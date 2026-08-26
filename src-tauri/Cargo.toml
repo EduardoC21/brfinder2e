@@ -1,0 +1,24 @@
+[package]
+name = "brfinder2e"
+version = "0.1.0"
+description = "Forja de fichas de Pathfinder 2e (Remaster)"
+edition = "2021"
+rust-version = "1.77.2"
+
+[lib]
+name = "brfinder2e_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[profile.release]
+codegen-units = 1
+lto = true
+panic = "abort"
+strip = true

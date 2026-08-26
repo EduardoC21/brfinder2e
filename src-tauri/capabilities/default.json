@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Permissoes da janela principal. O Tauri v2 nega tudo por padrao: cada capacidade nova entra aqui, explicitamente.",
+  "windows": ["main"],
+  "permissions": ["core:default"]
+}

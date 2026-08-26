@@ -1,0 +1,4 @@
+# O Prettier exige LF. Sem isto, o Windows grava CRLF e o format:check quebra no CI.
+* text=auto eol=lf
+*.png binary
+*.ico binary
