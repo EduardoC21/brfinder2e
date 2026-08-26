@@ -6,8 +6,8 @@ export default defineConfig({
   plugins: [react()],
 
   resolve: {
-    // Le os "paths" do tsconfig.app.json. Assim os apelidos (@nucleo/...) existem
-    // em UM lugar so, e valem no editor, no build e nos testes ao mesmo tempo.
+    // Lê os "paths" do tsconfig.app.json. Assim os apelidos (@core/...) existem
+    // em UM lugar só, e valem no editor, no build e nos testes ao mesmo tempo.
     tsconfigPaths: true,
   },
 
@@ -18,24 +18,24 @@ export default defineConfig({
     globals: true,
 
     // Dois projetos, espelhando a fronteira da arquitetura.
-    // O nucleo roda em Node puro (rapido, sem DOM). So a interface paga o jsdom.
+    // O core roda em Node puro (rápido, sem DOM). Só a UI paga o custo do jsdom.
     projects: [
       {
         extends: true,
         test: {
-          name: 'nucleo',
+          name: 'core',
           environment: 'node',
-          include: ['src/nucleo/**/*.test.ts'],
+          include: ['src/core/**/*.test.ts'],
         },
       },
       {
         extends: true,
         test: {
-          name: 'interface',
+          name: 'ui',
           environment: 'jsdom',
           include: ['src/**/*.test.{ts,tsx}'],
-          exclude: ['src/nucleo/**'],
-          setupFiles: ['./src/testes/preparo.ts'],
+          exclude: ['src/core/**'],
+          setupFiles: ['./src/test/setup.ts'],
         },
       },
     ],
@@ -44,7 +44,7 @@ export default defineConfig({
       provider: 'v8',
       reportsDirectory: './coverage',
       include: ['src/**/*.{ts,tsx}'],
-      exclude: ['src/**/*.test.{ts,tsx}', 'src/testes/**', 'src/main.tsx'],
+      exclude: ['src/**/*.test.{ts,tsx}', 'src/test/**', 'src/main.tsx'],
     },
   },
 });

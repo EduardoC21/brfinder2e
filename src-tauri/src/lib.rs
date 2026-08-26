@@ -2,5 +2,5 @@
 pub fn run() {
     tauri::Builder::default()
         .run(tauri::generate_context!())
-        .expect("erro ao iniciar a aplicacao Tauri");
+        .expect("failed to start the Tauri application");
 }

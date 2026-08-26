@@ -6,14 +6,14 @@ on:
   pull_request:
   workflow_dispatch:
 
-# Cancela execucoes antigas do mesmo branch: nao adianta esperar CI de commit superado.
+# Cancela execuções antigas do mesmo branch: não adianta esperar CI de commit superado.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  verificar:
-    name: formato, lint, tipos e testes
+  check:
+    name: format, lint, types, tests, build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -23,19 +23,19 @@ jobs:
           node-version: 20
           cache: npm
 
-      # "ci" e nao "install": instala exatamente o que esta no package-lock.json.
+      # "ci" e não "install": instala exatamente o que está no package-lock.json.
       - run: npm ci
 
-      - name: Formatacao
+      - name: Format
         run: npm run format:check
 
       - name: Lint
         run: npm run lint
 
-      - name: Tipos
+      - name: Types
         run: npm run typecheck
 
-      - name: Testes
+      - name: Tests
         run: npm run test
 
       - name: Build

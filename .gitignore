@@ -28,7 +28,7 @@ coverage
 .vitest
 
 # Base de dados baixada do Foundry (Etapa 1+).
-# NUNCA versionar: conteudo da Paizo sob ORC/OGL — o usuario baixa, nos nao redistribuimos.
+# NUNCA versionar: conteúdo da Paizo sob ORC/OGL — o usuário baixa, nós não redistribuímos.
 .dados/
 
 # Rust / Tauri

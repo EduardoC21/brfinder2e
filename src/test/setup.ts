@@ -1,6 +1,6 @@
 /**
- * Preparo do ambiente de teste da camada de interface (projeto "interface" no
- * vite.config.ts). O nucleo NAO carrega este arquivo — ele roda em Node puro.
+ * Preparo do ambiente de teste da camada de UI (projeto "ui" no vite.config.ts).
+ * O core NÃO carrega este arquivo — ele roda em Node puro.
  */
 import '@testing-library/jest-dom/vitest';
 import { cleanup } from '@testing-library/react';

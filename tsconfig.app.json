@@ -8,7 +8,7 @@
     "allowArbitraryExtensions": true,
     "skipLibCheck": true,
 
-    /* Modo bundler: quem resolve import e transpila e o Vite, nao o tsc. */
+    /* Modo bundler: quem resolve import e transpila é o Vite, não o tsc. */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
@@ -16,15 +16,16 @@
     "noEmit": true,
     "jsx": "react-jsx",
 
-    /* Apelidos de caminho. Fonte unica: o Vite le daqui via vite-tsconfig-paths. */
+    /* Apelidos de caminho. Fonte única: o Vite lê daqui via resolve.tsconfigPaths.
+       Sem "baseUrl" — o TypeScript 6 o marca como deprecado. */
     "paths": {
-      "@nucleo/*": ["./src/nucleo/*"],
-      "@interface/*": ["./src/interface/*"],
-      "@idiomas/*": ["./src/idiomas/*"],
-      "@testes/*": ["./src/testes/*"]
+      "@core/*": ["./src/core/*"],
+      "@ui/*": ["./src/ui/*"],
+      "@i18n/*": ["./src/i18n/*"],
+      "@test/*": ["./src/test/*"]
     },
 
-    /* Rigor. Tudo ligado de proposito: ver ARQUITETURA.md, secao "TypeScript". */
+    /* Rigor. Tudo ligado de propósito: ver ARCHITECTURE.md, seção "TypeScript". */
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,

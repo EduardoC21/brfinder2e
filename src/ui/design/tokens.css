@@ -1,0 +1,36 @@
+/*
+ * TOKENS — o único lugar do projeto onde existe um valor de cor, fonte ou espaço.
+ *
+ * Regra (briefing, seção 8, "Centralização"): nenhum componente escreve #hexadecimal,
+ * nome de fonte ou pixel solto. Todo mundo consome var(--...) daqui.
+ * O motivo prático: trocar de tema depois vira trocar este arquivo, não caçar 200 lugares.
+ *
+ * ATENÇÃO: os valores abaixo são PROVISÓRIOS, só para o esqueleto não ficar ilegível.
+ * A paleta e a tipografia de verdade são decididas na Etapa 4 (Anexo A do briefing).
+ * Não construa tela em cima destes valores.
+ */
+
+:root {
+  color-scheme: dark;
+
+  /* Cor — provisório */
+  --color-bg: #14161a;
+  --color-surface: #1c1f25;
+  --color-border: #2b2f38;
+  --color-text: #e6e8ec;
+  --color-text-muted: #9aa1ad;
+  --color-accent: #6ea8fe;
+
+  /* Tipografia — provisório */
+  --font-display: system-ui, sans-serif;
+  --font-body: system-ui, sans-serif;
+  --font-mono: ui-monospace, 'Cascadia Code', Consolas, monospace;
+
+  /* Espaçamento — base 4px, densidade alta (briefing, seção 8) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+}

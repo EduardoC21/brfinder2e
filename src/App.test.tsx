@@ -2,11 +2,11 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import { App } from './App';
-import { textos } from '@idiomas/index';
+import { strings } from '@i18n/index';
 
-describe('esqueleto da interface', () => {
-  it('renderiza React dentro do jsdom e le o texto do arquivo de idioma', () => {
+describe('esqueleto da UI', () => {
+  it('renderiza React dentro do jsdom e lê o texto do arquivo de idioma', () => {
     render(<App />);
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(textos.app.nome);
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(strings.app.name);
   });
 });

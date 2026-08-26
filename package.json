@@ -15,7 +15,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:cov": "vitest run --coverage",
-    "verificar": "npm run format:check && npm run lint && npm run typecheck && npm run test",
+    "check": "npm run format:check && npm run lint && npm run typecheck && npm run test",
     "tauri": "tauri"
   },
   "dependencies": {

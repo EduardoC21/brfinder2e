@@ -11,9 +11,9 @@ export default defineConfig([
 
   js.configs.recommended,
 
-  // "TypeChecked" = regras que consultam o compilador, nao so a sintaxe.
-  // Vale o custo: e o que pega Promise sem await e acesso a campo de JSON nao tipado,
-  // que sao exatamente os erros que a importacao do Foundry produz.
+  // "TypeChecked" = regras que consultam o compilador, não só a sintaxe.
+  // Vale o custo: é o que pega Promise sem await e acesso a campo de JSON não tipado,
+  // que são exatamente os erros que a importação do Foundry produz.
   tseslint.configs.strictTypeChecked,
   tseslint.configs.stylisticTypeChecked,
   {
@@ -25,7 +25,7 @@ export default defineConfig([
     },
   },
 
-  // ── Camada de interface: React ─────────────────────────────────────────────
+  // ── Camada de UI: React ────────────────────────────────────────────────────
   {
     ...reactHooks.configs.flat.recommended,
     files: ['src/**/*.{ts,tsx}'],
@@ -40,10 +40,10 @@ export default defineConfig([
   },
 
   // ── A FRONTEIRA, escrita como regra ────────────────────────────────────────
-  // O nucleo e dominio puro. Se um dia alguem importar React aqui, o lint quebra.
-  // Comentario nao segura arquitetura; regra segura.
+  // O core é domínio puro. Se um dia alguém importar React aqui, o lint quebra.
+  // Comentário não segura arquitetura; regra segura.
   {
-    files: ['src/nucleo/**/*.ts'],
+    files: ['src/core/**/*.ts'],
     rules: {
       '@typescript-eslint/no-restricted-imports': [
         'error',
@@ -55,13 +55,13 @@ export default defineConfig([
                 'react-dom',
                 'react/*',
                 'react-dom/*',
-                '@interface/*',
-                '@idiomas/*',
-                '**/interface/**',
-                '**/idiomas/**',
+                '@ui/*',
+                '@i18n/*',
+                '**/ui/**',
+                '**/i18n/**',
               ],
               message:
-                'O nucleo/ e dominio puro: nao pode importar React nem a camada de interface. Inverta a dependencia.',
+                'src/core/ é domínio puro: não pode importar React nem a camada de UI. Inverta a dependência.',
             },
           ],
         },
@@ -69,22 +69,22 @@ export default defineConfig([
     },
   },
 
-  // ── Arquivos de configuracao rodam em Node ─────────────────────────────────
+  // ── Arquivos de configuração rodam em Node ─────────────────────────────────
   {
     files: ['*.config.{js,ts}', 'eslint.config.js'],
     languageOptions: { globals: globals.node },
   },
 
-  // ── Testes: um pouco menos rigido ──────────────────────────────────────────
+  // ── Testes: um pouco menos rígido ──────────────────────────────────────────
   {
-    files: ['**/*.test.{ts,tsx}', 'src/testes/**/*.{ts,tsx}'],
+    files: ['**/*.test.{ts,tsx}', 'src/test/**/*.{ts,tsx}'],
     rules: {
       '@typescript-eslint/no-non-null-assertion': 'off',
       '@typescript-eslint/no-unsafe-assignment': 'off',
     },
   },
 
-  // Desliga toda regra de ESTILO do ESLint. Formatacao e assunto do Prettier.
-  // Precisa ficar por ultimo.
+  // Desliga toda regra de ESTILO do ESLint. Formatação é assunto do Prettier.
+  // Precisa ficar por último.
   prettier,
 ]);

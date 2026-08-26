@@ -1,13 +1,13 @@
-import { textos } from '@idiomas/index';
+import { strings } from '@i18n/index';
 
 export function App() {
   return (
-    <main style={{ padding: 'var(--espaco-8)' }}>
-      <h1 style={{ fontFamily: 'var(--fonte-titulo)', margin: 0 }}>{textos.app.nome}</h1>
-      <p style={{ color: 'var(--cor-texto-fraco)', marginTop: 'var(--espaco-2)' }}>
-        {textos.app.subtitulo}
+    <main style={{ padding: 'var(--space-8)' }}>
+      <h1 style={{ fontFamily: 'var(--font-display)', margin: 0 }}>{strings.app.name}</h1>
+      <p style={{ color: 'var(--color-text-muted)', marginTop: 'var(--space-2)' }}>
+        {strings.app.tagline}
       </p>
-      <p style={{ marginTop: 'var(--espaco-6)' }}>{textos.esqueleto.descricao}</p>
+      <p style={{ marginTop: 'var(--space-6)' }}>{strings.skeleton.description}</p>
     </main>
   );
 }
