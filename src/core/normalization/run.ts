@@ -49,6 +49,8 @@ export interface RunResult<TBase = unknown, TDesc = unknown> {
 
 export interface RunOptions {
   readonly language?: LanguageTable;
+  /** ID de pasta -> nome da pasta raiz. Ver `core/source/folders.ts`. */
+  readonly folders?: ReadonlyMap<string, string>;
 }
 
 class MissingFieldError extends Error {
@@ -166,7 +168,9 @@ function readField(
   const found =
     field.source === 'document'
       ? readFromDocument(field, document, coverage)
-      : readFromLanguage(field, document, options.language);
+      : field.source === 'folder'
+        ? readFromFolder(field, document, coverage, options.folders)
+        : readFromLanguage(field, document, options.language);
 
   if (!found.present) {
     if (field.fallback !== null) return applyTransform(field, field.fallback.value);
@@ -193,6 +197,29 @@ function readFromDocument(field: Field<unknown>, document: unknown, coverage: Co
   // e listá-lo como não mapeado seria mentira.
   field.decoder.cover(read.value, field.path, coverage);
   return { present: true, value: read.value };
+}
+
+/**
+ * Lê o ID de pasta do documento e troca pelo nome da raiz.
+ *
+ * A COBERTURA é registrada mesmo quando a tabela não tem o ID: o caminho `folder` foi
+ * lido de qualquer jeito, e listá-lo como não mapeado seria mentira.
+ */
+function readFromFolder(
+  field: Field<unknown>,
+  document: unknown,
+  coverage: Coverage,
+  folders: ReadonlyMap<string, string> | undefined,
+): Found {
+  const read = readPath(document, field.path);
+  if (!read.found) return { present: false, value: undefined };
+  coverage.subtree.add(field.path);
+
+  if (typeof read.value !== 'string' || folders === undefined) {
+    return { present: false, value: undefined };
+  }
+  const name = folders.get(read.value);
+  return name === undefined ? { present: false, value: undefined } : { present: true, value: name };
 }
 
 function readFromLanguage(

@@ -23,22 +23,26 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import type { FolderRoots } from '@core/source/index';
 import {
   DEFAULT_CHANNEL,
   KNOWN_GOOD_TAG,
   languageFiles,
   loadInventory,
+  parseFolderRoots,
   readEntries,
   readTextEntry,
   resolveRelease,
 } from '@core/source/index';
 import {
+  actionRecipe,
   conditionRecipe,
   formatReport,
   isClean,
   mergeLanguageFiles,
   run,
 } from '@core/normalization/index';
+import type { Recipe } from '@core/normalization/index';
 import { createFetchHttp } from '@platform/http-fetch';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -75,87 +79,114 @@ async function main(): Promise<void> {
     writeFileSync(cache, loaded.zip);
   }
 
-  const packName = conditionRecipe.packs[0];
-  const pack = loaded.inventory.packs.find((entry) => entry.name === packName);
-  if (!pack) throw new Error(`O pack "${String(packName)}" não está no manifesto do release.`);
-
-  // ── raw/ primeiro, com os bytes exatos da entrada do zip ────────────────────
-  const rawBytes = readEntries(loaded.zip, [pack.file]).get(pack.file);
-  if (!rawBytes) throw new Error(`Entrada "${pack.file}" não encontrada no zip.`);
-
-  const documents: unknown = JSON.parse(new TextDecoder().decode(rawBytes));
-  if (!Array.isArray(documents)) throw new Error(`${pack.file} não é um array de documentos.`);
-
   const language = mergeLanguageFiles(
     languageFiles(loaded.manifest, 'en').map(
       (entry) => JSON.parse(readTextEntry(loaded.zip, entry.path)) as unknown,
     ),
   );
 
-  const result = run(conditionRecipe, documents, { language });
-
   console.log('');
   console.log(`sistema   ${loaded.inventory.systemId} v${loaded.inventory.systemVersion}`);
   console.log(
-    `pack      ${String(packName)} → ${pack.file}   (${String(documents.length)} documentos)`,
-  );
-  console.log(
     `idioma    ${String(language.size)} chaves, de ${String(languageFiles(loaded.manifest, 'en').length)} arquivos`,
   );
-  console.log('');
-  console.log(
-    `receita "${result.type}"   ${String(result.entities.length)}/${String(result.total)} normalizadas   ` +
-      `${String(result.failures.length)} falhas`,
-  );
 
-  for (const failure of result.failures) {
-    console.log(`  ! ${failure.name} (${failure.id})  ${failure.message}`);
-  }
+  /*
+   * O comando roda receitas de tipos diferentes na mesma passada, então o tipo de saída
+   * é apagado para um registro. A garantia de forma já foi dada na declaração de cada
+   * receita, por `FieldMapFor<T>`; aqui só montamos JSON.
+   */
+  type ErasedRecipe = Recipe<Record<string, unknown>, Record<string, unknown>>;
+  const recipes: readonly ErasedRecipe[] = [conditionRecipe, actionRecipe];
+  const written: string[] = [];
 
-  console.log(formatReport(result.report));
+  for (const recipe of recipes) {
+    const packName = recipe.packs[0];
+    const pack = loaded.inventory.packs.find((entry) => entry.name === packName);
+    if (!pack) throw new Error(`O pack "${String(packName)}" não está no manifesto do release.`);
 
-  if (!isClean(result.report)) {
-    console.error('Relatório NÃO está limpo: há caminho por decidir. Ver a lista acima.');
-    process.exitCode = 1;
+    // ── raw/ primeiro, com os bytes exatos da entrada do zip ────────────────────
+    const rawBytes = readEntries(loaded.zip, [pack.file]).get(pack.file);
+    if (!rawBytes) throw new Error(`Entrada "${pack.file}" não encontrada no zip.`);
+
+    const documents: unknown = JSON.parse(new TextDecoder().decode(rawBytes));
+    if (!Array.isArray(documents)) throw new Error(`${pack.file} não é um array de documentos.`);
+
+    // As pastas do compêndio, quando o pack tiver o arquivo. Dá o setor das ações.
+    const declaration = loaded.manifest.packs.find((entry) => entry.name === packName);
+    let folders: FolderRoots | undefined;
+    try {
+      folders = declaration
+        ? parseFolderRoots(
+            JSON.parse(readTextEntry(loaded.zip, DEFAULT_CHANNEL.packFoldersFile(declaration))),
+          )
+        : undefined;
+    } catch {
+      folders = undefined;
+    }
+
+    const result = run(recipe, documents, { language, ...(folders ? { folders } : {}) });
+
+    console.log('');
+    console.log(
+      `pack      ${String(packName)} → ${pack.file}   (${String(documents.length)} documentos)`,
+    );
+    console.log(
+      `receita "${result.type}"   ${String(result.entities.length)}/${String(result.total)} normalizadas   ` +
+        `${String(result.failures.length)} falhas`,
+    );
+
+    for (const failure of result.failures) {
+      console.log(`  ! ${failure.name} (${failure.id})  ${failure.message}`);
+    }
+
+    console.log(formatReport(result.report));
+
+    if (!isClean(result.report)) {
+      console.error(`Relatório de "${result.type}" NÃO está limpo. Ver a lista acima.`);
+      process.exitCode = 1;
+    }
+
+    if (reportOnly) continue;
+
+    written.push(
+      write('raw', `${String(packName)}.json`, rawBytes),
+      write(
+        'base',
+        `${result.type}.json`,
+        JSON.stringify(
+          {
+            systemVersion: loaded.inventory.systemVersion,
+            type: result.type,
+            entities: result.entities.map((entity) => ({
+              id: entity.identity.id,
+              uuid: entity.identity.uuid,
+              ...entity.base,
+            })),
+          },
+          null,
+          2,
+        ),
+      ),
+      write(
+        'desc',
+        `${result.type}.json`,
+        JSON.stringify(
+          {
+            systemVersion: loaded.inventory.systemVersion,
+            type: result.type,
+            entries: Object.fromEntries(
+              result.entities.map((entity) => [entity.identity.uuid, entity.desc]),
+            ),
+          },
+          null,
+          2,
+        ),
+      ),
+    );
   }
 
   if (reportOnly) return;
-
-  const written = [
-    write('raw', `${String(packName)}.json`, rawBytes),
-    write(
-      'base',
-      `${result.type}.json`,
-      JSON.stringify(
-        {
-          systemVersion: loaded.inventory.systemVersion,
-          type: result.type,
-          entities: result.entities.map((entity) => ({
-            id: entity.identity.id,
-            uuid: entity.identity.uuid,
-            ...entity.base,
-          })),
-        },
-        null,
-        2,
-      ),
-    ),
-    write(
-      'desc',
-      `${result.type}.json`,
-      JSON.stringify(
-        {
-          systemVersion: loaded.inventory.systemVersion,
-          type: result.type,
-          entries: Object.fromEntries(
-            result.entities.map((entity) => [entity.identity.uuid, entity.desc]),
-          ),
-        },
-        null,
-        2,
-      ),
-    ),
-  ];
 
   console.log('gravado:');
   for (const path of written) {

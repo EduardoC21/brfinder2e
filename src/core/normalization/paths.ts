@@ -62,12 +62,11 @@ function walk(value: unknown, prefix: string, into: Map<string, unknown>): void 
   }
 
   if (isRecord(value)) {
-    const keys = Object.keys(value);
-    if (keys.length === 0) {
-      remember(into, prefix, value);
-      return;
-    }
-    for (const key of keys) {
+    // O caminho do objeto é registrado SEMPRE, cheio ou vazio — mesmo motivo do array:
+    // sem isto, um campo presente em 8 documentos aparecia como "2/574" (os que tinham o
+    // objeto vazio) e a leitura óbvia era que ele mal existia.
+    remember(into, prefix, value);
+    for (const key of Object.keys(value)) {
       walk(value[key], prefix === '' ? key : `${prefix}.${key}`, into);
     }
     return;
@@ -126,5 +125,13 @@ export function isCovered(path: string, coverage: Coverage): boolean {
     prefix = prefix === '' ? segment : `${prefix}.${segment}`;
     if (coverage.subtree.has(prefix)) return true;
   }
+
+  // Um nó INTERMEDIÁRIO está coberto se algo dentro dele foi lido: `system` não precisa
+  // aparecer no relatório só porque a receita leu `system.slug`. Sem esta regra, registrar
+  // o caminho do objeto (acima) encheria o relatório de nós de passagem.
+  const inside = `${path}.`;
+  for (const covered of coverage.exact) if (covered.startsWith(inside)) return true;
+  for (const covered of coverage.subtree) if (covered.startsWith(inside)) return true;
+
   return false;
 }

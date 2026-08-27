@@ -39,6 +39,12 @@ export interface ZipChannel {
    * (briefing 7.2). `conditionitems` mora em `packs/conditions.json`.
    */
   readonly packFile: (pack: PackDeclaration) => string;
+  /**
+   * O arquivo de PASTAS do pack. O briefing 7.2 manda ignorá-lo como entidade — e está
+   * certo, não é entidade. Mas ele carrega a organização do compêndio, que é a única
+   * coisa que separa as 30 ações básicas das 196 de classe.
+   */
+  readonly packFoldersFile: (pack: PackDeclaration) => string;
 }
 
 /**
@@ -68,6 +74,7 @@ export const CHANNELS = [
     manifestAsset: 'system.json',
     insideZip: { packs: 'packs', languages: 'lang' },
     packFile: (pack) => `packs/${basename(pack.path)}.json`,
+    packFoldersFile: (pack) => `packs/${basename(pack.path)}_folders.json`,
   },
   {
     // Reserva. O manifesto mudou de lugar quando o repositório passou a construir

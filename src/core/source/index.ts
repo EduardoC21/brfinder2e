@@ -2,6 +2,7 @@
 
 export * from './archive';
 export * from './channels';
+export * from './folders';
 export * from './inventory';
 export * from './manifest';
 export * from './packs';

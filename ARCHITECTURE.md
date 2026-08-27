@@ -333,6 +333,12 @@ a subárvore, esse campo sumiria calado.
 O inventário percorre **todos** os elementos de cada array, não o primeiro. É o que faz
 aparecer a chave que só existe em 3 dos 6.283 talentos.
 
+E registra o caminho do **contêiner** — array ou objeto — sempre, cheio ou vazio. Sem isso
+a frequência mente: `system.traits.selected` existe em 8 das 574 ações e aparecia como
+"2/574", só os dois em que o objeto estava vazio. Para o nó de passagem não virar ruído,
+`isCovered` o considera coberto quando algo DENTRO dele foi lido: `system` não precisa
+aparecer no relatório só porque a receita leu `system.slug`.
+
 ### O tipo de saída vem da receita
 
 `recipe<TBase, TDesc>({...})` recebe as interfaces de saída, e `FieldMapFor<T>` obriga cada
@@ -342,6 +348,16 @@ campo a produzir o tipo declarado. `from('system.value.isValued', text)` num cam
 O ganho aparece no consumidor: `entity.base.name` é `string`, não `unknown`. Sem isso, a
 tela de busca começaria com `entity.base['name'] as string` em todo lugar — exatamente o
 padrão que as regras de lint proíbem.
+
+### Uma terceira fonte de campo: a pasta do compêndio
+
+`fromFolder('folder', text)` lê o ID de pasta do documento e devolve o nome da pasta RAIZ,
+resolvido por `<pack>_folders.json`. Mesma mecânica do `fromLang`, e pelo mesmo motivo: o
+valor não está no documento, está numa tabela ao lado.
+
+O briefing 7.2 manda ignorar esse arquivo — e está certo, não é entidade. Mas é o ÚNICO
+dado da base que separa as 30 ações básicas das 196 de classe: nenhum traço marca uma ação
+como básica. Não é entidade; é metadado, e metadado útil.
 
 ### Formas alternativas
 

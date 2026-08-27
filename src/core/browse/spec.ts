@@ -77,7 +77,21 @@ export const SOURCES: readonly SourceSpec[] = [
     ],
     searchFields: ['name', 'summary'],
   },
-  { id: 'actions', entityType: null, mode: 'list', columns: [], filters: [], searchFields: [] },
+  {
+    id: 'actions',
+    entityType: 'action',
+    mode: 'list',
+    // Mesmas duas espécies de coluna da condição: nenhum tipo novo foi preciso, o que era
+    // o teste do descritor. A coluna de traços com orçamento de 26 caracteres é a Etapa 10.
+    columns: [{ kind: 'name' }, { kind: 'chip', field: 'sector', align: 'end' }],
+    filters: [
+      { kind: 'options', field: 'sector' },
+      { kind: 'options', field: 'costKind' },
+      { kind: 'options', field: 'category' },
+      { kind: 'options', field: 'source.title' },
+    ],
+    searchFields: ['name'],
+  },
   { id: 'feats', entityType: null, mode: 'list', columns: [], filters: [], searchFields: [] },
   { id: 'spells', entityType: null, mode: 'list', columns: [], filters: [], searchFields: [] },
   { id: 'equipment', entityType: null, mode: 'list', columns: [], filters: [], searchFields: [] },

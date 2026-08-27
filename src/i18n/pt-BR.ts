@@ -41,6 +41,10 @@ export const ptBR = {
     fieldLabel: {
       group: 'grupo',
       valued: 'valorada',
+      sector: 'setor',
+      costKind: 'custo',
+      category: 'categoria',
+      rarity: 'raridade',
       'source.title': 'livro',
     } as Record<string, string>,
   },

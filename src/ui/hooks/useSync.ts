@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useReducer, useRef } from 'react';
 
-import { conditionRecipe } from '@core/normalization/index';
+import { actionRecipe, conditionRecipe } from '@core/normalization/index';
 import type { Recipe } from '@core/normalization/index';
 import { KNOWN_GOOD_TAG } from '@core/source/index';
 import { persistSync } from '@core/sync/persist';
@@ -100,7 +100,10 @@ const http = createFetchHttp({
 });
 
 const store = createIndexedDbStore();
-const RECIPES: readonly Recipe<never, never>[] = [conditionRecipe as Recipe<never, never>];
+const RECIPES: readonly Recipe<never, never>[] = [
+  conditionRecipe as Recipe<never, never>,
+  actionRecipe as Recipe<never, never>,
+];
 
 const INITIAL: SyncState = { stored: null, run: { status: 'loading' }, update: NO_UPDATE };
 

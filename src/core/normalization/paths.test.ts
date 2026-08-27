@@ -20,20 +20,25 @@ describe('readPath', () => {
 });
 
 describe('collectPaths', () => {
-  it('lista folhas, não nós intermediários', () => {
+  /**
+   * Registra a folha E o nó que a contém. O nó de passagem não polui o relatório porque
+   * `isCovered` o considera coberto quando algo dentro dele foi lido — ver o teste lá
+   * embaixo. Sem registrar o nó, um campo presente em 8 documentos aparecia como "2/574".
+   */
+  it('lista as folhas e os nós que as contêm', () => {
     const paths = collectPaths({ a: { b: 1, c: 'x' } });
-    expect([...paths.keys()]).toEqual(['a.b', 'a.c']);
+    expect([...paths.keys()]).toEqual(['a', 'a.b', 'a.c']);
   });
 
   it('trata array vazio como folha — o caminho existe', () => {
     const paths = collectPaths({ traits: { value: [] } });
-    expect([...paths.keys()]).toEqual(['traits.value']);
+    expect([...paths.keys()]).toEqual(['traits', 'traits.value']);
     expect(paths.get('traits.value')).toEqual([]);
   });
 
   it('desce em array com a notação [], sem perder o caminho do próprio array', () => {
     const paths = collectPaths({ rules: [{ key: 'FlatModifier', value: -1 }] });
-    expect([...paths.keys()]).toEqual(['rules', 'rules[].key', 'rules[].value']);
+    expect([...paths.keys()]).toEqual(['rules', 'rules[]', 'rules[].key', 'rules[].value']);
   });
 
   /**
@@ -90,5 +95,33 @@ describe('isCovered', () => {
     const coverage = emptyCoverage();
     coverage.subtree.add('system.value');
     expect(isCovered('system.valueOther', coverage)).toBe(false);
+  });
+});
+
+/**
+ * Regressão irmã da do array, achada ao rodar a receita de `action`.
+ *
+ * `system.traits.selected` existe em 8 documentos, mas aparecia como "2/574" — os dois em
+ * que o objeto estava VAZIO. Nos outros seis o inventário descia nos filhos e não
+ * registrava o pai, então a leitura óbvia era que o campo mal existia.
+ */
+describe('objeto intermediário no inventário', () => {
+  it('conta o objeto cheio e o vazio no MESMO caminho', () => {
+    const into = collectPaths({ traits: { selected: {} } });
+    collectPaths({ traits: { selected: { general: 'General' } } }, into);
+    expect([...into.keys()].sort()).toEqual([
+      'traits',
+      'traits.selected',
+      'traits.selected.general',
+    ]);
+  });
+
+  it('nó de passagem não vai para o relatório quando algo dentro dele foi lido', () => {
+    const coverage = emptyCoverage();
+    coverage.subtree.add('system.slug');
+    // `system` é só caminho até o que a receita leu: não é campo por decidir.
+    expect(isCovered('system', coverage)).toBe(true);
+    // mas um irmão não lido continua aparecendo
+    expect(isCovered('system.outro', coverage)).toBe(false);
   });
 });

@@ -5,6 +5,7 @@ export * from './field';
 export * from './language';
 export * from './paths';
 export * from './recipe';
+export * from './recipes/action';
 export * from './recipes/condition';
 export * from './report';
 export * from './run';

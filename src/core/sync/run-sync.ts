@@ -13,8 +13,10 @@ import {
   KNOWN_GOOD_TAG,
   languageFiles,
   loadInventory,
+  parseFolderRoots,
   readEntries,
   readTextEntry,
+  type FolderRoots,
   type HttpPort,
   type Progress,
   type ZipChannel,
@@ -147,7 +149,11 @@ export async function runSync(
       throw new SyncError(`${pack.file} não é um array de documentos.`);
     }
 
-    const result = run(recipe, documents, { language });
+    // As pastas do compêndio, quando o pack tiver o arquivo. É o que dá o setor das ações
+    // (Basic, Skill, Class…) — ver core/source/folders.ts.
+    const folders = readFolders(loaded, channel, String(packName));
+
+    const result = run(recipe, documents, { language, ...(folders ? { folders } : {}) });
 
     // Os aposentados passam pela MESMA receita, na mesma execução. É o que garante uma
     // forma só para o front desenhar.
@@ -180,6 +186,35 @@ export async function runSync(
     types,
     total: types.reduce((sum, entry) => sum + entry.imported, 0),
   };
+}
+
+/**
+ * Lê `<pack>_folders.json`, se existir.
+ *
+ * Nem todo pack tem: são 54 arquivos de pasta para 97 packs. Ausência não é erro — a
+ * receita que usa `fromFolder` cai no valor padrão.
+ */
+function readFolders(
+  loaded: {
+    readonly zip: Uint8Array;
+    readonly manifest: {
+      readonly packs: readonly { readonly name: string; readonly path: string }[];
+    };
+  },
+  channel: ZipChannel,
+  packName: string,
+): FolderRoots | null {
+  const declaration = loaded.manifest.packs.find((entry) => entry.name === packName);
+  if (!declaration) return null;
+  try {
+    const raw = readTextEntry(
+      loaded.zip,
+      channel.packFoldersFile({ ...declaration, label: '', type: '' }),
+    );
+    return parseFolderRoots(JSON.parse(raw));
+  } catch {
+    return null;
+  }
 }
 
 /** Roda a receita ATUAL sobre os documentos crus guardados em `raw/retired/<tipo>/`. */

@@ -11,7 +11,7 @@
 
 import type { Decoder } from './decoders';
 
-export type FieldSource = 'document' | 'language';
+export type FieldSource = 'document' | 'language' | 'folder';
 
 export interface Field<T> {
   readonly source: FieldSource;
@@ -74,6 +74,25 @@ export function fromLang<T>(keyTemplate: string, decoder: Decoder<T>): Field<T> 
   return build<T>({
     source: 'language',
     path: keyTemplate,
+    decoder,
+    isOptional: false,
+    fallback: null,
+    transform: null,
+  });
+}
+
+/**
+ * Lê o ID de pasta no documento e devolve o nome da pasta RAIZ.
+ *
+ * Mesma situação do `fromLang`: o valor não está no documento, está numa tabela ao lado —
+ * aqui, `<pack>_folders.json`. O nome diferente deixa a segunda fonte visível na receita.
+ *
+ *   sector: fromFolder('folder', text).withDefault('')
+ */
+export function fromFolder<T>(path: string, decoder: Decoder<T>): Field<T> {
+  return build<T>({
+    source: 'folder',
+    path,
     decoder,
     isOptional: false,
     fallback: null,
