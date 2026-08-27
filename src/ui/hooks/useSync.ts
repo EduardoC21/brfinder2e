@@ -17,6 +17,7 @@ export interface SyncedType {
   readonly failed: number;
   readonly diff: EntityDiff;
   readonly retired: number;
+  readonly staleRetired: number;
 }
 
 export type RunState =
@@ -104,6 +105,8 @@ const RECIPES: readonly Recipe<never, never>[] = [conditionRecipe as Recipe<neve
 const INITIAL: SyncState = { stored: null, run: { status: 'loading' }, update: NO_UPDATE };
 
 function totalFailures(result: SyncResult): number {
+  // Falha ao reler um aposentado NÃO bloqueia atualização de versão: ela indica receita a
+  // consertar, e a projeção anterior daquele aposentado continua valendo.
   return result.types.reduce((sum, entry) => sum + entry.failed, 0);
 }
 
@@ -199,6 +202,7 @@ export function useSync(): UseSync {
                 failed: entry.failed,
                 diff: info?.diff ?? { added: 0, updated: 0, unchanged: 0, removed: 0 },
                 retired: info?.retired ?? 0,
+                staleRetired: info?.staleRetired ?? 0,
               };
             }),
           });

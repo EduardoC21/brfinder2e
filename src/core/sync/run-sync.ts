@@ -19,8 +19,9 @@ import {
   type Progress,
   type ZipChannel,
 } from '../source/index';
+import { listRetiredRaw, type StorePort } from '../store/index';
 import { mergeLanguageFiles } from '../normalization/language';
-import { run, type NormalizedEntity } from '../normalization/run';
+import { run, type Failure, type NormalizedEntity } from '../normalization/run';
 import type { Recipe } from '../normalization/recipe';
 import type { NormalizationReport } from '../normalization/report';
 
@@ -44,6 +45,22 @@ export interface TypeResult {
   readonly report: NormalizationReport;
   readonly entities: readonly NormalizedEntity[];
   /**
+   * Os APOSENTADOS, renormalizados pela receita ATUAL a partir de `raw/retired/`.
+   *
+   * Sem isto, a projeção do aposentado ficaria congelada na receita da época em que ele
+   * sumiu, e o front teria duas formas do mesmo tipo para desenhar. Com isto, aposentado
+   * é entidade normal que por acaso tem uma marca.
+   */
+  readonly retiredEntities: readonly NormalizedEntity[];
+  /**
+   * Aposentados que a receita ATUAL não conseguiu ler.
+   *
+   * Não é estado a contornar: é sinal de que a receita exige um campo que nem sempre
+   * existiu. O conserto é marcar o campo como opcional. Enquanto isso, a projeção
+   * anterior daquele aposentado é mantida.
+   */
+  readonly retiredFailures: readonly Failure[];
+  /**
    * Os bytes do pack, exatamente como saíram do zip. Guardados para a camada `raw/`
    * (briefing 5.2) — que é gravada a partir daqui, nunca a partir da projeção.
    */
@@ -63,6 +80,11 @@ export interface SyncOptions {
   readonly channel?: ZipChannel;
   readonly tag?: string | null;
   readonly onPhase?: (phase: SyncPhase) => void;
+  /**
+   * Quando presente, os aposentados guardados nele são renormalizados junto. Ausente, o
+   * resultado traz só o que veio do pack — é o caso do comando de linha.
+   */
+  readonly store?: StorePort;
 }
 
 export class SyncError extends Error {
@@ -127,6 +149,15 @@ export async function runSync(
 
     const result = run(recipe, documents, { language });
 
+    // Os aposentados passam pela MESMA receita, na mesma execução. É o que garante uma
+    // forma só para o front desenhar.
+    const retired =
+      options.store === undefined
+        ? { entities: [], failures: [] }
+        : renormalizeRetired(recipe, options.store, language);
+
+    const retiredResult = await retired;
+
     types.push({
       type: result.type,
       packName: String(packName),
@@ -136,6 +167,8 @@ export async function runSync(
       failed: result.failures.length,
       report: result.report,
       entities: result.entities,
+      retiredEntities: retiredResult.entities,
+      retiredFailures: retiredResult.failures,
       rawBytes,
     });
   }
@@ -147,4 +180,21 @@ export async function runSync(
     types,
     total: types.reduce((sum, entry) => sum + entry.imported, 0),
   };
+}
+
+/** Roda a receita ATUAL sobre os documentos crus guardados em `raw/retired/<tipo>/`. */
+async function renormalizeRetired(
+  recipe: Recipe<never, never>,
+  store: StorePort,
+  language: ReadonlyMap<string, string>,
+): Promise<{ entities: readonly NormalizedEntity[]; failures: readonly Failure[] }> {
+  const stored = await listRetiredRaw(store, recipe.type);
+  if (stored.length === 0) return { entities: [], failures: [] };
+
+  const result = run(
+    recipe,
+    stored.map((entry) => entry.document),
+    { language },
+  );
+  return { entities: result.entities, failures: result.failures };
 }

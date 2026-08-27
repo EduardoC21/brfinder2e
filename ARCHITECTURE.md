@@ -463,6 +463,20 @@ auditar.
 Uma entrada que volta a existir na fonte perde a lápide — há teste, porque a primeira
 versão gravava a entrada duas vezes, viva e aposentada.
 
+**O aposentado é renormalizado a cada sincronização**, pela receita ATUAL, a partir de
+`raw/retired/<tipo>/<chave>`. Sem isso a projeção dele ficaria congelada na receita da
+época em que sumiu, e mudar a receita — como a de `feat` vai mudar na Etapa 9 — deixaria
+`base/` com duas formas do mesmo tipo. **A camada de UI lê uma forma só**: viva e
+aposentada saem da mesma receita, na mesma execução, e a única diferença entre elas é a
+presença de `retiredIn`.
+
+O `retiredIn` preservado é o da vez em que a entrada sumiu, não o da sincronização de
+agora.
+
+Se a receita atual NÃO conseguir reler um aposentado, ele mantém a projeção anterior e é
+contado em `staleRetired`. Isso não é estado a contornar: é sinal de que a receita exige um
+campo que nem sempre existiu, e o conserto é marcar o campo como opcional.
+
 ### A versão da base não é código
 
 `KNOWN_GOOD_TAG` deixou de ser "a versão do app". A versão em uso fica no `meta` do

@@ -114,18 +114,44 @@ export async function readDesc(
  * embute cópias completas dos itens, então o documento aqui é o suficiente para o item
  * viajar dentro da ficha exportada.
  */
-export const keyRetiredRaw = (key: string): string => `raw/retired/${key}`;
+export const keyRetiredRaw = (type: string, key: string): string => `raw/retired/${type}/${key}`;
 
 export async function writeRetiredRaw(
   store: StorePort,
+  type: string,
   key: string,
   document: unknown,
 ): Promise<void> {
-  await store.put(keyRetiredRaw(key), document);
+  await store.put(keyRetiredRaw(type, key), document);
 }
 
-export async function readRetiredRaw(store: StorePort, key: string): Promise<unknown> {
-  return store.get(keyRetiredRaw(key));
+export async function readRetiredRaw(
+  store: StorePort,
+  type: string,
+  key: string,
+): Promise<unknown> {
+  return store.get(keyRetiredRaw(type, key));
+}
+
+/**
+ * Todos os documentos crus aposentados de um tipo.
+ *
+ * É o que permite RENORMALIZAR os aposentados a cada sincronização, em vez de arrastar
+ * adiante uma projeção congelada. Sem isso, mudar a receita deixaria os aposentados com a
+ * forma antiga, e o front teria duas formas do mesmo tipo para desenhar.
+ */
+export async function listRetiredRaw(
+  store: StorePort,
+  type: string,
+): Promise<readonly { readonly key: string; readonly document: unknown }[]> {
+  const prefix = `raw/retired/${type}/`;
+  const keys = await store.keys(prefix);
+  const out: { key: string; document: unknown }[] = [];
+  for (const full of keys) {
+    const document = await store.get(full);
+    if (document !== undefined) out.push({ key: full.slice(prefix.length), document });
+  }
+  return out;
 }
 
 /**

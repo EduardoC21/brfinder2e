@@ -43,6 +43,11 @@ export interface PersistedType {
   readonly diff: EntityDiff;
   /** Quantas entradas estão aposentadas no total, somando as de sincronizações anteriores. */
   readonly retired: number;
+  /**
+   * Quantas aposentadas a receita ATUAL não conseguiu reler, e por isso mantiveram a
+   * projeção antiga. Diferente de zero significa receita a consertar.
+   */
+  readonly staleRetired: number;
 }
 
 export interface PersistResult {
@@ -89,33 +94,74 @@ async function persistType(
 
   const arriving = new Set(incoming.map((entity) => entity.key));
   const newlyRetired = (previousActive ?? []).filter((entity) => !arriving.has(entity.key));
-  // Quem estava aposentado e VOLTOU a existir na fonte sai daqui: senão ficaria gravado
-  // duas vezes, vivo e com lápide. Já aconteceu de o Foundry reintroduzir conteúdo.
-  const alreadyRetired = (previous === null ? [] : retiredOnly(previous)).filter(
-    (entity) => !arriving.has(entity.key),
-  );
 
   // O documento cru de quem sumiu, salvo enquanto raw/<pack> ainda é o anterior.
   if (newlyRetired.length > 0) {
-    await saveRetiredDocuments(store, type.packName, newlyRetired);
+    await saveRetiredDocuments(store, type.type, type.packName, newlyRetired);
   }
+
+  const carried = carryRetired(previous, type, arriving, releaseTag);
 
   await writeRaw(store, type.packName, type.rawBytes);
   await writeBase(store, type.type, [
     ...incoming,
     ...newlyRetired.map((entity) => retire(entity, releaseTag)),
-    ...alreadyRetired,
+    ...carried.entities,
   ]);
   await writeDesc(store, type.type, {
-    ...carryDesc(previousDesc, [...newlyRetired, ...alreadyRetired]),
-    ...Object.fromEntries(type.entities.map((entity) => [entityKey(entity), entity.desc])),
+    // Ordem importa: a descrição renormalizada do aposentado vence a antiga, e a do vivo
+    // vence tudo.
+    ...carryDesc(previousDesc, [...newlyRetired, ...carried.entities]),
+    ...Object.fromEntries(type.retiredEntities.map((e) => [entityKey(e), e.desc])),
+    ...Object.fromEntries(type.entities.map((e) => [entityKey(e), e.desc])),
   });
 
   return {
     type: type.type,
     diff,
-    retired: newlyRetired.length + alreadyRetired.length,
+    retired: newlyRetired.length + carried.entities.length,
+    staleRetired: carried.stale,
   };
+}
+
+/**
+ * Os aposentados que continuam aposentados, já renormalizados pela receita ATUAL.
+ *
+ * É o que garante uma forma só em `base/`: vivo e aposentado saem da mesma receita, na
+ * mesma execução. Cada um mantém o `retiredIn` original — a tag em que ELE sumiu, não a
+ * da sincronização de agora.
+ *
+ * Aposentado que a receita atual não conseguiu ler mantém a projeção anterior e é contado
+ * em `stale`. Isso não é estado a contornar: é sinal de que a receita exige um campo que
+ * nem sempre existiu, e o conserto é marcar o campo como opcional.
+ */
+function carryRetired(
+  previous: readonly StoredEntity[] | null,
+  type: TypeResult,
+  arriving: ReadonlySet<string>,
+  releaseTag: string,
+): { entities: StoredEntity[]; stale: number } {
+  const previouslyRetired = previous === null ? [] : retiredOnly(previous);
+  const fresh = new Map(type.retiredEntities.map(toStored).map((e) => [e.key, e]));
+
+  const entities: StoredEntity[] = [];
+  let stale = 0;
+
+  for (const old of previouslyRetired) {
+    // Voltou a existir na fonte: sai da lista de aposentados, senão ficaria gravado duas
+    // vezes, vivo e com lápide.
+    if (arriving.has(old.key)) continue;
+
+    const renormalized = fresh.get(old.key);
+    if (renormalized === undefined) {
+      entities.push(old);
+      stale++;
+    } else {
+      entities.push({ ...renormalized, retiredIn: old.retiredIn ?? releaseTag });
+    }
+  }
+
+  return { entities, stale };
 }
 
 /**
@@ -127,6 +173,7 @@ async function persistType(
  */
 async function saveRetiredDocuments(
   store: StorePort,
+  type: string,
   packName: string,
   entities: readonly StoredEntity[],
 ): Promise<void> {
@@ -152,7 +199,7 @@ async function saveRetiredDocuments(
 
   for (const entity of entities) {
     const document = byId.get(entity.id);
-    if (document !== undefined) await writeRetiredRaw(store, entity.key, document);
+    if (document !== undefined) await writeRetiredRaw(store, type, entity.key, document);
   }
 }
 

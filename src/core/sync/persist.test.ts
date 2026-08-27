@@ -36,6 +36,8 @@ function result(entities: readonly NormalizedEntity[]): SyncResult {
       deferred: [],
     },
     entities,
+    retiredEntities: [],
+    retiredFailures: [],
     rawBytes: RAW,
   };
   return {
@@ -200,7 +202,7 @@ describe('lápide', () => {
     );
 
     // O raw/<pack> já é o novo, sem a entrada; o documento sobrevive à parte.
-    expect(await readRetiredRaw(store, 'u2')).toEqual(doc('u2', 'Antiga'));
+    expect(await readRetiredRaw(store, 'condition', 'u2')).toEqual(doc('u2', 'Antiga'));
   });
 
   it('mantém a descrição da aposentada, para a tela de detalhe não ficar vazia', async () => {
@@ -282,5 +284,136 @@ describe('lápide', () => {
     expect(volta.types[0]?.diff.added).toBe(1);
     const base = await readBase(store, 'condition');
     expect(base?.every((e) => e.retiredIn === undefined)).toBe(true);
+  });
+});
+
+/**
+ * O furo que a lápide abriu, e o conserto.
+ *
+ * Sem renormalizar, a projeção do aposentado ficaria congelada na receita da época em que
+ * ele sumiu. Aí mudar a receita — como a de `feat` vai mudar na Etapa 9 — deixaria `base/`
+ * com DUAS formas do mesmo tipo, e o front teria que desenhar as duas.
+ */
+describe('aposentado renormalizado pela receita atual', () => {
+  const doc = (id: string, name: string) => ({ _id: id, name, type: 'condition' });
+
+  const comTudo = (
+    entities: readonly NormalizedEntity[],
+    docs: readonly unknown[],
+    retiredEntities: readonly NormalizedEntity[] = [],
+  ): SyncResult => {
+    const base = result(entities);
+    const tipo = base.types[0];
+    if (!tipo) throw new Error('sem tipo');
+    return {
+      ...base,
+      types: [
+        {
+          ...tipo,
+          rawBytes: new TextEncoder().encode(JSON.stringify(docs)),
+          retiredEntities,
+        },
+      ],
+    };
+  };
+
+  it('a projeção do aposentado acompanha a receita, e o retiredIn original é preservado', async () => {
+    const store = createMemoryStore();
+
+    // 1ª: duas vivas, projeção "antiga" (só name)
+    await persistSync(
+      store,
+      comTudo(
+        [entity('u1', { name: 'Blinded' }, {}), entity('u2', { name: 'Antiga' }, {})],
+        [doc('u1', 'Blinded'), doc('u2', 'Antiga')],
+      ),
+      at('2026-08-27T12:00:00.000Z'),
+    );
+
+    // 2ª: u2 some. Vira lápide com a tag desta sincronização.
+    await persistSync(
+      store,
+      comTudo([entity('u1', { name: 'Blinded' }, {})], [doc('u1', 'Blinded')]),
+      at('2026-09-27T12:00:00.000Z'),
+    );
+
+    // 3ª: a receita mudou e agora projeta { name, group }. O runSync devolve a aposentada
+    // renormalizada na forma NOVA.
+    const persisted = await persistSync(
+      store,
+      comTudo(
+        [entity('u1', { name: 'Blinded', group: 'senses' }, {})],
+        [doc('u1', 'Blinded')],
+        [entity('u2', { name: 'Antiga', group: null }, { main: '<p>nova</p>' })],
+      ),
+      at('2026-10-27T12:00:00.000Z'),
+    );
+
+    const base = await readBase(store, 'condition');
+    const aposentada = base?.find((e) => e.key === 'u2');
+
+    // forma nova, igual à das vivas
+    expect(aposentada?.base).toEqual({ name: 'Antiga', group: null });
+    // e a tag preservada é a de quando ELA sumiu, não a de agora
+    expect(aposentada?.retiredIn).toBe('pf2e-8.4.1');
+    expect(persisted.types[0]?.staleRetired).toBe(0);
+    expect(persisted.types[0]?.retired).toBe(1);
+  });
+
+  it('aposentado que a receita atual não lê mantém a projeção anterior, e é contado', async () => {
+    const store = createMemoryStore();
+    await persistSync(
+      store,
+      comTudo(
+        [entity('u1', { name: 'Blinded' }, {}), entity('u2', { name: 'Antiga' }, {})],
+        [doc('u1', 'Blinded'), doc('u2', 'Antiga')],
+      ),
+      at('2026-08-27T12:00:00.000Z'),
+    );
+    await persistSync(
+      store,
+      comTudo([entity('u1', { name: 'Blinded' }, {})], [doc('u1', 'Blinded')]),
+      at('2026-09-27T12:00:00.000Z'),
+    );
+
+    // runSync não devolveu a aposentada: a receita atual falhou ao lê-la.
+    const persisted = await persistSync(
+      store,
+      comTudo([entity('u1', { name: 'Blinded' }, {})], [doc('u1', 'Blinded')], []),
+      at('2026-10-27T12:00:00.000Z'),
+    );
+
+    expect(persisted.types[0]?.staleRetired).toBe(1);
+    const base = await readBase(store, 'condition');
+    // continua lá, com a projeção antiga — a ficha não quebra
+    expect(base?.find((e) => e.key === 'u2')?.base).toEqual({ name: 'Antiga' });
+  });
+
+  it('a descrição do aposentado também é atualizada quando ele é relido', async () => {
+    const store = createMemoryStore();
+    await persistSync(
+      store,
+      comTudo(
+        [entity('u1', {}, {}), entity('u2', {}, { main: '<p>velha</p>' })],
+        [doc('u1', 'Blinded'), doc('u2', 'Antiga')],
+      ),
+      at('2026-08-27T12:00:00.000Z'),
+    );
+    await persistSync(
+      store,
+      comTudo([entity('u1', {}, {})], [doc('u1', 'Blinded')]),
+      at('2026-09-27T12:00:00.000Z'),
+    );
+    await persistSync(
+      store,
+      comTudo(
+        [entity('u1', {}, {})],
+        [doc('u1', 'Blinded')],
+        [entity('u2', {}, { main: '<p>NOVA</p>' })],
+      ),
+      at('2026-10-27T12:00:00.000Z'),
+    );
+
+    expect((await readDesc(store, 'condition'))?.['u2']).toEqual({ main: '<p>NOVA</p>' });
   });
 });
