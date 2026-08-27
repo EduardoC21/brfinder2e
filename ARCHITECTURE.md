@@ -333,11 +333,38 @@ a subárvore, esse campo sumiria calado.
 O inventário percorre **todos** os elementos de cada array, não o primeiro. É o que faz
 aparecer a chave que só existe em 3 dos 6.283 talentos.
 
+### O tipo de saída vem da receita
+
+`recipe<TBase, TDesc>({...})` recebe as interfaces de saída, e `FieldMapFor<T>` obriga cada
+campo a produzir o tipo declarado. `from('system.value.isValued', text)` num campo
+`boolean` vira erro de compilação, não surpresa em runtime.
+
+O ganho aparece no consumidor: `entity.base.name` é `string`, não `unknown`. Sem isso, a
+tela de busca começaria com `entity.base['name'] as string` em todo lugar — exatamente o
+padrão que as regras de lint proíbem.
+
 ### Formas alternativas
 
 `oneOf({...})` para campo que muda de forma — o caso do briefing 7.8, com as cinco formas
 de `ChoiceSet` em 641 ocorrências. Forma não reconhecida vira erro com o valor real, o que
 impede uma sexta forma numa versão futura passar batido.
+
+### As três camadas gravadas (seção 5.2)
+
+`npm run normalize` grava em `.dados/`, que o `.gitignore` barra:
+
+| Arquivo                   | O que é                                    |
+| ------------------------- | ------------------------------------------ |
+| `raw/conditionitems.json` | os bytes do pack, **idênticos** aos do zip |
+| `base/condition.json`     | a projeção leve, com id e uuid             |
+| `desc/condition.json`     | as descrições, chaveadas por UUID          |
+
+`raw/` é gravado a partir dos bytes da entrada do zip, **antes** de qualquer projeção e
+nunca a partir dela — há teste que confere byte a byte. É o que mantém aberta a porta da
+exportação para o Foundry (OPEN-DECISIONS, item 1).
+
+Gravar com `node:fs` é escolha do **comando**, não do domínio. A camada `core/store/` com
+porta própria entra na Etapa 4, junto com a tela de sincronização que vai precisar dela.
 
 ---
 

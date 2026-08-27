@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "packs": "tsx --tsconfig tsconfig.scripts.json scripts/list-packs.ts",
+    "normalize": "tsx --tsconfig tsconfig.scripts.json scripts/normalize.ts",
     "typecheck": "tsc -b --force",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",

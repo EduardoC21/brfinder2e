@@ -25,10 +25,10 @@ export interface Identity {
   readonly type: string;
 }
 
-export interface NormalizedEntity {
+export interface NormalizedEntity<TBase = unknown, TDesc = unknown> {
   readonly identity: Identity;
-  readonly base: Readonly<Record<string, unknown>>;
-  readonly desc: Readonly<Record<string, unknown>>;
+  readonly base: TBase;
+  readonly desc: TDesc;
 }
 
 export interface Failure {
@@ -39,10 +39,10 @@ export interface Failure {
   readonly message: string;
 }
 
-export interface RunResult {
+export interface RunResult<TBase = unknown, TDesc = unknown> {
   readonly type: string;
   readonly total: number;
-  readonly entities: readonly NormalizedEntity[];
+  readonly entities: readonly NormalizedEntity<TBase, TDesc>[];
   readonly failures: readonly Failure[];
   readonly report: NormalizationReport;
 }
@@ -60,12 +60,12 @@ class MissingFieldError extends Error {
   }
 }
 
-export function run(
-  recipe: Recipe,
+export function run<TBase, TDesc>(
+  recipe: Recipe<TBase, TDesc>,
   documents: readonly unknown[],
   options: RunOptions = {},
-): RunResult {
-  const entities: NormalizedEntity[] = [];
+): RunResult<TBase, TDesc> {
+  const entities: NormalizedEntity<TBase, TDesc>[] = [];
   const failures: Failure[] = [];
 
   // Inventário de tudo que existe, e cobertura do que a receita tocou.
@@ -116,16 +116,18 @@ function documentType(document: unknown): string | null {
   return typeof type === 'string' ? type : null;
 }
 
-function normalizeOne(
-  recipe: Recipe,
+function normalizeOne<TBase, TDesc>(
+  recipe: Recipe<TBase, TDesc>,
   document: unknown,
   coverage: Coverage,
   options: RunOptions,
-): NormalizedEntity {
+): NormalizedEntity<TBase, TDesc> {
   return {
     identity: readIdentity(document),
-    base: readBlock(recipe.base, document, coverage, options),
-    desc: readBlock(recipe.desc, document, coverage, options),
+    // A conversão acontece num ponto só. `FieldMapFor<T>` já garantiu, na declaração da
+    // receita, que cada campo produz o tipo certo — o motor só monta o objeto.
+    base: readBlock(recipe.base, document, coverage, options) as TBase,
+    desc: readBlock(recipe.desc, document, coverage, options) as TDesc,
   };
 }
 

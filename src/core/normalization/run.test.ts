@@ -94,7 +94,7 @@ describe('run', () => {
   it('withDefault entra quando o campo não existe', () => {
     const semTraits = doc();
     delete (semTraits['system'] as Record<string, unknown>)['traits'];
-    expect(run(minimal, [semTraits]).entities[0]?.base['traits']).toEqual([]);
+    expect(run(minimal, [semTraits]).entities[0]?.base.traits).toEqual([]);
   });
 });
 
@@ -175,7 +175,7 @@ describe('fromLang', () => {
 
   it('resolve o modelo com um caminho do documento', () => {
     const result = run(comIdioma, [doc()], { language: table });
-    expect(result.entities[0]?.base['summary']).toBe('Fear makes you less capable.');
+    expect(result.entities[0]?.base.summary).toBe('Fear makes you less capable.');
   });
 
   it('chave ausente na tabela cai no optional em vez de falhar', () => {
@@ -224,7 +224,7 @@ describe('map', () => {
       packs: ['w'],
       base: { valued: from('system.slug', text).map((slug) => slug.toUpperCase()) },
     });
-    expect(run(r, [doc()]).entities[0]?.base['valued']).toBe('FRIGHTENED');
+    expect(run(r, [doc()]).entities[0]?.base.valued).toBe('FRIGHTENED');
   });
 
   it('convive com bool sem transformar o tipo por engano', () => {
@@ -235,6 +235,6 @@ describe('map', () => {
       packs: ['w'],
       base: { flag: from('system.flag', bool).map((value) => (value ? 1 : 0)) },
     });
-    expect(run(r, [documento]).entities[0]?.base['flag']).toBe(1);
+    expect(run(r, [documento]).entities[0]?.base.flag).toBe(1);
   });
 });
