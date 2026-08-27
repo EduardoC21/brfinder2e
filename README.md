@@ -53,6 +53,7 @@ base na primeira execução; o cache de tradução fica local, por usuário.
 ## Documentos
 
 - `ARCHITECTURE.md` — a estrutura de pastas e o porquê de cada escolha
+- `OPEN-DECISIONS.md` — o que ainda não foi decidido, e quando decidir
 - `src/core/README.md` — as camadas de importação
 - `src/ui/README.md` — a camada React
 - `src-tauri/README.md` — a casca nativa e o que falta para compilá-la
