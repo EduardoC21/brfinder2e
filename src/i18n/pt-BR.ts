@@ -31,7 +31,10 @@ export const ptBR = {
     counting: (shown: number, total: number) =>
       shown === total ? `${String(total)} entradas` : `${String(shown)} de ${String(total)}`,
     filters: 'Filtros',
-    clearFilters: 'Limpar',
+    clearFilters: 'Limpar tudo',
+    activeFilters: 'Filtros ativos',
+    filterOptions: 'filtrar…',
+    findSource: 'Achar fonte…',
     noValue: '— sem valor —',
     yes: 'sim',
     no: 'não',

@@ -17,6 +17,7 @@ import { useBase } from '@ui/hooks/useBase';
 import { DetailPanel } from './DetailPanel';
 import { FilterBar } from './FilterBar';
 import { ResultList } from './ResultList';
+import { SourceRail } from './SourceRail';
 import styles from './BrowseScreen.module.css';
 
 interface BrowseScreenProps {
@@ -35,20 +36,12 @@ export function BrowseScreen({ baseVersion }: BrowseScreenProps) {
 
   return (
     <div className={styles['screen']}>
-      <nav className={styles['rail']} aria-label={t.sourcesLabel}>
-        <h2 className={styles['railTitle']}>{t.sourcesLabel}</h2>
-        {SOURCES.map((entry) => (
-          <SourceButton
-            key={entry.id}
-            source={entry}
-            current={entry.id === sourceId}
-            count={entry.id === sourceId ? entities.length : null}
-            onSelect={() => {
-              setSourceId(entry.id);
-            }}
-          />
-        ))}
-      </nav>
+      <SourceRail
+        sources={SOURCES}
+        currentId={sourceId}
+        currentCount={entities.length}
+        onSelect={setSourceId}
+      />
 
       {source === undefined ? (
         <p className={styles['empty']}>{t.empty}</p>
@@ -65,33 +58,6 @@ export function BrowseScreen({ baseVersion }: BrowseScreenProps) {
 }
 
 const EMPTY: readonly BrowseEntity[] = [];
-
-function SourceButton({
-  source,
-  current,
-  count,
-  onSelect,
-}: {
-  readonly source: SourceSpec;
-  readonly current: boolean;
-  readonly count: number | null;
-  readonly onSelect: () => void;
-}) {
-  const ready = source.entityType !== null;
-  return (
-    <button
-      type="button"
-      className={cx(styles['source'], 'chamfer-sm')}
-      aria-current={current}
-      disabled={!ready}
-      title={ready ? undefined : t.notReady}
-      onClick={onSelect}
-    >
-      {strings.sources[source.id] ?? source.id}
-      {count !== null && count > 0 && <span className={styles['sourceCount']}>{count}</span>}
-    </button>
-  );
-}
 
 /**
  * O painel de uma fonte: busca, filtros, lista e o detalhe provisório.
@@ -215,7 +181,6 @@ function SourcePane({
           setFilters(next);
           setActiveIndex(-1);
         }}
-        summary=""
       />
 
       <div className={styles['list']} id="lista-de-resultados">

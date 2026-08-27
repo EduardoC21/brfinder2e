@@ -1,0 +1,78 @@
+/*
+ * Trilho horizontal com degradê e setas. Ver ScrollRail.tsx para o porquê.
+ *
+ * `min-width: 0` no trilho é o que permite ele encolher dentro de um flex — sem isso o
+ * conteúdo empurra o contêiner e a rolagem nunca acontece. É a pegadinha clássica do
+ * flexbox: o padrão de `min-width` é `auto`, não `0`.
+ */
+.rail {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  flex: 1;
+}
+
+.track {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+/* A barra de rolagem some: quem indica que há mais é o degradê e a seta. */
+.track::-webkit-scrollbar {
+  display: none;
+}
+
+/*
+ * O degradê usa `mask-image` e não um elemento sobreposto: assim ele funciona sobre
+ * qualquer fundo, inclusive quando o tema mudar. Um retângulo com gradient-to-transparent
+ * teria que saber a cor do fundo, e passaria a mentir no primeiro tema novo.
+ */
+.fadeLeft {
+  mask-image: linear-gradient(to right, transparent 0, black 24px);
+}
+
+.fadeRight {
+  mask-image: linear-gradient(to left, transparent 0, black 24px);
+}
+
+.fadeLeft.fadeRight {
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    black 24px,
+    black calc(100% - 24px),
+    transparent 100%
+  );
+}
+
+.arrow {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 22px;
+  border: 0;
+  padding: 0;
+  background: var(--color-panel);
+  color: var(--color-text-muted);
+  font: 400 var(--text-lg) / 1 var(--font-body);
+  cursor: pointer;
+}
+
+.arrow:hover {
+  background: var(--color-state);
+  color: #f6edea;
+}
+
+.left {
+  margin-right: var(--space-1);
+}
+
+.right {
+  margin-left: var(--space-1);
+}

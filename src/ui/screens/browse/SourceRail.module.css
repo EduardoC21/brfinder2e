@@ -1,0 +1,90 @@
+/*
+ * O trilho de fontes.
+ *
+ * São 12 hoje e podem virar mais. Mostrar todas empilhadas empurraria a lista para baixo
+ * e deixaria dez linhas inertes ocupando a tela. Aqui a área das fontes tem teto e rola
+ * por dentro, e um campo de busca acha a fonte sem rolar.
+ */
+.rail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-height: 0;
+  padding: var(--space-3) var(--space-2);
+  border-right: 1px solid var(--color-hairline);
+}
+
+.title {
+  margin: 0 0 0 var(--space-2);
+  font: 400 var(--text-xs) / 1 var(--font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.source {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  width: 100%;
+  flex: none;
+  border: 0;
+  padding: var(--space-2) var(--space-3);
+  background: transparent;
+  color: var(--color-text);
+  font: 400 var(--text-md) / 1.2 var(--font-body);
+  text-align: left;
+  cursor: pointer;
+}
+
+.source:hover:not(:disabled) {
+  background: var(--color-hover);
+}
+
+/* Selecionada é ESTADO: bordô. */
+.source[aria-current='true'] {
+  background: var(--color-state);
+  color: #f6edea;
+}
+
+.source:disabled {
+  color: #453a3d;
+  cursor: default;
+}
+
+/* Contagem é dado de jogo: latão e mono. */
+.count {
+  font: 400 var(--text-xs) / 1 var(--font-mono);
+  color: var(--color-data);
+}
+
+.source[aria-current='true'] .count {
+  color: #f6edea;
+}
+
+/*
+ * As que ainda não têm receita ficam abaixo de uma divisória, e não misturadas: assim o
+ * olho encontra as utilizáveis sem ler a lista inteira.
+ */
+.divider {
+  margin: var(--space-2) var(--space-2) var(--space-1);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--color-hairline);
+  font: 400 var(--text-xs) / 1 var(--font-mono);
+  color: #453a3d;
+}
+
+.empty {
+  padding: var(--space-2) var(--space-3);
+  font: 400 var(--text-xs) / 1.4 var(--font-body);
+  color: var(--color-text-muted);
+}

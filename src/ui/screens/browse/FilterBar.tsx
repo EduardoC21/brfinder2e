@@ -1,8 +1,11 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import type { BrowseEntity, FilterSpec, FilterState } from '@core/browse/index';
 import { optionsFor } from '@core/browse/index';
 import { strings } from '@i18n/index';
+import { cx } from '@ui/cx';
+import { OptionList, type Option } from '@ui/components/OptionList';
+import { ScrollRail } from '@ui/components/ScrollRail';
 
 import styles from './FilterBar.module.css';
 
@@ -12,7 +15,6 @@ interface FilterBarProps {
   readonly entities: readonly BrowseEntity[];
   readonly state: FilterState;
   readonly onChange: (state: FilterState) => void;
-  readonly summary: string;
 }
 
 const t = strings.browse;
@@ -29,8 +31,22 @@ function valueLabel(spec: FilterSpec, value: string): string {
   return value;
 }
 
-export function FilterBar({ specs, entities, state, onChange, summary }: FilterBarProps) {
+export function FilterBar({ specs, entities, state, onChange }: FilterBarProps) {
   const [open, setOpen] = useState(false);
+
+  const groups = useMemo(
+    () =>
+      specs.map((spec) => ({
+        spec,
+        title: fieldLabel(spec.field),
+        options: optionsFor(entities, spec.field).map((option): Option => ({
+          value: option.value,
+          label: valueLabel(spec, option.value),
+          count: option.count,
+        })),
+      })),
+    [specs, entities],
+  );
 
   const active = specs.flatMap((spec) =>
     (state[spec.field] ?? []).map((value) => ({ spec, value })),
@@ -38,46 +54,61 @@ export function FilterBar({ specs, entities, state, onChange, summary }: FilterB
 
   const toggle = (field: string, value: string): void => {
     const current = state[field] ?? [];
-    const next = current.includes(value)
-      ? current.filter((entry) => entry !== value)
-      : [...current, value];
-    onChange({ ...state, [field]: next });
+    onChange({
+      ...state,
+      [field]: current.includes(value)
+        ? current.filter((entry) => entry !== value)
+        : [...current, value],
+    });
   };
 
   if (specs.length === 0) return null;
 
   return (
-    <>
-      <div className={styles['bar']}>
+    <div className={styles['bar']}>
+      <div className={styles['row']}>
         <button
           type="button"
-          className={styles['toggle']}
+          className={cx(styles['toggle'], 'chamfer-sm')}
           aria-expanded={open}
           onClick={() => {
             setOpen((value) => !value);
           }}
         >
           {t.filters} {open ? '▴' : '▾'}
+          {active.length > 0 && <span className={styles['badge']}>{active.length}</span>}
         </button>
 
-        {active.map(({ spec, value }) => (
-          <button
-            key={`${spec.field}:${value}`}
-            type="button"
-            className={styles['activeChip']}
-            title={fieldLabel(spec.field)}
-            onClick={() => {
-              toggle(spec.field, value);
-            }}
-          >
-            {valueLabel(spec, value)} ×
-          </button>
-        ))}
+        {/*
+         * Os marcados ficam SEMPRE visíveis, na linha de cima, e cada um se remove no
+         * clique. Escondê-los dentro da gaveta faria o usuário abrir a gaveta só para
+         * lembrar o que está filtrando — e a contagem "3 de 574" não diz o quê.
+         *
+         * O trilho rola na horizontal e nunca quebra para baixo: quebrar mudaria a altura
+         * da barra a cada filtro, e a lista de resultados pularia de lugar.
+         */}
+        <ScrollRail label={t.activeFilters}>
+          {active.map(({ spec, value }) => (
+            <button
+              key={`${spec.field}:${value}`}
+              type="button"
+              className={cx(styles['activeChip'], 'chamfer-sm')}
+              title={`${fieldLabel(spec.field)}: ${valueLabel(spec, value)}`}
+              onClick={() => {
+                toggle(spec.field, value);
+              }}
+            >
+              <span className={styles['chipField']}>{fieldLabel(spec.field)}</span>
+              {valueLabel(spec, value)}
+              <span aria-hidden="true">×</span>
+            </button>
+          ))}
+        </ScrollRail>
 
         {active.length > 0 && (
           <button
             type="button"
-            className={styles['clear']}
+            className={cx(styles['clearAll'], 'chamfer-sm')}
             onClick={() => {
               onChange({});
             }}
@@ -85,32 +116,23 @@ export function FilterBar({ specs, entities, state, onChange, summary }: FilterB
             {t.clearFilters}
           </button>
         )}
-
-        <span className={styles['optionCount']}>{summary}</span>
       </div>
 
       {open && (
-        <div className={styles['drawer']}>
-          {specs.map((spec) => (
-            <fieldset key={spec.field} style={{ border: 0, margin: 0, padding: 0 }}>
-              <legend className={styles['groupTitle']}>{fieldLabel(spec.field)}</legend>
-              {optionsFor(entities, spec.field).map((option) => (
-                <label key={option.value} className={styles['option']}>
-                  <input
-                    type="checkbox"
-                    checked={(state[spec.field] ?? []).includes(option.value)}
-                    onChange={() => {
-                      toggle(spec.field, option.value);
-                    }}
-                  />
-                  {valueLabel(spec, option.value)}
-                  <span className={styles['optionCount']}>{option.count}</span>
-                </label>
-              ))}
-            </fieldset>
+        <div className={cx(styles['drawer'], 'chamfer-md')}>
+          {groups.map(({ spec, title, options }) => (
+            <OptionList
+              key={spec.field}
+              title={title}
+              options={options}
+              selected={state[spec.field] ?? []}
+              onToggle={(value) => {
+                toggle(spec.field, value);
+              }}
+            />
           ))}
         </div>
       )}
-    </>
+    </div>
   );
 }

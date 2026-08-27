@@ -14,73 +14,35 @@
   min-height: 0;
 }
 
-.rail {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  padding: var(--space-3) var(--space-2);
-  border-right: 1px solid var(--color-hairline);
-  overflow-y: auto;
-}
-
-.railTitle {
-  margin: 0 0 var(--space-2) var(--space-2);
-  font: 400 var(--text-xs) / 1 var(--font-mono);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--color-text-muted);
-}
-
-.source {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space-2);
-  width: 100%;
-  border: 0;
-  padding: var(--space-2) var(--space-3);
-  background: transparent;
-  color: var(--color-text);
-  font: 400 var(--text-md) / 1.2 var(--font-body);
-  text-align: left;
-  cursor: pointer;
-}
-
-.source:hover:not(:disabled) {
-  background: var(--color-hover);
-}
-
-/* Selecionada é ESTADO: bordô. */
-.source[aria-current='true'] {
-  background: var(--color-state);
-  color: #f6edea;
-}
-
-.source:disabled {
-  color: #453a3d;
-  cursor: default;
-}
-
-/* Contagem é dado de jogo: latão e mono. Some quando a fonte não está pronta. */
-.sourceCount {
-  font: 400 var(--text-xs) / 1 var(--font-mono);
-  color: var(--color-data);
-}
-
-.source[aria-current='true'] .sourceCount {
-  color: #f6edea;
-}
-
 .main {
   display: grid;
   grid-template-rows: auto auto 1fr;
   min-height: 0;
+
+  /*
+   * Duas declarações, e são coisas DIFERENTES. Levei um tempo para separar:
+   *
+   *   `min-width: 0`                     impede que ESTE elemento seja empurrado além da
+   *                                      coluna do grid pai. `1fr` é `minmax(auto, 1fr)`,
+   *                                      e o mínimo `auto` é o tamanho do conteúdo.
+   *   `grid-template-columns: minmax(0,1fr)`  impede que a COLUNA INTERNA cresça. Sem
+   *                                      isto, a coluna implícita é `auto` e dimensiona
+   *                                      pelo conteúdo: medido, o elemento ficava com
+   *                                      570px e a coluna dentro dele com 2.084px.
+   *
+   * Sem as duas, um trilho de filtros com muitos chips deixa de rolar por dentro e a
+   * página ganha rolagem horizontal — que o briefing proíbe (Anexo A: não pode quebrar
+   * com a janela pela metade).
+   */
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .searchRow {
   display: flex;
   align-items: center;
   gap: var(--space-3);
+  min-width: 0;
   padding: var(--space-3) var(--space-4);
 }
 

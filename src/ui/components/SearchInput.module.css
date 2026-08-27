@@ -1,0 +1,40 @@
+/* Campo de texto pequeno, para filtrar listas dentro da própria interface. */
+.wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--color-hairline);
+  padding: var(--space-1) var(--space-5) var(--space-1) var(--space-2);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font: 400 var(--text-sm) / 1.4 var(--font-body);
+}
+
+.input::placeholder {
+  color: var(--color-text-muted);
+}
+
+/* O X só existe quando há o que limpar — botão inerte é ruído. */
+.clear {
+  position: absolute;
+  right: 2px;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--color-text-muted);
+  font: 400 var(--text-sm) / 1 var(--font-body);
+  cursor: pointer;
+}
+
+.clear:hover {
+  color: var(--color-text);
+}

@@ -1,0 +1,80 @@
+/*
+ * Lista de opções com caixa de marcação, busca própria e rolagem interna.
+ *
+ * A rolagem interna existe porque as listas variam de 2 a 200+ opções: traços na Etapa 10
+ * são mais de 200. Sem teto de altura, um grupo empurraria a gaveta para fora da tela.
+ */
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin: 0;
+  font: 400 var(--text-xs) / 1 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+/* Quantas estão marcadas neste grupo. Dado do usuário, não do jogo: bruma, não latão. */
+.selected {
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--color-data);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  max-height: 168px;
+  overflow-y: auto;
+  padding-right: var(--space-1);
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 2px 0;
+  font: 400 var(--text-md) / 1.4 var(--font-body);
+  color: var(--color-text);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.option:hover {
+  color: var(--color-text);
+  background: var(--color-hover);
+}
+
+.option input {
+  flex: none;
+  accent-color: var(--color-state);
+  cursor: pointer;
+}
+
+.label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Contagem é dado do jogo: latão e mono, para alinhar a coluna. */
+.count {
+  margin-left: auto;
+  padding-left: var(--space-2);
+  font: 400 var(--text-xs) / 1 var(--font-mono);
+  color: var(--color-text-muted);
+}
+
+.empty {
+  padding: var(--space-2) 0;
+  font: 400 var(--text-xs) / 1.4 var(--font-body);
+  color: var(--color-text-muted);
+}
