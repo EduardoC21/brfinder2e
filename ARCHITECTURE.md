@@ -27,7 +27,7 @@ brfinder2e/
 │  ├─ core/                     DOMÍNIO PURO. Sem React, sem DOM.
 │  │  ├─ source/                ONDE o dado está        (briefing 4.1)
 │  │  ├─ selection/             O QUE entra             (briefing 4.3)
-│  │  ├─ normalization/         COMO vira entidade      (briefing 5)
+│  │  ├─ normalization/         COMO vira entidade      (briefing 5) — motor pronto
 │  │  ├─ store/                 a saída gravada         (briefing 5.2)
 │  │  ├─ markup/                parser das 10 sintaxes  (briefing 7.6)
 │  │  ├─ search/                índice e consulta
@@ -289,7 +289,59 @@ a cada release sem que o contrato tivesse mudado.
 
 ---
 
-## 8. Tauri: presente na estrutura, ausente na compilação
+## 8. O motor de receita (`core/normalization/`)
+
+A receita é a **especificação legível** do briefing, seção 5: você lê a receita e vê a
+regra, sem ler o normalizador. Três decisões tomadas na Etapa 2, com o autor:
+
+**Os blocos têm o nome das pastas onde o resultado é gravado** (seção 5.2). Ler a receita
+mostra na hora o que carrega no boot e o que é sob demanda:
+
+| Bloco    | Vai para | O que é                                     |
+| -------- | -------- | ------------------------------------------- |
+| —        | `raw/`   | o documento inteiro. Não se declara.        |
+| `base`   | `base/`  | leve, carrega no boot, alimenta a busca     |
+| `desc`   | `desc/`  | pesado, carregado sob demanda               |
+| `ignore` | —        | olhei e não serve. Com o motivo escrito     |
+| `defer`  | —        | olhei, serve, mas não agora. Fica em `raw/` |
+
+São **três** disposições, não duas (seção 3.2: "projeta / ignora com motivo / adia").
+`ignore` e `defer` somem do relatório; a diferença é a intenção registrada.
+
+**O decodificador é obrigatório em todo `from()`.** `from('name', text)`, nunca
+`from('name')`. O JSON do Foundry chega sem tipo, e tratar campo não validado como string
+foi o erro das duas tentativas anteriores.
+
+**`fromLang()` lê da tabela de idioma**, com modelo resolvido contra o documento:
+`fromLang('PF2E.condition.{system.slug}.summary', text)`. Existe porque há conteúdo que só
+mora lá — `summary` está em 42 das 43 condições e em nenhum pack.
+
+### A garantia de que nada some (seção 5.1)
+
+O motor monta o inventário de todo caminho-folha do documento e subtrai o que a receita
+cobriu. A diferença é o relatório de não mapeados, com frequência e exemplo.
+
+A peça que faz isso funcionar são **dois tipos de cobertura**:
+
+- `subtree` — o caminho e tudo abaixo. É o que um decodificador de folha faz.
+- `exact` — só o caminho. É o que `shape` faz.
+
+Por isso `shape({ license, title })` sobre `system.publication` **não** esconde
+`system.publication.remaster` — que é falso em 5.872 entidades (7.8). Se `shape` cobrisse
+a subárvore, esse campo sumiria calado.
+
+O inventário percorre **todos** os elementos de cada array, não o primeiro. É o que faz
+aparecer a chave que só existe em 3 dos 6.283 talentos.
+
+### Formas alternativas
+
+`oneOf({...})` para campo que muda de forma — o caso do briefing 7.8, com as cinco formas
+de `ChoiceSet` em 641 ocorrências. Forma não reconhecida vira erro com o valor real, o que
+impede uma sexta forma numa versão futura passar batido.
+
+---
+
+## 9. Tauri: presente na estrutura, ausente na compilação
 
 `src-tauri/` está escrito e configurado, mas **não compila nesta máquina** — falta o Rust.
 Isso é decisão, não esquecimento (briefing, seção 8).
@@ -308,7 +360,7 @@ a uma, quando a Etapa 1 precisar.
 
 ---
 
-## 9. CI
+## 10. CI
 
 `.github/workflows/ci.yml` roda formato, lint, tipos, testes e build — nessa ordem, do mais
 barato para o mais caro, para falhar cedo.
@@ -321,7 +373,7 @@ toda segunda-feira, e também em PR que mexa em `source/` ou `platform/`.
 
 ---
 
-## 10. O que a Etapa 0 não fez
+## 11. O que a Etapa 0 não fez
 
 - **Não compilou nada de Rust.** Rust não está instalado; decisão aprovada.
 - **Não gerou ícones** do instalador. `bundle.icon` está vazio. Etapa 15.

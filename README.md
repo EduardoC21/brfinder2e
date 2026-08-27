@@ -9,9 +9,12 @@ Não é um VTT: sem rolagem, combate, iniciativa, tokens, mapas ou bestiário.
 
 ## Estado
 
-**Etapa 1 concluída** — camada `source/`: canais, resolução de release, download,
-extração e manifesto. `npm run packs` lista os 97 packs com tamanho, e o teste de contrato
-passa contra o repositório real do Foundry. A escada completa está no briefing, seção 6.
+**Etapa 2 concluída** — motor de receita e relatório de não mapeados, sem nenhum tipo de
+entidade. Antes: camada `source/` (`npm run packs` lista os 97 packs; o teste de contrato
+passa contra o repositório real do Foundry). A escada completa está no briefing, seção 6.
+
+Próxima: **Etapa 3**, a receita de `condition` — 43 registros, pelo ciclo de cinco passos
+da seção 3.2 do briefing.
 
 ## Requisitos
 
