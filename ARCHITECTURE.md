@@ -413,6 +413,35 @@ O `useSync` mora na barra de topo e não dentro do painel, porque a barra també
 resultado. Dentro do painel, fechar a engrenagem desmontaria o componente e zeraria a
 sincronização.
 
+### Persistência: `core/store/`
+
+A porta é deliberadamente pequena — `get`, `put`, `delete`, `keys`, `clear`. Uma porta com
+um método por camada (`readBase`, `writeDesc`…) obrigaria os três adaptadores previstos
+(Node, IndexedDB, memória) a reimplementar a mesma lógica de chave. Quem sabe o que cada
+chave significa é `store/layers.ts`, comum a todos.
+
+O adaptador é **IndexedDB**. `localStorage` só guarda string e para em ~5 MB; OPFS é mais
+rápido para arquivo grande mas tem API mais crua e suporte irregular fora do Chromium.
+Para ~20 MB de JSON, IndexedDB basta, e guarda objeto e `Uint8Array` sem serializar à mão.
+
+Duas sutilezas do adaptador viraram código com comentário: a conexão é aberta uma vez e
+reaproveitada (a sincronização faz uma dezena de gravações seguidas), e em escrita a
+Promise só resolve quando a TRANSAÇÃO completa, não quando o pedido responde — sem isso,
+uma leitura logo depois pode não enxergar o que acabou de ser gravado.
+
+### O relatório de diferença
+
+`persistSync` lê a base anterior, compara, e só então sobrescreve. Invertido, a comparação
+seria contra o que acabou de ser gravado e o relatório diria "nada mudou" para sempre —
+tem teste dedicado a essa ordem.
+
+A comparação usa `stableStringify`, com as chaves ordenadas. Com `JSON.stringify` direto,
+mexer a ordem de duas linhas numa receita marcaria as 6.283 entidades como "atualizadas"
+sem nenhuma ter mudado.
+
+As colunas `novas`, `mudaram` e `sumiram` só aparecem quando alguma linha tem valor: numa
+sincronização repetida seriam três colunas de zero, que não informam nada.
+
 ### O proxy do Vite
 
 `server.proxy` reescreve `api.github.com` e `github.com` para caminhos locais, e o Vite

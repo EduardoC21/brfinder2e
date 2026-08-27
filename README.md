@@ -9,13 +9,13 @@ Não é um VTT: sem rolagem, combate, iniciativa, tokens, mapas ou bestiário.
 
 ## Estado
 
-**Etapa 4a concluída** — sistema de design do mockup fixado nos tokens, fontes embarcadas,
-casca com barra de topo, e a sincronização funcionando no navegador pelo botão da
-engrenagem, com relatório por tipo. Antes: `source/` (Etapa 1), motor de receita (Etapa 2)
-e a receita de `condition` (Etapa 3).
+**Etapa 4 concluída** — sistema de design do mockup fixado nos tokens, fontes embarcadas,
+casca com barra de topo, e a sincronização pelo botão da engrenagem: baixa, normaliza,
+**grava em IndexedDB** e mostra o que entrou, o que mudou e o que sumiu. A base sobrevive
+ao recarregar a janela. Antes: `source/` (Etapa 1), motor de receita (Etapa 2) e a receita
+de `condition` (Etapa 3).
 
-Próxima: **Etapa 4b**, a camada `store/` — hoje a base fica só em memória, e recarregar a
-janela exige sincronizar de novo.
+Próxima: **Etapa 5**, a tela de busca.
 
 ## Requisitos
 

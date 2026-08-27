@@ -38,19 +38,19 @@ export const ptBR = {
         normalizing: 'Preparando as entradas',
       },
       report: {
-        title: 'Importado',
         type: 'tipo',
         imported: 'entradas',
+        added: 'novas',
+        updated: 'mudaram',
+        removed: 'sumiram',
         failed: 'falhas',
-        none: 'Nada importado ainda.',
-        version: 'versão do sistema',
+        none: 'Nenhuma base gravada ainda.',
+        syncedAt: 'sincronizado em',
       },
       error: {
         title: 'A sincronização falhou',
         retry: 'Tentar de novo',
       },
-      notPersisted:
-        'Esta versão ainda não guarda a base: ao recarregar a janela, é preciso sincronizar de novo.',
     },
   },
 } as const;

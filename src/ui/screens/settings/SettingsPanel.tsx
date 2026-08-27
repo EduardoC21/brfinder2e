@@ -1,11 +1,11 @@
 import { useRef } from 'react';
 
-import type { SyncPhase, SyncResult } from '@core/sync/run-sync';
+import type { StoreMeta } from '@core/store/index';
+import type { SyncPhase } from '@core/sync/run-sync';
 import { strings } from '@i18n/index';
-import { useDismissable } from '@ui/hooks/useDismissable';
-import type { SyncState } from '@ui/hooks/useSync';
-
 import { cx } from '@ui/cx';
+import { useDismissable } from '@ui/hooks/useDismissable';
+import type { SyncState, SyncedType } from '@ui/hooks/useSync';
 
 import styles from './SettingsPanel.module.css';
 
@@ -40,7 +40,8 @@ export function SettingsPanel({ anchor, onClose, sync, onSync }: SettingsPanelPr
   const panel = useRef<HTMLDivElement>(null);
   useDismissable(true, panel, anchor, onClose);
 
-  const running = sync.status === 'running';
+  const { run, stored } = sync;
+  const busy = run.status === 'running' || run.status === 'loading';
 
   return (
     <div
@@ -48,7 +49,6 @@ export function SettingsPanel({ anchor, onClose, sync, onSync }: SettingsPanelPr
       className={cx(styles['panel'], 'chamfer-lg')}
       role="dialog"
       aria-label={t.title}
-      aria-modal="false"
     >
       <h2 className={styles['title']}>{t.title}</h2>
 
@@ -60,22 +60,26 @@ export function SettingsPanel({ anchor, onClose, sync, onSync }: SettingsPanelPr
           type="button"
           className={cx(styles['action'], 'chamfer-sm')}
           onClick={onSync}
-          disabled={running}
+          disabled={busy}
         >
-          {sync.status === 'done' ? t.database.syncAgain : t.database.sync}
+          {stored === null ? t.database.sync : t.database.syncAgain}
         </button>
 
-        {running && <RunningState phase={sync.phase} />}
-        {sync.status === 'done' && <Report result={sync.result} />}
-        {sync.status === 'error' && <ErrorState message={sync.message} />}
+        {run.status === 'running' && <Running phase={run.phase} />}
+        {run.status === 'done' && <Report types={run.types} />}
+        {run.status === 'error' && <Failure message={run.message} />}
 
-        <p className={styles['warning']}>{t.database.notPersisted}</p>
+        {stored === null ? (
+          run.status === 'idle' && <p className={styles['hint']}>{t.database.report.none}</p>
+        ) : (
+          <StoredMeta meta={stored} />
+        )}
       </section>
     </div>
   );
 }
 
-function RunningState({ phase }: { readonly phase: SyncPhase }) {
+function Running({ phase }: { readonly phase: SyncPhase }) {
   const done = percent(phase);
   return (
     <>
@@ -96,42 +100,80 @@ function RunningState({ phase }: { readonly phase: SyncPhase }) {
   );
 }
 
-function Report({ result }: { readonly result: SyncResult }) {
+/**
+ * O relatório da sincronização.
+ *
+ * As colunas de diferença só aparecem quando alguma linha tem valor: numa sincronização
+ * repetida, "novas", "mudaram" e "sumiram" seriam três colunas de zero, que não informam
+ * nada. `entradas` fica sempre, porque é o total.
+ */
+function Report({ types }: { readonly types: readonly SyncedType[] }) {
+  const r = t.database.report;
+  const showAdded = types.some((entry) => entry.diff.added > 0);
+  const showUpdated = types.some((entry) => entry.diff.updated > 0);
+  const showRemoved = types.some((entry) => entry.diff.removed > 0);
+  const showFailed = types.some((entry) => entry.failed > 0);
+
   return (
-    <>
-      <table className={styles['table']}>
-        <thead>
-          <tr>
-            <th>{t.database.report.type}</th>
-            <th>{t.database.report.imported}</th>
-            <th>{t.database.report.failed}</th>
+    <table className={styles['table']}>
+      <thead>
+        <tr>
+          <th>{r.type}</th>
+          <th>{r.imported}</th>
+          {showAdded && <th>{r.added}</th>}
+          {showUpdated && <th>{r.updated}</th>}
+          {showRemoved && <th>{r.removed}</th>}
+          {showFailed && <th>{r.failed}</th>}
+        </tr>
+      </thead>
+      <tbody>
+        {types.map((entry) => (
+          <tr key={entry.type}>
+            <td className={styles['typeName']}>{entry.type}</td>
+            <Cell value={entry.imported} />
+            {showAdded && <Cell value={entry.diff.added} />}
+            {showUpdated && <Cell value={entry.diff.updated} />}
+            {showRemoved && <Cell value={entry.diff.removed} />}
+            {showFailed && <Cell value={entry.failed} alarming />}
           </tr>
-        </thead>
-        <tbody>
-          {result.types.map((entry) => (
-            <tr key={entry.type}>
-              <td className={styles['typeName']}>{entry.type}</td>
-              <td className={styles['count']}>{entry.imported}</td>
-              <td
-                className={cx(
-                  styles['count'],
-                  entry.failed === 0 ? styles['countZero'] : styles['failed'],
-                )}
-              >
-                {entry.failed}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      <p className={styles['meta']}>
-        {t.database.report.version}: {result.systemId} {result.systemVersion} · {result.releaseTag}
-      </p>
-    </>
+        ))}
+      </tbody>
+    </table>
   );
 }
 
-function ErrorState({ message }: { readonly message: string }) {
+/** Contagem é dado de jogo: latão e mono, para a coluna alinhar. Zero recua para bruma. */
+function Cell({ value, alarming }: { readonly value: number; readonly alarming?: boolean }) {
+  return (
+    <td
+      className={cx(
+        styles['count'],
+        value === 0 && styles['countZero'],
+        value > 0 && alarming === true && styles['failed'],
+      )}
+    >
+      {value}
+    </td>
+  );
+}
+
+function StoredMeta({ meta }: { readonly meta: StoreMeta }) {
+  const date = new Date(meta.syncedAt);
+  const when = Number.isNaN(date.getTime())
+    ? meta.syncedAt
+    : date.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+
+  return (
+    <p className={styles['meta']}>
+      {meta.systemId} {meta.systemVersion} · {meta.total.toLocaleString('pt-BR')}{' '}
+      {t.database.report.imported}
+      <br />
+      {t.database.report.syncedAt} {when}
+    </p>
+  );
+}
+
+function Failure({ message }: { readonly message: string }) {
   return (
     <>
       <p className={styles['phase']}>{t.database.error.title}</p>

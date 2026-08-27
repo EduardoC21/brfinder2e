@@ -13,13 +13,14 @@ import {
   PINNED_TAG,
   languageFiles,
   loadInventory,
+  readEntries,
   readTextEntry,
   type HttpPort,
   type Progress,
   type ZipChannel,
 } from '../source/index';
 import { mergeLanguageFiles } from '../normalization/language';
-import { run } from '../normalization/run';
+import { run, type NormalizedEntity } from '../normalization/run';
 import type { Recipe } from '../normalization/recipe';
 import type { NormalizationReport } from '../normalization/report';
 
@@ -32,12 +33,21 @@ export type SyncPhase =
 
 export interface TypeResult {
   readonly type: string;
+  /** Nome do pack no manifesto, usado como chave de `raw/`. */
+  readonly packName: string;
+  /** Nome da entrada no zip. */
   readonly pack: string;
   /** Documentos daquele tipo encontrados no pack. */
   readonly total: number;
   readonly imported: number;
   readonly failed: number;
   readonly report: NormalizationReport;
+  readonly entities: readonly NormalizedEntity[];
+  /**
+   * Os bytes do pack, exatamente como saíram do zip. Guardados para a camada `raw/`
+   * (briefing 5.2) — que é gravada a partir daqui, nunca a partir da projeção.
+   */
+  readonly rawBytes: Uint8Array;
 }
 
 export interface SyncResult {
@@ -47,7 +57,6 @@ export interface SyncResult {
   readonly types: readonly TypeResult[];
   /** Soma de `imported` — o número que a barra de topo mostra. */
   readonly total: number;
-  readonly entitiesByType: ReadonlyMap<string, readonly unknown[]>;
 }
 
 export interface SyncOptions {
@@ -91,7 +100,6 @@ export async function runSync(
   );
 
   const types: TypeResult[] = [];
-  const entitiesByType = new Map<string, readonly unknown[]>();
 
   for (const recipe of recipes) {
     notify({ kind: 'normalizing', type: recipe.type });
@@ -104,9 +112,12 @@ export async function runSync(
       );
     }
 
+    const rawBytes = readEntries(loaded.zip, [pack.file]).get(pack.file);
+    if (!rawBytes) throw new SyncError(`Entrada "${pack.file}" não encontrada no arquivo.`);
+
     let documents: unknown;
     try {
-      documents = JSON.parse(readTextEntry(loaded.zip, pack.file));
+      documents = JSON.parse(new TextDecoder().decode(rawBytes));
     } catch (cause) {
       throw new SyncError(`Não consegui ler ${pack.file} do arquivo compactado.`, { cause });
     }
@@ -118,13 +129,15 @@ export async function runSync(
 
     types.push({
       type: result.type,
+      packName: String(packName),
       pack: pack.file,
       total: result.total,
       imported: result.entities.length,
       failed: result.failures.length,
       report: result.report,
+      entities: result.entities,
+      rawBytes,
     });
-    entitiesByType.set(result.type, result.entities);
   }
 
   return {
@@ -133,6 +146,5 @@ export async function runSync(
     releaseTag: loaded.release.tag,
     types,
     total: types.reduce((sum, entry) => sum + entry.imported, 0),
-    entitiesByType,
   };
 }

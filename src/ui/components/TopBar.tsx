@@ -28,10 +28,15 @@ export function TopBar() {
    * `useSync` para o painel zeraria a sincronização toda vez que ele fechasse — o React
    * desmonta o componente, e com ele o estado.
    */
+  /*
+   * O indicador lê o que está GRAVADO, não o resultado da última execução. Assim ele
+   * continua certo depois de recarregar a janela, quando não houve execução nenhuma.
+   */
+  const stored = sync.state.stored;
   const status =
-    sync.state.status === 'done'
-      ? `${strings.base.label} ${sync.state.result.total.toLocaleString('pt-BR')} · v${sync.state.result.systemVersion}`
-      : strings.base.empty;
+    stored === null
+      ? strings.base.empty
+      : `${strings.base.label} ${stored.total.toLocaleString('pt-BR')} · v${stored.systemVersion}`;
 
   return (
     <header className={styles['bar']}>
