@@ -80,7 +80,7 @@ export async function listReleases(http: HttpPort, channel: Channel): Promise<Re
 /**
  * Escolhe um release. Com `tag`, exige aquele exato; sem `tag`, pega o de maior versão.
  *
- * O padrão do projeto é passar a tag fixada (`PINNED_TAG`) — ver o comentário lá.
+ * O padrão do projeto é passar a tag fixada (`KNOWN_GOOD_TAG`) — ver o comentário lá.
  */
 export async function resolveRelease(
   http: HttpPort,

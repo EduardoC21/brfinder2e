@@ -30,6 +30,18 @@ export const ptBR = {
       description: 'Baixa o sistema Pathfinder 2e do Foundry e prepara as entradas para consulta.',
       sync: 'Sincronizar',
       syncAgain: 'Sincronizar de novo',
+      checkUpdate: 'Procurar versão nova',
+      checking: 'Procurando…',
+      upToDate: 'Você está na versão mais recente.',
+      updateFound: 'Versão nova disponível:',
+      updateTo: 'Atualizar para',
+      incompatible:
+        'Esta versão mudou de estrutura e o aplicativo ainda não a acompanha. A base atual continua valendo — atualize o aplicativo e tente de novo.',
+      refusedToPersist:
+        'A atualização não foi gravada porque houve falha ao ler as entradas. A base anterior continua valendo.',
+      retired: 'aposentadas',
+      retiredHint:
+        'Entradas que sumiram da fonte continuam guardadas, para não quebrar fichas que as usem.',
       cancel: 'Cancelar',
       phase: {
         resolving: 'Procurando a versão…',

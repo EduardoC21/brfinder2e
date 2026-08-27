@@ -1,32 +1,48 @@
 /**
  * Grava o resultado da sincronização, e diz o que mudou.
  *
- * A ordem importa: para cada tipo, LÊ a base anterior, compara, e só então sobrescreve.
- * Invertido, a comparação seria sempre contra o que acabou de ser gravado, e o relatório
- * diria "nada mudou" para sempre.
+ * Duas ordens importam aqui, e ambas têm teste dedicado:
  *
- * A camada `raw/` é gravada a partir dos bytes do zip, nunca da projeção — é o que mantém
- * aberta a porta da exportação para o Foundry (OPEN-DECISIONS, item 1).
+ * 1. Para cada tipo, LÊ a base anterior, compara, e só então sobrescreve. Invertido, a
+ *    comparação seria contra o que acabou de ser gravado e o relatório diria "nada mudou"
+ *    para sempre.
+ * 2. O documento cru de quem sumiu é salvo ANTES de `raw/<pack>` ser sobrescrito — é a
+ *    última janela em que ele existe.
+ *
+ * A LÁPIDE (OPEN-DECISIONS, item 2): entrada que some da fonte não é apagada. Ela fica
+ * gravada com `retiredIn`, sai da busca e continua resolvendo por UUID. Apagar quebraria
+ * toda ficha que a referencie — e medimos que isso acontece: 4 talentos sumiram entre
+ * `pf2e-7.9.1` e `pf2e-8.4.1`, e nenhum deles existe hoje em pack nenhum.
  */
 
+import { isRecord } from '../json';
 import {
+  activeOnly,
   diffEntities,
   entityKey,
   readBase,
+  readDesc,
+  readRaw,
+  retire,
+  retiredOnly,
   toStored,
   writeBase,
   writeDesc,
   writeMeta,
   writeRaw,
+  writeRetiredRaw,
   type EntityDiff,
   type StoreMeta,
   type StorePort,
+  type StoredEntity,
 } from '../store/index';
-import type { SyncResult } from './run-sync';
+import type { SyncResult, TypeResult } from './run-sync';
 
 export interface PersistedType {
   readonly type: string;
   readonly diff: EntityDiff;
+  /** Quantas entradas estão aposentadas no total, somando as de sincronizações anteriores. */
+  readonly retired: number;
 }
 
 export interface PersistResult {
@@ -42,21 +58,7 @@ export async function persistSync(
   const types: PersistedType[] = [];
 
   for (const type of result.types) {
-    const stored = type.entities.map(toStored);
-
-    // Lê ANTES de gravar. Ver o comentário do topo.
-    const previous = await readBase(store, type.type);
-    const diff = diffEntities(previous, stored);
-
-    await writeRaw(store, type.packName, type.rawBytes);
-    await writeBase(store, type.type, stored);
-    await writeDesc(
-      store,
-      type.type,
-      Object.fromEntries(type.entities.map((entity) => [entityKey(entity), entity.desc])),
-    );
-
-    types.push({ type: type.type, diff });
+    types.push(await persistType(store, type, result.releaseTag));
   }
 
   const meta: StoreMeta = {
@@ -69,4 +71,101 @@ export async function persistSync(
   await writeMeta(store, meta);
 
   return { meta, types };
+}
+
+async function persistType(
+  store: StorePort,
+  type: TypeResult,
+  releaseTag: string,
+): Promise<PersistedType> {
+  const incoming = type.entities.map(toStored);
+
+  // Tudo que é leitura acontece antes de qualquer escrita deste tipo.
+  const previous = await readBase(store, type.type);
+  const previousDesc = await readDesc(store, type.type);
+
+  const previousActive = previous === null ? null : activeOnly(previous);
+  const diff = diffEntities(previousActive, incoming);
+
+  const arriving = new Set(incoming.map((entity) => entity.key));
+  const newlyRetired = (previousActive ?? []).filter((entity) => !arriving.has(entity.key));
+  // Quem estava aposentado e VOLTOU a existir na fonte sai daqui: senão ficaria gravado
+  // duas vezes, vivo e com lápide. Já aconteceu de o Foundry reintroduzir conteúdo.
+  const alreadyRetired = (previous === null ? [] : retiredOnly(previous)).filter(
+    (entity) => !arriving.has(entity.key),
+  );
+
+  // O documento cru de quem sumiu, salvo enquanto raw/<pack> ainda é o anterior.
+  if (newlyRetired.length > 0) {
+    await saveRetiredDocuments(store, type.packName, newlyRetired);
+  }
+
+  await writeRaw(store, type.packName, type.rawBytes);
+  await writeBase(store, type.type, [
+    ...incoming,
+    ...newlyRetired.map((entity) => retire(entity, releaseTag)),
+    ...alreadyRetired,
+  ]);
+  await writeDesc(store, type.type, {
+    ...carryDesc(previousDesc, [...newlyRetired, ...alreadyRetired]),
+    ...Object.fromEntries(type.entities.map((entity) => [entityKey(entity), entity.desc])),
+  });
+
+  return {
+    type: type.type,
+    diff,
+    retired: newlyRetired.length + alreadyRetired.length,
+  };
+}
+
+/**
+ * Localiza no pack ANTERIOR o documento de cada entrada aposentada e guarda cada um em
+ * `raw/retired/<chave>`.
+ *
+ * Só roda quando há aposentadoria — é raro (4 talentos em sete meses), e o custo é
+ * decodificar e percorrer o pack anterior uma vez.
+ */
+async function saveRetiredDocuments(
+  store: StorePort,
+  packName: string,
+  entities: readonly StoredEntity[],
+): Promise<void> {
+  const bytes = await readRaw(store, packName);
+  if (bytes === null) return;
+
+  let documents: unknown;
+  try {
+    documents = JSON.parse(new TextDecoder().decode(bytes));
+  } catch {
+    // Sem o pack anterior legível não há o que salvar. A lápide em `base/` continua
+    // valendo — só a exportação daquela entrada é que fica sem o documento cru.
+    return;
+  }
+  if (!Array.isArray(documents)) return;
+
+  const byId = new Map<string, unknown>();
+  for (const document of documents) {
+    if (!isRecord(document)) continue;
+    const id = document['_id'];
+    if (typeof id === 'string') byId.set(id, document);
+  }
+
+  for (const entity of entities) {
+    const document = byId.get(entity.id);
+    if (document !== undefined) await writeRetiredRaw(store, entity.key, document);
+  }
+}
+
+/** Mantém a descrição das aposentadas, para a tela de detalhe não ficar vazia. */
+function carryDesc(
+  previous: Readonly<Record<string, unknown>> | null,
+  entities: readonly StoredEntity[],
+): Record<string, unknown> {
+  if (previous === null) return {};
+  const kept: Record<string, unknown> = {};
+  for (const entity of entities) {
+    const desc = previous[entity.key];
+    if (desc !== undefined) kept[entity.key] = desc;
+  }
+  return kept;
 }

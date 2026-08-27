@@ -10,7 +10,7 @@
 
 import {
   DEFAULT_CHANNEL,
-  PINNED_TAG,
+  KNOWN_GOOD_TAG,
   languageFiles,
   loadInventory,
   readEntries,
@@ -84,7 +84,7 @@ export async function runSync(
 
   const loaded = await loadInventory(http, {
     channel,
-    tag: options.tag === null ? null : (options.tag ?? PINNED_TAG),
+    tag: options.tag === null ? null : (options.tag ?? KNOWN_GOOD_TAG),
     onProgress: (progress: Progress) => {
       notify({ kind: 'downloading', loaded: progress.loaded, total: progress.total });
     },

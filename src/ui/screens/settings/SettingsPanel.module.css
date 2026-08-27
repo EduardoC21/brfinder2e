@@ -150,3 +150,30 @@
   color: #e3cdd1;
   word-break: break-word;
 }
+
+/* Ação secundária: mesma forma da principal, sem o peso do bordô cheio. */
+.secondary {
+  margin-left: var(--space-2);
+  border: 1px solid var(--color-hairline);
+  padding: var(--space-2) var(--space-4);
+  background: transparent;
+  color: var(--color-text-muted);
+  font: 500 var(--text-md) / 1 var(--font-body);
+  cursor: pointer;
+}
+
+.secondary:hover:not(:disabled) {
+  background: var(--color-hover);
+  color: var(--color-text);
+}
+
+.secondary:disabled {
+  color: #453a3d;
+  cursor: default;
+}
+
+/* Tag de release é identificador: mono, e em latão porque é dado da fonte. */
+.tag {
+  font-family: var(--font-mono);
+  color: var(--color-data);
+}

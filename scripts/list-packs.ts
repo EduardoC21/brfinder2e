@@ -18,7 +18,7 @@ import { fileURLToPath } from 'node:url';
 
 import {
   DEFAULT_CHANNEL,
-  PINNED_TAG,
+  KNOWN_GOOD_TAG,
   loadInventory,
   resolveRelease,
   sortBySizeDesc,
@@ -99,7 +99,7 @@ async function load(flags: Flags): Promise<LoadedSource> {
   const http = createFetchHttp({ headers: { Accept: 'application/vnd.github+json' } });
   const channel = DEFAULT_CHANNEL;
 
-  const tag = flags.latest ? undefined : (flags.tag ?? PINNED_TAG);
+  const tag = flags.latest ? undefined : (flags.tag ?? KNOWN_GOOD_TAG);
   const release = await resolveRelease(http, channel, tag === undefined ? {} : { tag });
 
   const path = resolve(CACHE_DIR, `json-assets-${release.tag}.zip`);

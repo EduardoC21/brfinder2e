@@ -5,7 +5,7 @@ import type { SyncPhase } from '@core/sync/run-sync';
 import { strings } from '@i18n/index';
 import { cx } from '@ui/cx';
 import { useDismissable } from '@ui/hooks/useDismissable';
-import type { SyncState, SyncedType } from '@ui/hooks/useSync';
+import type { SyncState, SyncedType, UpdateState } from '@ui/hooks/useSync';
 
 import styles from './SettingsPanel.module.css';
 
@@ -14,6 +14,8 @@ interface SettingsPanelProps {
   readonly onClose: () => void;
   readonly sync: SyncState;
   readonly onSync: () => void;
+  readonly onCheckUpdate: () => void;
+  readonly onApplyUpdate: (tag: string) => void;
 }
 
 const t = strings.settings;
@@ -36,11 +38,18 @@ function percent(phase: SyncPhase): number | null {
   return Math.min(100, Math.round((phase.loaded / phase.total) * 100));
 }
 
-export function SettingsPanel({ anchor, onClose, sync, onSync }: SettingsPanelProps) {
+export function SettingsPanel({
+  anchor,
+  onClose,
+  sync,
+  onSync,
+  onCheckUpdate,
+  onApplyUpdate,
+}: SettingsPanelProps) {
   const panel = useRef<HTMLDivElement>(null);
   useDismissable(true, panel, anchor, onClose);
 
-  const { run, stored } = sync;
+  const { run, stored, update } = sync;
   const busy = run.status === 'running' || run.status === 'loading';
 
   return (
@@ -65,9 +74,23 @@ export function SettingsPanel({ anchor, onClose, sync, onSync }: SettingsPanelPr
           {stored === null ? t.database.sync : t.database.syncAgain}
         </button>
 
+        {stored !== null && (
+          <button
+            type="button"
+            className={cx(styles['secondary'], 'chamfer-sm')}
+            onClick={onCheckUpdate}
+            disabled={busy || update.status === 'checking'}
+          >
+            {update.status === 'checking' ? t.database.checking : t.database.checkUpdate}
+          </button>
+        )}
+
         {run.status === 'running' && <Running phase={run.phase} />}
         {run.status === 'done' && <Report types={run.types} />}
+        {run.status === 'refused' && <Refused tag={run.tag} failures={run.failures} />}
         {run.status === 'error' && <Failure message={run.message} />}
+
+        {run.status !== 'running' && <Update state={update} busy={busy} onApply={onApplyUpdate} />}
 
         {stored === null ? (
           run.status === 'idle' && <p className={styles['hint']}>{t.database.report.none}</p>
@@ -113,6 +136,7 @@ function Report({ types }: { readonly types: readonly SyncedType[] }) {
   const showUpdated = types.some((entry) => entry.diff.updated > 0);
   const showRemoved = types.some((entry) => entry.diff.removed > 0);
   const showFailed = types.some((entry) => entry.failed > 0);
+  const showRetired = types.some((entry) => entry.retired > 0);
 
   return (
     <table className={styles['table']}>
@@ -123,6 +147,7 @@ function Report({ types }: { readonly types: readonly SyncedType[] }) {
           {showAdded && <th>{r.added}</th>}
           {showUpdated && <th>{r.updated}</th>}
           {showRemoved && <th>{r.removed}</th>}
+          {showRetired && <th>{t.database.retired}</th>}
           {showFailed && <th>{r.failed}</th>}
         </tr>
       </thead>
@@ -134,6 +159,7 @@ function Report({ types }: { readonly types: readonly SyncedType[] }) {
             {showAdded && <Cell value={entry.diff.added} />}
             {showUpdated && <Cell value={entry.diff.updated} />}
             {showRemoved && <Cell value={entry.diff.removed} />}
+            {showRetired && <Cell value={entry.retired} />}
             {showFailed && <Cell value={entry.failed} alarming />}
           </tr>
         ))}
@@ -170,6 +196,59 @@ function StoredMeta({ meta }: { readonly meta: StoreMeta }) {
       <br />
       {t.database.report.syncedAt} {when}
     </p>
+  );
+}
+
+/**
+ * O resultado da procura por versão nova.
+ *
+ * Subir é ato deliberado: o app mostra que existe e oferece o botão, mas nunca troca
+ * sozinho (briefing seção 8 — a base do mestre e a dos jogadores precisam bater).
+ */
+function Update({
+  state,
+  busy,
+  onApply,
+}: {
+  readonly state: UpdateState;
+  readonly busy: boolean;
+  readonly onApply: (tag: string) => void;
+}) {
+  if (state.status === 'upToDate') return <p className={styles['phase']}>{t.database.upToDate}</p>;
+  if (state.status !== 'available') return null;
+
+  return (
+    <>
+      <p className={styles['phase']}>
+        {t.database.updateFound} <span className={styles['tag']}>{state.tag}</span>
+      </p>
+      {state.compatible ? (
+        <button
+          type="button"
+          className={cx(styles['action'], 'chamfer-sm')}
+          onClick={() => {
+            onApply(state.tag);
+          }}
+          disabled={busy}
+        >
+          {t.database.updateTo} {state.tag}
+        </button>
+      ) : (
+        <p className={styles['warning']}>{t.database.incompatible}</p>
+      )}
+    </>
+  );
+}
+
+/** Rodou e NÃO gravou: a base anterior continua valendo. */
+function Refused({ tag, failures }: { readonly tag: string; readonly failures: number }) {
+  return (
+    <>
+      <p className={styles['phase']}>
+        {tag} — {failures} {t.database.report.failed}
+      </p>
+      <p className={styles['warning']}>{t.database.refusedToPersist}</p>
+    </>
   );
 }
 

@@ -19,7 +19,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { createFetchHttp } from '@platform/http-fetch';
 import { isRecord } from '../json';
 import { readTextEntry } from './archive';
-import { DEFAULT_CHANNEL, PINNED_TAG } from './channels';
+import { DEFAULT_CHANNEL, KNOWN_GOOD_TAG } from './channels';
 import { loadInventory } from './inventory';
 import type { LoadedSource } from './inventory';
 import { findAsset, listReleases } from './releases';
@@ -32,7 +32,7 @@ let loaded: LoadedSource;
 
 beforeAll(async () => {
   releases = await listReleases(http, DEFAULT_CHANNEL);
-  loaded = await loadInventory(http, { channel: DEFAULT_CHANNEL, tag: PINNED_TAG });
+  loaded = await loadInventory(http, { channel: DEFAULT_CHANNEL, tag: KNOWN_GOOD_TAG });
 }, 180_000);
 
 describe('canal release-json-assets', () => {
@@ -45,13 +45,14 @@ describe('canal release-json-assets', () => {
 
   it('a tag fixada ainda existe', () => {
     const tags = releases.map((release) => release.tag);
-    expect(tags, `PINNED_TAG=${PINNED_TAG} sumiu. Tags: ${tags.slice(0, 5).join(', ')}`).toContain(
-      PINNED_TAG,
-    );
+    expect(
+      tags,
+      `KNOWN_GOOD_TAG=${KNOWN_GOOD_TAG} sumiu. Tags: ${tags.slice(0, 5).join(', ')}`,
+    ).toContain(KNOWN_GOOD_TAG);
   });
 
   it('o release tem os dois anexos que o canal declara', () => {
-    const release = releases.find((candidate) => candidate.tag === PINNED_TAG);
+    const release = releases.find((candidate) => candidate.tag === KNOWN_GOOD_TAG);
     expect(release).toBeDefined();
     expect(findAsset(release!, DEFAULT_CHANNEL.asset).size).toBeGreaterThan(1_000_000);
     expect(findAsset(release!, DEFAULT_CHANNEL.manifestAsset).size).toBeGreaterThan(0);
@@ -61,7 +62,7 @@ describe('canal release-json-assets', () => {
 describe('manifesto', () => {
   it('identifica o sistema pf2e e casa com a tag', () => {
     expect(loaded.manifest.id).toBe('pf2e');
-    expect(PINNED_TAG).toBe(`pf2e-${loaded.manifest.version}`);
+    expect(KNOWN_GOOD_TAG).toBe(`pf2e-${loaded.manifest.version}`);
   });
 
   it('declara packs e arquivos de idioma', () => {

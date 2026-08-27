@@ -5,7 +5,7 @@
  * por parâmetro, então não sabe se está rodando em Node, no navegador ou no Tauri.
  */
 
-import { DEFAULT_CHANNEL, PINNED_TAG, type ZipChannel } from './channels';
+import { DEFAULT_CHANNEL, KNOWN_GOOD_TAG, type ZipChannel } from './channels';
 import { listEntries } from './archive';
 import { parseManifest } from './manifest';
 import { buildInventory } from './packs';
@@ -16,7 +16,7 @@ import type { Manifest, PackInventory, ReleaseRef } from './types';
 export interface LoadInventoryOptions {
   readonly channel?: ZipChannel;
   /**
-   * Ausente: usa a tag fixada (`PINNED_TAG`), que é o comportamento de produção.
+   * Ausente: usa a tag fixada (`KNOWN_GOOD_TAG`), que é o comportamento de produção.
    * `null`: usa o release mais recente que casar com o padrão do canal.
    * String: exige aquela tag exata.
    */
@@ -43,7 +43,7 @@ export async function loadInventory(
   options: LoadInventoryOptions = {},
 ): Promise<LoadedSource> {
   const channel: ZipChannel = options.channel ?? DEFAULT_CHANNEL;
-  const tag = options.tag === null ? undefined : (options.tag ?? PINNED_TAG);
+  const tag = options.tag === null ? undefined : (options.tag ?? KNOWN_GOOD_TAG);
 
   const release =
     options.release ?? (await resolveRelease(http, channel, tag === undefined ? {} : { tag }));

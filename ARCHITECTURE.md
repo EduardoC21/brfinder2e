@@ -442,6 +442,48 @@ sem nenhuma ter mudado.
 As colunas `novas`, `mudaram` e `sumiram` só aparecem quando alguma linha tem valor: numa
 sincronização repetida seriam três colunas de zero, que não informam nada.
 
+### A lápide: entrada que some da fonte
+
+Medido entre `pf2e-7.9.1` e `pf2e-8.4.1` — sete meses, 21 releases: **4 talentos sumiram**
+de 5.845, e nenhum existe hoje em pack nenhum. Outros **15 mudaram de nome mantendo o
+`_id`**, o que valida chavear por UUID: renomear chega como atualização, não como remoção
+mais inclusão.
+
+Entrada que some **não é apagada**. Ela fica em `base/` com `retiredIn: "<tag>"`, sai da
+busca e continua resolvendo por UUID; a descrição é mantida em `desc/`; e o documento cru
+vai para `raw/retired/<chave>` **antes** de `raw/<pack>` ser sobrescrito — é a última
+janela em que ele existe.
+
+Por que não apagar: a ficha do Foundry embute cópias completas dos itens, não referências
+(medido em `iconics`). Guardando o documento cru, a ficha exportada continua carregando o
+item inteiro mesmo que ele não exista mais no compêndio. Apagar fecharia essa porta para
+sempre, e o briefing (seção 1) diz que o mestre precisa abrir a ficha de um jogador e
+auditar.
+
+Uma entrada que volta a existir na fonte perde a lápide — há teste, porque a primeira
+versão gravava a entrada duas vezes, viva e aposentada.
+
+### A versão da base não é código
+
+`KNOWN_GOOD_TAG` deixou de ser "a versão do app". A versão em uso fica no `meta` do
+armazenamento, e o usuário sobe pela engrenagem, sem recompilar. A constante virou duas
+coisas: rede de segurança da instalação nova, e alvo fixo do teste de contrato.
+
+O fluxo, e por que ele preserva a decisão da seção 8 do briefing (a base do mestre e a dos
+jogadores precisam bater durante a sessão):
+
+| Ação                               | O que faz                                                                                                            |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `Sincronizar` numa instalação nova | pega a mais recente; se ela não decodificar, cai para `KNOWN_GOOD_TAG`                                               |
+| `Sincronizar de novo`              | re-sincroniza a MESMA versão gravada. Nunca sobe sozinho                                                             |
+| `Procurar versão nova`             | só o `system.json` (~50 KiB): diz se há release novo e se os packs que as receitas pedem continuam declarados        |
+| `Atualizar para X`                 | roda a versão nova em modo estrito: **falha de decodificação impede a gravação**, e a base anterior continua valendo |
+
+A checagem barata não pega campo que mudou de tipo — isso só aparece ao rodar as receitas.
+Daí o modo estrito: o app segue na última versão compatível até o aplicativo ser
+atualizado, que é exatamente o comportamento pedido. E o teste de contrato semanal avisa
+antes de qualquer jogador ver o app quebrado.
+
 ### O proxy do Vite
 
 `server.proxy` reescreve `api.github.com` e `github.com` para caminhos locais, e o Vite

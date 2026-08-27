@@ -84,6 +84,8 @@ export function TopBar() {
             onClose={closeSettings}
             sync={sync.state}
             onSync={sync.start}
+            onCheckUpdate={sync.checkUpdate}
+            onApplyUpdate={sync.applyUpdate}
           />
         )}
       </div>

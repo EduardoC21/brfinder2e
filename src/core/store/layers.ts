@@ -68,7 +68,15 @@ export async function readBase(
     const id = item['id'];
     const uuid = item['uuid'];
     if (typeof key !== 'string' || typeof id !== 'string' || typeof uuid !== 'string') return null;
-    entities.push({ key, id, uuid, base: item['base'] });
+    const retiredIn = item['retiredIn'];
+    entities.push({
+      key,
+      id,
+      uuid,
+      base: item['base'],
+      // `exactOptionalPropertyTypes`: a chave é omitida, não posta como undefined.
+      ...(typeof retiredIn === 'string' ? { retiredIn } : {}),
+    });
   }
   return entities;
 }
@@ -96,6 +104,28 @@ export async function readDesc(
 ): Promise<Readonly<Record<string, unknown>> | null> {
   const value = await store.get(keyDesc(type));
   return isRecord(value) ? value : null;
+}
+
+/**
+ * O documento cru de uma entrada APOSENTADA, guardado à parte antes de `raw/<pack>` ser
+ * sobrescrito.
+ *
+ * É o que mantém a exportação possível para quem sumiu da fonte: a ficha do Foundry
+ * embute cópias completas dos itens, então o documento aqui é o suficiente para o item
+ * viajar dentro da ficha exportada.
+ */
+export const keyRetiredRaw = (key: string): string => `raw/retired/${key}`;
+
+export async function writeRetiredRaw(
+  store: StorePort,
+  key: string,
+  document: unknown,
+): Promise<void> {
+  await store.put(keyRetiredRaw(key), document);
+}
+
+export async function readRetiredRaw(store: StorePort, key: string): Promise<unknown> {
+  return store.get(keyRetiredRaw(key));
 }
 
 /**

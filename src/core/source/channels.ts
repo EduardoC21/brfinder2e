@@ -90,13 +90,22 @@ export const CHANNELS = [
 export const DEFAULT_CHANNEL: ZipChannel = CHANNELS[0];
 
 /**
- * A versão fixada (briefing, seção 8: "fixado por tag").
+ * A última versão conhecidamente boa.
  *
- * Fixar em vez de sempre pegar a mais nova é decisão de produto: a base do mestre e a dos
- * jogadores precisam bater durante a sessão. Subir de versão é um ato deliberado — trocar
- * esta constante — e não algo que acontece sozinho porque o Foundry publicou na terça.
+ * NÃO é mais "a versão do app". A versão em uso fica gravada no `meta` do armazenamento,
+ * e o usuário sobe de versão pela engrenagem — sem recompilar nada. Ver OPEN-DECISIONS,
+ * item 10.
+ *
+ * Esta constante serve a dois casos:
+ *
+ *   1. rede de segurança na instalação nova, se o release mais recente não decodificar;
+ *   2. alvo fixo do teste de contrato, para ele testar sempre a mesma coisa.
+ *
+ * Subir de versão continua sendo ato deliberado (briefing, seção 8: a base do mestre e a
+ * dos jogadores precisam bater durante a sessão) — só que agora o ato é um clique, e não
+ * uma alteração de código seguida de reinstalação.
  */
-export const PINNED_TAG = 'pf2e-8.4.1';
+export const KNOWN_GOOD_TAG = 'pf2e-8.4.1';
 
 /** URL de um anexo de release, montada sem passar pela API. Usada só em mensagem. */
 export function releasePageUrl(tag: string): string {

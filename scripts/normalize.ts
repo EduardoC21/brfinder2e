@@ -25,7 +25,7 @@ import { fileURLToPath } from 'node:url';
 
 import {
   DEFAULT_CHANNEL,
-  PINNED_TAG,
+  KNOWN_GOOD_TAG,
   languageFiles,
   loadInventory,
   readEntries,
@@ -61,7 +61,7 @@ async function main(): Promise<void> {
   const reportOnly = process.argv.slice(2).includes('--report-only');
   const http = createFetchHttp({ headers: { Accept: 'application/vnd.github+json' } });
 
-  const release = await resolveRelease(http, DEFAULT_CHANNEL, { tag: PINNED_TAG });
+  const release = await resolveRelease(http, DEFAULT_CHANNEL, { tag: KNOWN_GOOD_TAG });
   const cache = resolve(DATA, `json-assets-${release.tag}.zip`);
   const cached = existsSync(cache) ? new Uint8Array(readFileSync(cache)) : undefined;
 

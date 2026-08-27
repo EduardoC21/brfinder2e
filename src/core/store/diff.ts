@@ -57,6 +57,31 @@ export interface StoredEntity {
   readonly id: string;
   readonly uuid: string;
   readonly base: unknown;
+  /**
+   * A LÁPIDE: a tag do release em que a entrada deixou de existir na fonte.
+   *
+   * A entrada continua gravada de propósito. Apagar quebraria toda ficha que a
+   * referencie por UUID, e o briefing (seção 1) diz que o mestre precisa abrir a ficha de
+   * um jogador e auditar. Ver OPEN-DECISIONS, item 2.
+   *
+   * Ausente = entrada viva, presente na fonte.
+   */
+  readonly retiredIn?: string;
+}
+
+/** As vivas: ainda existem na fonte. É o que a busca mostra. */
+export function activeOnly(entities: readonly StoredEntity[]): StoredEntity[] {
+  return entities.filter((entity) => entity.retiredIn === undefined);
+}
+
+/** As aposentadas: existiram, sumiram da fonte, e continuam gravadas. */
+export function retiredOnly(entities: readonly StoredEntity[]): StoredEntity[] {
+  return entities.filter((entity) => entity.retiredIn !== undefined);
+}
+
+/** Marca uma entrada como aposentada no release informado. */
+export function retire(entity: StoredEntity, releaseTag: string): StoredEntity {
+  return { ...entity, retiredIn: releaseTag };
 }
 
 export function toStored(entity: NormalizedEntity): StoredEntity {
@@ -68,6 +93,12 @@ export function toStored(entity: NormalizedEntity): StoredEntity {
   };
 }
 
+/**
+ * Compara a base anterior com a nova.
+ *
+ * `previous` tem que conter só as entradas VIVAS. Uma aposentada continua gravada para
+ * sempre; contá-la em `removed` repetiria o mesmo aviso a cada sincronização.
+ */
 export function diffEntities(
   previous: readonly StoredEntity[] | null,
   next: readonly StoredEntity[],

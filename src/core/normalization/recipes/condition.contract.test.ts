@@ -12,7 +12,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 
 import { createFetchHttp } from '@platform/http-fetch';
-import { loadInventory, readTextEntry, languageFiles, PINNED_TAG } from '@core/source/index';
+import { loadInventory, readTextEntry, languageFiles, KNOWN_GOOD_TAG } from '@core/source/index';
 import type { LoadedSource } from '@core/source/index';
 import { mergeLanguageFiles } from '../language';
 import { isClean } from '../report';
@@ -25,7 +25,7 @@ let loaded: LoadedSource;
 let result: RunResult<ConditionBase, ConditionDesc>;
 
 beforeAll(async () => {
-  loaded = await loadInventory(http, { tag: PINNED_TAG });
+  loaded = await loadInventory(http, { tag: KNOWN_GOOD_TAG });
 
   const pack = loaded.inventory.packs.find((entry) => entry.name === conditionRecipe.packs[0]);
   if (!pack) throw new Error(`pack ${String(conditionRecipe.packs[0])} sumiu do manifesto`);
