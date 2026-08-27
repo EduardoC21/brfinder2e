@@ -1,0 +1,35 @@
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.scripts.tsbuildinfo",
+    "target": "es2023",
+    "lib": ["ES2023"],
+    /* Aqui SIM entram os tipos do Node. Ficam fora do tsconfig.app de proposito:
+       codigo de app nao deve enxergar "process" nem "fs". */
+    "types": ["node"],
+    "skipLibCheck": true,
+
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+
+    "paths": {
+      "@core/*": ["./src/core/*"],
+      "@platform/*": ["./src/platform/*"]
+    },
+
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["scripts"]
+}

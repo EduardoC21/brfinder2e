@@ -21,3 +21,11 @@ As demais:
 - `search/` — índice e consulta. É o diferencial do produto.
 - `glossary/` — tabela de termos de jogo, três consumidores. Ver briefing 8.1.
 - `types/` — tipos compartilhados entre as camadas.
+
+## `source/` — pronta (Etapa 1)
+
+`channels.ts` é o único arquivo do projeto com URL do Foundry. `ports.ts` define a porta
+HTTP, implementada em `src/platform/` — o download do release não manda cabeçalho CORS,
+então o mesmo código precisa de três hospedeiros. Detalhes em `ARCHITECTURE.md`, seção 7.
+
+Comando: `npm run packs`. Teste de contrato: `npm run test:contract`.

@@ -26,6 +26,8 @@ export default defineConfig({
           name: 'core',
           environment: 'node',
           include: ['src/core/**/*.test.ts'],
+          // O teste de contrato toca a rede: roda separado, via npm run test:contract.
+          exclude: ['**/*.contract.test.ts'],
         },
       },
       {
@@ -34,7 +36,7 @@ export default defineConfig({
           name: 'ui',
           environment: 'jsdom',
           include: ['src/**/*.test.{ts,tsx}'],
-          exclude: ['src/core/**'],
+          exclude: ['src/core/**', '**/*.contract.test.ts'],
           setupFiles: ['./src/test/setup.ts'],
         },
       },
@@ -44,7 +46,7 @@ export default defineConfig({
       provider: 'v8',
       reportsDirectory: './coverage',
       include: ['src/**/*.{ts,tsx}'],
-      exclude: ['src/**/*.test.{ts,tsx}', 'src/test/**', 'src/main.tsx'],
+      exclude: ['src/**/*.test.{ts,tsx}', 'src/test/**', 'src/main.tsx', 'scripts/**'],
     },
   },
 });

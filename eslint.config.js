@@ -57,8 +57,10 @@ export default defineConfig([
                 'react-dom/*',
                 '@ui/*',
                 '@i18n/*',
+                '@platform/*',
                 '**/ui/**',
                 '**/i18n/**',
+                '**/platform/**',
               ],
               message:
                 'src/core/ é domínio puro: não pode importar React nem a camada de UI. Inverta a dependência.',
@@ -69,10 +71,25 @@ export default defineConfig([
     },
   },
 
-  // ── Arquivos de configuração rodam em Node ─────────────────────────────────
+  // O teste de contrato é a exceção deliberada: ele existe justamente para ligar o
+  // core a uma implementação real e bater na rede. Sem essa liberação, ele não teria
+  // como montar a porta HTTP de verdade.
   {
-    files: ['*.config.{js,ts}', 'eslint.config.js'],
+    files: ['src/core/**/*.contract.test.ts'],
+    rules: { '@typescript-eslint/no-restricted-imports': 'off' },
+  },
+
+  // ── Configuração e scripts rodam em Node ───────────────────────────────────
+  {
+    files: ['*.config.{js,ts}', 'eslint.config.js', 'scripts/**/*.ts'],
     languageOptions: { globals: globals.node },
+  },
+  {
+    files: ['scripts/**/*.ts'],
+    rules: {
+      // Um comando de linha existe para escrever na tela.
+      'no-console': 'off',
+    },
   },
 
   // ── Testes: um pouco menos rígido ──────────────────────────────────────────

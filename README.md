@@ -9,8 +9,9 @@ Não é um VTT: sem rolagem, combate, iniciativa, tokens, mapas ou bestiário.
 
 ## Estado
 
-**Etapa 0 concluída** — projeto base com lint, tipos, testes e CI verdes num esqueleto vazio.
-A escada completa de etapas está no briefing, seção 6.
+**Etapa 1 concluída** — camada `source/`: canais, resolução de release, download,
+extração e manifesto. `npm run packs` lista os 97 packs com tamanho, e o teste de contrato
+passa contra o repositório real do Foundry. A escada completa está no briefing, seção 6.
 
 ## Requisitos
 
@@ -19,16 +20,18 @@ A escada completa de etapas está no briefing, seção 6.
 
 ## Comandos
 
-| Comando              | O que faz                                                    |
-| -------------------- | ------------------------------------------------------------ |
-| `npm run dev`        | Servidor de desenvolvimento em http://localhost:5173         |
-| `npm run check`      | **Formato + lint + tipos + testes.** Rode antes de commitar. |
-| `npm run test:watch` | Testes em modo contínuo                                      |
-| `npm run test:cov`   | Testes com relatório de cobertura                            |
-| `npm run lint:fix`   | Corrige o que o ESLint sabe corrigir                         |
-| `npm run format`     | Aplica o Prettier no projeto todo                            |
-| `npm run build`      | Build de produção em `dist/`                                 |
-| `npm run tauri dev`  | Janela nativa — **exige Rust instalado**                     |
+| Comando                 | O que faz                                                    |
+| ----------------------- | ------------------------------------------------------------ |
+| `npm run dev`           | Servidor de desenvolvimento em http://localhost:5173         |
+| `npm run check`         | **Formato + lint + tipos + testes.** Rode antes de commitar. |
+| `npm run packs`         | Lista os packs do release com tamanho (Etapa 1)              |
+| `npm run test:watch`    | Testes em modo contínuo                                      |
+| `npm run test:contract` | Bate no GitHub do Foundry e valida o canal (rede, 34 MiB)    |
+| `npm run test:cov`      | Testes com relatório de cobertura                            |
+| `npm run lint:fix`      | Corrige o que o ESLint sabe corrigir                         |
+| `npm run format`        | Aplica o Prettier no projeto todo                            |
+| `npm run build`         | Build de produção em `dist/`                                 |
+| `npm run tauri dev`     | Janela nativa — **exige Rust instalado**                     |
 
 ## Idioma
 

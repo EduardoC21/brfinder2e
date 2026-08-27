@@ -1,0 +1,39 @@
+name: Contrato da fonte
+
+# Briefing, seção 4.2: quando o Foundry reorganizar, quem descobre é este teste — e não
+# o autor, pelo app quebrado no meio da sessão de jogo.
+on:
+  schedule:
+    # Segunda-feira, 06:00 UTC (03:00 em Brasília).
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+  # Também quando a própria camada de fonte muda: mexeu no canal, prove que resolve.
+  pull_request:
+    paths:
+      - 'src/core/source/**'
+      - 'src/platform/**'
+      - 'vitest.contract.config.ts'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  contract:
+    name: bate no repositório real do Foundry
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Teste de contrato
+        # GITHUB_TOKEN sobe a cota da API de 60 para 1000 pedidos por hora.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run test:contract

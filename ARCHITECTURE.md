@@ -15,6 +15,10 @@ brfinder2e/
 ├─ eslint.config.js             regras — inclusive a fronteira de arquitetura
 ├─ tsconfig.app.json            regras de tipo do código do app
 ├─ tsconfig.node.json           regras de tipo dos arquivos de configuração
+├─ tsconfig.scripts.json        regras de tipo dos comandos (só aqui existe "node")
+│
+├─ scripts/                     comandos de linha (Node)
+│  └─ list-packs.ts             `npm run packs` — Etapa 1
 │
 ├─ src/
 │  ├─ main.tsx                  ponto de entrada: monta o React na página
@@ -35,6 +39,9 @@ brfinder2e/
 │  │  ├─ components/            peças burras e reutilizáveis
 │  │  ├─ screens/               sincronização, busca, detalhe, filtros, paleta
 │  │  └─ hooks/                 hooks compartilhados
+│  │
+│  ├─ platform/                 adaptadores das portas do core (I/O concreto)
+│  │  └─ http-fetch.ts          HttpPort sobre o `fetch` global
 │  │
 │  ├─ i18n/                     texto de interface, um arquivo por idioma
 │  └─ test/                     preparo do ambiente de teste (não os testes em si)
@@ -193,6 +200,8 @@ A configuração declara **dois projetos**, espelhando a fronteira:
 | `core`  | `node`   | `src/core/**/*.test.ts`                |
 | `ui`    | `jsdom`  | o resto, com `src/test/setup.ts` no ar |
 
+Os testes de contrato (`*.contract.test.ts`) ficam fora dos dois — ver seção 7.
+
 Assim o teste de uma receita de normalização não paga o custo de montar um DOM falso.
 `src/core/sanity.test.ts` **verifica que `document` não existe** no projeto do core — se
 alguém trocar o ambiente sem querer, o teste acusa.
@@ -228,7 +237,59 @@ Os valores atuais em `tokens.css` são **provisórios**. A paleta real é decidi
 
 ---
 
-## 7. Tauri: presente na estrutura, ausente na compilação
+## 7. A camada `source/` e a terceira pasta, `platform/`
+
+Medido em 26/08/2026, direto contra o GitHub:
+
+| Endpoint                           | CORS                             |
+| ---------------------------------- | -------------------------------- |
+| `api.github.com` (listar releases) | `Access-Control-Allow-Origin: *` |
+| download do `json-assets.zip`      | **nenhum cabeçalho CORS**        |
+
+Consequência: **o download não pode acontecer dentro do navegador.** Isso não estava no
+briefing e é o fato que desenha a camada.
+
+Por isso `core/source/ports.ts` define uma porta `HttpPort` em vez de chamar `fetch`
+direto. O mesmo código de domínio roda em três hospedeiros:
+
+| Host              | Adaptador                 | Quando                            |
+| ----------------- | ------------------------- | --------------------------------- |
+| Node              | `fetch` global            | hoje: `npm run packs` e os testes |
+| Navegador em dev  | proxy do Vite             | Etapa 4                           |
+| Tauri em produção | `@tauri-apps/plugin-http` | Etapa 15                          |
+
+Os adaptadores moram em `src/platform/` — nem domínio (fazem I/O), nem UI (não são React).
+A dependência aponta numa direção só: `platform/` conhece `core/`, nunca o contrário. A
+regra da FRONTEIRA no ESLint também proíbe `core/` de importar `@platform/*`.
+
+`src/platform/http-fetch.ts` não importa nada de `node:` de propósito: `fetch`, `Response`
+e `Uint8Array` são APIs web, presentes no Node 18+, no navegador e na webview do Tauri.
+Um arquivo, três hospedeiros.
+
+### Ler o zip sem descomprimir
+
+A biblioteca é a `fflate` — JavaScript puro, roda igual nos três hospedeiros. A alternativa
+seria o `zlib` do Node, que resolveria hoje e obrigaria a uma segunda implementação na
+Etapa 4.
+
+O detalhe que faz diferença: `unzipSync` chama `filter` com os metadados de cada entrada
+**antes** de inflar. Devolvendo `false` para tudo, lemos os 158 nomes e tamanhos em ~1 ms
+sem materializar os 168 MiB descomprimidos.
+
+### O teste de contrato
+
+`src/core/source/source.contract.test.ts` bate no repositório de verdade (briefing 4.2).
+Fica **fora** do `npm test` — toca a rede, baixa 34 MiB e depende da cota da API. Um teste
+assim dentro da suíte normal transforma "meu código quebrou" em "às vezes falha", e aí
+ninguém confia mais no verde.
+
+Roda por `npm run test:contract`, semanalmente em CI, e em PR que mexa em `source/` ou
+`platform/`. As asserções conferem **forma, não conteúdo**: contar 43 condições quebraria
+a cada release sem que o contrato tivesse mudado.
+
+---
+
+## 8. Tauri: presente na estrutura, ausente na compilação
 
 `src-tauri/` está escrito e configurado, mas **não compila nesta máquina** — falta o Rust.
 Isso é decisão, não esquecimento (briefing, seção 8).
@@ -247,7 +308,7 @@ a uma, quando a Etapa 1 precisar.
 
 ---
 
-## 8. CI
+## 9. CI
 
 `.github/workflows/ci.yml` roda formato, lint, tipos, testes e build — nessa ordem, do mais
 barato para o mais caro, para falhar cedo.
@@ -255,13 +316,12 @@ barato para o mais caro, para falhar cedo.
 Usa `npm ci` (não `npm install`): instala exatamente o que está no `package-lock.json`, sem
 resolver versões de novo. CI que resolve versões sozinho quebra sem ninguém ter mudado nada.
 
-**Ainda não existe** o teste de contrato da fonte (briefing, seção 4.2) — o que bate no
-GitHub do Foundry semanalmente e falha quando a disposição mudar. Ele entra na Etapa 1,
-junto com a camada `source/` que ele valida.
+`.github/workflows/contract.yml` roda o teste de contrato da fonte (briefing, seção 4.2)
+toda segunda-feira, e também em PR que mexa em `source/` ou `platform/`.
 
 ---
 
-## 9. O que a Etapa 0 não fez
+## 10. O que a Etapa 0 não fez
 
 - **Não compilou nada de Rust.** Rust não está instalado; decisão aprovada.
 - **Não gerou ícones** do instalador. `bundle.icon` está vazio. Etapa 15.

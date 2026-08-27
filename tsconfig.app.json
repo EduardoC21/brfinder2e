@@ -21,6 +21,7 @@
     "paths": {
       "@core/*": ["./src/core/*"],
       "@ui/*": ["./src/ui/*"],
+      "@platform/*": ["./src/platform/*"],
       "@i18n/*": ["./src/i18n/*"],
       "@test/*": ["./src/test/*"]
     },
