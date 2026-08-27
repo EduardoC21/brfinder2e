@@ -9,11 +9,13 @@ Não é um VTT: sem rolagem, combate, iniciativa, tokens, mapas ou bestiário.
 
 ## Estado
 
-**Etapa 3 concluída** — a receita de `condition`: 43 normalizadas, 0 falhas, relatório
-limpo, verificado contra o dado real. Antes: camada `source/` (Etapa 1) e motor de receita
-(Etapa 2). A escada completa está no briefing, seção 6.
+**Etapa 4a concluída** — sistema de design do mockup fixado nos tokens, fontes embarcadas,
+casca com barra de topo, e a sincronização funcionando no navegador pelo botão da
+engrenagem, com relatório por tipo. Antes: `source/` (Etapa 1), motor de receita (Etapa 2)
+e a receita de `condition` (Etapa 3).
 
-Próxima: **Etapa 4**, sistema de design e tela de sincronização.
+Próxima: **Etapa 4b**, a camada `store/` — hoje a base fica só em memória, e recarregar a
+janela exige sincronizar de novo.
 
 ## Requisitos
 

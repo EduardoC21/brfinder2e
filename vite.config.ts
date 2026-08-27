@@ -12,7 +12,33 @@ export default defineConfig({
   },
 
   // Porta fixa: o Tauri aponta para ela em src-tauri/tauri.conf.json (devUrl).
-  server: { port: 5173, strictPort: true },
+  server: {
+    port: 5173,
+    strictPort: true,
+
+    /*
+     * O download do release NÃO manda cabeçalho CORS (medido em 26/08/2026), então o
+     * navegador não consegue buscá-lo direto. Em dev, o Vite refaz o pedido pelo lado
+     * Node, onde CORS não existe.
+     *
+     * Isto é só para o desenvolvimento. Em produção quem sai para a rede é o Rust, pelo
+     * plugin HTTP do Tauri — mesma porta `HttpPort`, outro adaptador.
+     */
+    proxy: {
+      '/gh-api': {
+        target: 'https://api.github.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/gh-api/, ''),
+      },
+      '/gh-dl': {
+        target: 'https://github.com',
+        changeOrigin: true,
+        // O download responde 302 para release-assets.githubusercontent.com.
+        followRedirects: true,
+        rewrite: (path) => path.replace(/^\/gh-dl/, ''),
+      },
+    },
+  },
 
   test: {
     globals: true,

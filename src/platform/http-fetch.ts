@@ -83,3 +83,14 @@ export function createFetchHttp(options: FetchHttpOptions = {}): HttpPort {
     },
   };
 }
+
+/**
+ * Reescrita para o navegador em desenvolvimento.
+ *
+ * Troca os dois domínios do GitHub pelos caminhos que o proxy do Vite atende
+ * (ver `server.proxy` no vite.config.ts). Fora do navegador não faz falta: em Node e no
+ * Tauri o pedido sai direto, sem CORS no caminho.
+ */
+export function viteProxyRewrite(url: string): string {
+  return url.replace('https://api.github.com', '/gh-api').replace('https://github.com', '/gh-dl');
+}

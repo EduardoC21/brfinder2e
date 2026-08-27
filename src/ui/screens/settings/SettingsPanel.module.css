@@ -1,0 +1,152 @@
+/*
+ * Painel ancorado sob a engrenagem.
+ *
+ * `position: absolute` dentro da coluna direita da barra, e não `fixed`: assim ele
+ * acompanha o botão se a janela mudar de largura, sem nenhuma conta de posição em JS.
+ *
+ * Nasce como painel de CONFIGURAÇÕES com seções, não como painel de sincronização —
+ * a base de dados é a primeira seção, e vão entrar outras.
+ */
+.panel {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  right: 0;
+  z-index: 20;
+  width: 380px;
+  max-height: min(70vh, 560px);
+  overflow-y: auto;
+  padding: var(--space-4);
+  background: var(--color-panel);
+  border: 1px solid var(--color-hairline);
+  color: var(--color-text);
+}
+
+.title {
+  margin: 0 0 var(--space-4);
+  font: 600 var(--text-lg) / 1.2 var(--font-display);
+}
+
+.section + .section {
+  margin-top: var(--space-5);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--color-hairline);
+}
+
+.sectionTitle {
+  margin: 0 0 var(--space-2);
+  font: 600 var(--text-md) / 1.2 var(--font-display);
+}
+
+.hint {
+  margin: 0 0 var(--space-3);
+  font: 400 var(--text-xs) / 1.5 var(--font-body);
+  color: var(--color-text-muted);
+}
+
+.action {
+  border: 0;
+  padding: var(--space-2) var(--space-5);
+  background: var(--color-state);
+  color: #f6edea;
+  font: 500 var(--text-md) / 1 var(--font-body);
+  cursor: pointer;
+}
+
+.action:hover:not(:disabled) {
+  background: #a62a3e;
+}
+
+.action:disabled {
+  background: #453a3d;
+  color: var(--color-text-muted);
+  cursor: default;
+}
+
+.phase {
+  margin: var(--space-3) 0 0;
+  font: 400 var(--text-sm) / 1.4 var(--font-body);
+  color: var(--color-text-muted);
+}
+
+/* Progresso é ESTADO, então bordô. Latão diria "isto é dado de jogo". */
+.track {
+  margin-top: var(--space-2);
+  height: 4px;
+  background: var(--color-bg);
+  overflow: hidden;
+}
+
+.fill {
+  height: 100%;
+  background: var(--color-state);
+  transition: width 120ms linear;
+}
+
+.table {
+  width: 100%;
+  margin-top: var(--space-3);
+  border-collapse: collapse;
+  font: 400 var(--text-sm) / 1 var(--font-body);
+}
+
+.table th {
+  padding-bottom: var(--space-1);
+  border-bottom: 1px solid var(--color-hairline);
+  color: var(--color-text-muted);
+  font: 400 var(--text-xs) / 1 var(--font-body);
+  text-align: left;
+  text-transform: lowercase;
+}
+
+.table td {
+  height: var(--row-height);
+  border-bottom: 1px solid var(--color-hairline);
+}
+
+.table th:not(:first-child),
+.table td:not(:first-child) {
+  text-align: right;
+}
+
+/* Contagem de entradas é dado do jogo — latão, e em mono para alinhar a coluna. */
+.count {
+  font: 500 var(--text-md) / 1 var(--font-mono);
+  color: var(--color-data);
+}
+
+.countZero {
+  color: var(--color-text-muted);
+}
+
+.failed {
+  color: #e3cdd1;
+}
+
+.typeName {
+  font: 400 var(--text-md) / 1 var(--font-mono);
+  color: var(--color-text);
+}
+
+.meta {
+  margin: var(--space-3) 0 0;
+  font: 400 var(--text-xs) / 1.5 var(--font-mono);
+  color: var(--color-text-muted);
+}
+
+.warning {
+  margin: var(--space-3) 0 0;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-bg);
+  font: 400 var(--text-xs) / 1.5 var(--font-body);
+  color: var(--color-text-muted);
+}
+
+.error {
+  margin: var(--space-3) 0 0;
+  padding: var(--space-3);
+  background: var(--color-bg);
+  border-left: 2px solid var(--color-state);
+  font: 400 var(--text-xs) / 1.5 var(--font-mono);
+  color: #e3cdd1;
+  word-break: break-word;
+}

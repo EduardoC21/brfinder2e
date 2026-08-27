@@ -9,12 +9,49 @@
  */
 export const ptBR = {
   app: {
-    name: 'brfinder2e',
+    name: 'Forja',
+    shortName: 'BR',
     tagline: 'Forja de fichas de Pathfinder 2e (Remaster)',
   },
-  skeleton: {
-    title: 'Esqueleto no ar',
-    description: 'Etapa 0 concluída. As telas começam na Etapa 4.',
+  tabs: {
+    lookup: 'Consulta',
+    sheets: 'Fichas',
+  },
+  base: {
+    empty: 'base ausente',
+    /** `entries` e `version` entram por interpolação em quem monta a linha. */
+    label: 'base',
+  },
+  settings: {
+    open: 'Configurações',
+    title: 'Configurações',
+    database: {
+      title: 'Base de dados',
+      description: 'Baixa o sistema Pathfinder 2e do Foundry e prepara as entradas para consulta.',
+      sync: 'Sincronizar',
+      syncAgain: 'Sincronizar de novo',
+      cancel: 'Cancelar',
+      phase: {
+        resolving: 'Procurando a versão…',
+        downloading: 'Baixando o pacote',
+        reading: 'Abrindo o arquivo',
+        normalizing: 'Preparando as entradas',
+      },
+      report: {
+        title: 'Importado',
+        type: 'tipo',
+        imported: 'entradas',
+        failed: 'falhas',
+        none: 'Nada importado ainda.',
+        version: 'versão do sistema',
+      },
+      error: {
+        title: 'A sincronização falhou',
+        retry: 'Tentar de novo',
+      },
+      notPersisted:
+        'Esta versão ainda não guarda a base: ao recarregar a janela, é preciso sincronizar de novo.',
+    },
   },
 } as const;
 

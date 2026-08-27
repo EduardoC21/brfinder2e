@@ -368,7 +368,61 @@ porta própria entra na Etapa 4, junto com a tela de sincronização que vai pre
 
 ---
 
-## 9. Tauri: presente na estrutura, ausente na compilação
+## 9. A camada de UI
+
+O sistema de design vem do mockup "Forja PF2e — Consulta", artboard 1a, transcrito em
+`src/ui/design/tokens.css`. A regra que mais decide: **bordô só carrega estado** (seleção,
+foco, progresso) e **latão só carrega dado de jogo** (nível, custo em ações, raridade,
+contagem de entradas). Nenhuma cor é decorativa.
+
+### Fontes embarcadas, não CDN
+
+O app é offline. O mockup carregava Spectral e IBM Plex do `fonts.googleapis.com`; sem
+rede, as duas somem e o sistema de dois papéis cai inteiro no fallback. Os `.woff2` moram
+em `src/ui/design/fonts/` — 10 arquivos, 214 KiB, ambas as famílias sob OFL 1.1 (a licença
+está junto). `IBM Plex Sans` é variável: um arquivo por subset cobre 400, 500 e 600.
+
+### Estilo: CSS Modules
+
+Um arquivo `.module.css` ao lado de cada componente. Classe com escopo local, zero runtime,
+suporte nativo do Vite. As alternativas ficam piores aqui: CSS global colide em nome com
+vinte componentes; estilo em linha não faz `:hover` nem `:focus-visible`; CSS-in-JS traz
+runtime e dependência sem resolver problema nenhum que a gente tenha.
+
+O custo aparece no acesso: um CSS Module chega tipado como `Record<string, string>`, então
+com `noPropertyAccessFromIndexSignature` e `noUncheckedIndexedAccess` a leitura é
+`styles['panel']` e o tipo é `string | undefined`. É honesto — a chave não é verificada
+mesmo — e o `cx()` de `src/ui/cx.ts` absorve o `undefined` ao juntar classes. Se um dia
+incomodar, a saída é gerar `.d.ts` das classes, não afrouxar as regras.
+
+### O chanfro
+
+`clip-path: polygon(...)`, não `border-radius` — arredondamento não faz corte assimétrico.
+Três utilitários globais em `base.css` (`.chamfer-sm/md/lg`) porque a forma vale para
+qualquer elemento e não deve ser reimplementada por componente. O `clip-path` recorta
+sombra e borda junto, o que aqui não custa nada: o sistema separa superfície por cor.
+
+### Estado
+
+`useReducer` num hook (`useSync`), com o estado modelado como união discriminada. Estado
+inválido — "carregando e com erro ao mesmo tempo" — deixa de ser representável, e o
+`switch` na tela fica exaustivo. Biblioteca de estado seria peso sem problema: este estado
+pertence a um componente, não ao aplicativo.
+
+O `useSync` mora na barra de topo e não dentro do painel, porque a barra também mostra o
+resultado. Dentro do painel, fechar a engrenagem desmontaria o componente e zeraria a
+sincronização.
+
+### O proxy do Vite
+
+`server.proxy` reescreve `api.github.com` e `github.com` para caminhos locais, e o Vite
+refaz o pedido pelo lado Node, onde CORS não existe (ver seção 7). Vale só em
+desenvolvimento: em produção quem sai para a rede é o Rust, pelo plugin HTTP do Tauri —
+mesma porta `HttpPort`, outro adaptador.
+
+---
+
+## 10. Tauri: presente na estrutura, ausente na compilação
 
 `src-tauri/` está escrito e configurado, mas **não compila nesta máquina** — falta o Rust.
 Isso é decisão, não esquecimento (briefing, seção 8).
@@ -387,7 +441,7 @@ a uma, quando a Etapa 1 precisar.
 
 ---
 
-## 10. CI
+## 11. CI
 
 `.github/workflows/ci.yml` roda formato, lint, tipos, testes e build — nessa ordem, do mais
 barato para o mais caro, para falhar cedo.
@@ -400,7 +454,7 @@ toda segunda-feira, e também em PR que mexa em `source/` ou `platform/`.
 
 ---
 
-## 11. O que a Etapa 0 não fez
+## 12. O que a Etapa 0 não fez
 
 - **Não compilou nada de Rust.** Rust não está instalado; decisão aprovada.
 - **Não gerou ícones** do instalador. `bundle.icon` está vazio. Etapa 15.

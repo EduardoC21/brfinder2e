@@ -1,13 +1,14 @@
-import { strings } from '@i18n/index';
+import { TopBar } from '@ui/components/TopBar';
 
+/**
+ * A casca. Barra de topo e, abaixo, a área de conteúdo — vazia até a Etapa 5, quando a
+ * tela de busca entra.
+ */
 export function App() {
   return (
-    <main style={{ padding: 'var(--space-6)' }}>
-      <h1 style={{ fontFamily: 'var(--font-display)', margin: 0 }}>{strings.app.name}</h1>
-      <p style={{ color: 'var(--color-text-muted)', marginTop: 'var(--space-2)' }}>
-        {strings.app.tagline}
-      </p>
-      <p style={{ marginTop: 'var(--space-6)' }}>{strings.skeleton.description}</p>
-    </main>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <TopBar />
+      <main style={{ flex: 1, minHeight: 0 }} />
+    </div>
   );
 }

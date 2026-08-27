@@ -39,3 +39,25 @@ body {
   scrollbar-width: thin;
   scrollbar-color: #453a3d transparent;
 }
+
+/*
+ * O CHANFRO — a assinatura do sistema.
+ *
+ * Corte de 45° no canto superior esquerdo. Usa `clip-path` e não `border-radius` porque
+ * arredondamento não faz esse corte assimétrico, e porque o chanfro tem que valer para
+ * qualquer forma (chip, painel, botão) sem cada uma reimplementar o polígono.
+ *
+ * Custo do clip-path: ele recorta também a sombra e a borda. O sistema não usa nenhuma
+ * das duas — separa superfície por cor, não por contorno — então não há o que perder.
+ */
+.chamfer-sm {
+  clip-path: polygon(var(--chamfer-sm) 0, 100% 0, 100% 100%, 0 100%, 0 var(--chamfer-sm));
+}
+
+.chamfer-md {
+  clip-path: polygon(var(--chamfer-md) 0, 100% 0, 100% 100%, 0 100%, 0 var(--chamfer-md));
+}
+
+.chamfer-lg {
+  clip-path: polygon(var(--chamfer-lg) 0, 100% 0, 100% 100%, 0 100%, 0 var(--chamfer-lg));
+}
