@@ -62,7 +62,46 @@ Foundry de verdade.
 
 ---
 
-## 2. A receita lê só o documento, ou também a tabela de idioma? `novo`
+## 2. Fase da ficha: reimplementar regras, portar do pf2e, ou nenhum dos dois? `novo`
+
+**Não é decisão da Etapa 2.** Fica aqui para não se perder até a ficha entrar em escopo.
+
+**Reusar o motor do Foundry inteiro não é opção.** O código do sistema pf2e é Apache 2.0,
+então copiar é permitido — o problema não é licença. O problema é que ele é um plugin de
+uma plataforma fechada:
+
+```
+ConditionPF2e extends AbstractEffectPF2e extends ItemPF2e extends Item
+                                                                  └── classe global do
+                                                                      núcleo do Foundry
+```
+
+`Item`, `Actor`, `Document`, `foundry.data.fields`, `Roll`, `ChatMessage`, `game`,
+`CONFIG` e `Hooks` não existem no repositório do pf2e: vêm do bundle do Foundry, que é
+licenciado e não redistribuível. Hospedar o código deles exigiria reimplementar esse
+núcleo — projeto maior que este app, e alvo móvel a cada versão do Foundry.
+
+Escala medida (branch `v14-dev`): **833 arquivos TypeScript, 4,8 MiB, ~131 mil linhas**,
+dos quais 124 arquivos são só código de migração histórica.
+
+**O que já reusamos, e é o caminho certo: os dados.** Briefing 7.5 — o item de classe já
+traz `hp`, `perception`, `savingThrows`, `defenses`, `attacks`, `classFeatLevels` e os
+features por nível. Lemos a regra em vez de reescrevê-la.
+
+**O que é legítimo portar** (Apache 2.0, com atribuição), quando o algoritmo for difícil:
+o parser das dez sintaxes (7.6), a matemática de proficiência, as cinco formas de
+`ChoiceSet` (7.8).
+
+**Requisito que isso cria para a Etapa 3, e que não é opcional:** `system.rules` — o array
+de rule elements — tem que ser **adiado, não descartado**. É mecânica de VTT, inútil para
+consulta, essencial se a ficha um dia aplicar regras. Com `raw/` preservado (ver item 1) e
+`rules` marcado como adiado, a porta fica aberta a custo zero.
+
+**Decidir quando:** ao abrir a fase da ficha, depois da Etapa 15.
+
+---
+
+## 3. A receita lê só o documento, ou também a tabela de idioma? `novo`
 
 **Decidir na Etapa 2**, porque muda o motor.
 
@@ -88,7 +127,7 @@ mantém a receita com uma fonte só.
 
 ---
 
-## 3. Traços: inglês ou português? `§9`
+## 4. Traços: inglês ou português? `§9`
 
 São dado (`traits.value: ["fighter", "flourish"]`) mas quem desenha o chip é a interface.
 Ficam exatamente na fronteira.
@@ -101,20 +140,20 @@ inverter depois é trocar uma coluna.
 
 ---
 
-## 4. Detalhe da entrada: painel lateral ou tela cheia? `§9`
+## 5. Detalhe da entrada: painel lateral ou tela cheia? `§9`
 
 Argumentar a escolha ao propor a tela. **Decidir quando:** Etapa 8.
 
 ---
 
-## 5. Busca global: campo na barra, paleta de comandos, ou aba? `§9`
+## 6. Busca global: campo na barra, paleta de comandos, ou aba? `§9`
 
 **Recomendação do briefing:** campo na barra que abre a paleta, e o mesmo Ctrl+K de
 qualquer lugar. **Decidir quando:** Etapa 11.
 
 ---
 
-## 6. Sistema operacional dos jogadores `§9`
+## 7. Sistema operacional dos jogadores `§9`
 
 Confirmar se algum usa macOS ou Linux **antes de prometer suporte**. No Windows, binário
 não assinado mostra o aviso do SmartScreen — aceitável para cinco pessoas. No macOS o
@@ -124,7 +163,7 @@ atrito é maior (Gatekeeper).
 
 ---
 
-## 7. Fundo da tela `§9`
+## 8. Fundo da tela `§9`
 
 Não podemos distribuir arte da Paizo nem de banco de imagem. Ou um fundo gerado por
 código, ou o usuário aponta a própria imagem.
@@ -133,7 +172,7 @@ código, ou o usuário aponta a própria imagem.
 
 ---
 
-## 8. Política de atualização da base `novo`
+## 9. Política de atualização da base `novo`
 
 `PINNED_TAG` em `src/core/source/channels.ts` fixa a versão em `pf2e-8.4.1`. Fixar é
 decisão fechada (briefing, seção 8): a base do mestre e a dos jogadores precisam bater
