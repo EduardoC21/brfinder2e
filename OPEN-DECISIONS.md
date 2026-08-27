@@ -144,6 +144,10 @@ inverter depois é trocar uma coluna.
 
 Argumentar a escolha ao propor a tela. **Decidir quando:** Etapa 8.
 
+⚠️ A Etapa 5 pôs um painel PROVISÓRIO no rodapé da lista, só para o Enter ter para onde
+levar. Ele não é a decisão: mostra a descrição CRUA, com a marcação `@UUID[...]` à vista,
+justamente para deixar visível o que a Etapa 7 tem que resolver.
+
 ---
 
 ## 6. Busca global: campo na barra, paleta de comandos, ou aba? `§9`

@@ -24,6 +24,7 @@
   "dependencies": {
     "@tauri-apps/api": "^2.11.1",
     "fflate": "^0.8.3",
+    "minisearch": "^7.2.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },

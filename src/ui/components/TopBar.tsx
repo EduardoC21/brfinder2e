@@ -2,7 +2,7 @@ import { useCallback, useRef, useState } from 'react';
 
 import { strings } from '@i18n/index';
 import { IconButton } from '@ui/components/IconButton';
-import { useSync } from '@ui/hooks/useSync';
+import type { UseSync } from '@ui/hooks/useSync';
 import { SettingsPanel } from '@ui/screens/settings/SettingsPanel';
 
 import { cx } from '@ui/cx';
@@ -12,22 +12,15 @@ import styles from './TopBar.module.css';
 /** As abas do mockup. `sheets` só existe a partir da fase da ficha. */
 type Tab = 'lookup' | 'sheets';
 
-export function TopBar() {
+export function TopBar({ sync }: { readonly sync: UseSync }) {
   const [tab, setTab] = useState<Tab>('lookup');
   const [settingsOpen, setSettingsOpen] = useState(false);
   const gear = useRef<HTMLButtonElement>(null);
-  const sync = useSync();
 
   const closeSettings = useCallback(() => {
     setSettingsOpen(false);
   }, []);
 
-  /*
-   * O estado da sincronização mora aqui, e não dentro do painel, porque a barra também o
-   * mostra: o indicador da direita passa de "base ausente" para a contagem. Descer o
-   * `useSync` para o painel zeraria a sincronização toda vez que ele fechasse — o React
-   * desmonta o componente, e com ele o estado.
-   */
   /*
    * O indicador lê o que está GRAVADO, não o resultado da última execução. Assim ele
    * continua certo depois de recarregar a janela, quando não houve execução nenhuma.

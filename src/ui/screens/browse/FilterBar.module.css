@@ -1,0 +1,96 @@
+/*
+ * Em repouso, uma linha só: botão Filtros, os ativos como chips removíveis, e a contagem
+ * (artboard 2b). Aberto, vira gaveta em colunas.
+ *
+ * O trilho horizontal com setas do 2b não está aqui: com três filtros não há o que rolar.
+ * Entra quando um tipo tiver filtros suficientes para justificar — traços, na Etapa 10.
+ */
+.bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-4) var(--space-3);
+  flex-wrap: wrap;
+}
+
+.toggle {
+  flex: none;
+  border: 1px solid var(--color-hairline);
+  padding: var(--space-1) var(--space-3);
+  background: transparent;
+  color: var(--color-text-muted);
+  font: 500 var(--text-sm) / 1.6 var(--font-body);
+  cursor: pointer;
+}
+
+.toggle:hover,
+.toggle[aria-expanded='true'] {
+  background: var(--color-hover);
+  color: var(--color-text);
+}
+
+/* Filtro ativo é ESTADO: bordô. */
+.activeChip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  border: 0;
+  padding: var(--space-1) var(--space-2);
+  background: var(--color-state);
+  color: #f6edea;
+  font: 400 var(--text-xs) / 1.6 var(--font-mono);
+  cursor: pointer;
+}
+
+.activeChip:hover {
+  background: #a62a3e;
+}
+
+.clear {
+  border: 0;
+  padding: var(--space-1) var(--space-2);
+  background: transparent;
+  color: var(--color-text-muted);
+  font: 400 var(--text-xs) / 1.6 var(--font-body);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.drawer {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-4);
+  margin: 0 var(--space-4) var(--space-3);
+  padding: var(--space-3);
+  background: var(--color-panel);
+  border: 1px solid var(--color-hairline);
+}
+
+.groupTitle {
+  margin: 0 0 var(--space-2);
+  font: 400 var(--text-xs) / 1 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 2px 0;
+  font: 400 var(--text-md) / 1.4 var(--font-body);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.option input {
+  accent-color: var(--color-state);
+  cursor: pointer;
+}
+
+.optionCount {
+  margin-left: auto;
+  font: 400 var(--text-xs) / 1 var(--font-mono);
+  color: var(--color-text-muted);
+}

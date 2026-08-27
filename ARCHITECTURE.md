@@ -498,6 +498,64 @@ Daí o modo estrito: o app segue na última versão compatível até o aplicativ
 atualizado, que é exatamente o comportamento pedido. E o teste de contrato semanal avisa
 antes de qualquer jogador ver o app quebrado.
 
+### A listagem é dirigida por dados
+
+A tela de consulta não sabe o que é uma condição. Ela recebe um **descritor de fonte**
+(`core/browse/spec.ts`) e desenha o que ele declarar:
+
+```ts
+{ id: 'conditions', entityType: 'condition',
+  columns: [{ kind: 'name' }, { kind: 'chip', field: 'group', align: 'end' }],
+  filters: [{ kind: 'options', field: 'group' }, { kind: 'boolean', field: 'valued' }, …],
+  searchFields: ['name', 'summary'] }
+```
+
+Acrescentar talento na Etapa 9 é escrever um descritor, não uma tela. Não há
+`if (tipo === 'condition')` em lugar nenhum da camada de UI.
+
+**A regra da fronteira desenhou isso.** `core/` não pode importar React, e portanto não
+pode devolver um componente — então coluna e filtro tiveram que virar DADO, e a UI ficou
+com um desenhista por `kind`. O que parecia limitação virou o seam certo: o core diz o
+quê, a UI diz como. Acrescentar uma coluna é um caso na união mais um caso no `switch`, e
+o compilador cobra o segundo assim que você escreve o primeiro.
+
+O que NÃO foi abstraído, porque exigiria adivinhar: o modo `cards` da Classe (é outra
+tela, não uma variação da lista), o alternador OU/E dos traços, e o trilho horizontal de
+filtros com setas — com três filtros não há o que rolar.
+
+### A busca
+
+MiniSearch, ~10 KiB. Duas configurações não são padrão e vieram do briefing 7.8:
+
+- **Acento**: `processTerm` normaliza para NFD e apaga os diacríticos, então "ilusao" acha
+  "Ilusão" e vice-versa. O dado dos packs é inglês, mas a tradução sob demanda vai trazer
+  português.
+- **Apóstrofo**: o tokenizador padrão QUEBRA em `'`, e "Archwizard's Spellcraft" viraria
+  `["archwizard", "s", "spellcraft"]` — digitar "archwizards" não acharia nada. Aqui o
+  apóstrofo é REMOVIDO antes de tokenizar.
+
+A tolerância a erro de digitação é proporcional ao tamanho do termo: nenhuma até 4 letras,
+0,2 acima disso. Sem esse teto, "cat" casaria com meia base.
+
+Filtro e busca são coisas separadas (`query.ts` e `search.ts`): a busca ordena por
+relevância, o filtro só inclui ou exclui. Sem termo, a ordem é alfabética; com termo, é a
+da relevância e o filtro apenas recorta.
+
+Valores de filtro saem do PRÓPRIO dado, com contagem — não há lista fixa em lugar nenhum,
+então um grupo novo numa versão futura do Foundry aparece sozinho. Mesmo campo soma como
+OU, campos diferentes cruzam como E.
+
+### O teclado mora no campo de busca
+
+O briefing (Anexo A) pede "digita, desce com as setas, abre com Enter, sem tocar no mouse".
+Se o foco pulasse para a lista na primeira seta, continuar digitando exigiria voltar — por
+isso o foco fica no `<input>`, a lista é um `listbox` comandado por
+`aria-activedescendant`, e as linhas são `option` em vez de botões.
+
+`useDeferredValue` no termo, e não debounce: o campo desenha a letra nova de imediato e a
+lista é recalculada com prioridade menor. Nada é adiado por tempo, e o resultado nunca
+fica atrasado — só cede a vez. Importa quando a lista for 6.283 talentos.
+
 ### O proxy do Vite
 
 `server.proxy` reescreve `api.github.com` e `github.com` para caminhos locais, e o Vite

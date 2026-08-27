@@ -22,6 +22,43 @@ export const ptBR = {
     /** `entries` e `version` entram por interpolação em quem monta a linha. */
     label: 'base',
   },
+  browse: {
+    sourcesLabel: 'Fontes',
+    searchPlaceholder: 'Filtrar',
+    notReady: 'ainda não disponível',
+    empty: 'Sincronize a base para começar a consultar.',
+    noResults: 'Nada encontrado.',
+    counting: (shown: number, total: number) =>
+      shown === total ? `${String(total)} entradas` : `${String(shown)} de ${String(total)}`,
+    filters: 'Filtros',
+    clearFilters: 'Limpar',
+    noValue: '— sem valor —',
+    yes: 'sim',
+    no: 'não',
+    retired: 'aposentada',
+    detailProvisional:
+      'A tela de detalhe é a Etapa 8. Por enquanto a descrição aparece crua, com a marcação do Foundry — é o que a Etapa 7 vai transformar em texto legível com referência cruzada.',
+    fieldLabel: {
+      group: 'grupo',
+      valued: 'valorada',
+      'source.title': 'livro',
+    } as Record<string, string>,
+  },
+  /** Os nomes das fontes do trilho. Ver `core/browse/spec.ts` para a estrutura. */
+  sources: {
+    conditions: 'Condições',
+    actions: 'Ações',
+    feats: 'Talentos',
+    spells: 'Magias',
+    equipment: 'Equipamentos',
+    ancestries: 'Ancestralidade',
+    backgrounds: 'Antecedente',
+    archetypes: 'Arquétipo',
+    classes: 'Classe',
+    companions: 'Companheiro',
+    familiars: 'Familiar',
+    skills: 'Perícias',
+  } as Record<string, string>,
   settings: {
     open: 'Configurações',
     title: 'Configurações',

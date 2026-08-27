@@ -9,11 +9,14 @@ Não é um VTT: sem rolagem, combate, iniciativa, tokens, mapas ou bestiário.
 
 ## Estado
 
-**Etapa 4 concluída** — sistema de design do mockup fixado nos tokens, fontes embarcadas,
+**Etapa 5 concluída** — tela de consulta: trilho de fontes, busca com MiniSearch, filtros
+derivados do dado e navegação por teclado. Antes: **Etapa 4** — sistema de design do mockup fixado nos tokens, fontes embarcadas,
 casca com barra de topo, e a sincronização pelo botão da engrenagem: baixa, normaliza,
 **grava em IndexedDB** e mostra o que entrou, o que mudou e o que sumiu. A base sobrevive
-ao recarregar a janela. Antes: `source/` (Etapa 1), motor de receita (Etapa 2) e a receita
-de `condition` (Etapa 3).
+ao recarregar a janela. E `source/` (Etapa 1), motor de receita (Etapa 2) e a receita de
+`condition` (Etapa 3).
+
+Próxima: **Etapa 6**, a receita de `action` (574 entradas).
 
 Próxima: **Etapa 5**, a tela de busca.
 
