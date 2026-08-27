@@ -528,6 +528,41 @@ Daí o modo estrito: o app segue na última versão compatível até o aplicativ
 atualizado, que é exatamente o comportamento pedido. E o teste de contrato semanal avisa
 antes de qualquer jogador ver o app quebrado.
 
+### O analisador de marcação (`core/markup/`)
+
+⚠️ A armadilha, e a razão do arquivo existir: **a marcação aninha colchetes.**
+
+```
+@Damage[(4d6+@actor.abilities.str.mod)[bludgeoning]|options:area-damage]
+[[/r 2d6[fire]]]
+```
+
+Uma expressão regular ingênua (`\[[^\]]*\]`) para no PRIMEIRO `]` e corta o token no
+meio. O texto continua aparecendo na tela, então ninguém percebe — e o invariante de ida
+e volta quebra em silêncio. Por isso o analisador conta PROFUNDIDADE, caractere a
+caractere, com o mesmo algoritmo para `@Nome[...]` e para `[[/cmd ...]]`.
+
+São três camadas, nunca duas (briefing 7.6): `raw` nunca modificado, `tokens` com o `raw`
+de cada um, e o `render` — que é a Etapa 8.
+
+**O invariante**, afirmado sobre a base inteira no teste de contrato:
+
+```
+join(tokens.map((t) => t.raw)) === texto original
+```
+
+Medido no `pf2e-8.4.1`: **2.869.851 strings varridas nos 97 packs, 64.932 com marcação,
+zero quebras, zero tokens desconhecidos** — o que confirma o "exatamente dez sintaxes".
+
+Token com forma de marcação e nome desconhecido vira `kind: 'unknown'` e não texto. Ele
+desenha igual (cru, como o briefing manda), mas pode ser CONTADO: sintaxe nova numa versão
+futura do Foundry aparece no relatório em vez de se esconder no meio do texto.
+
+O teste de contrato também reproduz as contagens da seção 7.6 sobre os 25 packs de `Item`,
+com diferença máxima de 22 em dezenas de milhares — `@Embed` e `[[/br` batem exato.
+Reproduzir os números do briefing com um analisador escrito do zero é a melhor prova de
+que os dois estão certos.
+
 ### A listagem é dirigida por dados
 
 A tela de consulta não sabe o que é uma condição. Ela recebe um **descritor de fonte**

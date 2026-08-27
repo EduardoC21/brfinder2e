@@ -9,7 +9,9 @@ Não é um VTT: sem rolagem, combate, iniciativa, tokens, mapas ou bestiário.
 
 ## Estado
 
-**Etapa 6 concluída** — receita de `action`: 766 normalizadas de dois packs, 0 falhas,
+**Etapa 7 concluída** — analisador das dez sintaxes de marcação, com o invariante de ida
+e volta valendo em 100% da base (2,87 milhões de strings, zero quebras). Antes:
+**Etapa 6** — receita de `action`: 766 normalizadas de dois packs, 0 falhas,
 relatório limpo, com o setor vindo da pasta do compêndio (Class 196, Adventure 192,
 Archetype 140, Skill 54, Basic 30…).
 Antes: **Etapa 5** — tela de consulta: trilho de fontes, busca com MiniSearch, filtros
@@ -19,7 +21,7 @@ casca com barra de topo, e a sincronização pelo botão da engrenagem: baixa, n
 ao recarregar a janela. E `source/` (Etapa 1), motor de receita (Etapa 2) e a receita de
 `condition` (Etapa 3).
 
-Próxima: **Etapa 7**, o parser de marcação das descrições.
+Próxima: **Etapa 8**, a tela de detalhe da entrada.
 
 Próxima: **Etapa 5**, a tela de busca.
 
