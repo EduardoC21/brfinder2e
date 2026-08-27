@@ -17,13 +17,25 @@ body {
   background: var(--color-bg);
   color: var(--color-text);
   font-family: var(--font-body);
-  font-size: 14px;
+  font-size: var(--text-md);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
 
-/* Foco de teclado sempre visível — requisito do briefing (Anexo A, Restrições). */
+/*
+ * Foco de teclado sempre visível — requisito do briefing (Anexo A, Restrições).
+ * Em bordô porque foco é ESTADO, e no sistema estado é bordô. Latão diria "dado".
+ */
 :focus-visible {
-  outline: 2px solid var(--color-accent);
+  outline: 2px solid var(--color-state);
   outline-offset: 2px;
+}
+
+/*
+ * A barra de rolagem também é do sistema (artboard 2b): trilho invisível, polegar
+ * em ardósia clara que vira bordô no hover.
+ */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #453a3d transparent;
 }

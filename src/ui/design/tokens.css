@@ -1,36 +1,82 @@
 /*
- * TOKENS — o único lugar do projeto onde existe um valor de cor, fonte ou espaço.
+ * TOKENS — o único lugar do projeto onde existe valor de cor, fonte ou espaço.
  *
- * Regra (briefing, seção 8, "Centralização"): nenhum componente escreve #hexadecimal,
- * nome de fonte ou pixel solto. Todo mundo consome var(--...) daqui.
- * O motivo prático: trocar de tema depois vira trocar este arquivo, não caçar 200 lugares.
+ * Transcrição do sistema fixado no mockup "Forja PF2e — Consulta", artboard 1a
+ * ("O sistema, fixado") mais o adendo do 2b ("Regras novas").
  *
- * ATENÇÃO: os valores abaixo são PROVISÓRIOS, só para o esqueleto não ficar ilegível.
- * A paleta e a tipografia de verdade são decididas na Etapa 4 (Anexo A do briefing).
- * Não construa tela em cima destes valores.
+ * Regra do sistema: "Aço frio, veludo bordô. Ferramenta antes de tema: a fantasia entra
+ * pelo matiz (vinho e latão sob luz baixa), nunca pela textura."
+ *
+ * Os nomes dos tokens estão em inglês (regra do projeto: código em inglês), mas cada um
+ * traz ao lado o nome poético que você fixou, porque é por ele que a gente vai conversar.
  */
 
 :root {
   color-scheme: dark;
 
-  /* Cor — provisório */
-  --color-bg: #14161a;
-  --color-surface: #1c1f25;
-  --color-border: #2b2f38;
-  --color-text: #e6e8ec;
-  --color-text-muted: #9aa1ad;
-  --color-accent: #6ea8fe;
+  /* ── Paleta: seis nomes, um só ponto de troca ────────────────────────────────
+   * O tema é um objeto de seis chaves, trocável de uma vez. Nenhuma cor é
+   * decorativa — cada uma tem um trabalho, e só ele.
+   */
 
-  /* Tipografia — provisório */
-  --font-display: system-ui, sans-serif;
-  --font-body: system-ui, sans-serif;
-  --font-mono: ui-monospace, 'Cascadia Code', Consolas, monospace;
+  /** breu — o fundo da janela */
+  --color-bg: #0f0c0e;
+  /** ardósia — toda superfície elevada: painel, gaveta, barra */
+  --color-panel: #221e20;
+  /** bordô — SÓ estado: seleção, marca, foco ativo. Nunca dado. */
+  --color-state: #8e1f32;
+  /** latão — SÓ dado de jogo: nível, custo em ações, raridade, referência cruzada */
+  --color-data: #e5a84b;
+  /** giz — texto normal. Contraste aferido: 13,4:1 sobre breu */
+  --color-text: #e8e0db;
+  /** bruma — texto secundário e rótulo. 6,1:1 sobre breu, passa em 4,5:1 */
+  --color-text-muted: #9c918e;
 
-  /* Espaçamento — base 4px, densidade alta (briefing, seção 8) */
+  /* Derivadas das seis. Não são cores novas: são as mesmas com alfa. */
+  --color-hairline: rgb(255 255 255 / 7%);
+  --color-hover: rgb(255 255 255 / 5%);
+  --color-data-strong: #f2c070;
+
+  /* ── Tipografia: dois papéis ─────────────────────────────────────────────────
+   * Spectral só em nome de entrada e título de seção — serifa de contraste baixo,
+   * aguenta 14px em lista densa. IBM Plex Sans no corpo e nos rótulos em pt-BR.
+   * Mono para o que é identificador: traço, versão da base, atalho. Alinha em
+   * coluna e sinaliza "isto não é prosa".
+   */
+  --font-display: Spectral, Georgia, 'Times New Roman', serif;
+  --font-body: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Code', Consolas, monospace;
+
+  /* Escala de tipo: 11 · 12 · 13 · 15 · 18 · 22 · 26 */
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-md: 13px;
+  --text-lg: 15px;
+  --text-xl: 18px;
+  --text-2xl: 22px;
+  --text-3xl: 26px;
+
+  /* ── Espaço: base 4px, com os degraus que o sistema usa ──────────────────── */
   --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-6: 24px;
-  --space-8: 32px;
+  --space-2: 7px;
+  --space-3: 11px;
+  --space-4: 14px;
+  --space-5: 18px;
+  --space-6: 26px;
+
+  /** Altura da linha de lista. Constante em toda a base — é o que o orçamento de
+   * 26 caracteres de traço do artboard 2b existe para garantir. */
+  --row-height: 34px;
+
+  /* ── Assinatura: o chanfro ───────────────────────────────────────────────────
+   * Corte de 45° no canto superior esquerdo, em toda superfície e todo chip. Eco da
+   * faceta do d20 do ícone. Substitui o arredondamento: dá identidade sem custar
+   * densidade. Único ornamento do app.
+   *
+   * Usa-se com clip-path, não com border-radius:
+   *   clip-path: polygon(var(--chamfer-md) 0, 100% 0, 100% 100%, 0 100%, 0 var(--chamfer-md));
+   */
+  --chamfer-sm: 5px;
+  --chamfer-md: 7px;
+  --chamfer-lg: 11px;
 }
