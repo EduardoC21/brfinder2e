@@ -62,7 +62,67 @@ Foundry de verdade.
 
 ---
 
-## 2. Fase da ficha: reimplementar regras, portar do pf2e, ou nenhum dos dois? `novo`
+## 2. O que fazer com entrada que some da fonte `novo`
+
+**Hoje não há nada previsto.** `persistSync` sobrescreve `base/<tipo>`, `desc/<tipo>` e
+`raw/<pack>` inteiros, então o que sumiu desaparece das três camadas. O relatório da
+engrenagem conta em `sumiram`, mas o dado já foi.
+
+Enquanto não houver ficha de personagem isso é inofensivo. Deixa de ser no instante em que
+uma ficha referenciar uma entrada por UUID.
+
+### Quanto isso acontece, medido
+
+Comparando `pf2e-7.9.1` (17/01/2026) com `pf2e-8.4.1` (17/08/2026) — sete meses, 21
+releases:
+
+|                                   | condições | talentos               |
+| --------------------------------- | --------- | ---------------------- |
+| sumiram (`_id` deixou de existir) | 0         | **4** de 5.845 (0,07%) |
+| novos                             | 0         | 442                    |
+| mesmo `_id`, **nome mudou**       | 0         | **15**                 |
+
+Dois fatos que isso estabelece:
+
+1. **Renomear preserva o `_id`.** Os 15 casos (`Sense Chaos` → `Sense Iniquity`,
+   `Skill Mastery (Rogue)` → `Skill Mastery`) chegam como ATUALIZAÇÃO, não como
+   remoção mais inclusão. Chavear por UUID está certo.
+2. **Sumir é raro e é definitivo.** Os quatro (`Expanded Luck`,
+   `Evasiveness (Swashbuckler)`, `Skill Mastery (Investigator)`, `Deepest Wellspring`)
+   não existem em nenhum pack do 8.4.1, nem por `_id` nem por nome. Foram consolidados
+   em outros talentos, e não há link automático para onde foram.
+
+### Não há urgência, e o motivo importa
+
+A versão é **fixada** (`PINNED_TAG`). Sincronizar duas vezes a mesma tag nunca remove
+nada — o teste no navegador confirmou. Remoção só acontece quando alguém troca a tag de
+propósito, que hoje é mudança de código. É migração controlada, não evento aleatório.
+
+### As saídas
+
+|       | O quê                                                                                                                    | Custo                    | Problema                                                                                                                                            |
+| ----- | ------------------------------------------------------------------------------------------------------------------------ | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **A** | Apagar e deixar a ficha quebrar (comportamento de hoje)                                                                  | zero                     | O briefing (seção 1) diz que o mestre precisa abrir a ficha de um jogador e auditar. Referência pendurada é exatamente a falha que estraga a sessão |
+| **B** | **Lápide**: a entrada fica em `base/`, marcada `retiredIn: "pf2e-8.5.0"`. Some da busca por padrão, mas resolve por UUID | ~4 entradas por semestre | A busca precisa filtrar                                                                                                                             |
+| **C** | Versionar tudo: `raw/<tag>/<pack>`                                                                                       | ~35 MiB por versão       | Guardar 35 MiB para preservar 4 entradas                                                                                                            |
+| **D** | **B mais o `raw` do que morreu**: lápide em `base/` e `desc/`, e o documento cru da entidade em `raw/retired/<uuid>`     | praticamente zero        | Um passo a mais no `persistSync`                                                                                                                    |
+
+**Recomendação: D.** É a única que mantém as três garantias juntas — a ficha não quebra,
+a tela de detalhe ainda tem o que mostrar, e a exportação para o Foundry (item 1) continua
+possível para a entrada aposentada. O custo é uma passada a mais sobre a base anterior,
+que o `persistSync` já lê para calcular a diferença.
+
+Esboço: as chaves da base anterior ausentes na nova são copiadas para a nova com
+`retiredIn = <tag do release>`; o `desc` delas vai junto; e o documento cru vai para
+`raw/retired/<uuid>` antes de `raw/<pack>` ser sobrescrito.
+
+**Decidir quando:** antes de trocar `PINNED_TAG` pela primeira vez, ou ao começar a ficha
+de personagem — o que vier primeiro. Ver também o item 1 (exportação) e o item 9 (política
+de atualização da base).
+
+---
+
+## 3. Fase da ficha: reimplementar regras, portar do pf2e, ou nenhum dos dois? `novo`
 
 **Não é decisão da Etapa 2.** Fica aqui para não se perder até a ficha entrar em escopo.
 
@@ -101,7 +161,7 @@ consulta, essencial se a ficha um dia aplicar regras. Com `raw/` preservado (ver
 
 ---
 
-## 3. A receita lê só o documento, ou também a tabela de idioma? `novo`
+## 4. A receita lê só o documento, ou também a tabela de idioma? `novo`
 
 **Decidir na Etapa 2**, porque muda o motor.
 
@@ -127,7 +187,7 @@ mantém a receita com uma fonte só.
 
 ---
 
-## 4. Traços: inglês ou português? `§9`
+## 5. Traços: inglês ou português? `§9`
 
 São dado (`traits.value: ["fighter", "flourish"]`) mas quem desenha o chip é a interface.
 Ficam exatamente na fronteira.
@@ -140,20 +200,20 @@ inverter depois é trocar uma coluna.
 
 ---
 
-## 5. Detalhe da entrada: painel lateral ou tela cheia? `§9`
+## 6. Detalhe da entrada: painel lateral ou tela cheia? `§9`
 
 Argumentar a escolha ao propor a tela. **Decidir quando:** Etapa 8.
 
 ---
 
-## 6. Busca global: campo na barra, paleta de comandos, ou aba? `§9`
+## 7. Busca global: campo na barra, paleta de comandos, ou aba? `§9`
 
 **Recomendação do briefing:** campo na barra que abre a paleta, e o mesmo Ctrl+K de
 qualquer lugar. **Decidir quando:** Etapa 11.
 
 ---
 
-## 7. Sistema operacional dos jogadores `§9`
+## 8. Sistema operacional dos jogadores `§9`
 
 Confirmar se algum usa macOS ou Linux **antes de prometer suporte**. No Windows, binário
 não assinado mostra o aviso do SmartScreen — aceitável para cinco pessoas. No macOS o
@@ -163,7 +223,7 @@ atrito é maior (Gatekeeper).
 
 ---
 
-## 8. Fundo da tela `§9`
+## 9. Fundo da tela `§9`
 
 Não podemos distribuir arte da Paizo nem de banco de imagem. Ou um fundo gerado por
 código, ou o usuário aponta a própria imagem.
@@ -172,7 +232,7 @@ código, ou o usuário aponta a própria imagem.
 
 ---
 
-## 9. Política de atualização da base `novo`
+## 10. Política de atualização da base `novo`
 
 `PINNED_TAG` em `src/core/source/channels.ts` fixa a versão em `pf2e-8.4.1`. Fixar é
 decisão fechada (briefing, seção 8): a base do mestre e a dos jogadores precisam bater
