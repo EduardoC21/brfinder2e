@@ -51,11 +51,12 @@ export function collectPaths(
 
 function walk(value: unknown, prefix: string, into: Map<string, unknown>): void {
   if (Array.isArray(value)) {
-    if (value.length === 0) {
-      // Array vazio é uma folha: não há o que descer, mas o caminho existe.
-      remember(into, prefix, value);
-      return;
-    }
+    // O caminho do array é registrado SEMPRE, cheio ou vazio.
+    //
+    // Sem isto a frequência mente: um campo presente em 43 documentos aparecia como
+    // "35/43" (os vazios) mais "35/43[]" (os cheios), e a leitura óbvia — "falta em 8" —
+    // era falsa. Achado ao usar o relatório pela primeira vez, nas 43 condições.
+    remember(into, prefix, value);
     for (const item of value) walk(item, `${prefix}[]`, into);
     return;
   }
@@ -77,7 +78,16 @@ function walk(value: unknown, prefix: string, into: Map<string, unknown>): void 
 
 function remember(into: Map<string, unknown>, path: string, value: unknown): void {
   if (path === '') return;
-  if (!into.has(path)) into.set(path, value);
+  const existing = into.get(path);
+  // Guarda o primeiro exemplo, mas troca um vazio por um preenchido: `[]` não ensina nada.
+  if (existing === undefined || (isEmptyContainer(existing) && !isEmptyContainer(value))) {
+    into.set(path, value);
+  }
+}
+
+function isEmptyContainer(value: unknown): boolean {
+  if (Array.isArray(value)) return value.length === 0;
+  return isRecord(value) && Object.keys(value).length === 0;
 }
 
 /**

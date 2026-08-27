@@ -31,9 +31,22 @@ describe('collectPaths', () => {
     expect(paths.get('traits.value')).toEqual([]);
   });
 
-  it('desce em array com a notação []', () => {
+  it('desce em array com a notação [], sem perder o caminho do próprio array', () => {
     const paths = collectPaths({ rules: [{ key: 'FlatModifier', value: -1 }] });
-    expect([...paths.keys()]).toEqual(['rules[].key', 'rules[].value']);
+    expect([...paths.keys()]).toEqual(['rules', 'rules[].key', 'rules[].value']);
+  });
+
+  /**
+   * Regressão. Antes disto, um campo presente nos 43 documentos aparecia no relatório
+   * como "35/43" (os que tinham array vazio) mais uma linha "[]" separada — e a leitura
+   * óbvia, "falta em 8 documentos", era falsa.
+   */
+  it('conta o array cheio e o vazio no MESMO caminho', () => {
+    const into = collectPaths({ overrides: [] });
+    collectPaths({ overrides: ['hostile'] }, into);
+    expect([...into.keys()].sort()).toEqual(['overrides', 'overrides[]']);
+    // e o exemplo guardado é o preenchido, não o vazio
+    expect(into.get('overrides')).toEqual(['hostile']);
   });
 
   // É o mecanismo que o briefing (5.1) credita por ter pego system.subfeatures.
