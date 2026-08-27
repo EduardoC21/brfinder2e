@@ -67,8 +67,31 @@
 }
 
 .list {
+  min-height: 0;
+  min-width: 0;
   overflow-y: auto;
   padding-bottom: var(--space-6);
+}
+
+/*
+ * Com o detalhe aberto, a área vira duas colunas: a lista continua visível à esquerda,
+ * que é o motivo de o briefing (seção 9) chamar isto de "painel lateral AO LADO da lista".
+ * `minmax(0, …)` nas duas para nenhuma delas ser empurrada pelo conteúdo.
+ */
+.split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-height: 0;
+}
+
+.withDetail {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 420px);
+}
+
+.detailPane {
+  min-height: 0;
+  min-width: 0;
+  border-left: 1px solid var(--color-hairline);
 }
 
 .empty {

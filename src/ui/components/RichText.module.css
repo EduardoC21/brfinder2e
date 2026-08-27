@@ -1,0 +1,119 @@
+/*
+ * O texto de leitura da descrição.
+ *
+ * As classes têm o nome da TAG: o desenhista faz `styles[node.tag]`, então acrescentar
+ * suporte a uma tag nova é acrescentar uma regra aqui e o nome na lista permitida.
+ */
+.p {
+  margin: 0 0 var(--space-3);
+}
+
+.p:last-child {
+  margin-bottom: 0;
+}
+
+.strong {
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.em {
+  font-style: italic;
+}
+
+/*
+ * A régua separa "Requisitos/Gatilho" do efeito, e aparece 666 vezes. Fina e discreta:
+ * ela organiza, não decora.
+ */
+.hr {
+  height: 0;
+  margin: var(--space-3) 0;
+  border: 0;
+  border-top: 1px solid var(--color-hairline);
+}
+
+.ul,
+.ol {
+  margin: 0 0 var(--space-3);
+  padding-left: var(--space-5);
+}
+
+.li {
+  margin-bottom: var(--space-1);
+}
+
+.h2,
+.h3,
+.h4 {
+  margin: var(--space-4) 0 var(--space-2);
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.h2 {
+  font-size: var(--text-lg);
+}
+
+.h3,
+.h4 {
+  font-size: var(--text-md);
+}
+
+/* Tabela rola por dentro quando não couber: a página nunca ganha rolagem horizontal. */
+.table {
+  display: block;
+  width: 100%;
+  margin: 0 0 var(--space-3);
+  overflow-x: auto;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.th,
+.td {
+  padding: var(--space-1) var(--space-2);
+  border-bottom: 1px solid var(--color-hairline);
+  text-align: left;
+  vertical-align: top;
+}
+
+.th {
+  color: var(--color-text-muted);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.section {
+  margin-bottom: var(--space-3);
+}
+
+/*
+ * A REFERÊNCIA CRUZADA.
+ *
+ * O Anexo A pede que ela se destaque "sem virar um mar de links azuis". Então: latão, que
+ * no sistema é a cor de dado de jogo, com uma linha inferior pontilhada. Pontilhada e não
+ * contínua porque estas referências ainda não navegam — sublinhado contínuo prometeria um
+ * clique que não existe. Quando a navegação chegar, a linha vira contínua e o cursor vira
+ * ponteiro; o vocabulário já estará instalado.
+ */
+.xref {
+  color: var(--color-data);
+  border-bottom: 1px dotted color-mix(in srgb, var(--color-data) 55%, transparent);
+  cursor: help;
+}
+
+/* Dano e testes são números: mono os alinha e sinaliza "isto não é prosa". */
+.damage,
+.check,
+.roll {
+  font-family: var(--font-mono);
+  font-size: 0.94em;
+}
+
+/* O que ainda não resolvemos fica discreto, em vez de gritar em latão. */
+.pending {
+  color: var(--color-text-muted);
+  border-bottom: 1px dotted var(--color-hairline);
+  cursor: help;
+}

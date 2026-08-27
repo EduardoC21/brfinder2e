@@ -5,12 +5,14 @@ import {
   applyFilters,
   createSearchIndex,
   firstReadySource,
+  fieldValue,
   sortByName,
   type BrowseEntity,
   type FilterState,
   type SourceSpec,
 } from '@core/browse/index';
 import { strings } from '@i18n/index';
+import { FloatingPanel } from '@ui/components/FloatingPanel';
 import { cx } from '@ui/cx';
 import { useBase } from '@ui/hooks/useBase';
 
@@ -79,6 +81,11 @@ function SourcePane({
   const [filters, setFilters] = useState<FilterState>({});
   const [activeIndex, setActiveIndex] = useState(-1);
   const [openedKey, setOpenedKey] = useState<string | null>(null);
+  /*
+   * Onde o detalhe está desenhado, não se ele existe: são estados EXCLUSIVOS, e abrir o
+   * flutuante fecha a lateral porque é o mesmo detalhe mudando de moldura, não um segundo.
+   */
+  const [floating, setFloating] = useState(false);
   const input = useRef<HTMLInputElement>(null);
 
   /*
@@ -110,6 +117,11 @@ function SourcePane({
   }, [entities, source.filters, filters, deferredTerm, index]);
 
   const opened = results.find((entity) => entity.key === openedKey) ?? null;
+
+  const close = (): void => {
+    setOpenedKey(null);
+    setFloating(false);
+  };
 
   /**
    * O teclado vive no campo de busca, não na lista.
@@ -183,31 +195,56 @@ function SourcePane({
         }}
       />
 
-      <div className={styles['list']} id="lista-de-resultados">
-        {loading ? null : entities.length === 0 ? (
-          <p className={styles['empty']}>{t.empty}</p>
-        ) : results.length === 0 ? (
-          <p className={styles['empty']}>{t.noResults}</p>
-        ) : (
-          <ResultList
-            entities={results}
-            columns={source.columns}
-            activeIndex={activeIndex}
-            onActivate={(index) => {
-              setActiveIndex(index);
-              const chosen = results[index];
-              if (chosen) setOpenedKey(chosen.key);
-              input.current?.focus();
-            }}
-            onOpen={(index) => {
-              const chosen = results[index];
-              if (chosen) setOpenedKey(chosen.key);
-            }}
-          />
+      <div className={cx(styles['split'], opened !== null && !floating && styles['withDetail'])}>
+        <div className={styles['list']} id="lista-de-resultados">
+          {loading ? null : entities.length === 0 ? (
+            <p className={styles['empty']}>{t.empty}</p>
+          ) : results.length === 0 ? (
+            <p className={styles['empty']}>{t.noResults}</p>
+          ) : (
+            <ResultList
+              entities={results}
+              columns={source.columns}
+              activeIndex={activeIndex}
+              onActivate={(index) => {
+                setActiveIndex(index);
+                const chosen = results[index];
+                if (chosen) setOpenedKey(chosen.key);
+                input.current?.focus();
+              }}
+              onOpen={(index) => {
+                const chosen = results[index];
+                if (chosen) setOpenedKey(chosen.key);
+              }}
+            />
+          )}
+        </div>
+
+        {opened !== null && !floating && (
+          <div className={styles['detailPane']}>
+            <DetailPanel
+              entity={opened}
+              entityType={source.entityType ?? ''}
+              fields={source.detail}
+              onClose={close}
+              onPopOut={() => {
+                setFloating(true);
+              }}
+            />
+          </div>
         )}
       </div>
 
-      {opened !== null && <DetailPanel entity={opened} />}
+      {opened !== null && floating && (
+        <FloatingPanel title={fieldValue(opened, 'name')} onClose={close}>
+          <DetailPanel
+            entity={opened}
+            entityType={source.entityType ?? ''}
+            fields={source.detail}
+            onClose={close}
+          />
+        </FloatingPanel>
+      )}
     </div>
   );
 }

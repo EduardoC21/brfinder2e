@@ -140,13 +140,18 @@ inverter depois é trocar uma coluna.
 
 ---
 
-## 5. Detalhe da entrada: painel lateral ou tela cheia? `§9`
+## 5. Pop-out: painel dentro da janela ou janela do sistema? `novo`
 
-Argumentar a escolha ao propor a tela. **Decidir quando:** Etapa 8.
+**Decidido na Etapa 8b:** painel flutuante DENTRO da janela do app (`FloatingPanel`), não
+uma segunda janela do sistema operacional.
 
-⚠️ A Etapa 5 pôs um painel PROVISÓRIO no rodapé da lista, só para o Enter ter para onde
-levar. Ele não é a decisão: mostra a descrição CRUA, com a marcação `@UUID[...]` à vista,
-justamente para deixar visível o que a Etapa 7 tem que resolver.
+O que fica em aberto é a promoção: o Tauri sabe abrir uma segunda janela nativa, e ela
+teria uma vantagem real — ficar por cima de OUTROS programas, o que serve para consultar
+uma condição com o Foundry na frente. O custo é que a segunda janela é outro processo de
+interface: o estado tem que atravessar, e nada do que temos hoje atravessa.
+
+Não vale gastar isso antes de saber se alguém quer. **Decidir quando:** Etapa 15, com o
+empacotamento na mesa, e só se o uso pedir.
 
 ---
 

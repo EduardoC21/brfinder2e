@@ -39,12 +39,37 @@ export const ptBR = {
     yes: 'sim',
     no: 'não',
     retired: 'aposentada',
-    detailProvisional:
-      'A tela de detalhe é a Etapa 8. Por enquanto a descrição aparece crua, com a marcação do Foundry — é o que a Etapa 7 vai transformar em texto legível com referência cruzada.',
+    /** Custo em ações — artboard 1a, seção 4. */
+    cost: {
+      actions: (n: number) => (n === 1 ? '1 ação' : `${String(n)} ações`),
+      reaction: 'reação',
+      free: 'ação livre',
+      passive: 'passiva',
+      label: 'custo',
+    },
+    detail: {
+      close: 'Fechar',
+      popOut: 'Destacar em painel flutuante',
+      minimize: 'Minimizar',
+      restore: 'Restaurar',
+      translate: 'Gerar tradução',
+      retranslate: 'Gerar de novo',
+      toggleOriginal: 'Ver original',
+      toggleTranslated: 'Ver tradução',
+      /** A tradução é a Etapa 14. Os botões existem, e dizem por que não funcionam ainda. */
+      translationPending:
+        'A tradução sob demanda é a Etapa 15 do plano. Os botões já estão no lugar para o desenho ser avaliado.',
+      description: 'Descrição',
+      empty: 'Escolha uma entrada na lista.',
+    },
     fieldLabel: {
       group: 'grupo',
       valued: 'valorada',
       sector: 'setor',
+      summary: 'resumo',
+      overrides: 'anula',
+      traits: 'traços',
+      frequency: 'frequência',
       costKind: 'custo',
       category: 'categoria',
       rarity: 'raridade',

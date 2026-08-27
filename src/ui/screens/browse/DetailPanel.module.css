@@ -1,47 +1,158 @@
 /*
- * PROVISÓRIO. A tela de detalhe é a Etapa 8, e a decisão "painel lateral ou tela cheia"
- * está aberta (OPEN-DECISIONS, item 5). Isto existe só para o Enter ter para onde levar.
+ * O detalhe de uma entrada.
  *
- * A descrição aparece CRUA, com a marcação do Foundry à mostra — é honesto e mostra
- * exatamente o que a Etapa 7 vai ter que resolver.
+ * Grid de duas linhas: cabeçalho fixo e corpo que rola. É o ponto do desenho — a descrição
+ * de um talento longo passa da altura da janela, e sem esse teto o cabeçalho sairia de
+ * vista junto com o texto. Assim nome, custo e traços ficam sempre à mão enquanto se lê.
  */
 .panel {
-  border-top: 1px solid var(--color-hairline);
-  padding: var(--space-4);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
   background: var(--color-panel);
-  max-height: 40%;
-  overflow-y: auto;
 }
 
+.head {
+  flex: none;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-hairline);
+}
+
+.titleRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+/* Nome de entrada é Spectral — o papel de "nome" na tipografia do sistema. */
 .name {
   margin: 0;
-  font: 400 var(--text-2xl) / 1.1 var(--font-display);
-}
-
-.meta {
-  margin: var(--space-2) 0 0;
-  font: 400 var(--text-xs) / 1.5 var(--font-mono);
-  color: var(--color-text-muted);
-}
-
-.summary {
-  margin: var(--space-3) 0 0;
-  font: 400 var(--text-lg) / 1.5 var(--font-body);
+  min-width: 0;
+  font: 400 var(--text-2xl) / 1.15 var(--font-display);
   color: var(--color-text);
 }
 
-.raw {
-  margin: var(--space-3) 0 0;
-  padding: var(--space-3);
-  background: var(--color-bg);
-  font: 400 var(--text-xs) / 1.6 var(--font-mono);
-  color: var(--color-text-muted);
-  white-space: pre-wrap;
-  word-break: break-word;
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex: none;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
-.note {
-  margin: var(--space-3) 0 0;
-  font: 400 var(--text-xs) / 1.5 var(--font-body);
+.action {
+  border: 1px solid var(--color-hairline);
+  padding: var(--space-1) var(--space-2);
+  background: transparent;
   color: var(--color-text-muted);
+  font: 400 var(--text-xs) / 1.6 var(--font-body);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.action:hover:not(:disabled) {
+  background: var(--color-hover);
+  color: var(--color-text);
+}
+
+/* Desabilitado precisa PARECER desabilitado, senão o clique sem efeito vira bug aparente. */
+.action:disabled {
+  color: #453a3d;
+  border-color: rgb(255 255 255 / 4%);
+  cursor: not-allowed;
+}
+
+.icon {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--color-hairline);
+  padding: 0;
+  background: transparent;
+  color: var(--color-text-muted);
+  font: 400 var(--text-md) / 1 var(--font-body);
+  cursor: pointer;
+}
+
+.icon:hover {
+  background: var(--color-state);
+  border-color: transparent;
+  color: #f6edea;
+}
+
+/* Aposentada é ESTADO: bordô. */
+.retired {
+  display: inline-block;
+  margin: var(--space-2) 0 0;
+  padding: 2px var(--space-2);
+  background: var(--color-state);
+  color: #f6edea;
+  font: 500 var(--text-xs) / 1.5 var(--font-mono);
+}
+
+/*
+ * Rótulo à esquerda com largura fixa, valor à direita: os rótulos alinham em coluna e o
+ * olho desce por eles sem ler. `max-content` limitado evita que um rótulo longo empurre
+ * todos os valores para o lado.
+ */
+.fields {
+  display: grid;
+  grid-template-columns: minmax(0, max-content) minmax(0, 1fr);
+  gap: var(--space-1) var(--space-3);
+  margin: var(--space-3) 0 0;
+}
+
+.label {
+  font: 400 var(--text-xs) / 1.7 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.value {
+  margin: 0;
+  min-width: 0;
+  font: 400 var(--text-md) / 1.5 var(--font-body);
+  color: var(--color-text);
+}
+
+.muted {
+  color: var(--color-text-muted);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+/*
+ * Traço é identificador, não prosa: mono, e todos com o MESMO peso. O artboard 2b é
+ * explícito — os dados crus não distinguem traço de classe de traço genérico, então
+ * inventar duas cores seria mentir.
+ */
+.chip {
+  padding: 2px var(--space-2);
+  background: var(--color-bg);
+  color: var(--color-text-muted);
+  font: 400 var(--text-xs) / 1.5 var(--font-mono);
+}
+
+.body {
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--space-4);
+}
+
+/* Medida de leitura: linha muito longa cansa. 66ch é o limite clássico. */
+.prose {
+  max-width: 66ch;
+  font: 400 var(--text-md) / 1.6 var(--font-body);
+  color: var(--color-text);
 }

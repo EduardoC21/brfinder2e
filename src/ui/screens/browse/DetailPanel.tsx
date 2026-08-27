@@ -1,75 +1,278 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
-import { fieldValue, type BrowseEntity } from '@core/browse/index';
-import { readDesc } from '@core/store/index';
+import { fieldValue, type BrowseEntity, type DetailFieldSpec } from '@core/browse/index';
 import { isRecord } from '@core/json';
+import { parseDescription } from '@core/markup/index';
+import { readDesc } from '@core/store/index';
 import { strings } from '@i18n/index';
 import { createIndexedDbStore } from '@platform/store-indexeddb';
+import { ActionCost } from '@ui/components/ActionCost';
+import { RichText } from '@ui/components/RichText';
+import { cx } from '@ui/cx';
 
 import styles from './DetailPanel.module.css';
 
 const store = createIndexedDbStore();
-const t = strings.browse;
+const t = strings.browse.detail;
+const b = strings.browse;
+
+export interface DetailPanelProps {
+  readonly entity: BrowseEntity;
+  readonly entityType: string;
+  readonly fields: readonly DetailFieldSpec[];
+  readonly onClose: () => void;
+  /** Ausente quando já está flutuando: não se destaca o que já está destacado. */
+  readonly onPopOut?: () => void;
+}
 
 /**
- * PROVISÓRIO — a tela de detalhe é a Etapa 8, e a decisão "painel lateral ou tela cheia"
- * está aberta (OPEN-DECISIONS, item 5). Isto existe para o Enter ter para onde levar.
+ * O detalhe de uma entrada.
  *
- * A descrição aparece CRUA de propósito, com a marcação `@UUID[...]` à mostra. É honesto
- * e deixa visível exatamente o que a Etapa 7 vai ter que resolver.
+ * O mesmo componente serve o painel lateral e o pop-out flutuante — quem muda é só o
+ * invólucro. Por isso a barra de ações recebe `onPopOut` opcional em vez de saber onde
+ * está: um componente que pergunta "estou flutuando?" acaba com dois desenhos que
+ * divergem no primeiro ajuste.
  */
-export function DetailPanel({ entity }: { readonly entity: BrowseEntity }) {
-  const description = useDescription(entity.key);
-  const summary = fieldValue(entity, 'summary');
-  const group = fieldValue(entity, 'group');
+export function DetailPanel({ entity, entityType, fields, onClose, onPopOut }: DetailPanelProps) {
+  const description = useDescription(entityType, entity.key);
+  const nodes = useMemo(
+    () => (description === null ? null : parseDescription(description)),
+    [description],
+  );
 
   return (
-    <aside className={styles['panel']}>
-      <h2 className={styles['name']}>{fieldValue(entity, 'name')}</h2>
+    <section className={styles['panel']} aria-label={fieldValue(entity, 'name')}>
+      <header className={styles['head']}>
+        <div className={styles['titleRow']}>
+          <h2 className={styles['name']}>{fieldValue(entity, 'name')}</h2>
+          <Actions onClose={onClose} onPopOut={onPopOut} />
+        </div>
 
-      <p className={styles['meta']}>
-        {group === '' ? '' : `${group} · `}
-        {entity.uuid}
-        {entity.retiredIn !== undefined && ` · ${t.retired} (${entity.retiredIn})`}
-      </p>
+        {entity.retiredIn !== undefined && (
+          <p className={styles['retired']}>
+            {b.retired} — {entity.retiredIn}
+          </p>
+        )}
 
-      {summary !== '' && <p className={styles['summary']}>{summary}</p>}
-      {description !== null && <pre className={styles['raw']}>{description}</pre>}
+        <dl className={styles['fields']}>
+          {fields.map((spec, index) => (
+            <Field key={index} spec={spec} entity={entity} />
+          ))}
+        </dl>
+      </header>
 
-      <p className={styles['note']}>{t.detailProvisional}</p>
-    </aside>
+      {/*
+       * A rolagem é DAQUI, não da página: a descrição de um talento longo passa da altura
+       * da janela, e sem teto o cabeçalho sairia de vista junto. Assim nome, custo e
+       * traços ficam sempre à mão enquanto se lê o texto.
+       */}
+      <div className={styles['body']}>
+        {nodes === null ? null : (
+          <div className={styles['prose']}>
+            <RichText nodes={nodes} />
+          </div>
+        )}
+      </div>
+    </section>
   );
 }
 
 /**
- * As descrições moram em `desc/<tipo>`, à parte, por serem pesadas (briefing 5.2).
+ * Os botões de tradução existem e estão DESABILITADOS.
  *
- * O texto carregado guarda a chave que o produziu, e a troca de entrada é DERIVADA da
- * comparação — limpar com `setText(null)` no começo do efeito provocaria uma renderização
- * em cascata, e a descrição da entrada anterior piscaria na tela da nova.
+ * A tradução sob demanda é a Etapa 15 do briefing. Deixá-los visíveis permite avaliar o
+ * desenho agora; deixá-los clicáveis seria fingir que funcionam. O motivo vai no `title`,
+ * onde quem passar o mouse encontra.
  */
-function useDescription(key: string): string | null {
-  const [loaded, setLoaded] = useState<{ key: string; text: string } | null>(null);
+function Actions({
+  onClose,
+  onPopOut,
+}: {
+  readonly onClose: () => void;
+  readonly onPopOut?: (() => void) | undefined;
+}) {
+  return (
+    <div className={styles['actions']}>
+      <button
+        type="button"
+        className={cx(styles['action'], 'chamfer-sm')}
+        disabled
+        title={t.translationPending}
+      >
+        {t.translate}
+      </button>
+      <button
+        type="button"
+        className={cx(styles['action'], 'chamfer-sm')}
+        disabled
+        title={t.translationPending}
+      >
+        {t.toggleTranslated}
+      </button>
+      <button
+        type="button"
+        className={cx(styles['action'], 'chamfer-sm')}
+        disabled
+        title={t.translationPending}
+      >
+        {t.retranslate}
+      </button>
+
+      {onPopOut && (
+        <button
+          type="button"
+          className={cx(styles['icon'], 'chamfer-sm')}
+          aria-label={t.popOut}
+          title={t.popOut}
+          onClick={onPopOut}
+        >
+          ⤢
+        </button>
+      )}
+      <button
+        type="button"
+        className={cx(styles['icon'], 'chamfer-sm')}
+        aria-label={t.close}
+        title={t.close}
+        onClick={onClose}
+      >
+        ×
+      </button>
+    </div>
+  );
+}
+
+/**
+ * Um campo do cabeçalho.
+ *
+ * Um caso por espécie declarada em `core/browse/spec.ts`, igual às colunas da lista.
+ * Acrescentar espécie é um caso na união mais um caso aqui, e o compilador cobra.
+ */
+function Field({
+  spec,
+  entity,
+}: {
+  readonly spec: DetailFieldSpec;
+  readonly entity: BrowseEntity;
+}) {
+  const label = (field: string): string => b.fieldLabel[field] ?? field;
+
+  switch (spec.kind) {
+    case 'cost': {
+      const kind = fieldValue(entity, 'costKind');
+      if (kind === '') return null;
+      const count = Number(fieldValue(entity, 'costCount'));
+      return (
+        <Row label={b.cost.label}>
+          <ActionCost kind={kind} count={Number.isFinite(count) ? count : null} />
+        </Row>
+      );
+    }
+
+    case 'text': {
+      const value = fieldValue(entity, spec.field);
+      if (value === '') return null;
+      return <Row label={label(spec.field)}>{value}</Row>;
+    }
+
+    case 'boolean': {
+      const value = fieldValue(entity, spec.field);
+      if (value === '') return null;
+      return <Row label={label(spec.field)}>{value === 'true' ? b.yes : b.no}</Row>;
+    }
+
+    case 'chips': {
+      const list = readList(entity, spec.field);
+      if (list.length === 0) return null;
+      return (
+        <Row label={label(spec.field)}>
+          <span className={styles['chips']}>
+            {list.map((item) => (
+              <span key={item} className={cx(styles['chip'], 'chamfer-sm')}>
+                {item}
+              </span>
+            ))}
+          </span>
+        </Row>
+      );
+    }
+
+    case 'source': {
+      const title = fieldValue(entity, 'source.title');
+      if (title === '') return null;
+      const license = fieldValue(entity, 'source.license');
+      const remaster = fieldValue(entity, 'source.remaster') === 'true';
+      return (
+        <Row label={label('source.title')}>
+          {title}
+          <span className={styles['muted']}>
+            {' '}
+            · {license}
+            {remaster ? '' : ' · legado'}
+          </span>
+        </Row>
+      );
+    }
+
+    case 'frequency': {
+      const value = readRecord(entity, spec.field);
+      if (value === null) return null;
+      return (
+        <Row label={label(spec.field)}>
+          {String(value['max'])} × {String(value['per'])}
+        </Row>
+      );
+    }
+  }
+}
+
+function Row({ label, children }: { readonly label: string; readonly children: React.ReactNode }) {
+  return (
+    <>
+      <dt className={styles['label']}>{label}</dt>
+      <dd className={styles['value']}>{children}</dd>
+    </>
+  );
+}
+
+function readList(entity: BrowseEntity, field: string): string[] {
+  const base = entity.base;
+  if (!isRecord(base)) return [];
+  const value = base[field];
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === 'string')
+    : [];
+}
+
+function readRecord(entity: BrowseEntity, field: string): Record<string, unknown> | null {
+  const base = entity.base;
+  if (!isRecord(base)) return null;
+  const value = base[field];
+  return isRecord(value) ? value : null;
+}
+
+/** As descrições moram em `desc/<tipo>`, à parte, por serem pesadas (briefing 5.2). */
+function useDescription(type: string, key: string): string | null {
+  const [loaded, setLoaded] = useState<{ token: string; text: string } | null>(null);
+  const token = `${type}/${key}`;
 
   useEffect(() => {
     let alive = true;
-
-    readDesc(store, 'condition')
+    readDesc(store, type)
       .then((all) => {
         if (!alive || all === null) return;
         const entry = all[key];
         if (!isRecord(entry)) return;
         const main = entry['main'];
-        if (typeof main === 'string') setLoaded({ key, text: main });
+        if (typeof main === 'string') setLoaded({ token, text: main });
       })
       .catch(() => {
-        // Sem descrição gravada o painel simplesmente não a mostra.
+        // Sem descrição gravada, o painel mostra só o cabeçalho.
       });
-
     return () => {
       alive = false;
     };
-  }, [key]);
+  }, [type, key, token]);
 
-  return loaded?.key === key ? loaded.text : null;
+  return loaded?.token === token ? loaded.text : null;
 }

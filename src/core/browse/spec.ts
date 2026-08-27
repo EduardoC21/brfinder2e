@@ -41,6 +41,21 @@ export type FilterSpec =
   | { readonly kind: 'options'; readonly field: string }
   | { readonly kind: 'boolean'; readonly field: string };
 
+/**
+ * Os campos do cabeçalho do detalhe.
+ *
+ * Mesma ideia das colunas: dado, não componente, com um desenhista por espécie na UI.
+ * `cost` e `frequency` são conceitos de Pathfinder, e é assim mesmo — o que queremos
+ * genérico é "acrescentar um tipo é escrever um descritor", não uma UI sem domínio.
+ */
+export type DetailFieldSpec =
+  | { readonly kind: 'text'; readonly field: string }
+  | { readonly kind: 'boolean'; readonly field: string }
+  | { readonly kind: 'chips'; readonly field: string }
+  | { readonly kind: 'frequency'; readonly field: string }
+  | { readonly kind: 'cost' }
+  | { readonly kind: 'source' };
+
 export interface SourceSpec {
   /** Identificador estável. É a chave do texto em `i18n` e da rota depois. */
   readonly id: string;
@@ -55,6 +70,8 @@ export interface SourceSpec {
   readonly filters: readonly FilterSpec[];
   /** Campos que a busca indexa, em ordem de peso — o primeiro pesa mais. */
   readonly searchFields: readonly string[];
+  /** O cabeçalho do detalhe. A descrição vem sempre, e não se declara. */
+  readonly detail: readonly DetailFieldSpec[];
 }
 
 /**
@@ -76,6 +93,13 @@ export const SOURCES: readonly SourceSpec[] = [
       { kind: 'options', field: 'source.title' },
     ],
     searchFields: ['name', 'summary'],
+    detail: [
+      { kind: 'text', field: 'summary' },
+      { kind: 'text', field: 'group' },
+      { kind: 'boolean', field: 'valued' },
+      { kind: 'chips', field: 'overrides' },
+      { kind: 'source' },
+    ],
   },
   {
     id: 'actions',
@@ -91,17 +115,106 @@ export const SOURCES: readonly SourceSpec[] = [
       { kind: 'options', field: 'source.title' },
     ],
     searchFields: ['name'],
+    detail: [
+      { kind: 'cost' },
+      { kind: 'text', field: 'sector' },
+      { kind: 'text', field: 'category' },
+      { kind: 'chips', field: 'traits' },
+      { kind: 'text', field: 'rarity' },
+      { kind: 'frequency', field: 'frequency' },
+      { kind: 'source' },
+    ],
   },
-  { id: 'feats', entityType: null, mode: 'list', columns: [], filters: [], searchFields: [] },
-  { id: 'spells', entityType: null, mode: 'list', columns: [], filters: [], searchFields: [] },
-  { id: 'equipment', entityType: null, mode: 'list', columns: [], filters: [], searchFields: [] },
-  { id: 'ancestries', entityType: null, mode: 'list', columns: [], filters: [], searchFields: [] },
-  { id: 'backgrounds', entityType: null, mode: 'list', columns: [], filters: [], searchFields: [] },
-  { id: 'archetypes', entityType: null, mode: 'list', columns: [], filters: [], searchFields: [] },
-  { id: 'classes', entityType: null, mode: 'cards', columns: [], filters: [], searchFields: [] },
-  { id: 'companions', entityType: null, mode: 'list', columns: [], filters: [], searchFields: [] },
-  { id: 'familiars', entityType: null, mode: 'list', columns: [], filters: [], searchFields: [] },
-  { id: 'skills', entityType: null, mode: 'list', columns: [], filters: [], searchFields: [] },
+  {
+    id: 'feats',
+    entityType: null,
+    mode: 'list',
+    columns: [],
+    filters: [],
+    searchFields: [],
+    detail: [],
+  },
+  {
+    id: 'spells',
+    entityType: null,
+    mode: 'list',
+    columns: [],
+    filters: [],
+    searchFields: [],
+    detail: [],
+  },
+  {
+    id: 'equipment',
+    entityType: null,
+    mode: 'list',
+    columns: [],
+    filters: [],
+    searchFields: [],
+    detail: [],
+  },
+  {
+    id: 'ancestries',
+    entityType: null,
+    mode: 'list',
+    columns: [],
+    filters: [],
+    searchFields: [],
+    detail: [],
+  },
+  {
+    id: 'backgrounds',
+    entityType: null,
+    mode: 'list',
+    columns: [],
+    filters: [],
+    searchFields: [],
+    detail: [],
+  },
+  {
+    id: 'archetypes',
+    entityType: null,
+    mode: 'list',
+    columns: [],
+    filters: [],
+    searchFields: [],
+    detail: [],
+  },
+  {
+    id: 'classes',
+    entityType: null,
+    mode: 'cards',
+    columns: [],
+    filters: [],
+    searchFields: [],
+    detail: [],
+  },
+  {
+    id: 'companions',
+    entityType: null,
+    mode: 'list',
+    columns: [],
+    filters: [],
+    searchFields: [],
+    detail: [],
+  },
+  {
+    id: 'familiars',
+    entityType: null,
+    mode: 'list',
+    columns: [],
+    filters: [],
+    searchFields: [],
+    detail: [],
+  },
+  {
+    id: 'skills',
+    entityType: null,
+    mode: 'list',
+    columns: [],
+    filters: [],
+    searchFields: [],
+    detail: [],
+  },
 ];
 
 export function findSource(id: string): SourceSpec | undefined {

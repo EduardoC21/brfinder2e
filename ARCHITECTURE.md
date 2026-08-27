@@ -621,6 +621,64 @@ isso o foco fica no `<input>`, a lista é um `listbox` comandado por
 lista é recalculada com prioridade menor. Nada é adiado por tempo, e o resultado nunca
 fica atrasado — só cede a vez. Importa quando a lista for 6.283 talentos.
 
+### O detalhe da entrada, e por que a rolagem é interna
+
+O painel de detalhe (`DetailPanel`) é um grid de duas linhas: cabeçalho fixo e corpo que
+rola. A descrição pode passar da altura da janela — e se a rolagem fosse da página, o nome
+e o custo sairiam de vista junto com o texto. Rolando por dentro, o cabeçalho fica.
+
+O mesmo componente serve as **duas** molduras, lateral e flutuante. Ele não pergunta onde
+está: recebe `onPopOut` opcional, e a ausência do callback é o que apaga o botão. Um
+componente que se pergunta "estou flutuando?" vira dois desenhos que divergem no primeiro
+ajuste.
+
+Os campos do cabeçalho são **dado**, não JSX: `DetailFieldSpec` em `core/browse/spec.ts`,
+com um desenhista por espécie na UI. É a mesma regra das colunas e dos filtros — a
+FRONTEIRA (seção 4) proíbe React em `core/`, e isso é o que faz as doze fontes caberem no
+mesmo componente.
+
+### O pop-out flutuante
+
+`FloatingPanel` é arrastado por eventos de **ponteiro**, não de mouse: `pointerdown` cobre
+mouse, caneta e toque com um código só, e `setPointerCapture` mantém o arrasto quando o
+cursor sai do elemento — sem isso, mover rápido "solta" o painel.
+
+A posição é aplicada por `transform`, não por `left`/`top`: `transform` não força
+recálculo de layout a cada quadro. E o arrasto é preso dentro da janela, deixando sempre
+uma faixa visível — a posição vive no componente, então um painel arrastado para fora
+nunca mais voltaria, nem recarregando.
+
+Rolagem em **um** lugar só: o flutuante corta (`overflow: hidden`) e entrega a altura ao
+detalhe, que rola por dentro. Duas rolagens encaixadas dariam duas barras na mesma coluna,
+e ninguém sabe qual delas move o texto.
+
+Abrir o flutuante **fecha** a lateral. São estados exclusivos porque é o mesmo detalhe
+mudando de moldura, não um segundo detalhe.
+
+### Os rótulos dos tokens de referência
+
+Quando a descrição foi ligada pela primeira vez, apareceu na tela: _"roll a
+flat|showDC:all|dc:15 to see if you recover"_. Não é caso raro — medido na base inteira, a
+esmagadora maioria destes tokens **não traz rótulo escrito à mão**:
+
+| token       | sem rótulo | com rótulo |
+| ----------- | ---------: | ---------: |
+| `@Check`    |     17.434 |        140 |
+| `@Damage`   |     14.545 |      1.362 |
+| `@Template` |      4.544 |        506 |
+
+`core/markup/label.ts` gera o texto de leitura: `DC 15 Flat`, `2d6 fire damage`,
+`10-foot emanation`. Três regras que valem a pena registrar:
+
+- A CD só entra quando é **número literal**. 15.696 tokens trazem `dc`, e parte vem como
+  `dc:{societyDC}` — variável que só o Foundry resolve. Chave crua é pior que omissão.
+- 2.378 fórmulas de dano referem `@actor` ou `@item`, que só existem com uma ficha na mão.
+  Nesses casos a fórmula é **omitida** e sobra o tipo: `persistent acid damage` é verdade,
+  `(1d6 + @item.system.runes.potency) acid damage` é ruído.
+- O texto gerado sai em **inglês**, porque o texto ao redor está em inglês. Palavra em
+  português no meio de frase inglesa seria pior que a frase inteira em inglês. A tradução
+  é a Etapa 15, e é dela o trabalho de traduzir a frase toda.
+
 ### O proxy do Vite
 
 `server.proxy` reescreve `api.github.com` e `github.com` para caminhos locais, e o Vite
