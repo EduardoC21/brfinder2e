@@ -215,11 +215,20 @@ function readFromFolder(
   if (!read.found) return { present: false, value: undefined };
   coverage.subtree.add(field.path);
 
-  if (typeof read.value !== 'string' || folders === undefined) {
-    return { present: false, value: undefined };
-  }
-  const name = folders.get(read.value);
-  return name === undefined ? { present: false, value: undefined } : { present: true, value: name };
+  /*
+   * Três situações diferentes, e a receita precisa distingui-las:
+   *
+   *   chave ausente (ou nula)  o pack não organiza em pastas. AUSENTE, e o valor padrão
+   *                            da receita vale — é o que marca as ações de aventura.
+   *   sem tabela de pastas     não dá para resolver. PRESENTE com vazio, e não ausente:
+   *                            senão todo documento viraria o padrão por falta da tabela.
+   *   pasta órfã               a chave aponta para uma pasta que não está no arquivo.
+   *                            Acontece: `Disengage` aponta para `fn4rMlw19rVjvyjV`, que
+   *                            não existe. É defeito do dado, não ausência de organização.
+   */
+  if (typeof read.value !== 'string') return { present: false, value: undefined };
+  if (folders === undefined) return { present: true, value: '' };
+  return { present: true, value: folders.get(read.value) ?? '' };
 }
 
 function readFromLanguage(

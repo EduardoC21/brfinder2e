@@ -9,8 +9,9 @@ Não é um VTT: sem rolagem, combate, iniciativa, tokens, mapas ou bestiário.
 
 ## Estado
 
-**Etapa 6 concluída** — receita de `action`: 574 normalizadas, 0 falhas, relatório limpo,
-com o setor vindo da pasta do compêndio (Basic 30, Skill 54, Class 196, Archetype 140).
+**Etapa 6 concluída** — receita de `action`: 766 normalizadas de dois packs, 0 falhas,
+relatório limpo, com o setor vindo da pasta do compêndio (Class 196, Adventure 192,
+Archetype 140, Skill 54, Basic 30…).
 Antes: **Etapa 5** — tela de consulta: trilho de fontes, busca com MiniSearch, filtros
 derivados do dado e navegação por teclado. Antes: **Etapa 4** — sistema de design do mockup fixado nos tokens, fontes embarcadas,
 casca com barra de topo, e a sincronização pelo botão da engrenagem: baixa, normaliza,

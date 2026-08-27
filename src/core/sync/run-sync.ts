@@ -34,12 +34,22 @@ export type SyncPhase =
   | { readonly kind: 'reading' }
   | { readonly kind: 'normalizing'; readonly type: string };
 
+/** Um pack que alimenta uma receita, com os bytes exatos como saíram do zip. */
+export interface PackSource {
+  /** Nome no manifesto. É a chave de `raw/`. */
+  readonly name: string;
+  /** Nome da entrada no zip. */
+  readonly file: string;
+  readonly rawBytes: Uint8Array;
+}
+
 export interface TypeResult {
   readonly type: string;
-  /** Nome do pack no manifesto, usado como chave de `raw/`. */
-  readonly packName: string;
-  /** Nome da entrada no zip. */
-  readonly pack: string;
+  /**
+   * TODOS os packs da receita, não só o primeiro. `action` lê dois: `actionspf2e` e
+   * `adventure-specific-actions`.
+   */
+  readonly packs: readonly PackSource[];
   /** Documentos daquele tipo encontrados no pack. */
   readonly total: number;
   readonly imported: number;
@@ -62,11 +72,6 @@ export interface TypeResult {
    * anterior daquele aposentado é mantida.
    */
   readonly retiredFailures: readonly Failure[];
-  /**
-   * Os bytes do pack, exatamente como saíram do zip. Guardados para a camada `raw/`
-   * (briefing 5.2) — que é gravada a partir daqui, nunca a partir da projeção.
-   */
-  readonly rawBytes: Uint8Array;
 }
 
 export interface SyncResult {
@@ -128,32 +133,46 @@ export async function runSync(
   for (const recipe of recipes) {
     notify({ kind: 'normalizing', type: recipe.type });
 
-    const packName = recipe.packs[0];
-    const pack = loaded.inventory.packs.find((entry) => entry.name === packName);
-    if (!pack) {
-      throw new SyncError(
-        `A receita "${recipe.type}" pede o pack "${String(packName)}", que não está no manifesto do release ${loaded.release.tag}.`,
-      );
+    // TODOS os packs da receita. O primeiro que declarar pastas manda no setor; os que
+    // não têm pasta caem no valor padrão declarado na receita.
+    const packs: PackSource[] = [];
+    const documents: unknown[] = [];
+    const folderTable = new Map<string, string>();
+
+    for (const packName of recipe.packs) {
+      const pack = loaded.inventory.packs.find((entry) => entry.name === packName);
+      if (!pack) {
+        throw new SyncError(
+          `A receita "${recipe.type}" pede o pack "${packName}", que não está no manifesto do release ${loaded.release.tag}.`,
+        );
+      }
+
+      const rawBytes = readEntries(loaded.zip, [pack.file]).get(pack.file);
+      if (!rawBytes) throw new SyncError(`Entrada "${pack.file}" não encontrada no arquivo.`);
+
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(new TextDecoder().decode(rawBytes));
+      } catch (cause) {
+        throw new SyncError(`Não consegui ler ${pack.file} do arquivo compactado.`, { cause });
+      }
+      if (!Array.isArray(parsed)) {
+        throw new SyncError(`${pack.file} não é um array de documentos.`);
+      }
+
+      packs.push({ name: packName, file: pack.file, rawBytes });
+      // `Array.isArray` sobre `unknown` estreita para `any[]`; a conversão devolve
+      // `unknown[]`, que é o que de fato sabemos.
+      documents.push(...(parsed as unknown[]));
+
+      const folders = readFolders(loaded, channel, packName);
+      if (folders) for (const [id, name] of folders) folderTable.set(id, name);
     }
 
-    const rawBytes = readEntries(loaded.zip, [pack.file]).get(pack.file);
-    if (!rawBytes) throw new SyncError(`Entrada "${pack.file}" não encontrada no arquivo.`);
-
-    let documents: unknown;
-    try {
-      documents = JSON.parse(new TextDecoder().decode(rawBytes));
-    } catch (cause) {
-      throw new SyncError(`Não consegui ler ${pack.file} do arquivo compactado.`, { cause });
-    }
-    if (!Array.isArray(documents)) {
-      throw new SyncError(`${pack.file} não é um array de documentos.`);
-    }
-
-    // As pastas do compêndio, quando o pack tiver o arquivo. É o que dá o setor das ações
-    // (Basic, Skill, Class…) — ver core/source/folders.ts.
-    const folders = readFolders(loaded, channel, String(packName));
-
-    const result = run(recipe, documents, { language, ...(folders ? { folders } : {}) });
+    const result = run(recipe, documents, {
+      language,
+      ...(folderTable.size > 0 ? { folders: folderTable } : {}),
+    });
 
     // Os aposentados passam pela MESMA receita, na mesma execução. É o que garante uma
     // forma só para o front desenhar.
@@ -166,8 +185,7 @@ export async function runSync(
 
     types.push({
       type: result.type,
-      packName: String(packName),
-      pack: pack.file,
+      packs,
       total: result.total,
       imported: result.entities.length,
       failed: result.failures.length,
@@ -175,7 +193,6 @@ export async function runSync(
       entities: result.entities,
       retiredEntities: retiredResult.entities,
       retiredFailures: retiredResult.failures,
-      rawBytes,
     });
   }
 

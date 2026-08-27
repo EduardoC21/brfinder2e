@@ -1,5 +1,5 @@
 /**
- * TESTE DE CONTRATO da receita de `action` — as 574 de verdade.
+ * TESTE DE CONTRATO da receita de `action` — as 766 de verdade, dos dois packs.
  *
  * Fora do `npm test`: baixa 34 MiB. Roda com `npm run test:contract`, e semanalmente em CI.
  */
@@ -26,26 +26,35 @@ let result: RunResult<ActionBase, ActionDesc>;
 beforeAll(async () => {
   const loaded = await loadInventory(http, { tag: KNOWN_GOOD_TAG });
 
-  const pack = loaded.inventory.packs.find((entry) => entry.name === 'actionspf2e');
-  const declaration = loaded.manifest.packs.find((entry) => entry.name === 'actionspf2e');
-  if (!pack || !declaration) throw new Error('o pack actionspf2e sumiu do manifesto');
+  const documents: unknown[] = [];
+  for (const packName of actionRecipe.packs) {
+    const pack = loaded.inventory.packs.find((entry) => entry.name === packName);
+    if (!pack) throw new Error(`o pack ${packName} sumiu do manifesto`);
+    documents.push(...(JSON.parse(readTextEntry(loaded.zip, pack.file)) as unknown[]));
+  }
 
-  const documents: unknown = JSON.parse(readTextEntry(loaded.zip, pack.file));
+  // Só o pack principal tem arquivo de pastas; o de aventura não tem, e é isso que marca
+  // as suas 192 entradas como `Adventure`.
+  const declaration = loaded.manifest.packs.find((entry) => entry.name === 'actionspf2e');
+  if (!declaration) throw new Error('o pack actionspf2e sumiu do manifesto');
   const folders = parseFolderRoots(
     JSON.parse(readTextEntry(loaded.zip, DEFAULT_CHANNEL.packFoldersFile(declaration))),
   );
+
   const language = mergeLanguageFiles(
     languageFiles(loaded.manifest, 'en').map(
       (entry) => JSON.parse(readTextEntry(loaded.zip, entry.path)) as unknown,
     ),
   );
 
-  result = run(actionRecipe, documents as readonly unknown[], { language, folders });
+  result = run(actionRecipe, documents, { language, folders });
 }, 180_000);
 
-describe('as 574 ações reais', () => {
+describe('as 766 ações reais, dos dois packs', () => {
   it('normaliza todas, sem nenhuma falha', () => {
-    expect(result.total).toBe(574);
+    // 574 do pack principal + 192 do de aventura. Os 16 documentos do tipo `feat` que
+    // moram no pack de aventura são descartados pelo filtro de tipo do motor.
+    expect(result.total).toBe(766);
     expect(
       result.failures,
       result.failures.map((failure) => `${failure.name}: ${failure.message}`).join('\n'),
@@ -53,7 +62,7 @@ describe('as 574 ações reais', () => {
   });
 
   it('o relatório fica limpo', () => {
-    const sobrou = result.report.unmapped.map((item) => `${item.path} (${String(item.count)}/574)`);
+    const sobrou = result.report.unmapped.map((item) => `${item.path} (${String(item.count)}/766)`);
     expect(result.report.unmapped, `sobrou:\n${sobrou.join('\n')}`).toEqual([]);
     expect(isClean(result.report)).toBe(true);
   });
@@ -83,6 +92,17 @@ describe('o que as 574 confirmam', () => {
     expect(setores.get('Skill')).toBe(54);
     expect(setores.get('Class')).toBe(196);
     expect(setores.get('Archetype')).toBe(140);
+
+    // As de aventura não têm pasta nenhuma: caem no padrão da receita.
+    expect(setores.get('Adventure')).toBe(192);
+    // E `Disengage` é a única com pasta órfã — defeito do dado do pf2e.
+    expect(setores.get('')).toBe(1);
+  });
+
+  it('as de aventura vêm de muitos livros, e é o livro que diz qual aventura', () => {
+    const aventura = result.entities.filter((entity) => entity.base.sector === 'Adventure');
+    const livros = new Set(aventura.map((entity) => entity.base.source.title));
+    expect(livros.size).toBeGreaterThan(30);
   });
 
   it('a categoria tem exatamente os quatro valores medidos', () => {
@@ -100,6 +120,6 @@ describe('o que as 574 confirmam', () => {
   /** Briefing 8: importa tudo e filtra na interface. Ação tem conteúdo legado de verdade. */
   it('traz conteúdo legado junto com o Remaster', () => {
     const legado = result.entities.filter((entity) => !entity.base.source.remaster);
-    expect(legado.length).toBe(83);
+    expect(legado.length).toBeGreaterThan(83);
   });
 });

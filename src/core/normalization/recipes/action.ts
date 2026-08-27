@@ -9,7 +9,8 @@
  * Amostras: `Trip` (perícia, o caso simples), `Rage` (classe, com rules e selfEffect) e
  * `Intercession Spell` (reação, com frequência e SEM raridade).
  *
- * As ações de aventura ficam de fora: são outro pack (`adventure-specific-actions`, 208).
+ * Lê DOIS packs: `actionspf2e` (574) e `adventure-specific-actions` (192 do tipo `action`,
+ * mais 16 do tipo `feat` que o motor descarta por tipo). Total: 766.
  */
 
 import { bool, html, int, nullable, shape, text, textList } from '../decoders';
@@ -45,13 +46,19 @@ export interface ActionBase {
 
   /**
    * A pasta RAIZ do compêndio: `Basic`, `Skill`, `Class`, `Archetype`, `Ancestry`,
-   * `Background`, `Exploration`… São 20 valores.
+   * `Background`, `Exploration`… mais `Adventure`, que não vem de pasta nenhuma.
    *
    * É a única coisa na base que separa as 30 ações básicas das 196 de classe — nenhum
    * traço marca uma ação como básica. Vem de `<pack>_folders.json`, que o briefing 7.2
    * manda ignorar como entidade; e não é entidade mesmo, é metadado.
    *
-   * Vazio quando o documento não tem pasta (acontece em 1 das 574).
+   * `Adventure` sai do PADRÃO, e a regra é medida: as 574 do pack principal TODAS têm a
+   * chave `folder`, e as 192 do pack de aventura NENHUMA tem. Então chave ausente
+   * identifica aventura sem ambiguidade. Qual aventura, quem diz é `source.title` — são
+   * 41 livros distintos.
+   *
+   * Vazio quando a chave existe e aponta para uma pasta que não está no arquivo: acontece
+   * com `Disengage`, e é defeito do dado do pf2e, não ausência de organização.
    */
   readonly sector: string;
 
@@ -85,7 +92,7 @@ export interface ActionDesc {
 
 export const actionRecipe = recipe<ActionBase, ActionDesc>({
   type: 'action',
-  packs: ['actionspf2e'],
+  packs: ['actionspf2e', 'adventure-specific-actions'],
 
   base: {
     name: from('name', text),
@@ -93,7 +100,7 @@ export const actionRecipe = recipe<ActionBase, ActionDesc>({
     costKind: from('system.actionType.value', text),
     costCount: from('system.actions.value', nullable(int)),
     category: from('system.category', nullable(text)),
-    sector: fromFolder('folder', text).withDefault(''),
+    sector: fromFolder('folder', text).withDefault('Adventure'),
     traits: from('system.traits.value', textList),
     rarity: from('system.traits.rarity', text).withDefault('common'),
     frequency: from('system.frequency', nullable(shape({ max: int, per: text }))).withDefault(null),
@@ -109,7 +116,7 @@ export const actionRecipe = recipe<ActionBase, ActionDesc>({
     effects: 'active effects do VTT; vazio nas 574',
     'system._migration': 'controle interno de migração do Foundry',
     'system.frequency.value':
-      'quantos usos restam AGORA; estado de ficha, não de consulta (5 das 574)',
+      'quantos usos restam AGORA; estado de ficha, não de consulta (5 das 766)',
     'system.traits.selected':
       'cache de interface do Foundry que vazou para o compêndio (8 das 574), e é lixo: ' +
       'contradiz traits.value em pelo menos três — Steel Your Resolve tem value vazio e ' +
@@ -128,6 +135,9 @@ export const actionRecipe = recipe<ActionBase, ActionDesc>({
       'a descrição já conta em texto o que ele faz.',
     'system.traits.otherTags':
       'etiquetas internas de agrupamento do sistema, como commander-expert-tactic ' +
-      '(37 das 574). Vira útil se a ficha precisar agrupar táticas.',
+      '(37 das 766). Vira útil se a ficha precisar agrupar táticas.',
+    'system.description.gm':
+      'texto que só o mestre deveria ver (1 das 766). Mostrá-lo sem distinguir quem está ' +
+      'olhando entregaria DC e resposta ao jogador — decidir junto com a tela de detalhe.',
   },
 });

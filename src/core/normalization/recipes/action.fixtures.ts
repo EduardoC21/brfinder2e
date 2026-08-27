@@ -122,7 +122,37 @@ export const intercessionSpell = {
   effects: [],
 };
 
-export const samples: readonly unknown[] = [trip, rage, intercessionSpell];
+/**
+ * Do pack `adventure-specific-actions`: NENHUMA das 192 tem a chave `folder`, e é isso
+ * que as identifica como de aventura. Qual aventura, quem diz é `source.title`.
+ */
+export const playTheFool = {
+  _id: 'yFDPQJcOKVe7hqpJ',
+  img: 'systems/pf2e/icons/actions/OneAction.webp',
+  name: 'Play the Fool',
+  // sem `folder` — de propósito
+  system: {
+    actionType: { value: 'action' },
+    actions: { value: 1 },
+    category: 'interaction',
+    description: { value: '<p>You play the fool to catch a foe off guard. […]</p>' },
+    publication: { license: 'OGL', remaster: false, title: 'Pathfinder Dark Archive' },
+    rules: [],
+    traits: { value: ['manipulate'] },
+    slug: 'play-the-fool',
+    _migration: { version: 0.959, previous: null },
+  },
+  type: 'action',
+  _stats: {
+    coreVersion: '14.361',
+    systemId: 'pf2e',
+    systemVersion: '8.4.1',
+    compendiumSource: 'Compendium.pf2e.adventure-specific-actions.Item.yFDPQJcOKVe7hqpJ',
+  },
+  effects: [],
+};
+
+export const samples: readonly unknown[] = [trip, rage, intercessionSpell, playTheFool];
 
 /** ID de pasta -> nome da pasta RAIZ, como `parseFolderRoots` produz. */
 export const folderRoots: ReadonlyMap<string, string> = new Map([

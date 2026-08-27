@@ -23,7 +23,6 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import type { FolderRoots } from '@core/source/index';
 import {
   DEFAULT_CHANNEL,
   KNOWN_GOOD_TAG,
@@ -101,35 +100,48 @@ async function main(): Promise<void> {
   const written: string[] = [];
 
   for (const recipe of recipes) {
-    const packName = recipe.packs[0];
-    const pack = loaded.inventory.packs.find((entry) => entry.name === packName);
-    if (!pack) throw new Error(`O pack "${String(packName)}" não está no manifesto do release.`);
+    // TODOS os packs da receita: `action` lê dois.
+    const sources: { name: string; file: string; rawBytes: Uint8Array }[] = [];
+    const documents: unknown[] = [];
+    const folderTable = new Map<string, string>();
 
-    // ── raw/ primeiro, com os bytes exatos da entrada do zip ────────────────────
-    const rawBytes = readEntries(loaded.zip, [pack.file]).get(pack.file);
-    if (!rawBytes) throw new Error(`Entrada "${pack.file}" não encontrada no zip.`);
+    for (const packName of recipe.packs) {
+      const pack = loaded.inventory.packs.find((entry) => entry.name === packName);
+      if (!pack) throw new Error(`O pack "${packName}" não está no manifesto do release.`);
 
-    const documents: unknown = JSON.parse(new TextDecoder().decode(rawBytes));
-    if (!Array.isArray(documents)) throw new Error(`${pack.file} não é um array de documentos.`);
+      // raw/ sai dos bytes exatos da entrada do zip, antes de qualquer projeção.
+      const rawBytes = readEntries(loaded.zip, [pack.file]).get(pack.file);
+      if (!rawBytes) throw new Error(`Entrada "${pack.file}" não encontrada no zip.`);
 
-    // As pastas do compêndio, quando o pack tiver o arquivo. Dá o setor das ações.
-    const declaration = loaded.manifest.packs.find((entry) => entry.name === packName);
-    let folders: FolderRoots | undefined;
-    try {
-      folders = declaration
-        ? parseFolderRoots(
+      const parsed: unknown = JSON.parse(new TextDecoder().decode(rawBytes));
+      if (!Array.isArray(parsed)) throw new Error(`${pack.file} não é um array de documentos.`);
+
+      sources.push({ name: packName, file: pack.file, rawBytes });
+      // `Array.isArray` sobre `unknown` estreita para `any[]`; a conversão devolve
+      // `unknown[]`, que é o que de fato sabemos.
+      documents.push(...(parsed as unknown[]));
+
+      const declaration = loaded.manifest.packs.find((entry) => entry.name === packName);
+      if (declaration) {
+        try {
+          const roots = parseFolderRoots(
             JSON.parse(readTextEntry(loaded.zip, DEFAULT_CHANNEL.packFoldersFile(declaration))),
-          )
-        : undefined;
-    } catch {
-      folders = undefined;
+          );
+          for (const [id, name] of roots) folderTable.set(id, name);
+        } catch {
+          // Pack sem arquivo de pastas: são 54 arquivos para 97 packs. Não é erro.
+        }
+      }
     }
 
-    const result = run(recipe, documents, { language, ...(folders ? { folders } : {}) });
+    const result = run(recipe, documents, {
+      language,
+      ...(folderTable.size > 0 ? { folders: folderTable } : {}),
+    });
 
     console.log('');
     console.log(
-      `pack      ${String(packName)} → ${pack.file}   (${String(documents.length)} documentos)`,
+      `packs     ${sources.map((entry) => entry.name).join(' + ')}   (${String(documents.length)} documentos)`,
     );
     console.log(
       `receita "${result.type}"   ${String(result.entities.length)}/${String(result.total)} normalizadas   ` +
@@ -149,8 +161,10 @@ async function main(): Promise<void> {
 
     if (reportOnly) continue;
 
+    for (const source of sources) {
+      written.push(write('raw', `${source.name}.json`, source.rawBytes));
+    }
     written.push(
-      write('raw', `${String(packName)}.json`, rawBytes),
       write(
         'base',
         `${result.type}.json`,

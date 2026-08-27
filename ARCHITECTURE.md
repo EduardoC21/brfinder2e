@@ -359,6 +359,20 @@ O briefing 7.2 manda ignorar esse arquivo — e está certo, não é entidade. M
 dado da base que separa as 30 ações básicas das 196 de classe: nenhum traço marca uma ação
 como básica. Não é entidade; é metadado, e metadado útil.
 
+O leitor distingue **três** situações, e a diferença entre elas é decisão de receita:
+
+| No documento               | Resultado                              | Por quê                                                                                                           |
+| -------------------------- | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| chave `folder` ausente     | **ausente** → vale o padrão da receita | o pack não organiza em pastas. É o que marca as 192 ações de aventura como `Adventure`                            |
+| chave presente, sem tabela | presente, vazio                        | não dá para resolver; cair no padrão marcaria tudo como de aventura                                               |
+| chave presente, pasta órfã | presente, vazio                        | `Disengage` aponta para uma pasta que não existe no arquivo. Defeito do dado do pf2e, não ausência de organização |
+
+### Uma receita pode ler vários packs
+
+`recipe.packs` é uma lista e o motor lê TODOS. `action` lê dois — `actionspf2e` (574) e
+`adventure-specific-actions` (192 do tipo `action`, mais 16 do tipo `feat` que o filtro de
+tipo descarta). A camada `raw/` grava um arquivo por pack.
+
 ### Formas alternativas
 
 `oneOf({...})` para campo que muda de forma — o caso do briefing 7.8, com as cinco formas

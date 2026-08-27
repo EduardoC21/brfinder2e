@@ -36,7 +36,7 @@ import {
   type StorePort,
   type StoredEntity,
 } from '../store/index';
-import type { SyncResult, TypeResult } from './run-sync';
+import type { PackSource, SyncResult, TypeResult } from './run-sync';
 
 export interface PersistedType {
   readonly type: string;
@@ -97,12 +97,15 @@ async function persistType(
 
   // O documento cru de quem sumiu, salvo enquanto raw/<pack> ainda é o anterior.
   if (newlyRetired.length > 0) {
-    await saveRetiredDocuments(store, type.type, type.packName, newlyRetired);
+    await saveRetiredDocuments(store, type.type, type.packs, newlyRetired);
   }
 
   const carried = carryRetired(previous, type, arriving, releaseTag);
 
-  await writeRaw(store, type.packName, type.rawBytes);
+  // Um raw/ por pack: a receita de `action` lê dois, e cada um mantém os próprios bytes.
+  for (const pack of type.packs) {
+    await writeRaw(store, pack.name, pack.rawBytes);
+  }
   await writeBase(store, type.type, [
     ...incoming,
     ...newlyRetired.map((entity) => retire(entity, releaseTag)),
@@ -165,36 +168,42 @@ function carryRetired(
 }
 
 /**
- * Localiza no pack ANTERIOR o documento de cada entrada aposentada e guarda cada um em
- * `raw/retired/<chave>`.
+ * Localiza nos packs ANTERIORES o documento de cada entrada aposentada e guarda cada um em
+ * `raw/retired/<tipo>/<chave>`.
+ *
+ * Varre todos os packs da receita: uma entrada de `action` pode ter vindo de
+ * `actionspf2e` ou de `adventure-specific-actions`, e daqui não dá para saber de qual.
  *
  * Só roda quando há aposentadoria — é raro (4 talentos em sete meses), e o custo é
- * decodificar e percorrer o pack anterior uma vez.
+ * decodificar os packs anteriores uma vez.
  */
 async function saveRetiredDocuments(
   store: StorePort,
   type: string,
-  packName: string,
+  packs: readonly PackSource[],
   entities: readonly StoredEntity[],
 ): Promise<void> {
-  const bytes = await readRaw(store, packName);
-  if (bytes === null) return;
-
-  let documents: unknown;
-  try {
-    documents = JSON.parse(new TextDecoder().decode(bytes));
-  } catch {
-    // Sem o pack anterior legível não há o que salvar. A lápide em `base/` continua
-    // valendo — só a exportação daquela entrada é que fica sem o documento cru.
-    return;
-  }
-  if (!Array.isArray(documents)) return;
-
   const byId = new Map<string, unknown>();
-  for (const document of documents) {
-    if (!isRecord(document)) continue;
-    const id = document['_id'];
-    if (typeof id === 'string') byId.set(id, document);
+
+  for (const pack of packs) {
+    const bytes = await readRaw(store, pack.name);
+    if (bytes === null) continue;
+
+    let documents: unknown;
+    try {
+      documents = JSON.parse(new TextDecoder().decode(bytes));
+    } catch {
+      // Sem o pack anterior legível não há o que salvar dele. A lápide em `base/`
+      // continua valendo — só a exportação daquela entrada fica sem o documento cru.
+      continue;
+    }
+    if (!Array.isArray(documents)) continue;
+
+    for (const document of documents) {
+      if (!isRecord(document)) continue;
+      const id = document['_id'];
+      if (typeof id === 'string' && !byId.has(id)) byId.set(id, document);
+    }
   }
 
   for (const entity of entities) {

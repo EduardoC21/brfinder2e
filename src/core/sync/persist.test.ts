@@ -23,8 +23,7 @@ const RAW = new TextEncoder().encode('[{"name":"Blinded"}]');
 function result(entities: readonly NormalizedEntity[]): SyncResult {
   const type: TypeResult = {
     type: 'condition',
-    packName: 'conditionitems',
-    pack: 'packs/conditions.json',
+    packs: [{ name: 'conditionitems', file: 'packs/conditions.json', rawBytes: RAW }],
     total: entities.length,
     imported: entities.length,
     failed: 0,
@@ -38,7 +37,6 @@ function result(entities: readonly NormalizedEntity[]): SyncResult {
     entities,
     retiredEntities: [],
     retiredFailures: [],
-    rawBytes: RAW,
   };
   return {
     systemId: 'pf2e',
@@ -149,7 +147,18 @@ describe('lápide', () => {
     if (!tipo) throw new Error('sem tipo');
     return {
       ...base,
-      types: [{ ...tipo, rawBytes: new TextEncoder().encode(JSON.stringify(docs)) }],
+      types: [
+        {
+          ...tipo,
+          packs: [
+            {
+              name: 'conditionitems',
+              file: 'packs/conditions.json',
+              rawBytes: new TextEncoder().encode(JSON.stringify(docs)),
+            },
+          ],
+        },
+      ],
     };
   };
 
@@ -310,7 +319,13 @@ describe('aposentado renormalizado pela receita atual', () => {
       types: [
         {
           ...tipo,
-          rawBytes: new TextEncoder().encode(JSON.stringify(docs)),
+          packs: [
+            {
+              name: 'conditionitems',
+              file: 'packs/conditions.json',
+              rawBytes: new TextEncoder().encode(JSON.stringify(docs)),
+            },
+          ],
           retiredEntities,
         },
       ],

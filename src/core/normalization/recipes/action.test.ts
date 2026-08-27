@@ -3,14 +3,21 @@ import { describe, expect, it } from 'vitest';
 import { isClean } from '../report';
 import { run } from '../run';
 import { actionRecipe } from './action';
-import { folderRoots, intercessionSpell, rage, samples, trip } from './action.fixtures';
+import {
+  folderRoots,
+  intercessionSpell,
+  playTheFool,
+  rage,
+  samples,
+  trip,
+} from './action.fixtures';
 
 const result = run(actionRecipe, samples, { folders: folderRoots });
 
 describe('receita de action', () => {
-  it('normaliza as três amostras sem falha, com relatório limpo', () => {
+  it('normaliza as quatro amostras sem falha, com relatório limpo', () => {
     expect(result.failures).toEqual([]);
-    expect(result.entities).toHaveLength(3);
+    expect(result.entities).toHaveLength(4);
     expect(result.report.unmapped, JSON.stringify(result.report.unmapped)).toEqual([]);
     expect(isClean(result.report)).toBe(true);
   });
@@ -78,17 +85,46 @@ describe('Intercession Spell — reação, com frequência e sem raridade', () =
   });
 });
 
+/**
+ * O pack `adventure-specific-actions` não tem arquivo de pastas, e NENHUM dos seus 192
+ * documentos tem a chave `folder`. É isso que os identifica — e `source.title` diz qual
+ * aventura, entre 41 livros distintos.
+ */
+describe('Play the Fool — de aventura, sem a chave folder', () => {
+  const entity = result.entities[3];
+
+  it('cai no padrão Adventure', () => {
+    expect(entity?.base.sector).toBe('Adventure');
+    expect('folder' in playTheFool).toBe(false);
+  });
+
+  it('o livro identifica a aventura, e o conteúdo é legado', () => {
+    expect(entity?.base.source.title).toBe('Pathfinder Dark Archive');
+    expect(entity?.base.source.remaster).toBe(false);
+  });
+});
+
 describe('sem a tabela de pastas', () => {
-  it('o setor cai no padrão vazio em vez de falhar', () => {
+  /**
+   * Quem TEM a chave `folder` fica com o setor vazio, não com o padrão: sem a tabela não
+   * dá para resolver, e cair no padrão marcaria tudo como de aventura.
+   */
+  it('quem tem a chave fica vazio; quem não tem cai no padrão', () => {
     const semPastas = run(actionRecipe, samples);
     expect(semPastas.failures).toEqual([]);
-    expect(semPastas.entities.map((entity) => entity.base.sector)).toEqual(['', '', '']);
+    expect(semPastas.entities.map((entity) => entity.base.sector)).toEqual([
+      '',
+      '',
+      '',
+      'Adventure',
+    ]);
   });
 });
 
 describe('o que ficou de fora, e por quê', () => {
-  it('rules, selfEffect e otherTags estão adiados, não ignorados', () => {
+  it('mecânica de ficha e texto de mestre ficam adiados, não ignorados', () => {
     expect(result.report.deferred.map((entry) => entry.path).sort()).toEqual([
+      'system.description.gm',
       'system.rules',
       'system.selfEffect',
       'system.traits.otherTags',
