@@ -62,7 +62,33 @@ Foundry de verdade.
 
 ---
 
-## 2. Traços: inglês ou português? `§9`
+## 2. A receita lê só o documento, ou também a tabela de idioma? `novo`
+
+**Decidir na Etapa 2**, porque muda o motor.
+
+Medido no `pf2e-8.4.1`: `lang/en.json` traz `PF2E.condition.<slug>` com três campos —
+`name`, `rules` e **`summary`**. O `summary` **não existe no pack**: é uma frase de uma
+linha ("Fear makes you less capable of attacking and defending"), presente em 42 das 43
+condições. Para uma linha de resultado de busca, é exatamente o texto que se quer.
+
+Já o `rules` do arquivo de idioma **não** substitui a descrição do pack: em 40 das 43
+condições os textos diferem, e a diferença é que a versão do idioma é achatada — perde os
+links `@UUID` (27 dos 40 casos têm) e troca o travessão por hífen. O pack é o canônico.
+
+Comparação em `Blinded`:
+
+```
+PACK : ... Blinded overrides @UUID[Compendium.pf2e.conditionitems.Item.TkIyaNPgTZFBCCuh]{Dazzled}.
+LANG : ... Blinded overrides dazzled.
+```
+
+**A questão:** o motor de receita aceita campo vindo da tabela de idioma, ou a receita lê
+só o documento e um passo posterior enriquece? A primeira é mais direta de ler; a segunda
+mantém a receita com uma fonte só.
+
+---
+
+## 3. Traços: inglês ou português? `§9`
 
 São dado (`traits.value: ["fighter", "flourish"]`) mas quem desenha o chip é a interface.
 Ficam exatamente na fronteira.
@@ -75,20 +101,20 @@ inverter depois é trocar uma coluna.
 
 ---
 
-## 3. Detalhe da entrada: painel lateral ou tela cheia? `§9`
+## 4. Detalhe da entrada: painel lateral ou tela cheia? `§9`
 
 Argumentar a escolha ao propor a tela. **Decidir quando:** Etapa 8.
 
 ---
 
-## 4. Busca global: campo na barra, paleta de comandos, ou aba? `§9`
+## 5. Busca global: campo na barra, paleta de comandos, ou aba? `§9`
 
 **Recomendação do briefing:** campo na barra que abre a paleta, e o mesmo Ctrl+K de
 qualquer lugar. **Decidir quando:** Etapa 11.
 
 ---
 
-## 5. Sistema operacional dos jogadores `§9`
+## 6. Sistema operacional dos jogadores `§9`
 
 Confirmar se algum usa macOS ou Linux **antes de prometer suporte**. No Windows, binário
 não assinado mostra o aviso do SmartScreen — aceitável para cinco pessoas. No macOS o
@@ -98,7 +124,7 @@ atrito é maior (Gatekeeper).
 
 ---
 
-## 6. Fundo da tela `§9`
+## 7. Fundo da tela `§9`
 
 Não podemos distribuir arte da Paizo nem de banco de imagem. Ou um fundo gerado por
 código, ou o usuário aponta a própria imagem.
@@ -107,7 +133,7 @@ código, ou o usuário aponta a própria imagem.
 
 ---
 
-## 7. Política de atualização da base `novo`
+## 8. Política de atualização da base `novo`
 
 `PINNED_TAG` em `src/core/source/channels.ts` fixa a versão em `pf2e-8.4.1`. Fixar é
 decisão fechada (briefing, seção 8): a base do mestre e a dos jogadores precisam bater
