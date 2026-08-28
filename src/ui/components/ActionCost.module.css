@@ -35,3 +35,16 @@
   text-transform: uppercase;
   color: var(--color-data);
 }
+
+/*
+ * O símbolo da reação. Mesma cor e mesma caixa dos losangos, para as duas formas de custo
+ * alinharem na coluna da lista — é o mesmo papel visual, só muda o desenho.
+ */
+.glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1em;
+  color: var(--color-data);
+  font: 400 1.05em / 1 var(--font-body);
+}

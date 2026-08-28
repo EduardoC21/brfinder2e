@@ -128,3 +128,18 @@ describe('actionGlyph', () => {
     expect(actionGlyph('x')).toBeNull();
   });
 });
+
+describe('fechamento implícito', () => {
+  it('parágrafo não fica dentro de parágrafo', () => {
+    // Como fica depois da expansão do @Localize: o texto da tabela traz os próprios <p>.
+    const nodes = parseDescription('<p><p>um</p><p>dois</p></p>');
+    expect(nodes).toHaveLength(2);
+    expect(nodes.every((n) => n.kind === 'element' && n.tag === 'p')).toBe(true);
+  });
+
+  it('item de lista sem fechar não engole o próximo', () => {
+    const nodes = parseDescription('<ul><li>um<li>dois</ul>');
+    const ul = nodes[0];
+    expect(ul?.kind === 'element' ? ul.children.length : 0).toBe(2);
+  });
+});

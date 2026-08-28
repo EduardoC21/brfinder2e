@@ -1,24 +1,29 @@
 /**
- * O texto de leitura dos tokens de referência cruzada.
+ * O texto de leitura dos tokens de referência.
  *
- * Sem isto, `@Check[flat|showDC:all|dc:15]` aparece no meio da prosa como
- * "roll a flat|showDC:all|dc:15" — que foi exatamente o que apareceu na tela quando
- * ligamos a descrição pela primeira vez. E não é um caso raro: medido na base inteira,
- * a esmagadora maioria destes tokens NÃO tem rótulo escrito à mão.
+ * A esmagadora maioria destes tokens não traz rótulo escrito à mão — medido na base
+ * inteira, `@Check` 17.434 sem contra 140 com, `@Damage` 14.545 contra 1.362,
+ * `@Template` 4.544 contra 506. Sem gerar o texto, a prosa mostra o corpo cru.
  *
- *   @Check      17.434 sem rótulo  contra    140 com
- *   @Damage     14.545 sem rótulo  contra  1.362 com
- *   @Template    4.544 sem rótulo  contra    506 com
+ * ⚠️ A REGRA CENTRAL, e a que eu errei na primeira versão: **a palavra substantiva já
+ * está no texto ao redor**. Medido:
  *
- * O texto gerado sai em inglês porque o texto ao redor está em inglês — o corpo do
- * Paizo é inglês, e a tradução é a Etapa 15. Enfiar palavra em português no meio de uma
- * frase inglesa seria pior que a frase inteira em inglês.
+ *   `@Damage`      seguido da palavra "damage"     11.220 de 14.545  (77,1%)
+ *   `@Check`       seguido de "save" ou "saving"    8.577 de 17.434
+ *   `@Check[flat]` seguido de "check"                 120 de  1.163  (10,3%)
+ *
+ * Então acrescentar "damage" ou "save" DUPLICA: saía "1d10 fire damage damage". A única
+ * exceção é o flat check, onde em 89,7% dos casos o texto não completa e "DC 5 flat"
+ * sozinho não é frase — ali a palavra entra.
+ *
+ * O texto gerado sai em inglês porque o texto ao redor está em inglês. A tradução é a
+ * Etapa 15, e é dela o trabalho de traduzir a frase inteira.
  */
 
 /** `crimson-fulcrum-lens` → `Crimson Fulcrum Lens`. */
 function titulo(slug: string): string {
   return slug
-    .split(/[-_]/)
+    .split(/[-_\s]+/)
     .filter((parte) => parte !== '')
     .map((parte) => parte.charAt(0).toUpperCase() + parte.slice(1))
     .join(' ');
@@ -36,34 +41,38 @@ function parametros(segmentos: readonly string[]): Map<string, string> {
 }
 
 /**
- * `flat|showDC:all|dc:15` → `DC 15 Flat`.
+ * `flat|showDC:all|dc:15` → `DC 15 flat check`; `reflex|basic` → `basic Reflex`.
  *
- * A CD só entra quando é número literal: 15.696 tokens trazem `dc`, e parte vem como
- * `dc:{societyDC}` — uma variável que só o Foundry resolve. Mostrar a chave crua seria
- * pior que omitir.
+ * Maiúsculas seguem o PF2e: salvamento e perícia são nome próprio (`Reflex`, `Athletics`,
+ * `Perception`); `flat check` é substantivo comum e fica minúsculo.
+ *
+ * A CD só entra quando é número literal. 15.696 tokens trazem `dc`, e parte vem como
+ * `dc:{societyDC}` — variável que só o Foundry resolve. Chave crua é pior que omissão.
  */
 export function checkLabel(body: string): string {
   const segmentos = body.split('|');
-  const nome = titulo(segmentos[0] ?? '');
+  const slug = (segmentos[0] ?? '').trim();
   const params = parametros(segmentos.slice(1));
+  const ehFlat = slug === 'flat';
 
-  const dc = params.get('dc');
   const partes: string[] = [];
+  const dc = params.get('dc');
   if (dc !== undefined && /^\d+$/.test(dc)) partes.push(`DC ${dc}`);
   if (params.has('basic')) partes.push('basic');
-  partes.push(nome);
+  partes.push(ehFlat ? 'flat check' : titulo(slug));
   return partes.join(' ');
 }
 
 /**
- * `2d6[fire]` → `2d6 fire damage`; `(3[splash])[acid]` → `3 acid splash damage`.
+ * `1d10[fire]` → `1d10 fire`; `(3[splash])[acid]` → `3 acid splash`.
  *
  * O último grupo entre colchetes é o tipo de dano; os anteriores são modificadores e vão
- * depois, que é a ordem em que o próprio Paizo escreve os 1.362 rótulos à mão.
+ * depois, que é a ordem em que o próprio Paizo escreve os 1.362 rótulos à mão
+ * (`@Damage[(3[splash])[acid]]{3 acid splash damage}`).
  *
  * 2.378 fórmulas referem `@actor` ou `@item` — valores que só existem com uma ficha na
- * mão. Nesses casos a fórmula é OMITIDA e sobra o tipo: "persistent acid damage" é
- * verdade, "(1d6 + @item.system.runes.potency) acid damage" é ruído.
+ * mão. Nesses casos a fórmula é OMITIDA e sobra o tipo: "persistent acid" é verdade,
+ * "(1d6 + @item.system.runes.potency) acid" é ruído.
  */
 export function damageLabel(body: string): string {
   const cabeca = body.split('|')[0] ?? '';
@@ -86,7 +95,6 @@ export function damageLabel(body: string): string {
   const tipo = palavras[palavras.length - 1];
   if (tipo) partes.push(...tipo);
   for (const anterior of palavras.slice(0, -1)) partes.push(...anterior);
-  partes.push('damage');
   return partes.join(' ');
 }
 
@@ -99,4 +107,23 @@ export function templateLabel(body: string): string {
 
   if (distancia === undefined || !/^\d+$/.test(distancia)) return forma;
   return `${distancia}-foot ${forma}`;
+}
+
+/**
+ * `[[/r 1d4 #Recharge Searing Wave]]` → `1d4`; `[[/act sense-direction]]` → `Sense Direction`.
+ *
+ * Duas formas, medidas na base:
+ *
+ *   `/act`  1.170 ocorrências, ZERO com `#`. O corpo é o slug da ação, às vezes com
+ *           `dc=28` colado. Vira o nome da ação.
+ *   `/r`, `/gmr`, `/br`  839 ocorrências, 175 com `#`. O `#` abre o *flavor* da rolagem —
+ *           um rótulo para a janela de dados do Foundry, não parte da frase. Sai fora.
+ *           Vem com e sem espaço antes (`1d4+1#Lost Omens`), então o corte é no `#`.
+ */
+export function rollLabel(command: string, body: string): string {
+  if (command === 'act') {
+    const slug = body.split(/\s*(?:dc=|\|)/)[0] ?? body;
+    return titulo(slug.trim());
+  }
+  return (body.split('#')[0] ?? body).trim();
 }

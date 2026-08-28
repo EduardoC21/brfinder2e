@@ -39,7 +39,19 @@ export function ActionCost({ kind, count }: ActionCostProps) {
     );
   }
 
-  if (kind === 'reaction') return <span className={styles['label']}>{t.reaction}</span>;
+  /*
+   * Reação é SÍMBOLO, não palavra: ↩ (U+21A9), como no livro e no AoN. A palavra fica no
+   * `aria-label` e no `title`, que é onde ela serve — leitor de tela e quem passa o mouse.
+   * Escrever "reação" na linha do custo desalinhava a coluna, porque uma palavra ao lado
+   * de losangos não tem largura comparável.
+   */
+  if (kind === 'reaction') {
+    return (
+      <span className={styles['glyph']} aria-label={t.reaction} title={t.reaction}>
+        ↩
+      </span>
+    );
+  }
   if (kind === 'passive') return <span className={styles['label']}>{t.passive}</span>;
   return null;
 }

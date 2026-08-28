@@ -25,6 +25,7 @@ export const ptBR = {
   browse: {
     sourcesLabel: 'Fontes',
     searchPlaceholder: 'Filtrar',
+    searchLabel: 'Filtrar a lista',
     notReady: 'ainda não disponível',
     empty: 'Sincronize a base para começar a consultar.',
     noResults: 'Nada encontrado.',
@@ -47,6 +48,34 @@ export const ptBR = {
       passive: 'passiva',
       label: 'custo',
     },
+    /**
+     * A frequência, montada a partir do que `core/browse/duration.ts` decodificou.
+     *
+     * `core/` devolve estrutura e a palavra é escrita aqui — a FRONTEIRA não deixa
+     * `core/` conhecer português.
+     */
+    frequency: {
+      units: {
+        round: ['rodada', 'rodadas'],
+        turn: ['turno', 'turnos'],
+        second: ['segundo', 'segundos'],
+        minute: ['minuto', 'minutos'],
+        hour: ['hora', 'horas'],
+        day: ['dia', 'dias'],
+        week: ['semana', 'semanas'],
+        month: ['mês', 'meses'],
+        year: ['ano', 'anos'],
+      } as Record<string, [string, string]>,
+      /** `1` + `por dia`; `2` + `a cada 10 minutos`. */
+      times: (max: number) => `${String(max)}×`,
+      every: (count: number, unit: [string, string]): string =>
+        count === 1 ? `por ${unit[0]}` : `a cada ${String(count)} ${unit[1]}`,
+      /** Código que não reconhecemos aparece cru, para o defeito ficar visível. */
+      unknown: (code: string) => `por ${code}`,
+    },
+    /** Conteúdo anterior ao Remaster. Só o legado é marcado; o resto não ganha nada. */
+    legacy: 'legado',
+    legacyHint: 'Publicado antes do Remaster: pode ter sido substituído por regra nova.',
     detail: {
       close: 'Fechar',
       popOut: 'Destacar em painel flutuante',

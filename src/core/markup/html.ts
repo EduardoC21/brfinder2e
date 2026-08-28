@@ -55,6 +55,26 @@ export const ALLOWED_TAGS = new Set([
 /** Tags que não têm fechamento. */
 const VOID_TAGS = new Set(['br', 'hr', 'img', 'input', 'meta', 'link']);
 
+/**
+ * Tags que a abertura de uma nova FECHA implicitamente, como manda o HTML.
+ *
+ * `<p>` não pode conter `<p>`: o navegador fecha o anterior sozinho ao ver o próximo. O
+ * parser não fazia isso, e o problema apareceu com a expansão do `@Localize` — a
+ * descrição da Sickened é `<p>@Localize[…]</p>` e o texto da tabela já vem com os
+ * próprios `<p>`, então saía `<p><p>…</p><p>…</p></p>` e o React desenhava parágrafo
+ * dentro de parágrafo.
+ *
+ * A regra é do HTML, não do nosso caso: implementá-la conserta a expansão e qualquer
+ * outro texto que venha assim.
+ */
+const CLOSES_PREVIOUS: Readonly<Record<string, readonly string[]>> = {
+  p: ['p'],
+  li: ['li'],
+  tr: ['tr', 'td', 'th'],
+  td: ['td', 'th'],
+  th: ['td', 'th'],
+};
+
 const TAG = /<(\/?)([a-zA-Z][a-zA-Z0-9]*)((?:"[^"]*"|'[^']*'|[^>])*)>/g;
 const CLASS = /class\s*=\s*"([^"]*)"|class\s*=\s*'([^']*)'/;
 
@@ -110,6 +130,8 @@ export function parseHtml(html: string): HtmlNode[] {
   };
 
   const close = (frame: Frame): void => {
+    // Parágrafo que ficou vazio é sobra de fechamento implícito, não conteúdo.
+    if (frame.tag === 'p' && frame.children.length === 0) return;
     // Tag fora da lista: descarta o invólucro e sobe os filhos. O texto não some.
     if (ALLOWED_TAGS.has(frame.tag)) {
       top().push({
@@ -149,6 +171,16 @@ export function parseHtml(html: string): HtmlNode[] {
         top().push({ kind: 'element', tag, className: readClass(attrs), children: [] });
       }
       continue;
+    }
+
+    const fecha = CLOSES_PREVIOUS[tag];
+    if (fecha !== undefined) {
+      while (stack.length > 0) {
+        const topo = stack[stack.length - 1];
+        if (topo === undefined || !fecha.includes(topo.tag)) break;
+        stack.pop();
+        close(topo);
+      }
     }
 
     stack.push({ tag, className: readClass(attrs), children: [] });

@@ -49,6 +49,16 @@ type="search">`. Se o componente não serve, ele ganha uma prop — não um clon
 Vale igual para botão de ícone (`IconButton`), lista de opções (`OptionList`), trilho com
 rolagem lateral (`ScrollRail`).
 
+### Token de design que não existe
+
+`color: var(--color-accent)` com `--color-accent` inexistente **não é erro em CSS**: a
+declaração vira inválida e a propriedade herda. O rótulo que devia sair em latão saiu
+branco, e nada reclamou — nem o navegador, nem o lint, nem o compilador. Só apareceu
+porque fui medir a cor calculada na tela.
+
+`npm run check` roda `scripts/check-tokens.ts`, que compara todo `var(--…)` do `src` com
+o que `src/ui/design/tokens.css` declara. **O latão chama-se `--color-data`.**
+
 ---
 
 ## 3. Listagem dirigida por dado
@@ -234,41 +244,27 @@ dado do Paizo e não pode ser apagada por uma sincronização.
 
 ## 8. Pendências abertas
 
-Feedback das Etapas 8a/8b, ainda não implementado. Este bloco **encolhe**: item feito sai
-daqui e o que virou regra sobe para as seções acima.
+Feedback das Etapas 8a/8b. Este bloco **encolhe**: item feito sai daqui e o que virou
+regra sobe para as seções acima.
 
-Agrupadas por natureza, porque são etapas diferentes — não dá para fazer as dezesseis de
-uma vez sem repetir o erro que matou as duas tentativas anteriores do projeto.
-
-**A — máscara e campos** (só `core/`, sem mexer em layout)
-
-1. Corrigir a máscara conforme a seção 5: nada de `damage` acrescentado, `flat check` como
-   única exceção, `#flavor` fora do `[[/r]]`.
-2. Decodificar o `per` da frequência (seção 6).
-3. Livro sem licença; legado com marcação própria (seção 6).
-4. Resolver `@Localize` pela tabela de idioma — hoje Sickened não tem descrição.
-
-**B — costura e vocabulário** (defeitos pequenos, visíveis)
-
-5. Reação vira `↩`.
-6. Matar o `×` nativo e unificar tudo em `SearchInput` (seção 2).
-7. `<strong>` que abre bloco vira latão + versalete (seção 5).
+Os blocos **A (máscara e campos)** e **B (costura e vocabulário)** foram feitos na Etapa
+8c e saíram desta lista. O que sobrou:
 
 **C — o esqueleto da tela**
 
-8. Lateral fixa do topo até embaixo, com estado vazio; filtros só sobre a lista.
-9. Cabeçalho do detalhe: ações em cima, nome na linha de baixo.
-10. Tradução: um botão rotulado pelo destino + `⟳` só no modo tradução.
-11. Lateral e pop-out redimensionáveis pela borda, com mínimo.
-12. Vários pop-outs, em cascata, com `z-index` por ordem de foco; minimizado encolhe até
-    o nome.
+1. Lateral fixa do topo até embaixo, com estado vazio; filtros só sobre a lista.
+2. Cabeçalho do detalhe: ações em cima, nome na linha de baixo.
+3. Tradução: um botão rotulado pelo destino + `⟳` só no modo tradução.
+4. Lateral e pop-out redimensionáveis pela borda, com mínimo.
+5. Vários pop-outs, em cascata, com `z-index` por ordem de foco; minimizado encolhe até o
+   nome.
 
-**D — o super filtro** (o maior; provavelmente etapa própria)
+**D — o super filtro** (o maior; etapa própria)
 
-13. Tópicos como dado (`FilterTopic`), painel do tópico ocupando a lateral (seção 6b).
-14. Filtro de custo com os glifos; par E / OU onde faz sentido.
+6. Tópicos como dado (`FilterTopic`), painel do tópico ocupando a lateral (seção 6b).
+7. Filtro de custo com os glifos; par E / OU onde faz sentido.
 
 **E — preferências**
 
-15. Seletor de colunas com preferência salva, por tipo de entidade, com ordem (seção 7).
-16. Último filtro aplicado persistido, com "limpar".
+8. Seletor de colunas com preferência salva, por tipo de entidade, com ordem (seção 7).
+9. Último filtro aplicado persistido, com "limpar".

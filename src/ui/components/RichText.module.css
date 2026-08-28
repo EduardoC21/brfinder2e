@@ -12,9 +12,25 @@
   margin-bottom: 0;
 }
 
+/* Negrito no meio da frase: ênfase de verdade. Cor cheia, contra o corpo apagado. */
 .strong {
   font-weight: 600;
   color: var(--color-text);
+}
+
+/*
+ * O `<strong>` que ABRE o bloco é rótulo estrutural — Effect, Trigger, Requirements,
+ * Critical Success. Latão porque é dado de jogo, e versalete porque rótulo se lê de
+ * relance: o olho desce pelos rótulos procurando "Trigger" sem ler o resto.
+ *
+ * O peso desce para 500. Com a cor e o versalete fazendo o destaque, manter 600 empastela
+ * a linha, e é exatamente o que estava acontecendo antes com o negrito quase invisível.
+ */
+.blockLabel {
+  font-weight: 500;
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.04em;
+  color: var(--color-data);
 }
 
 .em {

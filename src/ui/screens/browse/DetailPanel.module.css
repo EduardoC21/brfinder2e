@@ -126,6 +126,25 @@
   color: var(--color-text-muted);
 }
 
+/*
+ * Selo de conteúdo anterior ao Remaster.
+ *
+ * Contorno, sem preenchimento: bordô é estado da aplicação e latão é dado de jogo, e
+ * "legado" não é nem um nem outro — é uma ressalva sobre a fonte. Preencher daria a ele
+ * mais peso que o próprio nome do livro, que é a informação principal da linha.
+ */
+.legacy {
+  margin-left: var(--space-2);
+  padding: 1px var(--space-2);
+  border: 1px solid var(--color-hairline);
+  color: var(--color-text-muted);
+  font: 400 var(--text-xs) / 1.5 var(--font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: help;
+}
+
 .chips {
   display: flex;
   flex-wrap: wrap;

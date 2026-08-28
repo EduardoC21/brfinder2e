@@ -18,8 +18,9 @@
     "test:watch": "vitest",
     "test:cov": "vitest run --coverage",
     "test:contract": "vitest run --config vitest.contract.config.ts",
-    "check": "npm run format:check && npm run lint && npm run typecheck && npm run test",
-    "tauri": "tauri"
+    "check": "npm run format:check && npm run lint && npm run typecheck && npm run check:tokens && npm run test",
+    "tauri": "tauri",
+    "check:tokens": "tsx --tsconfig tsconfig.scripts.json scripts/check-tokens.ts"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.11.1",

@@ -10,6 +10,7 @@
  */
 
 import { isRecord } from '../json';
+import { expandLocalize } from '../markup/localize';
 import { DecodeError } from './decoders';
 import { resolveTemplate, type Field } from './field';
 import { collectPaths, emptyCoverage, isCovered, readPath, type Coverage } from './paths';
@@ -129,8 +130,38 @@ function normalizeOne<TBase, TDesc>(
     // A conversão acontece num ponto só. `FieldMapFor<T>` já garantiu, na declaração da
     // receita, que cada campo produz o tipo certo — o motor só monta o objeto.
     base: readBlock(recipe.base, document, coverage, options) as TBase,
-    desc: readBlock(recipe.desc, document, coverage, options) as TDesc,
+    /*
+     * O `@Localize` é expandido AQUI, e só no bloco de descrição.
+     *
+     * Ele não referencia outra entrada: é texto que mora na tabela de idioma em vez de
+     * morar no pack, e a tabela só existe neste ponto do caminho — a tela recebe o
+     * `desc/` já gravado, sem tabela nenhuma junto. Expandir uma vez na normalização é
+     * mais barato que carregar 11.802 chaves no navegador para resolver 7.629 tokens.
+     *
+     * Fica no motor, e não em cada receita, porque receita esquece: são doze, e a que
+     * esquecesse entregaria uma descrição com a chave crua no lugar do texto.
+     */
+    desc: localizeBlock(
+      readBlock(recipe.desc, document, coverage, options),
+      options.language,
+    ) as TDesc,
   };
+}
+
+/** Expande `@Localize` em toda folha de texto do bloco, em qualquer profundidade. */
+function localizeBlock(block: Record<string, unknown>, table: LanguageTable | undefined): unknown {
+  return table === undefined ? block : mapStrings(block, (text) => expandLocalize(text, table));
+}
+
+function mapStrings(value: unknown, apply: (text: string) => string): unknown {
+  if (typeof value === 'string') return apply(value);
+  if (Array.isArray(value)) return value.map((item) => mapStrings(item, apply));
+  if (isRecord(value)) {
+    const out: Record<string, unknown> = {};
+    for (const [key, item] of Object.entries(value)) out[key] = mapStrings(item, apply);
+    return out;
+  }
+  return value;
 }
 
 function readIdentity(document: unknown): Identity {

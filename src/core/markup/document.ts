@@ -15,7 +15,7 @@
  */
 
 import { parseHtml, type HtmlNode } from './html';
-import { checkLabel, damageLabel, templateLabel } from './label';
+import { checkLabel, damageLabel, rollLabel, templateLabel } from './label';
 import { parseMarkup } from './parse';
 import type { Token } from './types';
 
@@ -76,7 +76,7 @@ export function tokenText(token: Token): string {
     case 'embed':
       return token.label ?? token.body;
     case 'roll':
-      return token.label ?? token.body.trim();
+      return token.label ?? rollLabel(token.command, token.body);
     case 'unknown':
       return token.raw;
   }

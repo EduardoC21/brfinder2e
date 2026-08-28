@@ -19,13 +19,29 @@ import styles from './RichText.module.css';
  * pontilhada em latão, que é a cor de dado de jogo no sistema.
  */
 export function RichText({ nodes }: { readonly nodes: readonly DocNode[] }) {
-  return <>{nodes.map((node, index) => renderNode(node, index))}</>;
+  return <>{renderChildren(nodes)}</>;
 }
 
-function renderNode(node: DocNode, key: number): ReactNode {
+/**
+ * Desenha os filhos de um bloco marcando QUAL deles o abre.
+ *
+ * Esse é o dado que separa rótulo de ênfase. Medido nas 809 descrições: 1.694 `<strong>`,
+ * e 1.683 (99,4%) abrem o bloco em que estão — `Effect` 258, `Frequency` 191,
+ * `Requirements` 173, `Success` 167, `Trigger` 165. Os 11 do meio são referências de mapa
+ * (`A10`, `C45`), que são ênfase de verdade.
+ *
+ * Por posição, e NÃO por lista de palavras: uma lista quebraria na primeira fonte com um
+ * rótulo que ninguém previu, e são doze fontes pela frente.
+ */
+function renderChildren(nodes: readonly DocNode[]): ReactNode[] {
+  const abertura = nodes.findIndex((node) => node.kind !== 'token' || node.token.raw.trim() !== '');
+  return nodes.map((node, index) => renderNode(node, index, index === abertura));
+}
+
+function renderNode(node: DocNode, key: number, abreBloco = false): ReactNode {
   if (node.kind === 'token') return <TokenPiece key={key} token={node.token} />;
 
-  const children = node.children.map((child, index) => renderNode(child, index));
+  const children = renderChildren(node.children);
 
   /*
    * O símbolo de custo embutido na prosa. O Foundry manda a letra da fonte de ícones
@@ -45,7 +61,9 @@ function renderNode(node: DocNode, key: number): ReactNode {
     return createElement(node.tag, { key, className: styles[node.tag] });
   }
 
-  return createElement(node.tag, { key, className: styles[node.tag] ?? undefined }, ...children);
+  const classe =
+    node.tag === 'strong' && abreBloco ? styles['blockLabel'] : (styles[node.tag] ?? undefined);
+  return createElement(node.tag, { key, className: classe }, ...children);
 }
 
 function TokenPiece({ token }: { readonly token: Token }) {

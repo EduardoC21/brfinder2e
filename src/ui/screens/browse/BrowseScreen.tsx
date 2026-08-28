@@ -13,6 +13,7 @@ import {
 } from '@core/browse/index';
 import { strings } from '@i18n/index';
 import { FloatingPanel } from '@ui/components/FloatingPanel';
+import { SearchInput } from '@ui/components/SearchInput';
 import { cx } from '@ui/cx';
 import { useBase } from '@ui/hooks/useBase';
 
@@ -165,19 +166,23 @@ function SourcePane({
   return (
     <div className={styles['main']}>
       <div className={styles['searchRow']}>
-        <input
+        {/*
+          Era um <input type="search"> cru aqui, escrito à parte só por causa dos atributos
+          de caixa de combinação — e por isso sem o CSS que esconde o × nativo do Chrome.
+          Agora é o mesmo SearchInput das outras duas buscas, com a fiação como prop.
+        */}
+        <SearchInput
           ref={input}
-          type="search"
-          className={cx(styles['search'], 'chamfer-sm')}
+          className={styles['search']}
+          label={t.searchLabel}
           placeholder={`${t.searchPlaceholder} ${(strings.sources[source.id] ?? '').toLowerCase()}…`}
           value={term}
-          role="combobox"
-          aria-expanded
-          aria-controls="lista-de-resultados"
-          aria-activedescendant={activeIndex >= 0 ? `resultado-${String(activeIndex)}` : undefined}
-          autoComplete="off"
-          onChange={(event) => {
-            setTerm(event.target.value);
+          controls={{
+            listId: 'lista-de-resultados',
+            activeId: activeIndex >= 0 ? `resultado-${String(activeIndex)}` : undefined,
+          }}
+          onChange={(next) => {
+            setTerm(next);
             setActiveIndex(-1);
           }}
           onKeyDown={onKeyDown}

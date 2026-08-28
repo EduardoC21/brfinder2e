@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { fieldValue, type BrowseEntity, type DetailFieldSpec } from '@core/browse/index';
+import {
+  fieldValue,
+  parseDurationCode,
+  type BrowseEntity,
+  type DetailFieldSpec,
+} from '@core/browse/index';
 import { isRecord } from '@core/json';
 import { parseDescription } from '@core/markup/index';
 import { readDesc } from '@core/store/index';
@@ -197,29 +202,49 @@ function Field({
       );
     }
 
+    /*
+     * Só o livro. A licença (ORC/OGL) saiu: é informação jurídica da Paizo, não ajuda
+     * ninguém na mesa a decidir se pode usar o poder.
+     *
+     * "Legado" é marcação POR OMISSÃO — só o que veio antes do Remaster ganha selo, e o
+     * resto não ganha nada. Marcar os dois lados encheria todas as linhas de ruído para
+     * dizer o que já é o normal. E `!== 'true'` seria errado: campo ausente viraria
+     * legado. Só o `false` explícito marca.
+     */
     case 'source': {
       const title = fieldValue(entity, 'source.title');
       if (title === '') return null;
-      const license = fieldValue(entity, 'source.license');
-      const remaster = fieldValue(entity, 'source.remaster') === 'true';
+      const legado = fieldValue(entity, 'source.remaster') === 'false';
       return (
         <Row label={label('source.title')}>
           {title}
-          <span className={styles['muted']}>
-            {' '}
-            · {license}
-            {remaster ? '' : ' · legado'}
-          </span>
+          {legado && (
+            <span className={cx(styles['legacy'], 'chamfer-sm')} title={b.legacyHint}>
+              {b.legacy}
+            </span>
+          )}
         </Row>
       );
     }
 
+    /*
+     * O `per` mistura palavra (`day`) com ISO-8601 (`PT1H`), e o cru aparecia na tela
+     * como "1 × PT1H". `core/` decodifica a estrutura, o i18n escreve a palavra.
+     */
     case 'frequency': {
       const value = readRecord(entity, spec.field);
       if (value === null) return null;
+      const max = Number(value['max']);
+      const per = typeof value['per'] === 'string' ? value['per'] : '';
+      const duracao = parseDurationCode(per);
+      const f = b.frequency;
+      const unidade = duracao === null ? undefined : f.units[duracao.unit];
       return (
         <Row label={label(spec.field)}>
-          {String(value['max'])} × {String(value['per'])}
+          {f.times(Number.isFinite(max) ? max : 1)}{' '}
+          {duracao === null || unidade === undefined
+            ? f.unknown(per)
+            : f.every(duracao.count, unidade)}
         </Row>
       );
     }

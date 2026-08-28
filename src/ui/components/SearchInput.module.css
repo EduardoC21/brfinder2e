@@ -19,6 +19,22 @@
   color: var(--color-text-muted);
 }
 
+/*
+ * O × NATIVO do `type="search"`, escondido.
+ *
+ * O comentário do componente já dizia que ele era escondido — e a regra nunca tinha sido
+ * escrita. Resultado: dois × na tela, o do Chrome à direita e o nosso mais para dentro.
+ * Comentário que promete o que o código não faz é pior que comentário nenhum.
+ *
+ * Mantemos o nosso porque o nativo não acompanha o sistema de cores, não aparece em todo
+ * navegador e não dá para posicionar.
+ */
+.input::-webkit-search-cancel-button,
+.input::-webkit-search-decoration {
+  appearance: none;
+  display: none;
+}
+
 /* O X só existe quando há o que limpar — botão inerte é ruído. */
 .clear {
   position: absolute;
