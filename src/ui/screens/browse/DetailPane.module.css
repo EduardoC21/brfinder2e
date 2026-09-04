@@ -52,3 +52,16 @@
   color: var(--color-text-muted);
   font: 400 var(--text-md) / 1.5 var(--font-body);
 }
+
+/*
+ * A camada do filtro, por cima do detalhe.
+ *
+ * `inset: 0` cobre a coluna inteira, e o fundo opaco é obrigatório: sem ele, o texto do
+ * detalhe apareceria atrás das opções. Fica ABAIXO do divisor no empilhamento — a borda
+ * continua arrastável com o filtro aberto.
+ */
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--color-panel);
+}

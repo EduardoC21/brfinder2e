@@ -40,6 +40,12 @@ export const ptBR = {
     yes: 'sim',
     no: 'não',
     retired: 'aposentada',
+    removeFilter: 'Remover este filtro',
+    clearTopic: 'Limpar este filtro',
+    findOption: 'Achar opção…',
+    combineLabel: 'Como combinar os valores marcados',
+    combineAny: 'Qualquer um (OU)',
+    combineAll: 'Todos (E)',
     /** Custo em ações — artboard 1a, seção 4. */
     cost: {
       actions: (n: number) => (n === 1 ? '1 ação' : `${String(n)} ações`),

@@ -1,82 +1,113 @@
 /*
- * Em repouso, uma linha só: botão Filtros, os ativos como chips removíveis, e Limpar
- * (artboard 2b). Aberto, vira gaveta em colunas.
+ * A barra de filtros: os títulos dos tópicos, e abaixo o que está aplicado.
+ *
+ * Duas fileiras que rolam na horizontal, nunca quebrando para baixo. Quebrar mudaria a
+ * altura da barra conforme o número de filtros, e a lista pularia de posição a cada clique
+ * (artboard 2b).
  */
 .bar {
-  display: flex;
-  flex-direction: column;
+  display: grid;
   gap: var(--space-2);
   min-width: 0;
   padding: 0 var(--space-4) var(--space-3);
 }
 
-/*
- * `min-width: 0` é o que permite o trilho encolher e rolar. Sem isso o padrão `auto` faz
- * o conteúdo empurrar a linha e a rolagem nunca acontece.
- */
-.row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
+.topics,
+.applied {
   min-width: 0;
 }
 
-.toggle {
+/* "FILTROS:" como rótulo da fileira, no lugar do antigo botão que abria tudo. */
+.legend {
   flex: none;
-  display: flex;
+  align-self: center;
+  padding-right: var(--space-1);
+  color: var(--color-text-muted);
+  font: 400 var(--text-xs) / 1 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.topic {
+  flex: none;
+  display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--space-1);
   border: 1px solid var(--color-hairline);
   padding: var(--space-1) var(--space-3);
   background: transparent;
   color: var(--color-text-muted);
-  font: 500 var(--text-sm) / 1.6 var(--font-body);
-  cursor: pointer;
-}
-
-.toggle:hover,
-.toggle[aria-expanded='true'] {
-  background: var(--color-hover);
-  color: var(--color-text);
-}
-
-/* Quantos filtros ativos. Contagem do usuário, mas é dado — latão, e em mono. */
-.badge {
-  font: 500 var(--text-xs) / 1 var(--font-mono);
-  color: var(--color-data);
-}
-
-/* Filtro ativo é ESTADO: bordô. */
-.activeChip {
-  flex: none;
-  display: inline-flex;
-  align-items: baseline;
-  gap: var(--space-2);
-  border: 0;
-  padding: var(--space-1) var(--space-2);
-  background: var(--color-state);
-  color: #f6edea;
-  font: 400 var(--text-xs) / 1.6 var(--font-mono);
+  font: 400 var(--text-sm) / 1.5 var(--font-body);
   white-space: nowrap;
   cursor: pointer;
 }
 
-.activeChip:hover {
-  background: #a62a3e;
+.topic:hover {
+  background: var(--color-hover);
+  color: var(--color-text);
 }
 
-/* O nome do campo, para "senses" e "reaction" não virarem chips indistinguíveis. */
-.chipField {
+/* Aberto e "tem filtro marcado" são coisas DIFERENTES e precisam de sinais diferentes. */
+.topicOpen {
+  border-color: var(--color-state);
+  color: var(--color-text);
+}
+
+.topicActive {
+  color: var(--color-text);
+}
+
+.badge {
+  display: grid;
+  place-items: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  background: var(--color-state);
+  color: #f6edea;
+  font: 500 var(--text-xs) / 1 var(--font-mono);
+}
+
+/*
+ * O filtro aplicado é um botão que se remove ao ser clicado. Um chip com um × separado
+ * daria dois alvos na mesma coisa e um deles seria minúsculo.
+ */
+.chip {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  border: 1px solid transparent;
+  padding: var(--space-1) var(--space-2);
+  background: var(--color-state);
+  color: #f6edea;
+  font: 400 var(--text-sm) / 1.4 var(--font-body);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.chip:hover .chipX {
+  opacity: 1;
+}
+
+/* Qual tópico o valor veio: "livro" antes de "Player Core" evita o chip ambíguo. */
+.chipTopic {
   opacity: 0.65;
+  font: 400 var(--text-xs) / 1.4 var(--font-mono);
+}
+
+.chipX {
+  opacity: 0.6;
+  font: 400 var(--text-md) / 1 var(--font-body);
 }
 
 .clearAll {
   flex: none;
   border: 1px solid var(--color-hairline);
-  padding: var(--space-1) var(--space-3);
+  padding: var(--space-1) var(--space-2);
   background: transparent;
   color: var(--color-text-muted);
-  font: 400 var(--text-xs) / 1.9 var(--font-body);
+  font: 400 var(--text-xs) / 1.6 var(--font-body);
   white-space: nowrap;
   cursor: pointer;
 }
@@ -84,19 +115,4 @@
 .clearAll:hover {
   background: var(--color-hover);
   color: var(--color-text);
-}
-
-/*
- * Colunas que se acomodam sozinhas: `auto-fit` com mínimo de 190px enche a largura
- * disponível sem eu precisar saber quantos filtros o tipo tem. Talento vai ter seis.
- */
-.drawer {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-  gap: var(--space-5) var(--space-4);
-  padding: var(--space-3) var(--space-4);
-  background: var(--color-panel);
-  border: 1px solid var(--color-hairline);
-  max-height: 46vh;
-  overflow-y: auto;
 }

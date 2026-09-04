@@ -20,6 +20,13 @@ interface DetailPaneProps {
   readonly fields: readonly DetailFieldSpec[];
   readonly onClose: () => void;
   readonly onPopOut: () => void;
+  /**
+   * O painel de um tópico de filtro, quando há um aberto.
+   *
+   * Vem como nó pronto e não como descritor porque quem sabe montá-lo é a tela — este
+   * componente só empresta o espaço.
+   */
+  readonly overlay?: React.ReactNode;
 }
 
 /**
@@ -34,7 +41,14 @@ interface DetailPaneProps {
  * ação, ajusta uma medida. Aceita as setas do teclado porque um controle que só responde
  * a arrasto não existe para quem não usa o mouse.
  */
-export function DetailPane({ entity, entityType, fields, onClose, onPopOut }: DetailPaneProps) {
+export function DetailPane({
+  entity,
+  entityType,
+  fields,
+  onClose,
+  onPopOut,
+  overlay,
+}: DetailPaneProps) {
   const [largura, setLargura] = useState(PADRAO);
 
   const preso = (valor: number): number => Math.min(MAX, Math.max(MIN, valor));
@@ -86,6 +100,15 @@ export function DetailPane({ entity, entityType, fields, onClose, onPopOut }: De
           onPopOut={onPopOut}
         />
       )}
+
+      {/*
+        O filtro se SOBREPÕE ao detalhe; não o substitui.
+        Fechar o filtro tem que devolver a entrada exatamente como estava, inclusive a
+        rolagem. Desmontar o DetailPanel perderia o `scrollTop`, e alternar `display:none`
+        também o zera em alguns motores. Sobreposto, o detalhe continua montado e com
+        layout — o navegador nem toca na posição de rolagem dele.
+      */}
+      {overlay !== undefined && <div className={styles['overlay']}>{overlay}</div>}
     </div>
   );
 }

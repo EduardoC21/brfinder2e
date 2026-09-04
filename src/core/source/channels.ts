@@ -112,7 +112,7 @@ export const DEFAULT_CHANNEL: ZipChannel = CHANNELS[0];
  * dos jogadores precisam bater durante a sessão) — só que agora o ato é um clique, e não
  * uma alteração de código seguida de reinstalação.
  */
-export const KNOWN_GOOD_TAG = 'pf2e-8.4.1';
+export const KNOWN_GOOD_TAG = 'pf2e-8.5.0';
 
 /** URL de um anexo de release, montada sem passar pela API. Usada só em mensagem. */
 export function releasePageUrl(tag: string): string {

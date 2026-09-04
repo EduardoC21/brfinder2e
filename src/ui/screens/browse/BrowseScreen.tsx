@@ -18,6 +18,7 @@ import { useBase } from '@ui/hooks/useBase';
 
 import { DetailPane } from './DetailPane';
 import { FilterBar } from './FilterBar';
+import { FilterTopicPanel } from './FilterTopicPanel';
 import { ResultList } from './ResultList';
 import { SourceRail } from './SourceRail';
 import { DetailPanel } from './DetailPanel';
@@ -81,6 +82,8 @@ function SourcePane({
 }) {
   const [term, setTerm] = useState('');
   const [filters, setFilters] = useState<FilterState>({});
+  /** O tópico de filtro aberto na lateral. Um por vez. */
+  const [openTopic, setOpenTopic] = useState<string | null>(null);
   const [activeIndex, setActiveIndex] = useState(-1);
   const [openedKey, setOpenedKey] = useState<string | null>(null);
   /*
@@ -123,6 +126,7 @@ function SourcePane({
   }, [entities, source.filters, filters, deferredTerm, index]);
 
   const opened = results.find((entity) => entity.key === openedKey) ?? null;
+  const topicoAberto = source.filters.find((spec) => spec.id === openTopic);
 
   /**
    * O teclado vive no campo de busca, não na lista.
@@ -200,8 +204,9 @@ function SourcePane({
 
         <FilterBar
           specs={source.filters}
-          entities={entities}
           state={filters}
+          openTopic={openTopic}
+          onOpenTopic={setOpenTopic}
           onChange={(next) => {
             setFilters(next);
             setActiveIndex(-1);
@@ -243,6 +248,24 @@ function SourcePane({
         onPopOut={() => {
           if (opened !== null) despacharPopout({ kind: 'open', entity: opened });
         }}
+        {...(topicoAberto === undefined
+          ? {}
+          : {
+              overlay: (
+                <FilterTopicPanel
+                  spec={topicoAberto}
+                  entities={entities}
+                  state={filters}
+                  onChange={(next) => {
+                    setFilters(next);
+                    setActiveIndex(-1);
+                  }}
+                  onClose={() => {
+                    setOpenTopic(null);
+                  }}
+                />
+              ),
+            })}
       />
 
       {popouts.items.map((item) => (

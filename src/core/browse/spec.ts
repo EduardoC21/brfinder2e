@@ -31,15 +31,39 @@ export type ColumnSpec =
   /** Um valor curto em forma de chip. Texto vazio ou nulo não desenha nada. */
   | ({ readonly kind: 'chip'; readonly field: string } & ColumnBase);
 
+/** Como os valores marcados de um MESMO tópico se combinam. */
+export type Combine = 'any' | 'all';
+
 /**
- * Os filtros que existem hoje.
+ * Um TÓPICO de filtro.
  *
- * `options` descobre os valores a partir do próprio dado — não há lista fixa em lugar
- * nenhum, então um grupo novo numa versão futura do Foundry aparece sozinho.
+ * Tópico e não "filtro de campo": o `id` é a identidade, e o campo é detalhe de como o
+ * tópico lê o dado. O custo em ações não tem campo único — lê `costKind` e `costCount`
+ * juntos — e é justamente por isso que a identidade não pode ser o campo.
+ *
+ * As opções saem do próprio dado, sempre. Não há lista fixa em lugar nenhum, então um
+ * traço novo numa versão futura do Foundry aparece sozinho.
+ *
+ * Um tópico novo é um caso novo nesta união mais um caso no desenhista da UI, e o
+ * compilador cobra o segundo. Nenhuma das doze telas precisa mudar por causa dele.
  */
 export type FilterSpec =
-  | { readonly kind: 'options'; readonly field: string }
-  | { readonly kind: 'boolean'; readonly field: string };
+  /** Campo de valor único: grupo, categoria, livro. Vários marcados é OU. */
+  | { readonly kind: 'options'; readonly id: string; readonly field: string }
+  /** Campo de sim/não. */
+  | { readonly kind: 'boolean'; readonly id: string; readonly field: string }
+  /**
+   * Campo que guarda uma LISTA — traços. Aqui o par E/OU faz diferença de verdade, e
+   * `combine` é o padrão com que o tópico abre.
+   */
+  | {
+      readonly kind: 'list';
+      readonly id: string;
+      readonly field: string;
+      readonly combine: Combine;
+    }
+  /** O custo em ações, desenhado com os glifos: ◆ ◆◆ ◆◆◆ ◇ ↩ —. */
+  | { readonly kind: 'cost'; readonly id: string };
 
 /**
  * Os campos do cabeçalho do detalhe.
@@ -88,9 +112,9 @@ export const SOURCES: readonly SourceSpec[] = [
     mode: 'list',
     columns: [{ kind: 'name' }, { kind: 'chip', field: 'group', align: 'end' }],
     filters: [
-      { kind: 'options', field: 'group' },
-      { kind: 'boolean', field: 'valued' },
-      { kind: 'options', field: 'source.title' },
+      { kind: 'options', id: 'group', field: 'group' },
+      { kind: 'boolean', id: 'valued', field: 'valued' },
+      { kind: 'options', id: 'source', field: 'source.title' },
     ],
     searchFields: ['name', 'summary'],
     detail: [
@@ -109,10 +133,21 @@ export const SOURCES: readonly SourceSpec[] = [
     // o teste do descritor. A coluna de traços com orçamento de 26 caracteres é a Etapa 10.
     columns: [{ kind: 'name' }, { kind: 'chip', field: 'sector', align: 'end' }],
     filters: [
-      { kind: 'options', field: 'sector' },
-      { kind: 'options', field: 'costKind' },
-      { kind: 'options', field: 'category' },
-      { kind: 'options', field: 'source.title' },
+      { kind: 'cost', id: 'cost' },
+      { kind: 'options', id: 'sector', field: 'sector' },
+      { kind: 'options', id: 'category', field: 'category' },
+      /*
+       * Traços só aparecem agora porque só agora existe a espécie `list`. Antes um filtro
+       * `options` sobre `traits` enxergava as 766 ações como "sem valor" — `fieldValue`
+       * devolve string vazia para array.
+       *
+       * Abre em OU: quem clica em dois traços quase sempre quer "um ou outro". Quem quer
+       * a interseção vira a chave, e aí "concentrate E manipulate" recorta de 250 para 20
+       * (medido nas 766 ações do pf2e-8.5.0).
+       */
+      { kind: 'list', id: 'traits', field: 'traits', combine: 'any' },
+      { kind: 'options', id: 'rarity', field: 'rarity' },
+      { kind: 'options', id: 'source', field: 'source.title' },
     ],
     searchFields: ['name'],
     detail: [

@@ -1,64 +1,43 @@
-import { useMemo, useState } from 'react';
-
-import type { BrowseEntity, FilterSpec, FilterState } from '@core/browse/index';
-import { optionsFor } from '@core/browse/index';
+import type { FilterSpec, FilterState } from '@core/browse/index';
 import { strings } from '@i18n/index';
-import { cx } from '@ui/cx';
-import { OptionList, type Option } from '@ui/components/OptionList';
 import { ScrollRail } from '@ui/components/ScrollRail';
+import { cx } from '@ui/cx';
 
+import { topicLabel, valueLabel } from './filterLabels';
 import styles from './FilterBar.module.css';
 
 interface FilterBarProps {
   readonly specs: readonly FilterSpec[];
-  /** As entidades ANTES do filtro — é delas que saem as opções e as contagens. */
-  readonly entities: readonly BrowseEntity[];
   readonly state: FilterState;
+  /** O tópico cujo painel está aberto na lateral, ou `null`. */
+  readonly openTopic: string | null;
+  readonly onOpenTopic: (id: string | null) => void;
   readonly onChange: (state: FilterState) => void;
 }
 
 const t = strings.browse;
 
-/** O rótulo de um campo. Texto de interface mora no i18n, nunca no descritor. */
-function fieldLabel(field: string): string {
-  return t.fieldLabel[field] ?? field;
-}
-
-/** O rótulo de um valor. Booleano e "sem valor" precisam de tradução; o resto é o dado. */
-function valueLabel(spec: FilterSpec, value: string): string {
-  if (value === '') return t.noValue;
-  if (spec.kind === 'boolean') return value === 'true' ? t.yes : t.no;
-  return value;
-}
-
-export function FilterBar({ specs, entities, state, onChange }: FilterBarProps) {
-  const [open, setOpen] = useState(false);
-
-  const groups = useMemo(
-    () =>
-      specs.map((spec) => ({
-        spec,
-        title: fieldLabel(spec.field),
-        options: optionsFor(entities, spec.field).map((option): Option => ({
-          value: option.value,
-          label: valueLabel(spec, option.value),
-          count: option.count,
-        })),
-      })),
-    [specs, entities],
+/**
+ * A barra de filtros: só os TÍTULOS dos tópicos, e os filtros já aplicados.
+ *
+ * As opções não moram aqui — clicar num título abre o painel daquele tópico na barra
+ * lateral. O motivo é espaço: são doze tipos de entidade pela frente, e magias sozinhas
+ * trazem tradição, escola, nível, alvo, duração e salvamento. Empilhados na barra, os
+ * filtros comeriam a lista; a lateral está ociosa justamente enquanto se monta filtro.
+ *
+ * O que fica aqui é o que precisa estar SEMPRE visível: quais filtros estão valendo. Um
+ * filtro esquecido e invisível é a explicação mais comum para "sumiu tudo da lista".
+ */
+export function FilterBar({ specs, state, openTopic, onOpenTopic, onChange }: FilterBarProps) {
+  const aplicados = specs.flatMap((spec) =>
+    (state[spec.id]?.values ?? []).map((value) => ({ spec, value })),
   );
 
-  const active = specs.flatMap((spec) =>
-    (state[spec.field] ?? []).map((value) => ({ spec, value })),
-  );
-
-  const toggle = (field: string, value: string): void => {
-    const current = state[field] ?? [];
+  const desmarcar = (spec: FilterSpec, value: string): void => {
+    const atual = state[spec.id]?.values ?? [];
     onChange({
       ...state,
-      [field]: current.includes(value)
-        ? current.filter((entry) => entry !== value)
-        : [...current, value],
+      [spec.id]: { ...state[spec.id], values: atual.filter((entry) => entry !== value) },
     });
   };
 
@@ -66,46 +45,50 @@ export function FilterBar({ specs, entities, state, onChange }: FilterBarProps) 
 
   return (
     <div className={styles['bar']}>
-      <div className={styles['row']}>
-        <button
-          type="button"
-          className={cx(styles['toggle'], 'chamfer-sm')}
-          aria-expanded={open}
-          onClick={() => {
-            setOpen((value) => !value);
-          }}
-        >
-          {t.filters} {open ? '▴' : '▾'}
-          {active.length > 0 && <span className={styles['badge']}>{active.length}</span>}
-        </button>
-
-        {/*
-         * Os marcados ficam SEMPRE visíveis, na linha de cima, e cada um se remove no
-         * clique. Escondê-los dentro da gaveta faria o usuário abrir a gaveta só para
-         * lembrar o que está filtrando — e a contagem "3 de 574" não diz o quê.
-         *
-         * O trilho rola na horizontal e nunca quebra para baixo: quebrar mudaria a altura
-         * da barra a cada filtro, e a lista de resultados pularia de lugar.
-         */}
-        <ScrollRail label={t.activeFilters}>
-          {active.map(({ spec, value }) => (
+      <ScrollRail className={styles['topics']} label={t.filters}>
+        <span className={styles['legend']}>{t.filters}</span>
+        {specs.map((spec) => {
+          const marcados = state[spec.id]?.values.length ?? 0;
+          return (
             <button
-              key={`${spec.field}:${value}`}
+              key={spec.id}
               type="button"
-              className={cx(styles['activeChip'], 'chamfer-sm')}
-              title={`${fieldLabel(spec.field)}: ${valueLabel(spec, value)}`}
+              className={cx(
+                styles['topic'],
+                'chamfer-sm',
+                openTopic === spec.id && styles['topicOpen'],
+                marcados > 0 && styles['topicActive'],
+              )}
+              aria-expanded={openTopic === spec.id}
               onClick={() => {
-                toggle(spec.field, value);
+                // Clicar no que já está aberto fecha, e é o que devolve a lateral à entrada.
+                onOpenTopic(openTopic === spec.id ? null : spec.id);
               }}
             >
-              <span className={styles['chipField']}>{fieldLabel(spec.field)}</span>
+              {topicLabel(spec)}
+              {marcados > 0 && <span className={styles['badge']}>{marcados}</span>}
+            </button>
+          );
+        })}
+      </ScrollRail>
+
+      {aplicados.length > 0 && (
+        <ScrollRail className={styles['applied']} label={t.activeFilters}>
+          {aplicados.map(({ spec, value }) => (
+            <button
+              key={`${spec.id}:${value}`}
+              type="button"
+              className={cx(styles['chip'], 'chamfer-sm')}
+              title={t.removeFilter}
+              onClick={() => {
+                desmarcar(spec, value);
+              }}
+            >
+              <span className={styles['chipTopic']}>{topicLabel(spec)}</span>
               {valueLabel(spec, value)}
-              <span aria-hidden="true">×</span>
+              <span className={styles['chipX']}>×</span>
             </button>
           ))}
-        </ScrollRail>
-
-        {active.length > 0 && (
           <button
             type="button"
             className={cx(styles['clearAll'], 'chamfer-sm')}
@@ -115,23 +98,7 @@ export function FilterBar({ specs, entities, state, onChange }: FilterBarProps) 
           >
             {t.clearFilters}
           </button>
-        )}
-      </div>
-
-      {open && (
-        <div className={cx(styles['drawer'], 'chamfer-md')}>
-          {groups.map(({ spec, title, options }) => (
-            <OptionList
-              key={spec.field}
-              title={title}
-              options={options}
-              selected={state[spec.field] ?? []}
-              onToggle={(value) => {
-                toggle(spec.field, value);
-              }}
-            />
-          ))}
-        </div>
+        </ScrollRail>
       )}
     </div>
   );

@@ -215,8 +215,10 @@ uma entrada enquanto está montando filtro. A lateral é espaço morto naquele m
 
 Consequências que o código tem que respeitar:
 
-- A lateral tem **dois modos**, e o modo filtro é uma **pilha por cima**, não uma troca: ao
-  fechar, a entrada anterior reaparece como estava, inclusive a rolagem.
+- A lateral tem **dois modos**, e o modo filtro é uma **camada por cima** (`position:
+absolute; inset: 0`), não uma troca. Desmontar o detalhe perderia o `scrollTop`, e
+  alternar `display: none` também o zera em alguns motores. Sobreposto, o detalhe fica
+  montado e com layout, e o navegador nem toca na rolagem dele.
 - Um tópico aberto por vez. Abrir outro fecha o primeiro **sem limpar** o que foi marcado.
 - Os filtros aplicados ficam visíveis fora do painel, com `×` individual e um "limpar
   todos" — é o que já existe hoje e continua.
@@ -224,14 +226,27 @@ Consequências que o código tem que respeitar:
   tela. As doze telas escolhem quais tópicos usam; o que não se aplica, some. Um tópico
   novo é um descritor novo, e nenhuma tela existente muda.
 
-### Filtro de custo em ações
+### As espécies de tópico
 
-O filtro atual não distingue **quantas** ações. Precisa distinguir, e a forma é uma fileira
-dos próprios glifos como alternadores: `◆` `◆◆` `◆◆◆` `◇` `↩` `—`. Marcar vários é **OU**.
+| espécie   | lê                                             | par E/OU |
+| --------- | ---------------------------------------------- | -------- |
+| `options` | um campo de valor único                        | não      |
+| `boolean` | um campo de sim/não                            | não      |
+| `list`    | um campo que guarda ARRAY (traços)             | **sim**  |
+| `cost`    | `costKind` + `costCount` juntos, como um token | não      |
 
-Tópicos com muitas opções (traços, fonte) ganham o par **E / OU** explícito, como no AoN.
-Onde só existe uma escolha sensata (raridade, custo) o par não aparece: controle que só
-tem um valor possível é ruído.
+O par E/OU só aparece na espécie `list`, e o motivo é aritmético: num campo de valor único
+o "E" daria sempre lista vazia, e um controle que só produz resultado vazio é armadilha.
+Onde ele existe, a diferença é grande — medido nas 766 ações do `pf2e-8.5.0`,
+`concentrate` OU `manipulate` dá **250** e o E dá **20**.
+
+`cost` existe porque a pessoa pensa "as de duas ações", não "tipo ação com contagem dois".
+Os dois campos viram um token (`1`, `2`, `3`, `free`, `reaction`, `passive`) e o filtro é
+uma fileira dos próprios glifos — ela procura ◆◆, não a frase.
+
+`list` existe porque `fieldValue` devolve string vazia para array: um filtro `options`
+sobre `traits` enxergava as 766 ações como "sem valor". Era por isso que traços nunca
+tinham aparecido como filtro.
 
 ---
 
@@ -259,16 +274,11 @@ Feedback das Etapas 8a/8b. Este bloco **encolhe**: item feito sai daqui e o que 
 regra sobe para as seções acima.
 
 Feitos e removidos: **A** (máscara e campos) e **B** (costura e vocabulário) na Etapa 8c;
-**C** (esqueleto da tela) na Etapa 8d. O que sobrou:
-
-**D — o super filtro** (o maior; etapa própria)
-
-1. Tópicos como dado (`FilterTopic`), painel do tópico ocupando a lateral (seção 6b).
-2. Filtro de custo com os glifos; par E / OU onde faz sentido.
+**C** (esqueleto da tela) na 8d; **D** (super filtro) na 8e. O que sobrou:
 
 **E — preferências**
 
-3. Seletor de colunas com preferência salva, por tipo de entidade, com ordem (seção 7).
-4. Último filtro aplicado persistido, com "limpar".
-5. A largura da lateral e o tamanho do pop-out ainda **não** persistem. Entram junto com
+1. Seletor de colunas com preferência salva, por tipo de entidade, com ordem (seção 7).
+2. Último filtro aplicado persistido, com "limpar".
+3. A largura da lateral e o tamanho do pop-out ainda **não** persistem. Entram junto com
    as outras preferências, na mesma chave do `StorePort`.

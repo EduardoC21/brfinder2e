@@ -7,7 +7,7 @@ import styles from './ScrollRail.module.css';
 interface ScrollRailProps {
   readonly children: React.ReactNode;
   readonly label: string;
-  readonly className?: string;
+  readonly className?: string | undefined;
 }
 
 /**

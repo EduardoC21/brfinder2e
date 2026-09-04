@@ -1,0 +1,169 @@
+/*
+ * O painel de um tópico de filtro, desenhado na barra lateral.
+ *
+ * Mesma estrutura do painel de detalhe — cabeçalho fixo, corpo que rola — porque ocupam o
+ * mesmo espaço e alternar entre eles não pode mudar o formato da coluna. Uma lista de
+ * traços tem 300 e poucas opções; sem a rolagem interna, o cabeçalho com o par E/OU e o
+ * campo de busca sairia de vista logo no primeiro rolar.
+ */
+.panel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  background: var(--color-panel);
+}
+
+.head {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-hairline);
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.title {
+  margin: 0;
+  min-width: 0;
+  font: 400 var(--text-lg) / 1.2 var(--font-display);
+  color: var(--color-text);
+}
+
+.close {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  flex: none;
+  border: 1px solid var(--color-hairline);
+  padding: 0;
+  background: transparent;
+  color: var(--color-text-muted);
+  font: 400 var(--text-md) / 1 var(--font-body);
+  cursor: pointer;
+}
+
+.close:hover {
+  background: var(--color-state);
+  border-color: transparent;
+  color: #f6edea;
+}
+
+/*
+ * O par E/OU. Dois botões encostados formando um interruptor, e não um <select>: são duas
+ * opções, sempre as mesmas, e escondê-las atrás de um clique tiraria da vista a diferença
+ * entre 431 e 62 resultados.
+ */
+.combine {
+  display: flex;
+  margin-top: var(--space-3);
+  border: 1px solid var(--color-hairline);
+  width: fit-content;
+}
+
+.combineOption {
+  border: 0;
+  padding: var(--space-1) var(--space-3);
+  background: transparent;
+  color: var(--color-text-muted);
+  font: 400 var(--text-xs) / 1.6 var(--font-mono);
+  cursor: pointer;
+}
+
+.combineOption:hover {
+  background: var(--color-hover);
+}
+
+/* Bordô: qual modo está ligado é ESTADO da aplicação, não dado de jogo. */
+.combineOn {
+  background: var(--color-state);
+  color: #f6edea;
+}
+
+.search {
+  margin-top: var(--space-3);
+}
+
+.clear {
+  margin-top: var(--space-3);
+  border: 1px solid var(--color-hairline);
+  padding: var(--space-1) var(--space-2);
+  background: transparent;
+  color: var(--color-text-muted);
+  font: 400 var(--text-xs) / 1.6 var(--font-body);
+  cursor: pointer;
+}
+
+.clear:hover {
+  background: var(--color-hover);
+  color: var(--color-text);
+}
+
+.options {
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--space-2) 0 var(--space-6);
+}
+
+/*
+ * Cada opção é uma linha inteira clicável, não uma caixa de seleção com rótulo ao lado.
+ * O alvo do clique passa a ser a linha toda — em lista de 300 traços, mirar num quadrado
+ * de 13px é o que faz a pessoa desistir do filtro.
+ */
+.option {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  border: 0;
+  padding: var(--space-1) var(--space-4);
+  background: transparent;
+  color: var(--color-text);
+  font: 400 var(--text-md) / 1.5 var(--font-body);
+  text-align: left;
+  cursor: pointer;
+}
+
+.option:hover {
+  background: var(--color-hover);
+}
+
+.optionOn {
+  background: rgb(142 31 50 / 22%);
+}
+
+.mark {
+  color: var(--color-state);
+  font: 600 var(--text-sm) / 1 var(--font-body);
+}
+
+.optionOn .mark {
+  color: #e8a0ad;
+}
+
+.label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* A contagem é dado, mas dado de apoio: mono e apagada, para não competir com o rótulo. */
+.count {
+  color: var(--color-text-muted);
+  font: 400 var(--text-xs) / 1 var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.empty {
+  margin: 0;
+  padding: var(--space-4);
+  color: var(--color-text-muted);
+  font: 400 var(--text-sm) / 1.5 var(--font-body);
+}
