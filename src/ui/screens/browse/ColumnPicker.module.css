@@ -1,0 +1,54 @@
+/*
+ * O seletor de colunas empresta o CSS do painel de filtro — são o mesmo objeto de tela.
+ * Aqui ficam só as peças que ele tem a mais: os títulos de grupo e as setas de ordem.
+ */
+.hint {
+  margin: var(--space-2) 0 0;
+  color: var(--color-text-muted);
+  font: 400 var(--text-xs) / 1.5 var(--font-body);
+}
+
+/* Divide "mostrando" de "disponíveis". Sem isto, a ordem não teria onde ser lida. */
+.group {
+  margin: var(--space-3) 0 var(--space-1);
+  padding: 0 var(--space-4);
+  color: var(--color-text-muted);
+  font: 400 var(--text-xs) / 1 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ordered {
+  display: flex;
+  align-items: center;
+}
+
+.grow {
+  flex: 1;
+  min-width: 0;
+}
+
+.move {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  margin-right: var(--space-1);
+  border: 1px solid var(--color-hairline);
+  padding: 0;
+  background: transparent;
+  color: var(--color-text-muted);
+  font: 400 var(--text-sm) / 1 var(--font-body);
+  cursor: pointer;
+}
+
+.move:hover:not(:disabled) {
+  background: var(--color-hover);
+  color: var(--color-text);
+}
+
+/* Seta na ponta da lista não faz nada — e precisa PARECER que não faz. */
+.move:disabled {
+  color: #453a3d;
+  border-color: rgb(255 255 255 / 4%);
+  cursor: not-allowed;
+}

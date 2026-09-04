@@ -1,4 +1,4 @@
-import type { FilterSpec } from '@core/browse/index';
+import type { ColumnSpec, FilterSpec } from '@core/browse/index';
 import { strings } from '@i18n/index';
 
 const t = strings.browse;
@@ -45,4 +45,10 @@ function costLabel(token: string): string {
     default:
       return token === '' ? t.noValue : token;
   }
+}
+
+/** O rótulo de uma coluna. Mesma tabela dos filtros: `custo` é `custo` nos dois lugares. */
+export function columnLabel(spec: ColumnSpec): string {
+  if (spec.kind === 'cost') return t.cost.label;
+  return t.fieldLabel[spec.field] ?? spec.field;
 }

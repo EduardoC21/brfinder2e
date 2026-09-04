@@ -11,13 +11,16 @@ import {
   type FilterState,
   type SourceSpec,
 } from '@core/browse/index';
+import { sourcePreferences, withSource } from '@core/prefs/index';
 import { strings } from '@i18n/index';
 import { FloatingPanel } from '@ui/components/FloatingPanel';
 import { SearchInput } from '@ui/components/SearchInput';
 import { useBase } from '@ui/hooks/useBase';
+import { usePreferences } from '@ui/prefs/usePreferences';
 
 import { DetailPane } from './DetailPane';
 import { FilterBar } from './FilterBar';
+import { ColumnPicker } from './ColumnPicker';
 import { FilterTopicPanel } from './FilterTopicPanel';
 import { ResultList } from './ResultList';
 import { SourceRail } from './SourceRail';
@@ -81,9 +84,25 @@ function SourcePane({
   readonly loading: boolean;
 }) {
   const [term, setTerm] = useState('');
-  const [filters, setFilters] = useState<FilterState>({});
-  /** O tópico de filtro aberto na lateral. Um por vez. */
-  const [openTopic, setOpenTopic] = useState<string | null>(null);
+  const { prefs, update, ready } = usePreferences();
+  const salvas = sourcePreferences(prefs, source.id);
+
+  /*
+   * O filtro vive na PREFERÊNCIA, não num `useState` local.
+   *
+   * Antes era estado do componente, e a `key` da tela o descartava ao trocar de fonte —
+   * que era o comportamento certo enquanto ele não persistia. Agora ele volta: guardar por
+   * fonte é o que faz "voltar em Ações" reencontrar o recorte de ontem sem refazer.
+   */
+  const filters = salvas.filters as FilterState;
+  const setFilters = (next: FilterState): void => {
+    update((atual) => withSource(atual, source.id, { filters: next }));
+  };
+
+  /** O que está aberto na lateral por cima do detalhe: um tópico, as colunas, ou nada. */
+  const [overlay, setOverlay] = useState<
+    { kind: 'topic'; id: string } | { kind: 'columns' } | null
+  >(null);
   const [activeIndex, setActiveIndex] = useState(-1);
   const [openedKey, setOpenedKey] = useState<string | null>(null);
   /*
@@ -126,7 +145,19 @@ function SourcePane({
   }, [entities, source.filters, filters, deferredTerm, index]);
 
   const opened = results.find((entity) => entity.key === openedKey) ?? null;
+  const openTopic = overlay?.kind === 'topic' ? overlay.id : null;
   const topicoAberto = source.filters.find((spec) => spec.id === openTopic);
+
+  /*
+   * As colunas visíveis: a escolha do usuário, ou o padrão da fonte enquanto ele não
+   * escolheu. `ready` importa aqui — antes da leitura terminar as preferências estão
+   * vazias, e usar o padrão nesse instante evitaria o piscar, mas gravaria o padrão por
+   * cima da escolha dele se ele mexesse rápido demais.
+   */
+  const idsVisiveis = ready && salvas.columns.length > 0 ? salvas.columns : source.defaultColumns;
+  const colunasVisiveis = idsVisiveis
+    .map((id) => source.columns.find((column) => column.id === id))
+    .filter((column) => column !== undefined);
 
   /**
    * O teclado vive no campo de busca, não na lista.
@@ -174,6 +205,41 @@ function SourcePane({
    * criaria uma célula só, e o detalhe voltaria a viver dentro da área da lista — que é
    * exatamente por que a barra de filtros passava por cima dele.
    */
+  /*
+   * A camada da lateral é UMA: filtro ou colunas, nunca os dois.
+   * Montada aqui e passada pronta porque quem sabe quais dados cada painel precisa é esta
+   * tela — o `DetailPane` só empresta o espaço.
+   */
+  const camada =
+    overlay === null ? null : overlay.kind === 'columns' ? (
+      <ColumnPicker
+        available={source.columns}
+        selected={idsVisiveis}
+        onChange={(columns) => {
+          update((atual) => withSource(atual, source.id, { columns }));
+        }}
+        onReset={() => {
+          update((atual) => withSource(atual, source.id, { columns: [] }));
+        }}
+        onClose={() => {
+          setOverlay(null);
+        }}
+      />
+    ) : topicoAberto === undefined ? null : (
+      <FilterTopicPanel
+        spec={topicoAberto}
+        entities={entities}
+        state={filters}
+        onChange={(next) => {
+          setFilters(next);
+          setActiveIndex(-1);
+        }}
+        onClose={() => {
+          setOverlay(null);
+        }}
+      />
+    );
+
   return (
     <>
       <div className={styles['main']}>
@@ -206,7 +272,13 @@ function SourcePane({
           specs={source.filters}
           state={filters}
           openTopic={openTopic}
-          onOpenTopic={setOpenTopic}
+          onOpenTopic={(id) => {
+            setOverlay(id === null ? null : { kind: 'topic', id });
+          }}
+          columnsOpen={overlay?.kind === 'columns'}
+          onOpenColumns={() => {
+            setOverlay((atual) => (atual?.kind === 'columns' ? null : { kind: 'columns' }));
+          }}
           onChange={(next) => {
             setFilters(next);
             setActiveIndex(-1);
@@ -221,7 +293,7 @@ function SourcePane({
           ) : (
             <ResultList
               entities={results}
-              columns={source.columns}
+              columns={colunasVisiveis}
               activeIndex={activeIndex}
               onActivate={(index) => {
                 setActiveIndex(index);
@@ -248,24 +320,7 @@ function SourcePane({
         onPopOut={() => {
           if (opened !== null) despacharPopout({ kind: 'open', entity: opened });
         }}
-        {...(topicoAberto === undefined
-          ? {}
-          : {
-              overlay: (
-                <FilterTopicPanel
-                  spec={topicoAberto}
-                  entities={entities}
-                  state={filters}
-                  onChange={(next) => {
-                    setFilters(next);
-                    setActiveIndex(-1);
-                  }}
-                  onClose={() => {
-                    setOpenTopic(null);
-                  }}
-                />
-              ),
-            })}
+        {...(camada === null ? {} : { overlay: camada })}
       />
 
       {popouts.items.map((item) => (

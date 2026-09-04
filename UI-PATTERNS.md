@@ -252,33 +252,78 @@ tinham aparecido como filtro.
 
 ## 7. Preferências do usuário
 
-Tudo que o usuário configura na tela **sobrevive**: ao fechar o app e às atualizações da
-base. Guardado por tipo de entidade — a preferência de Talentos não é a de Magias.
+Tudo que o usuário configura na tela **sobrevive** ao fechamento do app e às atualizações
+da base. Guardado em `prefs/ui` no `StorePort` — chave própria, **fora** de `base/` e
+`desc/`, porque preferência não é conteúdo da Paizo e não pode sumir numa sincronização.
 
-| O que                            | Persiste | Tem "limpar" |
-| -------------------------------- | -------- | ------------ |
-| Colunas visíveis e a ordem delas | sim      | sim          |
-| Último filtro aplicado           | sim      | sim          |
+| O que                            | Escopo    |
+| -------------------------------- | --------- |
+| Colunas visíveis e a ordem delas | por fonte |
+| Último filtro aplicado           | por fonte |
+| Largura da coluna de detalhe     | global    |
+| Tamanho do pop-out               | global    |
 
-Ordem das colunas é escolha explícita, não "ordem em que foi clicado". Clicar de novo no
-mesmo atributo o remove.
+Por fonte porque as colunas úteis de Talentos não são as de Magias, e os filtros nem
+existem em comum. Global para o layout porque a largura confortável de leitura é da
+pessoa, não do que ela está lendo.
 
-Guardar onde: `StorePort`, chave própria, fora de `base/` e `desc/` — preferência não é
-dado do Paizo e não pode ser apagada por uma sincronização.
+**A posição do pop-out NÃO é preferência.** Tamanho é escolha sobre o painel; posição é
+onde aquele painel está agora. Guardá-la faria dois pop-outs abertos juntos nascerem na
+mesma coordenada, desfazendo a cascata.
 
----
+### Contexto, com escrita adiada
+
+`PreferencesProvider` envolve o app inteiro. Um `usePreference` por componente daria N
+leituras do armazenamento e N escritores disputando o MESMO documento — a última gravação
+apagaria as outras.
+
+A gravação espera 400 ms de silêncio, e um `pagehide` força a pendente antes de a janela
+fechar.
+
+### Em curso não é assentado
+
+O valor que o usuário está arrastando é **estado local**; ele só vira preferência quando o
+gesto termina (`onEnd` do `usePointerDrag`). Gravar por quadro atualizaria o contexto por
+quadro, e todo consumidor redesenharia junto — inclusive a lista, que tem 766 linhas em
+Ações.
+
+⚠️ **`onEnd` vem ANTES de `releasePointerCapture`.** Essa chamada LANÇA quando o elemento
+não tem a captura, e ela pode não ter: o sistema cancela o ponteiro, o elemento sai da
+árvore. Com a ordem invertida a exceção pulava o `onEnd` e o arrasto inteiro era descartado
+em silêncio. Descoberto arrastando a lateral para 540, recarregando, e vendo 720.
+
+### O decodificador é tolerante
+
+O que está gravado veio de uma versão ANTERIOR do app: é entrada não confiável vinda do
+passado. `readPreferences` nunca lança — campo que não reconhece é descartado, número
+absurdo é recusado, e preferência ilegível vira preferência padrão. Uma exceção ali
+derrubaria a tela na abertura, que é o pior momento possível.
+
+### Colunas
+
+O **nome** não é coluna escolhível: fica sempre primeiro, fora da lista. Uma linha de
+resultado sem nome não identifica nada, e deixá-lo desmarcável faria alguém apagá-lo por
+engano.
+
+`SourceSpec.columns` é tudo que a fonte OFERECE; `defaultColumns` é o que aparece antes de
+o usuário escolher. Separar as duas coisas permite oferecer uma coluna nova sem empurrá-la
+para quem já configurou as dele.
+
+Teto de **quatro** colunas ao lado do nome: a linha tem altura fixa e não quebra, então
+sem teto o nome seria espremido até a primeira letra.
+
+A ordem é editada com **setas**, não arrastando: são no máximo quatro itens, e setas
+funcionam com teclado sem mecanismo extra.
 
 ## 8. Pendências abertas
 
-Feedback das Etapas 8a/8b. Este bloco **encolhe**: item feito sai daqui e o que virou
-regra sobe para as seções acima.
+O feedback das Etapas 8a/8b foi todo implementado: **A** e **B** na 8c, **C** na 8d,
+**D** na 8e, **E** na 8f. Nada em aberto vindo dele.
 
-Feitos e removidos: **A** (máscara e campos) e **B** (costura e vocabulário) na Etapa 8c;
-**C** (esqueleto da tela) na 8d; **D** (super filtro) na 8e. O que sobrou:
+O que ficou registrado como próximo, e NÃO é dívida deste feedback:
 
-**E — preferências**
-
-1. Seletor de colunas com preferência salva, por tipo de entidade, com ordem (seção 7).
-2. Último filtro aplicado persistido, com "limpar".
-3. A largura da lateral e o tamanho do pop-out ainda **não** persistem. Entram junto com
-   as outras preferências, na mesma chave do `StorePort`.
+1. Coluna de traços com orçamento de caracteres — precisa de espécie própria que corte a
+   lista, e não de mais um `chip`. Etapa 10.
+2. Virtualizar a lista. A altura de linha já é constante para isso; a conta muda quando
+   forem os 6.283 talentos, não com 766 ações.
+3. O botão de tradução segue desabilitado até a Etapa 15.

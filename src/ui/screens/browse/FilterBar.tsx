@@ -12,6 +12,8 @@ interface FilterBarProps {
   /** O tópico cujo painel está aberto na lateral, ou `null`. */
   readonly openTopic: string | null;
   readonly onOpenTopic: (id: string | null) => void;
+  readonly columnsOpen: boolean;
+  readonly onOpenColumns: () => void;
   readonly onChange: (state: FilterState) => void;
 }
 
@@ -28,7 +30,15 @@ const t = strings.browse;
  * O que fica aqui é o que precisa estar SEMPRE visível: quais filtros estão valendo. Um
  * filtro esquecido e invisível é a explicação mais comum para "sumiu tudo da lista".
  */
-export function FilterBar({ specs, state, openTopic, onOpenTopic, onChange }: FilterBarProps) {
+export function FilterBar({
+  specs,
+  state,
+  openTopic,
+  onOpenTopic,
+  columnsOpen,
+  onOpenColumns,
+  onChange,
+}: FilterBarProps) {
   const aplicados = specs.flatMap((spec) =>
     (state[spec.id]?.values ?? []).map((value) => ({ spec, value })),
   );
@@ -70,6 +80,20 @@ export function FilterBar({ specs, state, openTopic, onOpenTopic, onChange }: Fi
             </button>
           );
         })}
+
+        {/*
+          As colunas ficam na MESMA fileira dos filtros porque são o mesmo gesto: escolher
+          o que a lista mostra. O separador antes dela diz que é outra família de escolha.
+        */}
+        <span className={styles['divider']} aria-hidden="true" />
+        <button
+          type="button"
+          className={cx(styles['topic'], 'chamfer-sm', columnsOpen && styles['topicOpen'])}
+          aria-expanded={columnsOpen}
+          onClick={onOpenColumns}
+        >
+          {t.columns}
+        </button>
       </ScrollRail>
 
       {aplicados.length > 0 && (

@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react';
 import type { BrowseEntity, ColumnSpec } from '@core/browse/index';
 import { fieldValue } from '@core/browse/index';
 import { strings } from '@i18n/index';
+import { ActionCost } from '@ui/components/ActionCost';
 import { cx } from '@ui/cx';
 
 import styles from './ResultList.module.css';
@@ -65,8 +66,16 @@ export function ResultList({
             onOpen(index);
           }}
         >
-          {columns.map((column, position) => (
-            <Column key={position} spec={column} entity={entity} />
+          {/*
+            O nome vem SEMPRE, e fora do laço.
+            Ele não é uma coluna escolhível: uma linha de resultado sem nome não identifica
+            nada. Deixá-lo na lista de colunas o tornaria desmarcável, e a primeira coisa
+            que alguém faria por engano seria apagá-lo.
+          */}
+          <span className={styles['name']}>{fieldValue(entity, 'name')}</span>
+
+          {columns.map((column) => (
+            <Column key={column.id} spec={column} entity={entity} />
           ))}
           {entity.retiredIn !== undefined && (
             <span className={styles['retired']} title={entity.retiredIn}>
@@ -88,15 +97,36 @@ export function ResultList({
  */
 function Column({ spec, entity }: { readonly spec: ColumnSpec; readonly entity: BrowseEntity }) {
   switch (spec.kind) {
-    case 'name':
-      return <span className={cx(styles['name'])}>{fieldValue(entity, 'name')}</span>;
-
     case 'chip': {
       const value = fieldValue(entity, spec.field);
       // Valor vazio não desenha chip: 20 das 43 condições têm grupo nulo, e um chip
       // vazio em metade das linhas seria ruído.
       if (value === '') return null;
-      return <span className={styles['chip']}>{value}</span>;
+      return <span className={cx(styles['chip'], alinhamento(spec))}>{value}</span>;
+    }
+
+    case 'text': {
+      const value = fieldValue(entity, spec.field);
+      if (value === '') return null;
+      // Booleano vira palavra: "true" numa coluna não diz nada a quem está jogando.
+      const texto =
+        value === 'true' ? strings.browse.yes : value === 'false' ? strings.browse.no : value;
+      return <span className={cx(styles['text'], alinhamento(spec))}>{texto}</span>;
+    }
+
+    case 'cost': {
+      const kind = fieldValue(entity, 'costKind');
+      if (kind === '') return null;
+      const count = Number(fieldValue(entity, 'costCount'));
+      return (
+        <span className={alinhamento(spec)}>
+          <ActionCost kind={kind} count={Number.isFinite(count) ? count : null} />
+        </span>
+      );
     }
   }
+}
+
+function alinhamento(spec: ColumnSpec): string | undefined {
+  return spec.align === 'end' ? styles['end'] : undefined;
 }

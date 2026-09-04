@@ -16,6 +16,13 @@
 export type Align = 'start' | 'end';
 
 interface ColumnBase {
+  /**
+   * Identidade da coluna, e é o que fica gravado na preferência do usuário.
+   *
+   * Separada do campo porque a preferência sobrevive a mudanças no descritor: se amanhã a
+   * coluna `setor` passar a ler outro caminho, quem já a tinha escolhida continua com ela.
+   */
+  readonly id: string;
   /** `end` empurra para a direita. O grupo da condição vive na borda direita. */
   readonly align?: Align;
 }
@@ -24,12 +31,17 @@ interface ColumnBase {
  * As colunas que existem hoje. A lista é curta de propósito: `condition` é o tipo mais
  * pobre da base (sem nível, sem traço, sem raridade, sem custo em ações), e inventar
  * colunas para os outros tipos antes de ter o dado deles seria adivinhação.
+ *
+ * O NOME não está aqui: ele é sempre a primeira coluna, sempre visível, e não se escolhe.
+ * Uma linha de resultado sem nome não identifica nada.
  */
 export type ColumnSpec =
-  /** O nome da entrada. Sempre em inglês, como veio do pack (briefing 8.1). */
-  | ({ readonly kind: 'name' } & ColumnBase)
   /** Um valor curto em forma de chip. Texto vazio ou nulo não desenha nada. */
-  | ({ readonly kind: 'chip'; readonly field: string } & ColumnBase);
+  | ({ readonly kind: 'chip'; readonly field: string } & ColumnBase)
+  /** O custo em ações, com os glifos — o mesmo componente do detalhe e do filtro. */
+  | ({ readonly kind: 'cost' } & ColumnBase)
+  /** Texto simples, sem moldura de chip. Para valores mais longos que um rótulo. */
+  | ({ readonly kind: 'text'; readonly field: string } & ColumnBase);
 
 /** Como os valores marcados de um MESMO tópico se combinam. */
 export type Combine = 'any' | 'all';
@@ -90,7 +102,16 @@ export interface SourceSpec {
   readonly entityType: string | null;
   /** `cards` é a Classe, que no mockup é outra tela. Nenhuma fonte `cards` hoje. */
   readonly mode: 'list' | 'cards';
+  /**
+   * TODAS as colunas que esta fonte sabe oferecer, na ordem canônica do seletor.
+   *
+   * Não é o que aparece na tela: o que aparece é `defaultColumns`, ou o que o usuário
+   * escolheu. Separar as duas coisas é o que permite oferecer uma coluna nova sem
+   * empurrá-la para quem já configurou as dele.
+   */
   readonly columns: readonly ColumnSpec[];
+  /** Ids visíveis quando o usuário nunca mexeu. */
+  readonly defaultColumns: readonly string[];
   readonly filters: readonly FilterSpec[];
   /** Campos que a busca indexa, em ordem de peso — o primeiro pesa mais. */
   readonly searchFields: readonly string[];
@@ -110,7 +131,12 @@ export const SOURCES: readonly SourceSpec[] = [
     id: 'conditions',
     entityType: 'condition',
     mode: 'list',
-    columns: [{ kind: 'name' }, { kind: 'chip', field: 'group', align: 'end' }],
+    columns: [
+      { kind: 'chip', id: 'group', field: 'group', align: 'end' },
+      { kind: 'text', id: 'valued', field: 'valued' },
+      { kind: 'text', id: 'source', field: 'source.title' },
+    ],
+    defaultColumns: ['group'],
     filters: [
       { kind: 'options', id: 'group', field: 'group' },
       { kind: 'boolean', id: 'valued', field: 'valued' },
@@ -129,9 +155,21 @@ export const SOURCES: readonly SourceSpec[] = [
     id: 'actions',
     entityType: 'action',
     mode: 'list',
-    // Mesmas duas espécies de coluna da condição: nenhum tipo novo foi preciso, o que era
-    // o teste do descritor. A coluna de traços com orçamento de 26 caracteres é a Etapa 10.
-    columns: [{ kind: 'name' }, { kind: 'chip', field: 'sector', align: 'end' }],
+    /*
+     * Sete colunas oferecidas, uma visível por padrão. O resto é escolha do usuário, e a
+     * escolha dele fica gravada por fonte.
+     *
+     * A coluna de traços com orçamento de 26 caracteres continua sendo a Etapa 10: ela
+     * precisa de uma espécie própria que corte a lista, e não de mais um `chip`.
+     */
+    columns: [
+      { kind: 'cost', id: 'cost' },
+      { kind: 'chip', id: 'sector', field: 'sector', align: 'end' },
+      { kind: 'text', id: 'category', field: 'category' },
+      { kind: 'text', id: 'rarity', field: 'rarity' },
+      { kind: 'text', id: 'source', field: 'source.title' },
+    ],
+    defaultColumns: ['sector'],
     filters: [
       { kind: 'cost', id: 'cost' },
       { kind: 'options', id: 'sector', field: 'sector' },
@@ -165,6 +203,7 @@ export const SOURCES: readonly SourceSpec[] = [
     entityType: null,
     mode: 'list',
     columns: [],
+    defaultColumns: [],
     filters: [],
     searchFields: [],
     detail: [],
@@ -174,6 +213,7 @@ export const SOURCES: readonly SourceSpec[] = [
     entityType: null,
     mode: 'list',
     columns: [],
+    defaultColumns: [],
     filters: [],
     searchFields: [],
     detail: [],
@@ -183,6 +223,7 @@ export const SOURCES: readonly SourceSpec[] = [
     entityType: null,
     mode: 'list',
     columns: [],
+    defaultColumns: [],
     filters: [],
     searchFields: [],
     detail: [],
@@ -192,6 +233,7 @@ export const SOURCES: readonly SourceSpec[] = [
     entityType: null,
     mode: 'list',
     columns: [],
+    defaultColumns: [],
     filters: [],
     searchFields: [],
     detail: [],
@@ -201,6 +243,7 @@ export const SOURCES: readonly SourceSpec[] = [
     entityType: null,
     mode: 'list',
     columns: [],
+    defaultColumns: [],
     filters: [],
     searchFields: [],
     detail: [],
@@ -210,6 +253,7 @@ export const SOURCES: readonly SourceSpec[] = [
     entityType: null,
     mode: 'list',
     columns: [],
+    defaultColumns: [],
     filters: [],
     searchFields: [],
     detail: [],
@@ -219,6 +263,7 @@ export const SOURCES: readonly SourceSpec[] = [
     entityType: null,
     mode: 'cards',
     columns: [],
+    defaultColumns: [],
     filters: [],
     searchFields: [],
     detail: [],
@@ -228,6 +273,7 @@ export const SOURCES: readonly SourceSpec[] = [
     entityType: null,
     mode: 'list',
     columns: [],
+    defaultColumns: [],
     filters: [],
     searchFields: [],
     detail: [],
@@ -237,6 +283,7 @@ export const SOURCES: readonly SourceSpec[] = [
     entityType: null,
     mode: 'list',
     columns: [],
+    defaultColumns: [],
     filters: [],
     searchFields: [],
     detail: [],
@@ -246,6 +293,7 @@ export const SOURCES: readonly SourceSpec[] = [
     entityType: null,
     mode: 'list',
     columns: [],
+    defaultColumns: [],
     filters: [],
     searchFields: [],
     detail: [],

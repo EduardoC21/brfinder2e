@@ -46,6 +46,13 @@ export const ptBR = {
     combineLabel: 'Como combinar os valores marcados',
     combineAny: 'Qualquer um (OU)',
     combineAll: 'Todos (E)',
+    columns: 'Colunas',
+    columnsHint: (max: number) => `Até ${String(max)} colunas ao lado do nome.`,
+    columnsShown: 'mostrando',
+    columnsHidden: 'disponíveis',
+    columnsReset: 'Voltar ao padrão',
+    columnUp: 'Mover para a esquerda',
+    columnDown: 'Mover para a direita',
     /** Custo em ações — artboard 1a, seção 4. */
     cost: {
       actions: (n: number) => (n === 1 ? '1 ação' : `${String(n)} ações`),

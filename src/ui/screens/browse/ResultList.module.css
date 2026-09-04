@@ -64,3 +64,32 @@
   color: #f6edea;
   font: 500 var(--text-xs) / 1 var(--font-mono);
 }
+
+/*
+ * Coluna de texto simples: valores mais longos que um rótulo (categoria, livro).
+ *
+ * `min-width: 0` com reticências porque a linha tem altura fixa — sem isso um título de
+ * livro longo empurraria as colunas seguintes para fora da linha em vez de ser cortado.
+ */
+.text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-text-muted);
+  font: 400 var(--text-sm) / 1.4 var(--font-body);
+}
+
+.row[aria-selected='true'] .text {
+  color: #f0dfe2;
+}
+
+/*
+ * `margin-left: auto` na PRIMEIRA coluna alinhada à direita empurra ela e todas as
+ * seguintes para o fim da linha. Aplicar em todas faria cada uma abrir seu próprio vão, e
+ * as colunas da direita ficariam espalhadas em vez de agrupadas.
+ */
+.end:first-of-type,
+.name + .end {
+  margin-left: auto;
+}

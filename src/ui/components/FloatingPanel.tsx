@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { withLayout } from '@core/prefs/index';
 import { strings } from '@i18n/index';
 import { cx } from '@ui/cx';
 import { usePointerDrag } from '@ui/hooks/usePointerDrag';
+import { usePreferences } from '@ui/prefs/usePreferences';
 
 import styles from './FloatingPanel.module.css';
 
@@ -45,7 +47,24 @@ export function FloatingPanel({
   initial,
 }: FloatingPanelProps) {
   const [pos, setPos] = useState(initial);
-  const [tamanho, setTamanho] = useState({ w: LARGURA_PADRAO, h: ALTURA_PADRAO });
+
+  /*
+   * O TAMANHO é preferência; a POSIÇÃO não.
+   *
+   * Tamanho é uma escolha sobre o painel — quem alargou quer que o próximo já abra
+   * assim. Posição é onde este painel está agora: guardá-la faria dois pop-outs abertos
+   * juntos disputarem a mesma coordenada e nascerem um em cima do outro, desfazendo a
+   * cascata.
+   */
+  const { prefs, update } = usePreferences();
+  const salvo = {
+    w: prefs.layout.popoutWidth ?? LARGURA_PADRAO,
+    h: prefs.layout.popoutHeight ?? ALTURA_PADRAO,
+  };
+
+  /* Mesma separação da lateral: em curso é local, assentado é preferência. */
+  const [rascunho, setRascunho] = useState<{ w: number; h: number } | null>(null);
+  const tamanho = rascunho ?? salvo;
   const [minimized, setMinimized] = useState(false);
   const panel = useRef<HTMLDivElement>(null);
 
@@ -67,10 +86,16 @@ export function FloatingPanel({
   const redimensiona = usePointerDrag(
     () => tamanho,
     (inicio, dx, dy) => {
-      setTamanho({
+      setRascunho({
         w: Math.max(MIN_LARGURA, inicio.w + dx),
         h: Math.max(MIN_ALTURA, inicio.h + dy),
       });
+    },
+    () => {
+      if (rascunho !== null) {
+        update((atual) => withLayout(atual, { popoutWidth: rascunho.w, popoutHeight: rascunho.h }));
+        setRascunho(null);
+      }
     },
   );
 

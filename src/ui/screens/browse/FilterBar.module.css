@@ -57,6 +57,16 @@
   color: var(--color-text);
 }
 
+/* Separa a família "filtrar" da família "mostrar". */
+.divider {
+  flex: none;
+  align-self: center;
+  width: 1px;
+  height: 18px;
+  margin: 0 var(--space-1);
+  background: var(--color-hairline);
+}
+
 .badge {
   display: grid;
   place-items: center;

@@ -1,8 +1,10 @@
 import { useState } from 'react';
 
 import type { BrowseEntity, DetailFieldSpec } from '@core/browse/index';
+import { withLayout } from '@core/prefs/index';
 import { strings } from '@i18n/index';
 import { usePointerDrag } from '@ui/hooks/usePointerDrag';
+import { usePreferences } from '@ui/prefs/usePreferences';
 
 import { DetailPanel } from './DetailPanel';
 import styles from './DetailPane.module.css';
@@ -49,9 +51,28 @@ export function DetailPane({
   onPopOut,
   overlay,
 }: DetailPaneProps) {
-  const [largura, setLargura] = useState(PADRAO);
-
+  /*
+   * A largura vem da preferência, não de um `useState` local: ela precisa sobreviver ao
+   * fechamento do app. O `preso` é reaplicado na LEITURA porque o mínimo e o máximo podem
+   * ter mudado desde a gravação — um valor gravado por uma versão anterior não é promessa.
+   */
+  const { prefs, update } = usePreferences();
   const preso = (valor: number): number => Math.min(MAX, Math.max(MIN, valor));
+  const salva = preso(prefs.layout.detailWidth ?? PADRAO);
+
+  /*
+   * Durante o arrasto a largura é LOCAL; ela só vira preferência quando o gesto acaba.
+   *
+   * Gravar a cada quadro atualizaria o contexto a cada quadro, e todo consumidor dele
+   * redesenharia junto — inclusive a lista, que tem 766 linhas em Ações. A preferência é
+   * a escolha assentada, não o caminho até ela.
+   */
+  const [rascunho, setRascunho] = useState<number | null>(null);
+  const largura = rascunho ?? salva;
+
+  const assentar = (proxima: number): void => {
+    update((atual) => withLayout(atual, { detailWidth: preso(proxima) }));
+  };
 
   /*
    * O divisor fica à ESQUERDA do painel, então arrastar para a esquerda o AUMENTA — daí
@@ -60,7 +81,13 @@ export function DetailPane({
   const arrasto = usePointerDrag(
     () => largura,
     (inicio, dx) => {
-      setLargura(preso(inicio - dx));
+      setRascunho(preso(inicio - dx));
+    },
+    () => {
+      if (rascunho !== null) {
+        assentar(rascunho);
+        setRascunho(null);
+      }
     },
   );
 
@@ -80,11 +107,11 @@ export function DetailPane({
           const passo = event.shiftKey ? 48 : 16;
           if (event.key === 'ArrowLeft') {
             event.preventDefault();
-            setLargura((atual) => preso(atual + passo));
+            assentar(largura + passo);
           }
           if (event.key === 'ArrowRight') {
             event.preventDefault();
-            setLargura((atual) => preso(atual - passo));
+            assentar(largura - passo);
           }
         }}
       />
