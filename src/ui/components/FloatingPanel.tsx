@@ -2,62 +2,77 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { strings } from '@i18n/index';
 import { cx } from '@ui/cx';
+import { usePointerDrag } from '@ui/hooks/usePointerDrag';
 
 import styles from './FloatingPanel.module.css';
 
 interface FloatingPanelProps {
   readonly title: string;
   readonly onClose: () => void;
+  /** Traz este painel para a frente. Chamado a cada toque nele. */
+  readonly onFocus: () => void;
+  readonly z: number;
   readonly children: React.ReactNode;
   /** Posição inicial, em pixels a partir do canto superior esquerdo da janela. */
-  readonly initial?: { readonly x: number; readonly y: number };
+  readonly initial: { readonly x: number; readonly y: number };
 }
 
 const t = strings.browse.detail;
 
+/** Abaixo disto o painel deixa de caber um nome e dois botões. */
+const MIN_LARGURA = 260;
+const MIN_ALTURA = 140;
+const LARGURA_PADRAO = 460;
+const ALTURA_PADRAO = 520;
+
 /**
- * Painel flutuante: arrastável pela barra de título, minimizável para só o título.
+ * Painel flutuante: arrastável, redimensionável e minimizável.
  *
- * Arrastar é feito com eventos de PONTEIRO, não de mouse: `pointerdown` cobre mouse,
- * caneta e toque com um código só, e `setPointerCapture` garante que o arrasto continue
- * mesmo quando o cursor sai do elemento — sem isso, mover rápido "solta" o painel.
+ * A posição e o tamanho vivem em `useState` e são aplicados por `transform` e por
+ * `width`/`height`. `transform` para mover, porque não força recálculo de layout a cada
+ * quadro do arrasto — `left`/`top` forçam, e o painel tem texto longo dentro.
  *
- * A posição vive num `useState` e é aplicada por `transform`, não por `left`/`top`:
- * `transform` não força recálculo de layout a cada quadro, e o arrasto de um painel com
- * texto longo dentro fica visivelmente mais leve.
+ * `top: 0; left: 0` fixos com todo o deslocamento no `transform` mantêm UMA origem. Somar
+ * as duas coisas faz a conta do arrasto virar dois sistemas de coordenadas, e o painel
+ * "pula" no primeiro movimento depois de um redimensionamento.
  */
-export function FloatingPanel({ title, onClose, children, initial }: FloatingPanelProps) {
-  const [pos, setPos] = useState(initial ?? { x: 120, y: 90 });
+export function FloatingPanel({
+  title,
+  onClose,
+  onFocus,
+  z,
+  children,
+  initial,
+}: FloatingPanelProps) {
+  const [pos, setPos] = useState(initial);
+  const [tamanho, setTamanho] = useState({ w: LARGURA_PADRAO, h: ALTURA_PADRAO });
   const [minimized, setMinimized] = useState(false);
-  const drag = useRef<{ dx: number; dy: number } | null>(null);
   const panel = useRef<HTMLDivElement>(null);
 
-  const onPointerDown = (event: React.PointerEvent<HTMLDivElement>): void => {
-    // Só o botão principal, e não quando o alvo é um dos botões da barra.
-    if (event.button !== 0 || event.target instanceof HTMLButtonElement) return;
-    drag.current = { dx: event.clientX - pos.x, dy: event.clientY - pos.y };
-    event.currentTarget.setPointerCapture(event.pointerId);
-  };
+  const arrasto = usePointerDrag(
+    () => pos,
+    (inicio, dx, dy) => {
+      /*
+       * Prende dentro da janela, deixando sempre uma faixa visível. Sem isso dá para
+       * arrastar o painel para fora e nunca mais alcançá-lo — e como a posição é do
+       * componente, nem recarregar traria de volta.
+       */
+      const largura = panel.current?.offsetWidth ?? tamanho.w;
+      const x = Math.min(Math.max(inicio.x + dx, 8 - largura + 80), window.innerWidth - 80);
+      const y = Math.min(Math.max(inicio.y + dy, 0), window.innerHeight - 32);
+      setPos({ x, y });
+    },
+  );
 
-  const onPointerMove = (event: React.PointerEvent<HTMLDivElement>): void => {
-    const held = drag.current;
-    if (!held) return;
-
-    /*
-     * Prende dentro da janela, deixando sempre uma faixa visível. Sem isso dá para
-     * arrastar o painel para fora e nunca mais alcançá-lo — e como a posição é do
-     * componente, nem recarregar traria de volta.
-     */
-    const largura = panel.current?.offsetWidth ?? 320;
-    const x = Math.min(Math.max(event.clientX - held.dx, 8 - largura + 80), window.innerWidth - 80);
-    const y = Math.min(Math.max(event.clientY - held.dy, 0), window.innerHeight - 32);
-    setPos({ x, y });
-  };
-
-  const endDrag = (event: React.PointerEvent<HTMLDivElement>): void => {
-    drag.current = null;
-    event.currentTarget.releasePointerCapture(event.pointerId);
-  };
+  const redimensiona = usePointerDrag(
+    () => tamanho,
+    (inicio, dx, dy) => {
+      setTamanho({
+        w: Math.max(MIN_LARGURA, inicio.w + dx),
+        h: Math.max(MIN_ALTURA, inicio.h + dy),
+      });
+    },
+  );
 
   const close = useCallback(() => {
     onClose();
@@ -73,22 +88,36 @@ export function FloatingPanel({ title, onClose, children, initial }: FloatingPan
     };
   }, [close]);
 
+  /*
+   * Minimizado, o painel encolhe até o tamanho do nome — `width: max-content`, e não uma
+   * largura calculada em JS: medir texto exigiria ler o layout depois de desenhar, o
+   * navegador já sabe fazer isso, e o resultado acompanha a fonte sozinho.
+   *
+   * A largura escolhida no arrasto fica GUARDADA no estado e volta ao restaurar, o que
+   * não aconteceria se o minimizar a sobrescrevesse.
+   */
+  const medidas = minimized
+    ? { width: 'max-content' }
+    : { width: `${String(tamanho.w)}px`, height: `${String(tamanho.h)}px` };
+
   return (
     <div
       ref={panel}
       className={cx(styles['panel'], 'chamfer-lg', minimized && styles['minimized'])}
-      style={{ transform: `translate(${String(pos.x)}px, ${String(pos.y)}px)` }}
+      style={{
+        transform: `translate(${String(pos.x)}px, ${String(pos.y)}px)`,
+        zIndex: z,
+        ...medidas,
+      }}
       role="dialog"
       aria-label={title}
+      onPointerDownCapture={onFocus}
     >
       <div
         className={styles['bar']}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={endDrag}
-        onPointerCancel={endDrag}
+        {...arrasto}
         onDoubleClick={() => {
-          setMinimized((value) => !value);
+          setMinimized((valor) => !valor);
         }}
       >
         <span className={styles['title']}>{title}</span>
@@ -99,7 +128,7 @@ export function FloatingPanel({ title, onClose, children, initial }: FloatingPan
           aria-label={minimized ? t.restore : t.minimize}
           title={minimized ? t.restore : t.minimize}
           onClick={() => {
-            setMinimized((value) => !value);
+            setMinimized((valor) => !valor);
           }}
         >
           {minimized ? '▢' : '—'}
@@ -116,7 +145,22 @@ export function FloatingPanel({ title, onClose, children, initial }: FloatingPan
         </button>
       </div>
 
-      {!minimized && <div className={styles['body']}>{children}</div>}
+      {!minimized && (
+        <>
+          <div className={styles['body']}>{children}</div>
+          {/*
+            O canto de redimensionar. `role="separator"` e não um botão: ele não executa
+            ação, ajusta uma medida — é a mesma semântica do divisor da lateral.
+          */}
+          <div
+            className={styles['grip']}
+            role="separator"
+            aria-label={t.resize}
+            title={t.resize}
+            {...redimensiona}
+          />
+        </>
+      )}
     </div>
   );
 }

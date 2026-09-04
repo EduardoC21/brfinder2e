@@ -1,0 +1,54 @@
+/*
+ * A coluna de detalhe.
+ *
+ * `position: relative` só existe para ancorar o divisor. `flex: none` com `width` vindo
+ * do componente: a largura é escolha do usuário, e escolha em tempo de execução não cabe
+ * em folha de estilo.
+ */
+.pane {
+  position: relative;
+  flex: none;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  border-left: 1px solid var(--color-hairline);
+  background: var(--color-panel);
+}
+
+/*
+ * O divisor é uma faixa de 6px sobreposta à borda, e não uma coluna de grade.
+ *
+ * Coluna própria empurraria o conteúdo 6px para dentro em todas as telas para servir a um
+ * gesto raro. Sobreposta, ela mora sobre a linha de 1px que já existe. `z-index` baixo,
+ * mas acima do conteúdo: um `<p>` de descrição colado à borda roubaria o cursor.
+ */
+.divider {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -3px;
+  width: 6px;
+  z-index: 1;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.divider:hover,
+.divider:focus-visible {
+  background: var(--color-state);
+  outline: none;
+}
+
+/*
+ * O estado vazio.
+ *
+ * A coluna existe mesmo sem seleção — foi o pedido, e é o que impede a lista de mudar de
+ * largura a cada clique. Sem uma frase aqui, a coluna vazia parece defeito.
+ */
+.empty {
+  align-self: start;
+  margin: 0;
+  padding: var(--space-6) var(--space-4);
+  color: var(--color-text-muted);
+  font: 400 var(--text-md) / 1.5 var(--font-body);
+}

@@ -113,6 +113,17 @@ cache. Nunca dois botões de tradução na mesma linha do nome.
   largura padrão. Guardar a largura de antes, não recalcular.
 - Redimensionável pelo canto, com mínimo.
 
+### Um gesto, um hook
+
+Arrastar o pop-out, redimensioná-lo pelo canto e puxar a borda da lateral são o MESMO
+gesto com contas diferentes. `usePointerDrag` guarda a mecânica — captura de ponteiro,
+botão principal, alvo que não é botão — e entrega o **deslocamento** desde o início, não a
+posição do cursor. Quem usa guarda o valor de partida e soma, e por isso o mesmo hook
+serve posição e tamanho.
+
+Escrever a mecânica em cada lugar é como o `×` duplicado apareceu: três cópias, e a
+correção chegou a uma.
+
 ---
 
 ## 5. Máscara dos tokens de referência
@@ -247,24 +258,17 @@ dado do Paizo e não pode ser apagada por uma sincronização.
 Feedback das Etapas 8a/8b. Este bloco **encolhe**: item feito sai daqui e o que virou
 regra sobe para as seções acima.
 
-Os blocos **A (máscara e campos)** e **B (costura e vocabulário)** foram feitos na Etapa
-8c e saíram desta lista. O que sobrou:
-
-**C — o esqueleto da tela**
-
-1. Lateral fixa do topo até embaixo, com estado vazio; filtros só sobre a lista.
-2. Cabeçalho do detalhe: ações em cima, nome na linha de baixo.
-3. Tradução: um botão rotulado pelo destino + `⟳` só no modo tradução.
-4. Lateral e pop-out redimensionáveis pela borda, com mínimo.
-5. Vários pop-outs, em cascata, com `z-index` por ordem de foco; minimizado encolhe até o
-   nome.
+Feitos e removidos: **A** (máscara e campos) e **B** (costura e vocabulário) na Etapa 8c;
+**C** (esqueleto da tela) na Etapa 8d. O que sobrou:
 
 **D — o super filtro** (o maior; etapa própria)
 
-6. Tópicos como dado (`FilterTopic`), painel do tópico ocupando a lateral (seção 6b).
-7. Filtro de custo com os glifos; par E / OU onde faz sentido.
+1. Tópicos como dado (`FilterTopic`), painel do tópico ocupando a lateral (seção 6b).
+2. Filtro de custo com os glifos; par E / OU onde faz sentido.
 
 **E — preferências**
 
-8. Seletor de colunas com preferência salva, por tipo de entidade, com ordem (seção 7).
-9. Último filtro aplicado persistido, com "limpar".
+3. Seletor de colunas com preferência salva, por tipo de entidade, com ordem (seção 7).
+4. Último filtro aplicado persistido, com "limpar".
+5. A largura da lateral e o tamanho do pop-out ainda **não** persistem. Entram junto com
+   as outras preferências, na mesma chave do `StorePort`.

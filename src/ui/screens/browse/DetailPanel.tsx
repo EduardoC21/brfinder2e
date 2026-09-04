@@ -47,11 +47,17 @@ export function DetailPanel({ entity, entityType, fields, onClose, onPopOut }: D
 
   return (
     <section className={styles['panel']} aria-label={fieldValue(entity, 'name')}>
+      {/*
+        Ações em CIMA, nome embaixo.
+        Lado a lado, os botões espremiam o nome: "Persistent Damage" quebrava em duas
+        linhas e "Pathfinder Society Scenario…" saía cortado. Botão tem largura fixa e
+        nome não tem, então quem cede numa linha compartilhada é sempre o nome. Em linhas
+        separadas, o nome fica com a largura inteira e nada o disputa.
+      */}
       <header className={styles['head']}>
-        <div className={styles['titleRow']}>
-          <h2 className={styles['name']}>{fieldValue(entity, 'name')}</h2>
-          <Actions onClose={onClose} onPopOut={onPopOut} />
-        </div>
+        <Actions onClose={onClose} onPopOut={onPopOut} />
+
+        <h2 className={styles['name']}>{fieldValue(entity, 'name')}</h2>
 
         {entity.retiredIn !== undefined && (
           <p className={styles['retired']}>
@@ -83,11 +89,18 @@ export function DetailPanel({ entity, entityType, fields, onClose, onPopOut }: D
 }
 
 /**
- * Os botões de tradução existem e estão DESABILITADOS.
+ * A barra de ações. UM botão de tradução, rotulado pelo DESTINO.
  *
- * A tradução sob demanda é a Etapa 15 do briefing. Deixá-los visíveis permite avaliar o
- * desenho agora; deixá-los clicáveis seria fingir que funcionam. O motivo vai no `title`,
- * onde quem passar o mouse encontra.
+ * Eram três lado a lado — gerar, alternar, regerar — e juntos ocupavam mais largura que o
+ * nome da entrada. Agora é um só: diz `Traduzir` enquanto se lê o original, e passa a
+ * dizer `Ver original` depois de traduzido. Rótulo pelo destino e não pelo estado: o
+ * botão anuncia o que o clique FAZ, que é o que se quer saber antes de clicar.
+ *
+ * A roda de regerar só aparece no modo tradução, porque só ali existe algo a refazer —
+ * ela é o único caminho que ignora o cache local.
+ *
+ * Tudo DESABILITADO: a tradução sob demanda é a Etapa 15. Visível permite avaliar o
+ * desenho; clicável seria fingir que funciona. O motivo vai no `title`.
  */
 function Actions({
   onClose,
@@ -105,22 +118,6 @@ function Actions({
         title={t.translationPending}
       >
         {t.translate}
-      </button>
-      <button
-        type="button"
-        className={cx(styles['action'], 'chamfer-sm')}
-        disabled
-        title={t.translationPending}
-      >
-        {t.toggleTranslated}
-      </button>
-      <button
-        type="button"
-        className={cx(styles['action'], 'chamfer-sm')}
-        disabled
-        title={t.translationPending}
-      >
-        {t.retranslate}
       </button>
 
       {onPopOut && (

@@ -1,4 +1,4 @@
-import { useDeferredValue, useMemo, useRef, useState } from 'react';
+import { useDeferredValue, useMemo, useReducer, useRef, useState } from 'react';
 
 import {
   SOURCES,
@@ -14,13 +14,14 @@ import {
 import { strings } from '@i18n/index';
 import { FloatingPanel } from '@ui/components/FloatingPanel';
 import { SearchInput } from '@ui/components/SearchInput';
-import { cx } from '@ui/cx';
 import { useBase } from '@ui/hooks/useBase';
 
-import { DetailPanel } from './DetailPanel';
+import { DetailPane } from './DetailPane';
 import { FilterBar } from './FilterBar';
 import { ResultList } from './ResultList';
 import { SourceRail } from './SourceRail';
+import { DetailPanel } from './DetailPanel';
+import { EMPTY_POPOUTS, popoutReducer } from './popouts';
 import styles from './BrowseScreen.module.css';
 
 interface BrowseScreenProps {
@@ -83,10 +84,14 @@ function SourcePane({
   const [activeIndex, setActiveIndex] = useState(-1);
   const [openedKey, setOpenedKey] = useState<string | null>(null);
   /*
-   * Onde o detalhe está desenhado, não se ele existe: são estados EXCLUSIVOS, e abrir o
-   * flutuante fecha a lateral porque é o mesmo detalhe mudando de moldura, não um segundo.
+   * Os flutuantes são INDEPENDENTES da lateral, e não a moldura alternativa dela.
+   *
+   * Na primeira versão eram exclusivos, e o resultado era que destacar um poder desligava
+   * a lista: clicar noutra entrada trocava o conteúdo do flutuante em vez de alimentar a
+   * lateral. Agora o flutuante CONGELA a entrada dele, e a lateral segue viva — que é o
+   * que permite comparar dois poderes lado a lado.
    */
-  const [floating, setFloating] = useState(false);
+  const [popouts, despacharPopout] = useReducer(popoutReducer, EMPTY_POPOUTS);
   const input = useRef<HTMLInputElement>(null);
 
   /*
@@ -118,11 +123,6 @@ function SourcePane({
   }, [entities, source.filters, filters, deferredTerm, index]);
 
   const opened = results.find((entity) => entity.key === openedKey) ?? null;
-
-  const close = (): void => {
-    setOpenedKey(null);
-    setFloating(false);
-  };
 
   /**
    * O teclado vive no campo de busca, não na lista.
@@ -163,44 +163,51 @@ function SourcePane({
     }
   };
 
+  /*
+   * Fragmento, e não um `<div>` em volta.
+   *
+   * A lista e o detalhe são COLUNAS IRMÃS da grade da tela. Envolvê-los num elemento
+   * criaria uma célula só, e o detalhe voltaria a viver dentro da área da lista — que é
+   * exatamente por que a barra de filtros passava por cima dele.
+   */
   return (
-    <div className={styles['main']}>
-      <div className={styles['searchRow']}>
-        {/*
+    <>
+      <div className={styles['main']}>
+        <div className={styles['searchRow']}>
+          {/*
           Era um <input type="search"> cru aqui, escrito à parte só por causa dos atributos
           de caixa de combinação — e por isso sem o CSS que esconde o × nativo do Chrome.
           Agora é o mesmo SearchInput das outras duas buscas, com a fiação como prop.
         */}
-        <SearchInput
-          ref={input}
-          className={styles['search']}
-          label={t.searchLabel}
-          placeholder={`${t.searchPlaceholder} ${(strings.sources[source.id] ?? '').toLowerCase()}…`}
-          value={term}
-          controls={{
-            listId: 'lista-de-resultados',
-            activeId: activeIndex >= 0 ? `resultado-${String(activeIndex)}` : undefined,
-          }}
+          <SearchInput
+            ref={input}
+            className={styles['search']}
+            label={t.searchLabel}
+            placeholder={`${t.searchPlaceholder} ${(strings.sources[source.id] ?? '').toLowerCase()}…`}
+            value={term}
+            controls={{
+              listId: 'lista-de-resultados',
+              activeId: activeIndex >= 0 ? `resultado-${String(activeIndex)}` : undefined,
+            }}
+            onChange={(next) => {
+              setTerm(next);
+              setActiveIndex(-1);
+            }}
+            onKeyDown={onKeyDown}
+          />
+          <span className={styles['count']}>{t.counting(results.length, entities.length)}</span>
+        </div>
+
+        <FilterBar
+          specs={source.filters}
+          entities={entities}
+          state={filters}
           onChange={(next) => {
-            setTerm(next);
+            setFilters(next);
             setActiveIndex(-1);
           }}
-          onKeyDown={onKeyDown}
         />
-        <span className={styles['count']}>{t.counting(results.length, entities.length)}</span>
-      </div>
 
-      <FilterBar
-        specs={source.filters}
-        entities={entities}
-        state={filters}
-        onChange={(next) => {
-          setFilters(next);
-          setActiveIndex(-1);
-        }}
-      />
-
-      <div className={cx(styles['split'], opened !== null && !floating && styles['withDetail'])}>
         <div className={styles['list']} id="lista-de-resultados">
           {loading ? null : entities.length === 0 ? (
             <p className={styles['empty']}>{t.empty}</p>
@@ -224,32 +231,43 @@ function SourcePane({
             />
           )}
         </div>
-
-        {opened !== null && !floating && (
-          <div className={styles['detailPane']}>
-            <DetailPanel
-              entity={opened}
-              entityType={source.entityType ?? ''}
-              fields={source.detail}
-              onClose={close}
-              onPopOut={() => {
-                setFloating(true);
-              }}
-            />
-          </div>
-        )}
       </div>
 
-      {opened !== null && floating && (
-        <FloatingPanel title={fieldValue(opened, 'name')} onClose={close}>
+      <DetailPane
+        entity={opened}
+        entityType={source.entityType ?? ''}
+        fields={source.detail}
+        onClose={() => {
+          setOpenedKey(null);
+        }}
+        onPopOut={() => {
+          if (opened !== null) despacharPopout({ kind: 'open', entity: opened });
+        }}
+      />
+
+      {popouts.items.map((item) => (
+        <FloatingPanel
+          key={item.id}
+          title={fieldValue(item.entity, 'name')}
+          initial={{ x: item.x, y: item.y }}
+          z={item.z}
+          onFocus={() => {
+            despacharPopout({ kind: 'focus', id: item.id });
+          }}
+          onClose={() => {
+            despacharPopout({ kind: 'close', id: item.id });
+          }}
+        >
           <DetailPanel
-            entity={opened}
+            entity={item.entity}
             entityType={source.entityType ?? ''}
             fields={source.detail}
-            onClose={close}
+            onClose={() => {
+              despacharPopout({ kind: 'close', id: item.id });
+            }}
           />
         </FloatingPanel>
-      )}
-    </div>
+      ))}
+    </>
   );
 }

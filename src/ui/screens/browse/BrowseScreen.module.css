@@ -1,15 +1,20 @@
 /*
- * A tela de consulta: trilho de fontes à esquerda, busca e lista à direita.
+ * A tela de consulta: trilho de fontes, área de busca e lista, e o painel de detalhe.
  *
- * Grid de duas colunas com a primeira fixa: o trilho não pode encolher quando um nome de
- * fonte for mais longo, senão a lista "pula" de largura ao trocar de fonte.
+ * TRÊS colunas, e o detalhe é a terceira — irmã da área da lista, não filha dela. Era
+ * filha, e por isso a barra de filtros (que mora na área da lista) passava por cima dele.
+ * Como coluna própria, o painel vai do topo até o rodapé e nada o cobre.
+ *
+ * A primeira coluna é fixa: o trilho não pode encolher quando um nome de fonte for mais
+ * longo, senão a lista "pula" de largura ao trocar de fonte. A terceira é `auto`, porque
+ * quem manda na largura dela é o próprio painel — o usuário a escolhe arrastando.
  *
  * `min-height: 0` nas células é o que permite a lista rolar dentro do grid em vez de
  * esticar a página — sem isso, um filho com overflow força a altura do avô.
  */
 .screen {
   display: grid;
-  grid-template-columns: 190px 1fr;
+  grid-template-columns: 190px minmax(0, 1fr) auto;
   height: 100%;
   min-height: 0;
 }
@@ -71,27 +76,6 @@
   min-width: 0;
   overflow-y: auto;
   padding-bottom: var(--space-6);
-}
-
-/*
- * Com o detalhe aberto, a área vira duas colunas: a lista continua visível à esquerda,
- * que é o motivo de o briefing (seção 9) chamar isto de "painel lateral AO LADO da lista".
- * `minmax(0, …)` nas duas para nenhuma delas ser empurrada pelo conteúdo.
- */
-.split {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  min-height: 0;
-}
-
-.withDetail {
-  grid-template-columns: minmax(0, 1fr) minmax(0, 420px);
-}
-
-.detailPane {
-  min-height: 0;
-  min-width: 0;
-  border-left: 1px solid var(--color-hairline);
 }
 
 .empty {

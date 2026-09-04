@@ -20,26 +20,26 @@
   border-bottom: 1px solid var(--color-hairline);
 }
 
-.titleRow {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-3);
-}
-
-/* Nome de entrada é Spectral — o papel de "nome" na tipografia do sistema. */
+/*
+ * Nome de entrada é Spectral — o papel de "nome" na tipografia do sistema.
+ *
+ * Linha inteira para ele, com os botões numa linha própria acima. Compartilhando a linha,
+ * o nome era o único elemento sem largura fixa, e por isso o único que cedia.
+ */
 .name {
-  margin: 0;
+  margin: var(--space-2) 0 0;
   min-width: 0;
   font: 400 var(--text-2xl) / 1.15 var(--font-display);
   color: var(--color-text);
+  /* Nome muito longo quebra em duas linhas em vez de estourar a coluna. */
+  overflow-wrap: anywhere;
 }
 
+/* A linha de ações fica encostada à direita, acima do nome. */
 .actions {
   display: flex;
   align-items: center;
   gap: var(--space-1);
-  flex: none;
   flex-wrap: wrap;
   justify-content: flex-end;
 }
