@@ -87,7 +87,9 @@ export function SettingsPanel({
 
         {run.status === 'running' && <Running phase={run.phase} />}
         {run.status === 'done' && <Report types={run.types} />}
-        {run.status === 'refused' && <Refused tag={run.tag} failures={run.failures} />}
+        {run.status === 'refused' && (
+          <Refused rejected={run.rejected} failures={run.failures} keeping={run.keeping} />
+        )}
         {run.status === 'error' && <Failure message={run.message} />}
 
         {run.status !== 'running' && <Update state={update} busy={busy} onApply={onApplyUpdate} />}
@@ -240,14 +242,29 @@ function Update({
   );
 }
 
-/** Rodou e NÃO gravou: a base anterior continua valendo. */
-function Refused({ tag, failures }: { readonly tag: string; readonly failures: number }) {
+/**
+ * Tentou subir e não subiu: a base anterior continua valendo.
+ *
+ * A frase começa pela versão em que a mesa FICOU, e não pela que foi recusada: é a
+ * informação que alguém precisa para conferir se todo mundo está igual.
+ */
+function Refused({
+  rejected,
+  failures,
+  keeping,
+}: {
+  readonly rejected: string;
+  readonly failures: number;
+  readonly keeping: string;
+}) {
   return (
     <>
-      <p className={styles['phase']}>
-        {tag} — {failures} {t.database.report.failed}
+      <p className={styles['phase']}>{t.database.stayedOn(keeping)}</p>
+      <p className={styles['warning']}>
+        {rejected === ''
+          ? t.database.upgradeUnavailable
+          : t.database.upgradeFailed(rejected, failures)}
       </p>
-      <p className={styles['warning']}>{t.database.refusedToPersist}</p>
     </>
   );
 }

@@ -4,6 +4,7 @@ import { actionRecipe, conditionRecipe } from '@core/normalization/index';
 import type { Recipe } from '@core/normalization/index';
 import { KNOWN_GOOD_TAG } from '@core/source/index';
 import { persistSync } from '@core/sync/persist';
+import { decideSync } from '@core/sync/policy';
 import { runSync, type SyncPhase, type SyncResult } from '@core/sync/run-sync';
 import { checkForUpdate } from '@core/sync/update-check';
 import { readMeta, type EntityDiff, type StoreMeta } from '@core/store/index';
@@ -25,8 +26,19 @@ export type RunState =
   | { readonly status: 'idle' }
   | { readonly status: 'running'; readonly phase: SyncPhase }
   | { readonly status: 'done'; readonly types: readonly SyncedType[] }
-  /** Rodou, mas houve falha de decodificação numa troca de versão: NADA foi gravado. */
-  | { readonly status: 'refused'; readonly tag: string; readonly failures: number }
+  /**
+   * Rodou e NÃO adotou: a versão candidata não decodificou limpa. Nada foi gravado, e a
+   * base anterior continua valendo.
+   *
+   * `keeping` é o que importa para quem lê: saber em qual versão a mesa ficou vale mais
+   * que saber qual foi recusada.
+   */
+  | {
+      readonly status: 'refused';
+      readonly rejected: string;
+      readonly failures: number;
+      readonly keeping: string;
+    }
   | { readonly status: 'error'; readonly message: string };
 
 export type UpdateState =
@@ -58,12 +70,30 @@ type SyncAction =
   | { readonly kind: 'start' }
   | { readonly kind: 'phase'; readonly phase: SyncPhase }
   | { readonly kind: 'done'; readonly stored: StoreMeta; readonly types: readonly SyncedType[] }
-  | { readonly kind: 'refused'; readonly tag: string; readonly failures: number }
+  | {
+      readonly kind: 'refused';
+      readonly rejected: string;
+      readonly failures: number;
+      readonly keeping: string;
+    }
   | { readonly kind: 'error'; readonly message: string }
   | { readonly kind: 'checking' }
   | { readonly kind: 'checked'; readonly update: UpdateState };
 
 const NO_UPDATE: UpdateState = { status: 'idle' };
+
+/**
+ * O que uma sincronização está tentando fazer.
+ *
+ * União nomeada, e não três parâmetros soltos: antes era `sync(tag, strict, fallback)`, e
+ * a combinação certa era convenção — nada impedia pedir "estrito com fallback", que não
+ * faz sentido. Aqui só as combinações válidas são escrevíveis.
+ */
+type SyncPlan =
+  /** Sobe para a mais nova. Se ela não decodificar limpa, fica onde já está. */
+  | { readonly kind: 'newest' }
+  /** Exatamente esta versão, escolhida pelo usuário na tela de configurações. */
+  | { readonly kind: 'pinned'; readonly tag: string };
 
 function reduce(state: SyncState, action: SyncAction): SyncState {
   switch (action.kind) {
@@ -83,7 +113,15 @@ function reduce(state: SyncState, action: SyncAction): SyncState {
         update: NO_UPDATE,
       };
     case 'refused':
-      return { ...state, run: { status: 'refused', tag: action.tag, failures: action.failures } };
+      return {
+        ...state,
+        run: {
+          status: 'refused',
+          rejected: action.rejected,
+          failures: action.failures,
+          keeping: action.keeping,
+        },
+      };
     case 'error':
       return { ...state, run: { status: 'error', message: action.message } };
     case 'checking':
@@ -152,91 +190,136 @@ export function useSync(): UseSync {
   }, []);
 
   /**
-   * `strict` liga a regra da troca de versão: falha de decodificação impede a gravação, e
-   * a base anterior continua valendo. Ao re-sincronizar a MESMA versão ela fica desligada
-   * — senão uma falha isolada deixaria o usuário travado sem poder atualizar nada.
+   * A política de versão, num lugar só.
+   *
+   *   PRIORIDADE      a versão MAIS NOVA. É onde a mesa quer estar.
+   *   PISO            a última que deu certo — a gravada no `meta`, e não uma constante
+   *                   no código. Numa instalação nova, onde não há histórico, o piso é o
+   *                   `KNOWN_GOOD_TAG`.
+   *
+   * A TOLERÂNCIA a falhas é DERIVADA, não escolhida por quem chama: só existe quando o
+   * alvo é a versão que já está gravada. Aí você está reparando a base que já tem, e
+   * recusar deixaria o usuário preso a uma base corrompida sem poder refazê-la. Trocar
+   * de versão nunca tolera — não vale trocar uma base boa por uma pior.
    */
-  const sync = useCallback(
-    (tag: string | null, strict: boolean, fallback: string | null = null) => {
-      const id = ++runId.current;
-      dispatch({ kind: 'start' });
+  const sync = useCallback((plan: SyncPlan) => {
+    const id = ++runId.current;
+    const atual = storedTag.current;
+    dispatch({ kind: 'start' });
 
-      void (async () => {
-        const attempt = async (
-          candidate: string | null,
-        ): Promise<{ result: SyncResult; failures: number }> => {
-          const result = await runSync(http, RECIPES, {
-            tag: candidate,
-            onPhase: (phase) => {
-              if (runId.current === id) dispatch({ kind: 'phase', phase });
-            },
-          });
-          return { result, failures: totalFailures(result) };
-        };
+    void (async () => {
+      const attempt = async (
+        candidate: string | null,
+      ): Promise<{ result: SyncResult; failures: number }> => {
+        const result = await runSync(http, RECIPES, {
+          tag: candidate,
+          onPhase: (phase) => {
+            if (runId.current === id) dispatch({ kind: 'phase', phase });
+          },
+        });
+        return { result, failures: totalFailures(result) };
+      };
 
-        try {
-          let { result, failures } = await attempt(tag);
+      try {
+        let { result, failures } = await attempt(plan.kind === 'pinned' ? plan.tag : null);
 
-          // Rede de segurança da instalação nova: se a mais recente não decodificar, cai
-          // para a última versão conhecidamente boa em vez de deixar o usuário sem base.
-          if (failures > 0 && fallback !== null && fallback !== result.releaseTag) {
-            ({ result, failures } = await attempt(fallback));
-          }
+        /*
+         * A decisão mora em `core/sync/policy.ts`, com nome e teste. Aqui fica só a
+         * EXECUÇÃO dela — a parte que precisa de rede e de armazenamento.
+         */
+        let decisao = decideSync({
+          resolvedTag: result.releaseTag,
+          failures,
+          storedTag: atual,
+          floorTag: KNOWN_GOOD_TAG,
+        });
 
-          if (strict && failures > 0) {
-            if (runId.current === id) {
-              dispatch({ kind: 'refused', tag: result.releaseTag, failures });
-            }
-            return;
-          }
-
-          const persisted = await persistSync(store, result);
-          if (runId.current !== id) return;
-
-          const byType = new Map(persisted.types.map((entry) => [entry.type, entry]));
-          dispatch({
-            kind: 'done',
-            stored: persisted.meta,
-            types: result.types.map((entry) => {
-              const info = byType.get(entry.type);
-              return {
-                type: entry.type,
-                imported: entry.imported,
-                failed: entry.failed,
-                diff: info?.diff ?? { added: 0, updated: 0, unchanged: 0, removed: 0 },
-                retired: info?.retired ?? 0,
-                staleRetired: info?.staleRetired ?? 0,
-              };
-            }),
-          });
-        } catch (error) {
-          if (runId.current !== id) return;
-          dispatch({
-            kind: 'error',
-            message: error instanceof Error ? error.message : String(error),
+        if (decisao.kind === 'fallback') {
+          ({ result, failures } = await attempt(decisao.tag));
+          decisao = decideSync({
+            resolvedTag: result.releaseTag,
+            failures,
+            storedTag: atual,
+            floorTag: KNOWN_GOOD_TAG,
+            floorTried: true,
           });
         }
-      })();
-    },
-    [],
-  );
 
-  /*
-   * Sem base gravada, pega a mais recente — é instalação nova, não há o que preservar.
-   * Com base gravada, re-sincroniza a MESMA versão: subir é ato deliberado, pelo botão de
-   * atualizar. Ver briefing seção 8 e OPEN-DECISIONS item 10.
+        if (decisao.kind === 'keep') {
+          if (runId.current === id) {
+            dispatch({
+              kind: 'refused',
+              rejected: result.releaseTag,
+              failures,
+              keeping: decisao.keeping,
+            });
+          }
+          return;
+        }
+
+        const persisted = await persistSync(store, result);
+        if (runId.current !== id) return;
+
+        const byType = new Map(persisted.types.map((entry) => [entry.type, entry]));
+        dispatch({
+          kind: 'done',
+          stored: persisted.meta,
+          types: result.types.map((entry) => {
+            const info = byType.get(entry.type);
+            return {
+              type: entry.type,
+              imported: entry.imported,
+              failed: entry.failed,
+              diff: info?.diff ?? { added: 0, updated: 0, unchanged: 0, removed: 0 },
+              retired: info?.retired ?? 0,
+              staleRetired: info?.staleRetired ?? 0,
+            };
+          }),
+        });
+      } catch (error) {
+        if (runId.current !== id) return;
+
+        /*
+         * Tentar subir e explodir não é erro: é uma subida que não aconteceu.
+         *
+         * `runSync` LANÇA quando o release novo não declara mais um pack que a receita
+         * pede — foi o cenário que motivou a política inteira. Havendo base gravada, a
+         * mesa simplesmente continua nela; erro vermelho fica para quem não tem base
+         * nenhuma e ficou sem nada.
+         */
+        if (atual !== null && plan.kind === 'newest') {
+          dispatch({ kind: 'refused', rejected: '', failures: 0, keeping: atual });
+          return;
+        }
+
+        dispatch({
+          kind: 'error',
+          message: error instanceof Error ? error.message : String(error),
+        });
+      }
+    })();
+  }, []);
+
+  /**
+   * Sincronizar sempre MIRA na mais nova.
+   *
+   * Era "re-sincroniza a mesma versão, subir é ato deliberado". Mudou por decisão do
+   * autor: a mesa joga sempre na mais atualizada, então estar na mais nova é o alvo, e a
+   * última que deu certo é só o piso para quando a nova não presta.
+   *
+   * ⚠️ O que se perdeu com isso, e vale saber: o clique deliberado era o que fazia a mesa
+   * inteira subir junto. Agora quem sincronizar na terça pode pegar um release que saiu
+   * depois de quem sincronizou na segunda. O risco já existia — qualquer um podia clicar
+   * em atualizar — e a defesa é a mesma de antes: a versão fica visível na barra de topo.
    */
   const start = useCallback(() => {
-    const current = storedTag.current;
-    // Instalação nova: pega a mais recente, com KNOWN_GOOD_TAG como rede.
-    // Já tem base: re-sincroniza a MESMA versão. Subir é ato deliberado.
-    if (current === null) sync(null, false, KNOWN_GOOD_TAG);
-    else sync(current, false);
+    sync({ kind: 'newest' });
   }, [sync]);
 
+  /** Fixar uma versão específica continua existindo: é como a mesa se realinha. */
   const applyUpdate = useCallback(
     (tag: string) => {
-      sync(tag, true);
+      sync({ kind: 'pinned', tag });
     },
     [sync],
   );

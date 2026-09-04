@@ -151,8 +151,12 @@ export const ptBR = {
       updateTo: 'Atualizar para',
       incompatible:
         'Esta versão mudou de estrutura e o aplicativo ainda não a acompanha. A base atual continua valendo — atualize o aplicativo e tente de novo.',
-      refusedToPersist:
-        'A atualização não foi gravada porque houve falha ao ler as entradas. A base anterior continua valendo.',
+      stayedOn: (tag: string) => `Continua em ${tag}.`,
+      upgradeFailed: (tag: string, failures: number) =>
+        `A ${tag} não foi adotada: ${String(failures)} entrada(s) não puderam ser lidas. ` +
+        `A base anterior continua valendo.`,
+      upgradeUnavailable:
+        'Não foi possível ler a versão mais nova. A base anterior continua valendo.',
       retired: 'aposentadas',
       retiredHint:
         'Entradas que sumiram da fonte continuam guardadas, para não quebrar fichas que as usem.',

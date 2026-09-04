@@ -507,26 +507,56 @@ Se a receita atual NÃO conseguir reler um aposentado, ele mantém a projeção 
 contado em `staleRetired`. Isso não é estado a contornar: é sinal de que a receita exige um
 campo que nem sempre existiu, e o conserto é marcar o campo como opcional.
 
-### A versão da base não é código
+### A política de versão: mira na mais nova, cai para a última que deu certo
 
 `KNOWN_GOOD_TAG` deixou de ser "a versão do app". A versão em uso fica no `meta` do
-armazenamento, e o usuário sobe pela engrenagem, sem recompilar. A constante virou duas
-coisas: rede de segurança da instalação nova, e alvo fixo do teste de contrato.
+armazenamento, e o app sobe sozinho quando a mais nova funciona.
 
-O fluxo, e por que ele preserva a decisão da seção 8 do briefing (a base do mestre e a dos
-jogadores precisam bater durante a sessão):
+**A regra, em uma frase: a prioridade é a versão MAIS NOVA, e o piso é a última que deu
+certo.** O piso não é a constante — é a tag gravada no `meta`, que só chega lá depois de
+uma normalização limpa. A constante é consultada num caso só: instalação nova, onde não há
+histórico nenhum.
 
-| Ação                               | O que faz                                                                                                            |
-| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| `Sincronizar` numa instalação nova | pega a mais recente; se ela não decodificar, cai para `KNOWN_GOOD_TAG`                                               |
-| `Sincronizar de novo`              | re-sincroniza a MESMA versão gravada. Nunca sobe sozinho                                                             |
-| `Procurar versão nova`             | só o `system.json` (~50 KiB): diz se há release novo e se os packs que as receitas pedem continuam declarados        |
-| `Atualizar para X`                 | roda a versão nova em modo estrito: **falha de decodificação impede a gravação**, e a base anterior continua valendo |
+A decisão mora em `core/sync/policy.ts` como função pura, e não dissolvida em `if`s dentro
+do callback de sincronização. Ela tem cinco casos:
+
+| Situação                                         | Resultado                               |
+| ------------------------------------------------ | --------------------------------------- |
+| decodificou limpa                                | **adota**                               |
+| falhou, e há base gravada de OUTRA versão        | **fica** na gravada, sem gravar nada    |
+| falhou, e é a MESMA versão já gravada            | **adota** — está reparando o que tem    |
+| falhou, instalação nova, ainda não tentou o piso | **cai** para `KNOWN_GOOD_TAG`           |
+| falhou, instalação nova, piso já tentado         | **adota** — parcial serve mais que nada |
+
+A tolerância a falhas é **derivada**, nunca escolhida por quem chama. Antes era um
+parâmetro booleano (`strict`) ao lado de um `fallback`, e nada impedia pedir a combinação
+sem sentido. Hoje o plano é uma união nomeada (`newest` ou `pinned`) e a tolerância sai da
+comparação entre o alvo e o que está gravado.
+
+Por que tolerar ao reparar a mesma versão: recusar prenderia o usuário a uma base
+corrompida sem nenhum caminho para refazê-la.
+
+Por que recusar ao trocar: não vale trocar uma base boa por uma pior.
+
+| Ação                   | O que faz                                                                                                     |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `Sincronizar`          | mira na mais nova. Se ela não decodificar limpa, a mesa fica onde está e a tela diz em qual versão ficou      |
+| `Procurar versão nova` | só o `system.json` (~50 KiB): diz se há release novo e se os packs que as receitas pedem continuam declarados |
+| `Atualizar para X`     | fixa uma versão específica, em modo estrito. É como a mesa se realinha depois de alguém divergir              |
+
+Uma subida que EXPLODE não é erro, é uma subida que não aconteceu: `runSync` lança quando o
+release novo deixa de declarar um pack que a receita pede, e havendo base gravada a mesa
+simplesmente continua nela. Erro vermelho fica para quem não tem base nenhuma.
+
+⚠️ **O que se perdeu ao trocar o clique deliberado pela subida automática.** Antes, subir
+era um ato, e isso fazia a mesa inteira subir junta — a seção 8 do briefing pede que a base
+do mestre e a dos jogadores batam durante a sessão. Agora quem sincroniza na terça pode
+pegar um release publicado depois de quem sincronizou na segunda. Foi decisão consciente do
+autor, porque a mesa joga sempre na versão atual. A defesa é a mesma de antes: a versão
+fica visível na barra de topo, e `Atualizar para X` permite realinhar todo mundo numa tag.
 
 A checagem barata não pega campo que mudou de tipo — isso só aparece ao rodar as receitas.
-Daí o modo estrito: o app segue na última versão compatível até o aplicativo ser
-atualizado, que é exatamente o comportamento pedido. E o teste de contrato semanal avisa
-antes de qualquer jogador ver o app quebrado.
+E o teste de contrato semanal avisa antes de qualquer jogador ver o app quebrado.
 
 ### O analisador de marcação (`core/markup/`)
 
