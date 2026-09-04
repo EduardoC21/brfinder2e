@@ -18,14 +18,16 @@ import {
   readTextEntry,
   type FolderRoots,
   type HttpPort,
+  type PackListing,
   type Progress,
   type ZipChannel,
 } from '../source/index';
 import { listRetiredRaw, type StorePort } from '../store/index';
 import { mergeLanguageFiles } from '../normalization/language';
-import { run, type Failure, type NormalizedEntity } from '../normalization/run';
+import { run, type PackDocuments, type Failure, type NormalizedEntity } from '../normalization/run';
 import type { Recipe } from '../normalization/recipe';
 import type { NormalizationReport } from '../normalization/report';
+import { findUnreadPacks, type PackContents, type UnreadPack } from './unread-packs';
 
 /** Em que ponto a sincronização está. A tela desenha a partir disto. */
 export type SyncPhase =
@@ -81,6 +83,13 @@ export interface SyncResult {
   readonly types: readonly TypeResult[];
   /** Soma de `imported` — o número que a barra de topo mostra. */
   readonly total: number;
+  /**
+   * Packs do release que trazem um tipo que importamos e que nenhuma receita lê.
+   *
+   * Quase sempre vazio, e é isso que o torna útil: quando não está, apareceu conteúdo
+   * novo que merece uma decisão sua. Ver `unread-packs.ts`.
+   */
+  readonly unreadPacks: readonly UnreadPack[];
 }
 
 export interface SyncOptions {
@@ -133,17 +142,19 @@ export async function runSync(
   for (const recipe of recipes) {
     notify({ kind: 'normalizing', type: recipe.type });
 
-    // TODOS os packs da receita. O primeiro que declarar pastas manda no setor; os que
-    // não têm pasta caem no valor padrão declarado na receita.
+    /*
+     * Os documentos vão para o motor AGRUPADOS por pack, cada um com a tabela de pastas
+     * dele. Achatados, a origem se perdia — e a origem é o que carimba o setor de quem
+     * não está em pasta nenhuma.
+     */
     const packs: PackSource[] = [];
-    const documents: unknown[] = [];
-    const folderTable = new Map<string, string>();
+    const sources: PackDocuments[] = [];
 
-    for (const packName of recipe.packs) {
-      const pack = loaded.inventory.packs.find((entry) => entry.name === packName);
+    for (const declared of recipe.packs) {
+      const pack = loaded.inventory.packs.find((entry) => entry.name === declared.name);
       if (!pack) {
         throw new SyncError(
-          `A receita "${recipe.type}" pede o pack "${packName}", que não está no manifesto do release ${loaded.release.tag}.`,
+          `A receita "${recipe.type}" pede o pack "${declared.name}", que não está no manifesto do release ${loaded.release.tag}.`,
         );
       }
 
@@ -160,26 +171,26 @@ export async function runSync(
         throw new SyncError(`${pack.file} não é um array de documentos.`);
       }
 
-      packs.push({ name: packName, file: pack.file, rawBytes });
-      // `Array.isArray` sobre `unknown` estreita para `any[]`; a conversão devolve
-      // `unknown[]`, que é o que de fato sabemos.
-      documents.push(...(parsed as unknown[]));
+      packs.push({ name: declared.name, file: pack.file, rawBytes });
 
-      const folders = readFolders(loaded, channel, packName);
-      if (folders) for (const [id, name] of folders) folderTable.set(id, name);
+      const folders = readFolders(loaded, channel, declared.name);
+      sources.push({
+        pack: declared.name,
+        // `Array.isArray` sobre `unknown` estreita para `any[]`; a conversão devolve
+        // `unknown[]`, que é o que de fato sabemos.
+        documents: parsed as unknown[],
+        ...(folders === null ? {} : { folders }),
+      });
     }
 
-    const result = run(recipe, documents, {
-      language,
-      ...(folderTable.size > 0 ? { folders: folderTable } : {}),
-    });
+    const result = run(recipe, sources, { language });
 
     // Os aposentados passam pela MESMA receita, na mesma execução. É o que garante uma
     // forma só para o front desenhar.
     const retired =
       options.store === undefined
         ? { entities: [], failures: [] }
-        : renormalizeRetired(recipe, options.store, language);
+        : renormalizeRetired(recipe, options.store, language, mergeFolders(sources));
 
     const retiredResult = await retired;
 
@@ -200,6 +211,7 @@ export async function runSync(
     systemId: loaded.inventory.systemId,
     systemVersion: loaded.inventory.systemVersion,
     releaseTag: loaded.release.tag,
+    unreadPacks: scanUnreadPacks(loaded, recipes),
     types,
     total: types.reduce((sum, entry) => sum + entry.imported, 0),
   };
@@ -208,8 +220,8 @@ export async function runSync(
 /**
  * Lê `<pack>_folders.json`, se existir.
  *
- * Nem todo pack tem: são 54 arquivos de pasta para 97 packs. Ausência não é erro — a
- * receita que usa `fromFolder` cai no valor padrão.
+ * Nem todo pack tem: são 54 arquivos de pasta para 98 packs. Ausência não é erro — quem
+ * usa `fromSector` cai no carimbo declarado no pack.
  */
 function readFolders(
   loaded: {
@@ -234,18 +246,88 @@ function readFolders(
   }
 }
 
-/** Roda a receita ATUAL sobre os documentos crus guardados em `raw/retired/<tipo>/`. */
+/**
+ * Varre TODOS os packs do release só para saber quais tipos cada um traz.
+ *
+ * Custa ~1,1 s medido no `pf2e-8.5.0` (98 packs, 29.617 documentos) — cabe numa
+ * sincronização que já baixa 36 MiB e leva vários segundos. Não vale gastar uma porta de
+ * configuração para economizar isso.
+ *
+ * Falha de leitura num pack é ignorada de propósito: isto é um AVISO, e um aviso que
+ * derruba a sincronização é pior que aviso nenhum.
+ */
+function scanUnreadPacks(
+  loaded: {
+    readonly zip: Uint8Array;
+    readonly inventory: { readonly packs: readonly PackListing[] };
+  },
+  recipes: readonly Recipe<never, never>[],
+): readonly UnreadPack[] {
+  const lidos = new Set(recipes.flatMap((recipe) => recipe.packs.map((pack) => pack.name)));
+  const importados = new Set(recipes.map((recipe) => recipe.type));
+
+  const contents: PackContents[] = [];
+  for (const pack of loaded.inventory.packs) {
+    if (lidos.has(pack.name)) continue;
+    try {
+      const bytes = readEntries(loaded.zip, [pack.file]).get(pack.file);
+      if (!bytes) continue;
+      const parsed: unknown = JSON.parse(new TextDecoder().decode(bytes));
+      if (!Array.isArray(parsed)) continue;
+      contents.push({
+        pack: pack.name,
+        types: (parsed as { type?: unknown }[]).map((doc) =>
+          typeof doc.type === 'string' ? doc.type : '',
+        ),
+      });
+    } catch {
+      // Pack ilegível não vira erro de sincronização — vira ausência de aviso.
+    }
+  }
+
+  return findUnreadPacks(contents, lidos, importados);
+}
+
+/** Junta as tabelas de pasta de todos os packs da receita, para os aposentados. */
+function mergeFolders(sources: readonly PackDocuments[]): ReadonlyMap<string, string> {
+  const todas = new Map<string, string>();
+  for (const source of sources) {
+    if (source.folders === undefined) continue;
+    for (const [id, name] of source.folders) todas.set(id, name);
+  }
+  return todas;
+}
+
+/**
+ * Roda a receita ATUAL sobre os documentos crus guardados em `raw/retired/<tipo>/`.
+ *
+ * ⚠️ O aposentado não sabe de qual PACK veio: `raw/retired/<tipo>/<chave>` guarda só o
+ * documento. Então ele recebe as tabelas de pasta de todos os packs da receita — a chave
+ * de pasta está no próprio documento e resolve certo — mas NÃO recebe carimbo de setor.
+ *
+ * O efeito visível: um aposentado que estava numa pasta mantém o setor; um que vinha de
+ * pack sem pastas fica com o setor vazio. Vazio é honesto — "não sei" — enquanto carimbar
+ * seria adivinhar. O conserto de verdade é gravar o pack junto do documento aposentado, e
+ * isso muda a forma do armazenamento.
+ */
 async function renormalizeRetired(
   recipe: Recipe<never, never>,
   store: StorePort,
   language: ReadonlyMap<string, string>,
+  folders: ReadonlyMap<string, string>,
 ): Promise<{ entities: readonly NormalizedEntity[]; failures: readonly Failure[] }> {
   const stored = await listRetiredRaw(store, recipe.type);
   if (stored.length === 0) return { entities: [], failures: [] };
 
   const result = run(
     recipe,
-    stored.map((entry) => entry.document),
+    [
+      {
+        pack: '(aposentados)',
+        documents: stored.map((entry) => entry.document),
+        folders,
+      },
+    ],
     { language },
   );
   return { entities: result.entities, failures: result.failures };

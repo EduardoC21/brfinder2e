@@ -61,7 +61,7 @@ export interface ConditionDesc {
 
 export const conditionRecipe = recipe<ConditionBase, ConditionDesc>({
   type: 'condition',
-  packs: ['conditionitems'],
+  packs: [{ name: 'conditionitems' }],
 
   base: {
     name: from('name', text),

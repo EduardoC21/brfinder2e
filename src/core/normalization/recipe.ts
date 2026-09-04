@@ -34,11 +34,33 @@ export type FieldMapFor<T> = { [K in keyof T]-?: Field<T[K]> };
 /** Caminho -> motivo. O motivo é obrigatório: nunca em silêncio (briefing 5.1). */
 export type ReasonMap = Readonly<Record<string, string>>;
 
+/**
+ * Um pack que alimenta a receita.
+ *
+ * Não é só um nome porque o pack CARREGA SIGNIFICADO que o documento não tem. Medido no
+ * `pf2e-8.5.0`: as 1.414 ações estão em cinco packs, e nada dentro do documento separa
+ * `Power Attack` (habilidade de monstro, no glossário de bestiário) de `Fling Magic`
+ * (ação de PJ) — mesmos campos, mesmos traços, mesma forma. O pack é a única informação.
+ *
+ * `sector` é o carimbo para packs **sem arquivo de pastas**. Onde há pasta, a pasta vence:
+ * ela é mais específica e se atualiza sozinha quando o Paizo cria uma categoria nova.
+ *
+ * Isto substitui um `withDefault('Adventure')` que funcionava por COINCIDÊNCIA — havia
+ * dois packs, um com pastas e um sem. Um terceiro pack sem pastas também viraria
+ * "Adventure", e estaria errado.
+ */
+export interface RecipePack {
+  /** `name` do manifesto. */
+  readonly name: string;
+  /** Setor de todo documento deste pack que não estiver numa pasta. */
+  readonly sector?: string;
+}
+
 export interface RecipeInput<TBase, TDesc> {
   /** Valor de `type` no documento do Foundry. Documento de outro tipo é descartado. */
   readonly type: string;
-  /** Nomes de pack (`name` do manifesto) que alimentam esta receita. */
-  readonly packs: readonly string[];
+  /** Os packs que alimentam esta receita. */
+  readonly packs: readonly RecipePack[];
   readonly base: FieldMapFor<TBase>;
   readonly desc?: FieldMapFor<TDesc>;
   readonly ignore?: ReasonMap;
@@ -47,7 +69,7 @@ export interface RecipeInput<TBase, TDesc> {
 
 export interface Recipe<TBase = unknown, TDesc = unknown> {
   readonly type: string;
-  readonly packs: readonly string[];
+  readonly packs: readonly RecipePack[];
   readonly base: FieldMapFor<TBase>;
   readonly desc: FieldMapFor<TDesc>;
   readonly ignore: ReasonMap;

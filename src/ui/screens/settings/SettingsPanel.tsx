@@ -5,6 +5,7 @@ import type { SyncPhase } from '@core/sync/run-sync';
 import { strings } from '@i18n/index';
 import { cx } from '@ui/cx';
 import { useDismissable } from '@ui/hooks/useDismissable';
+import type { UnreadPack } from '@core/sync/unread-packs';
 import type { SyncState, SyncedType, UpdateState } from '@ui/hooks/useSync';
 
 import styles from './SettingsPanel.module.css';
@@ -87,6 +88,9 @@ export function SettingsPanel({
 
         {run.status === 'running' && <Running phase={run.phase} />}
         {run.status === 'done' && <Report types={run.types} />}
+        {run.status === 'done' && run.unreadPacks.length > 0 && (
+          <UnreadPacks packs={run.unreadPacks} />
+        )}
         {run.status === 'refused' && (
           <Refused rejected={run.rejected} failures={run.failures} keeping={run.keeping} />
         )}
@@ -265,6 +269,33 @@ function Refused({
           ? t.database.upgradeUnavailable
           : t.database.upgradeFailed(rejected, failures)}
       </p>
+    </>
+  );
+}
+
+/**
+ * Packs do release que trazem conteúdo do nosso interesse e que nenhuma receita lê.
+ *
+ * Não aparece quase nunca — e é justamente por isso que, quando aparece, merece atenção.
+ * O app NÃO importa sozinho: nada dentro do documento separa habilidade de monstro de
+ * ação de personagem, então quem decide é você. O aviso existe para a decisão ser feita, e
+ * não para o conteúdo sumir em silêncio.
+ */
+function UnreadPacks({ packs }: { readonly packs: readonly UnreadPack[] }) {
+  return (
+    <>
+      <p className={styles['phase']}>{t.database.unreadPacks.title}</p>
+      <ul className={styles['unread']}>
+        {packs.map((pack) => (
+          <li key={pack.pack}>
+            <code>{pack.pack}</code>{' '}
+            {Object.entries(pack.counts)
+              .map(([type, n]) => `${String(n)} ${type}`)
+              .join(', ')}
+          </li>
+        ))}
+      </ul>
+      <p className={styles['hint']}>{t.database.unreadPacks.hint}</p>
     </>
   );
 }

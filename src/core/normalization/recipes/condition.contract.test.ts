@@ -27,8 +27,10 @@ let result: RunResult<ConditionBase, ConditionDesc>;
 beforeAll(async () => {
   loaded = await loadInventory(http, { tag: KNOWN_GOOD_TAG });
 
-  const pack = loaded.inventory.packs.find((entry) => entry.name === conditionRecipe.packs[0]);
-  if (!pack) throw new Error(`pack ${String(conditionRecipe.packs[0])} sumiu do manifesto`);
+  const pack = loaded.inventory.packs.find(
+    (entry) => entry.name === conditionRecipe.packs[0]?.name,
+  );
+  if (!pack) throw new Error(`pack ${String(conditionRecipe.packs[0]?.name)} sumiu do manifesto`);
 
   const documents: unknown = JSON.parse(readTextEntry(loaded.zip, pack.file));
 
@@ -39,7 +41,11 @@ beforeAll(async () => {
     ),
   );
 
-  result = run(conditionRecipe, documents as readonly unknown[], { language });
+  result = run(
+    conditionRecipe,
+    [{ pack: 'conditionitems', documents: documents as readonly unknown[] }],
+    { language },
+  );
 }, 180_000);
 
 describe('as 43 condições reais', () => {

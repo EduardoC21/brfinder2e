@@ -44,6 +44,7 @@ function result(entities: readonly NormalizedEntity[]): SyncResult {
     releaseTag: 'pf2e-8.4.1',
     types: [type],
     total: entities.length,
+    unreadPacks: [],
   };
 }
 

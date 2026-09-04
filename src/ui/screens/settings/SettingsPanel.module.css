@@ -177,3 +177,16 @@
   font-family: var(--font-mono);
   color: var(--color-data);
 }
+
+/* A lista de packs não lidos. Curta por natureza: quase sempre não aparece. */
+.unread {
+  margin: var(--space-1) 0 var(--space-2);
+  padding-left: var(--space-5);
+  color: var(--color-text);
+  font: 400 var(--text-sm) / 1.6 var(--font-body);
+}
+
+.unread code {
+  color: var(--color-data);
+  font: 400 var(--text-xs) / 1.6 var(--font-mono);
+}

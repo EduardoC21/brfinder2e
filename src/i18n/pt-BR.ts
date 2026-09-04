@@ -151,6 +151,13 @@ export const ptBR = {
       updateTo: 'Atualizar para',
       incompatible:
         'Esta versão mudou de estrutura e o aplicativo ainda não a acompanha. A base atual continua valendo — atualize o aplicativo e tente de novo.',
+      unreadPacks: {
+        title: 'Conteúdo novo que ninguém está lendo',
+        hint:
+          'Esses pacotes trazem entradas do tipo que importamos, mas nenhuma receita os lê. ' +
+          'Nada dentro do arquivo diz se é conteúdo de jogador ou de mestre — por isso a ' +
+          'decisão é sua, e nada foi importado automaticamente.',
+      },
       stayedOn: (tag: string) => `Continua em ${tag}.`,
       upgradeFailed: (tag: string, failures: number) =>
         `A ${tag} não foi adotada: ${String(failures)} entrada(s) não puderam ser lidas. ` +

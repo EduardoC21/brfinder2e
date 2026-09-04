@@ -14,7 +14,7 @@
  */
 
 import { bool, html, int, nullable, shape, text, textList } from '../decoders';
-import { from, fromFolder } from '../field';
+import { from, fromSector } from '../field';
 import { recipe } from '../recipe';
 
 /** Com que frequência a ação pode ser usada. Só 140 das 574 declaram. */
@@ -92,7 +92,15 @@ export interface ActionDesc {
 
 export const actionRecipe = recipe<ActionBase, ActionDesc>({
   type: 'action',
-  packs: ['actionspf2e', 'adventure-specific-actions'],
+  packs: [
+    { name: 'actionspf2e' },
+    /*
+     * Sem arquivo de pastas — medido: 208 documentos, nenhuma pasta. O carimbo é do pack,
+     * e não um `withDefault` global: um terceiro pack sem pastas também viraria
+     * "Adventure" por engano.
+     */
+    { name: 'adventure-specific-actions', sector: 'Adventure' },
+  ],
 
   base: {
     name: from('name', text),
@@ -100,7 +108,7 @@ export const actionRecipe = recipe<ActionBase, ActionDesc>({
     costKind: from('system.actionType.value', text),
     costCount: from('system.actions.value', nullable(int)),
     category: from('system.category', nullable(text)),
-    sector: fromFolder('folder', text).withDefault('Adventure'),
+    sector: fromSector(),
     traits: from('system.traits.value', textList),
     rarity: from('system.traits.rarity', text).withDefault('common'),
     frequency: from('system.frequency', nullable(shape({ max: int, per: text }))).withDefault(null),

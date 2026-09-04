@@ -53,7 +53,7 @@ export async function checkForUpdate(
   const manifest = parseManifest(await http.getJson(manifestAsset.url));
   const declared = new Set(manifest.packs.map((pack) => pack.name));
 
-  const wanted = new Set(recipes.flatMap((recipe) => recipe.packs));
+  const wanted = new Set(recipes.flatMap((recipe) => recipe.packs.map((pack) => pack.name)));
   const missingPacks = [...wanted].filter((pack) => !declared.has(pack)).sort();
 
   return {

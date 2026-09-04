@@ -27,7 +27,8 @@ beforeAll(async () => {
   const loaded = await loadInventory(http, { tag: KNOWN_GOOD_TAG });
 
   const documents: unknown[] = [];
-  for (const packName of actionRecipe.packs) {
+  for (const declared of actionRecipe.packs) {
+    const packName = declared.name;
     const pack = loaded.inventory.packs.find((entry) => entry.name === packName);
     if (!pack) throw new Error(`o pack ${packName} sumiu do manifesto`);
     documents.push(...(JSON.parse(readTextEntry(loaded.zip, pack.file)) as unknown[]));
@@ -47,7 +48,7 @@ beforeAll(async () => {
     ),
   );
 
-  result = run(actionRecipe, documents, { language, folders });
+  result = run(actionRecipe, [{ pack: 'actionspf2e', documents, folders }], { language });
 }, 180_000);
 
 describe('as 766 ações reais, dos dois packs', () => {

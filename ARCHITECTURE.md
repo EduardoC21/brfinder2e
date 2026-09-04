@@ -507,6 +507,80 @@ Se a receita atual NÃO conseguir reler um aposentado, ele mantém a projeção 
 contado em `staleRetired`. Isso não é estado a contornar: é sinal de que a receita exige um
 campo que nem sempre existiu, e o conserto é marcar o campo como opcional.
 
+### Como o sistema distingue o que é o quê
+
+Esta é a seção para reler antes de acrescentar uma fonte. Medido no `pf2e-8.5.0`, são
+**quatro eixos automáticos e um manual**:
+
+| A pergunta                               | Quem responde                                                                            | Automático? |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------- | ----------- |
+| É de monstro ou de jogador?              | **A estrutura**: habilidade de criatura é item EMBUTIDO num `npc`, não documento de topo | **sim**     |
+| É glossário de bestiário ou coisa de PJ? | **O pack**. Nenhum campo distingue                                                       | **não**     |
+| É de classe, perícia, arquétipo?         | **A pasta** (`fromSector`)                                                               | **sim**     |
+| De qual livro veio?                      | `system.publication.title`                                                               | **sim**     |
+| É legado ou pós-Remaster?                | `system.publication.remaster`                                                            | **sim**     |
+
+**Habilidade de criatura não é documento.** No pack `the-dead-gods-hand-bestiary`, os 40
+documentos de topo são 29 `npc`, 10 `hazard` e 1 `vehicle`; as **129 ações e 97 magias**
+daquelas criaturas vivem dentro do `npc`, em `items[]`. O motor filtra documentos de topo
+(`documentType(document) === recipe.type`), então item embutido é invisível **por
+construção** — não há regra escrita para isso, e não há como esquecer de escrevê-la.
+
+**O tipo NÃO basta para escolher o que importar.** As 1.414 ações moram em cinco packs, e
+nada dentro do documento separa `Power Attack` (do glossário de bestiário) de `Fling Magic`
+(ação de PJ): mesmo `category`, mesmos traços, mesma forma. O manifesto declara só `name`,
+`path`, `label` e `type: "Item"` — idêntico para os dois. **O pack é a única informação**, e
+por isso a lista de packs de cada receita é escrita à mão.
+
+**O conteúdo de livro novo cai em pack EXISTENTE.** Os packs são organizados por espécie,
+não por livro: 171 livros distintos alimentam seis packs. `Pathfinder Impossible Magic` já
+está na base, espalhado por `feats`, `spells`, `classes`, `actions` e `heritages`, sem pack
+novo nenhum. Pack novo acontece essencialmente para bestiário de aventura — que, pelo
+parágrafo acima, contribui zero.
+
+#### O setor: pasta, com carimbo do pack como piso
+
+`fromSector()` resolve nesta ordem:
+
+```
+documento numa pasta conhecida   o nome da pasta RAIZ
+documento sem chave `folder`     o carimbo declarado no pack
+pasta órfã (id fora da tabela)   vazio — defeito do dado, e carimbar seria esconder
+```
+
+A pasta cobre onde mais importa, e cobre inteiro: **6.284 talentos com 7 raízes e zero sem
+pasta**; 574 ações com 20 raízes e zero sem pasta; 1.994 magias com 4 raízes e zero sem
+pasta. Onde ela não cobre — `class-features` tem 778 de 874 sem pasta, `equipment` tem
+5.706 de 5.869 — responde o carimbo do pack (`RecipePack.sector`).
+
+⚠️ Isto substituiu um `withDefault('Adventure')` que funcionava por **coincidência**: havia
+dois packs, um com pastas e um sem, então "sem pasta" e "de aventura" eram a mesma coisa.
+Um terceiro pack sem pastas viraria "Adventure" por engano.
+
+E o carimbo **nunca vence a pasta**: um documento que declara `folder` está dizendo que ESTÁ
+organizado, e carimbá-lo contradiria o dado.
+
+Por isso o motor recebe os documentos **agrupados por pack** (`PackDocuments`), com a
+tabela de pastas de cada um. Achatados numa lista só, a origem se perdia — e a origem é
+informação.
+
+#### O aviso de pack não lido
+
+A lista de packs é manual, e o problema nunca foi ela existir: foi ela ser **silenciosa**.
+
+`core/sync/unread-packs.ts` cruza o que existe no release com o que as receitas leem, e a
+tela de configurações mostra o que sobrou. Não importa nada sozinho — importar habilidade
+de monstro na lista do jogador seria pior que não avisar — mas põe a decisão na frente de
+quem sincroniza. É a mesma filosofia do relatório de campos não mapeados.
+
+Hoje ele acusa quatro, e todos são verdadeiros: `bestiary-family-ability-glossary` (482
+`action`), `familiar-abilities` (111 `action`, que a fonte Familiar vai querer),
+`bestiary-ability-glossary-srd` (55 `action`) e `campaign-effects` (1 `condition`, a
+`Malevolence`).
+
+Custa ~1,1 s por sincronização — 98 packs, 29.617 documentos — dentro de uma operação que
+já baixa 36 MiB.
+
 ### A política de versão: mira na mais nova, cai para a última que deu certo
 
 `KNOWN_GOOD_TAG` deixou de ser "a versão do app". A versão em uso fica no `meta` do

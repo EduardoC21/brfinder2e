@@ -9,9 +9,9 @@
  * como nome de método, atrapalha ferramenta e leitura.
  */
 
-import type { Decoder } from './decoders';
+import { text, type Decoder } from './decoders';
 
-export type FieldSource = 'document' | 'language' | 'folder';
+export type FieldSource = 'document' | 'language' | 'sector';
 
 export interface Field<T> {
   readonly source: FieldSource;
@@ -82,18 +82,31 @@ export function fromLang<T>(keyTemplate: string, decoder: Decoder<T>): Field<T> 
 }
 
 /**
- * Lê o ID de pasta no documento e devolve o nome da pasta RAIZ.
+ * O SETOR da entrada: a pasta raiz onde ela está, ou o carimbo do pack.
  *
- * Mesma situação do `fromLang`: o valor não está no documento, está numa tabela ao lado —
- * aqui, `<pack>_folders.json`. O nome diferente deixa a segunda fonte visível na receita.
+ * É o eixo de setorização das doze telas — o que separa talento de classe de talento de
+ * perícia, ação básica de ação de arquétipo. Medido no `pf2e-8.5.0`, a pasta cobre onde
+ * mais importa: 6.284 talentos com 7 raízes e ZERO sem pasta; 574 ações com 20 raízes e
+ * zero sem pasta; 1.994 magias com 4 raízes e zero sem pasta.
  *
- *   sector: fromFolder('folder', text).withDefault('')
+ * Onde ela não cobre — `class-features` tem 778 de 874 sem pasta, `equipment` tem 5.706 de
+ * 5.869 — quem responde é o `sector` declarado no pack (ver `PackSource`).
+ *
+ * A resolução, em ordem:
+ *
+ *   documento numa pasta conhecida   o nome da pasta RAIZ
+ *   documento sem pasta              o carimbo do pack
+ *   pack sem tabela de pastas        o carimbo do pack
+ *   pasta órfã (id fora da tabela)   vazio — é defeito do dado, não organização ausente
+ *
+ * Sem argumento: não há caminho a escolher nem padrão a inventar. O caminho é sempre
+ * `folder`, e o padrão vem do pack, que é quem sabe.
  */
-export function fromFolder<T>(path: string, decoder: Decoder<T>): Field<T> {
-  return build<T>({
-    source: 'folder',
-    path,
-    decoder,
+export function fromSector(): Field<string> {
+  return build<string>({
+    source: 'sector',
+    path: 'folder',
+    decoder: text,
     isOptional: false,
     fallback: null,
     transform: null,

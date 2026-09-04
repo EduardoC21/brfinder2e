@@ -5,7 +5,9 @@ import { run } from '../run';
 import { conditionRecipe } from './condition';
 import { blinded, cursebound, languageSample, offGuard, samples } from './condition.fixtures';
 
-const result = run(conditionRecipe, samples, { language: languageSample });
+const result = run(conditionRecipe, [{ pack: 'conditionitems', documents: samples }], {
+  language: languageSample,
+});
 
 describe('receita de condition', () => {
   it('normaliza as três amostras sem falha', () => {

@@ -5,6 +5,7 @@ import type { Recipe } from '@core/normalization/index';
 import { KNOWN_GOOD_TAG } from '@core/source/index';
 import { persistSync } from '@core/sync/persist';
 import { decideSync } from '@core/sync/policy';
+import type { UnreadPack } from '@core/sync/unread-packs';
 import { runSync, type SyncPhase, type SyncResult } from '@core/sync/run-sync';
 import { checkForUpdate } from '@core/sync/update-check';
 import { readMeta, type EntityDiff, type StoreMeta } from '@core/store/index';
@@ -25,7 +26,12 @@ export type RunState =
   | { readonly status: 'loading' }
   | { readonly status: 'idle' }
   | { readonly status: 'running'; readonly phase: SyncPhase }
-  | { readonly status: 'done'; readonly types: readonly SyncedType[] }
+  | {
+      readonly status: 'done';
+      readonly types: readonly SyncedType[];
+      /** Packs com conteúdo do nosso interesse que nenhuma receita lê. */
+      readonly unreadPacks: readonly UnreadPack[];
+    }
   /**
    * Rodou e NÃO adotou: a versão candidata não decodificou limpa. Nada foi gravado, e a
    * base anterior continua valendo.
@@ -69,7 +75,12 @@ type SyncAction =
   | { readonly kind: 'loaded'; readonly stored: StoreMeta | null }
   | { readonly kind: 'start' }
   | { readonly kind: 'phase'; readonly phase: SyncPhase }
-  | { readonly kind: 'done'; readonly stored: StoreMeta; readonly types: readonly SyncedType[] }
+  | {
+      readonly kind: 'done';
+      readonly stored: StoreMeta;
+      readonly types: readonly SyncedType[];
+      readonly unreadPacks: readonly UnreadPack[];
+    }
   | {
       readonly kind: 'refused';
       readonly rejected: string;
@@ -109,7 +120,7 @@ function reduce(state: SyncState, action: SyncAction): SyncState {
       // Sincronizou: o que a procura sabia sobre versão nova pode ter deixado de valer.
       return {
         stored: action.stored,
-        run: { status: 'done', types: action.types },
+        run: { status: 'done', types: action.types, unreadPacks: action.unreadPacks },
         update: NO_UPDATE,
       };
     case 'refused':
@@ -264,6 +275,7 @@ export function useSync(): UseSync {
         dispatch({
           kind: 'done',
           stored: persisted.meta,
+          unreadPacks: result.unreadPacks,
           types: result.types.map((entry) => {
             const info = byType.get(entry.type);
             return {

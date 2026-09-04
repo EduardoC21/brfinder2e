@@ -41,7 +41,7 @@ import {
   mergeLanguageFiles,
   run,
 } from '@core/normalization/index';
-import type { Recipe } from '@core/normalization/index';
+import type { PackDocuments, Recipe } from '@core/normalization/index';
 import { createFetchHttp } from '@platform/http-fetch';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -102,10 +102,10 @@ async function main(): Promise<void> {
   for (const recipe of recipes) {
     // TODOS os packs da receita: `action` lê dois.
     const sources: { name: string; file: string; rawBytes: Uint8Array }[] = [];
-    const documents: unknown[] = [];
-    const folderTable = new Map<string, string>();
+    const documentSets: PackDocuments[] = [];
 
-    for (const packName of recipe.packs) {
+    for (const declared of recipe.packs) {
+      const packName = declared.name;
       const pack = loaded.inventory.packs.find((entry) => entry.name === packName);
       if (!pack) throw new Error(`O pack "${packName}" não está no manifesto do release.`);
 
@@ -117,31 +117,34 @@ async function main(): Promise<void> {
       if (!Array.isArray(parsed)) throw new Error(`${pack.file} não é um array de documentos.`);
 
       sources.push({ name: packName, file: pack.file, rawBytes });
-      // `Array.isArray` sobre `unknown` estreita para `any[]`; a conversão devolve
-      // `unknown[]`, que é o que de fato sabemos.
-      documents.push(...(parsed as unknown[]));
 
+      let folders: ReadonlyMap<string, string> | null = null;
       const declaration = loaded.manifest.packs.find((entry) => entry.name === packName);
       if (declaration) {
         try {
-          const roots = parseFolderRoots(
+          folders = parseFolderRoots(
             JSON.parse(readTextEntry(loaded.zip, DEFAULT_CHANNEL.packFoldersFile(declaration))),
           );
-          for (const [id, name] of roots) folderTable.set(id, name);
         } catch {
-          // Pack sem arquivo de pastas: são 54 arquivos para 97 packs. Não é erro.
+          // Pack sem arquivo de pastas: são 54 arquivos para 98 packs. Não é erro.
         }
       }
+
+      documentSets.push({
+        pack: packName,
+        // `Array.isArray` sobre `unknown` estreita para `any[]`; a conversão devolve
+        // `unknown[]`, que é o que de fato sabemos.
+        documents: parsed as unknown[],
+        ...(folders === null ? {} : { folders }),
+      });
     }
 
-    const result = run(recipe, documents, {
-      language,
-      ...(folderTable.size > 0 ? { folders: folderTable } : {}),
-    });
+    const result = run(recipe, documentSets, { language });
 
     console.log('');
     console.log(
-      `packs     ${sources.map((entry) => entry.name).join(' + ')}   (${String(documents.length)} documentos)`,
+      `packs     ${sources.map((entry) => entry.name).join(' + ')}   ` +
+        `(${String(documentSets.reduce((soma, entry) => soma + entry.documents.length, 0))} documentos)`,
     );
     console.log(
       `receita "${result.type}"   ${String(result.entities.length)}/${String(result.total)} normalizadas   ` +

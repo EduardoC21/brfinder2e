@@ -12,7 +12,13 @@ import {
   trip,
 } from './action.fixtures';
 
-const result = run(actionRecipe, samples, { folders: folderRoots });
+/*
+ * As amostras vêm do pack COM pastas. É por isso que elas resolvem o setor pela árvore, e
+ * não pelo carimbo.
+ */
+const result = run(actionRecipe, [
+  { pack: 'actionspf2e', documents: samples, folders: folderRoots },
+]);
 
 describe('receita de action', () => {
   it('normaliza as quatro amostras sem falha, com relatório limpo', () => {
@@ -91,31 +97,57 @@ describe('Intercession Spell — reação, com frequência e sem raridade', () =
  * aventura, entre 41 livros distintos.
  */
 describe('Play the Fool — de aventura, sem a chave folder', () => {
-  const entity = result.entities[3];
-
-  it('cai no padrão Adventure', () => {
-    expect(entity?.base.sector).toBe('Adventure');
-    expect('folder' in playTheFool).toBe(false);
-  });
-
   it('o livro identifica a aventura, e o conteúdo é legado', () => {
+    const entity = result.entities[3];
     expect(entity?.base.source.title).toBe('Pathfinder Dark Archive');
     expect(entity?.base.source.remaster).toBe(false);
+    expect('folder' in playTheFool).toBe(false);
   });
 });
 
-describe('sem a tabela de pastas', () => {
+/**
+ * O CARIMBO vem do pack, e é isto que ele conserta.
+ *
+ * Antes era `withDefault('Adventure')` na receita — um padrão global. Funcionava por
+ * coincidência: havia dois packs, um com pastas e um sem, então "sem pasta" e "de
+ * aventura" eram a mesma coisa. Com um terceiro pack sem pastas (e eles existem:
+ * `class-features` tem 778 de 874 sem pasta, `boons-and-curses` não tem arquivo nenhum)
+ * o padrão global marcaria tudo como de aventura.
+ */
+describe('o carimbo do pack', () => {
+  it('vem do pack que declarou, e só dele', () => {
+    const doPackCarimbado = run(actionRecipe, [
+      { pack: 'adventure-specific-actions', documents: [playTheFool] },
+    ]);
+    const semCarimbo = run(actionRecipe, [{ pack: 'actionspf2e', documents: [playTheFool] }]);
+
+    expect(doPackCarimbado.entities[0]?.base.sector).toBe('Adventure');
+    expect(semCarimbo.entities[0]?.base.sector).toBe('');
+  });
+
+  it('pack que a receita não declara não carimba nada', () => {
+    // É o caso dos aposentados, que não sabem de qual pack vieram.
+    const orfao = run(actionRecipe, [{ pack: '(aposentados)', documents: [playTheFool] }]);
+    expect(orfao.entities[0]?.base.sector).toBe('');
+  });
+
   /**
-   * Quem TEM a chave `folder` fica com o setor vazio, não com o padrão: sem a tabela não
-   * dá para resolver, e cair no padrão marcaria tudo como de aventura.
+   * Sem a tabela de pastas, quem TEM a chave `folder` fica com o setor vazio.
+   *
+   * Vazio e não o carimbo: a chave existe, então o documento ESTÁ organizado — só não
+   * conseguimos resolver. Carimbar aqui marcaria como "de aventura" um punhado de ações
+   * de classe, que é o oposto do que o carimbo serve para fazer.
    */
-  it('quem tem a chave fica vazio; quem não tem cai no padrão', () => {
-    const semPastas = run(actionRecipe, samples);
-    expect(semPastas.failures).toEqual([]);
-    expect(semPastas.entities.map((entity) => entity.base.sector)).toEqual([
+  it('a pasta VENCE o carimbo: quem tem a chave nunca é carimbado', () => {
+    const semTabela = run(actionRecipe, [
+      { pack: 'adventure-specific-actions', documents: samples },
+    ]);
+    expect(semTabela.failures).toEqual([]);
+    expect(semTabela.entities.map((entity) => entity.base.sector)).toEqual([
       '',
       '',
       '',
+      // só a quarta, que não tem a chave `folder`, recebe o carimbo
       'Adventure',
     ]);
   });

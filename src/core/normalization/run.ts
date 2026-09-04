@@ -50,7 +50,23 @@ export interface RunResult<TBase = unknown, TDesc = unknown> {
 
 export interface RunOptions {
   readonly language?: LanguageTable;
-  /** ID de pasta -> nome da pasta raiz. Ver `core/source/folders.ts`. */
+}
+
+/**
+ * Os documentos de UM pack, com o que só o pack sabe.
+ *
+ * O motor recebe os documentos agrupados por pack, e não uma lista achatada. Achatada, a
+ * origem se perdia — e a origem é informação: é ela que diz que uma ação veio do glossário
+ * de bestiário e não do pack de ações de PJ, distinção que campo nenhum do documento faz.
+ *
+ * A tabela de pastas também é por pack. Fundir as tabelas de vários packs funcionaria por
+ * sorte: os ids são gerados por pack e nada garante que não colidam.
+ */
+export interface PackDocuments {
+  /** `name` do manifesto, para casar com o `PackSource` da receita. */
+  readonly pack: string;
+  readonly documents: readonly unknown[];
+  /** `<pack>_folders.json` resolvido. Ausente quando o pack não tem esse arquivo. */
   readonly folders?: ReadonlyMap<string, string>;
 }
 
@@ -65,7 +81,7 @@ class MissingFieldError extends Error {
 
 export function run<TBase, TDesc>(
   recipe: Recipe<TBase, TDesc>,
-  documents: readonly unknown[],
+  sources: readonly PackDocuments[],
   options: RunOptions = {},
 ): RunResult<TBase, TDesc> {
   const entities: NormalizedEntity<TBase, TDesc>[] = [];
@@ -80,19 +96,36 @@ export function run<TBase, TDesc>(
   for (const path of Object.keys(recipe.ignore)) coverage.subtree.add(path);
   for (const path of Object.keys(recipe.defer)) coverage.subtree.add(path);
 
-  const matching = documents.filter((document) => documentType(document) === recipe.type);
+  /*
+   * O CONTEXTO DO PACK acompanha cada documento.
+   *
+   * `sector` e `folders` vêm daqui, e não das opções globais: dois packs da mesma receita
+   * podem ter tabelas de pasta diferentes, e um deles pode não ter tabela nenhuma.
+   */
+  let matching = 0;
 
-  for (const document of matching) {
-    const paths = collectPaths(document);
-    for (const [path, example] of paths) {
-      if (!inventory.has(path)) inventory.set(path, example);
-      frequency.set(path, (frequency.get(path) ?? 0) + 1);
-    }
+  for (const source of sources) {
+    const declared = recipe.packs.find((entry) => entry.name === source.pack);
+    const context: PackContext = {
+      sector: declared?.sector ?? '',
+      ...(source.folders === undefined ? {} : { folders: source.folders }),
+    };
 
-    try {
-      entities.push(normalizeOne(recipe, document, coverage, options));
-    } catch (error) {
-      failures.push(toFailure(document, error));
+    for (const document of source.documents) {
+      if (documentType(document) !== recipe.type) continue;
+      matching++;
+
+      const paths = collectPaths(document);
+      for (const [path, example] of paths) {
+        if (!inventory.has(path)) inventory.set(path, example);
+        frequency.set(path, (frequency.get(path) ?? 0) + 1);
+      }
+
+      try {
+        entities.push(normalizeOne(recipe, document, coverage, options, context));
+      } catch (error) {
+        failures.push(toFailure(document, error));
+      }
     }
   }
 
@@ -106,10 +139,10 @@ export function run<TBase, TDesc>(
 
   return {
     type: recipe.type,
-    total: matching.length,
+    total: matching,
     entities,
     failures,
-    report: buildReport(recipe, matching.length, unmapped),
+    report: buildReport(recipe, matching, unmapped),
   };
 }
 
@@ -119,17 +152,24 @@ function documentType(document: unknown): string | null {
   return typeof type === 'string' ? type : null;
 }
 
+/** O que o pack sabe e o documento não. */
+interface PackContext {
+  readonly sector: string;
+  readonly folders?: ReadonlyMap<string, string>;
+}
+
 function normalizeOne<TBase, TDesc>(
   recipe: Recipe<TBase, TDesc>,
   document: unknown,
   coverage: Coverage,
   options: RunOptions,
+  context: PackContext,
 ): NormalizedEntity<TBase, TDesc> {
   return {
     identity: readIdentity(document),
     // A conversão acontece num ponto só. `FieldMapFor<T>` já garantiu, na declaração da
     // receita, que cada campo produz o tipo certo — o motor só monta o objeto.
-    base: readBlock(recipe.base, document, coverage, options) as TBase,
+    base: readBlock(recipe.base, document, coverage, options, context) as TBase,
     /*
      * O `@Localize` é expandido AQUI, e só no bloco de descrição.
      *
@@ -142,7 +182,7 @@ function normalizeOne<TBase, TDesc>(
      * esquecesse entregaria uma descrição com a chave crua no lugar do texto.
      */
     desc: localizeBlock(
-      readBlock(recipe.desc, document, coverage, options),
+      readBlock(recipe.desc, document, coverage, options, context),
       options.language,
     ) as TDesc,
   };
@@ -181,10 +221,11 @@ function readBlock(
   document: unknown,
   coverage: Coverage,
   options: RunOptions,
+  context: PackContext,
 ): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const [name, field] of Object.entries(fields)) {
-    const value = readField(field, document, coverage, options);
+    const value = readField(field, document, coverage, options, context);
     if (value !== undefined) out[name] = value;
   }
   return out;
@@ -195,12 +236,13 @@ function readField(
   document: unknown,
   coverage: Coverage,
   options: RunOptions,
+  context: PackContext,
 ): unknown {
   const found =
     field.source === 'document'
       ? readFromDocument(field, document, coverage)
-      : field.source === 'folder'
-        ? readFromFolder(field, document, coverage, options.folders)
+      : field.source === 'sector'
+        ? readSector(field, document, coverage, context)
         : readFromLanguage(field, document, options.language);
 
   if (!found.present) {
@@ -231,35 +273,44 @@ function readFromDocument(field: Field<unknown>, document: unknown, coverage: Co
 }
 
 /**
- * Lê o ID de pasta do documento e troca pelo nome da raiz.
+ * O setor: a pasta raiz do documento, ou o carimbo do pack.
  *
- * A COBERTURA é registrada mesmo quando a tabela não tem o ID: o caminho `folder` foi
- * lido de qualquer jeito, e listá-lo como não mapeado seria mentira.
+ * A COBERTURA é registrada sempre que o caminho `folder` foi lido, mesmo quando a tabela
+ * não tem o id: listá-lo como não mapeado seria mentira.
+ *
+ * Quatro situações, e cada uma tem uma resposta diferente:
+ *
+ *   sem chave `folder`        o carimbo do pack. É o caso de `adventure-specific-actions`,
+ *                             `class-features`, `boons-and-curses` — packs sem pastas.
+ *   pack sem tabela           o carimbo do pack, pela mesma razão.
+ *   pasta órfã                VAZIO. A chave aponta para uma pasta fora do arquivo:
+ *                             `Disengage` aponta para `fn4rMlw19rVjvyjV`, que não existe.
+ *                             É defeito do dado, e carimbar seria esconder.
+ *   pasta conhecida           o nome da RAIZ da árvore.
  */
-function readFromFolder(
+function readSector(
   field: Field<unknown>,
   document: unknown,
   coverage: Coverage,
-  folders: ReadonlyMap<string, string> | undefined,
+  context: PackContext,
 ): Found {
   const read = readPath(document, field.path);
-  if (!read.found) return { present: false, value: undefined };
-  coverage.subtree.add(field.path);
+  if (read.found) coverage.subtree.add(field.path);
+
+  // Sem chave `folder`: o documento não está organizado, e o carimbo do pack responde.
+  if (!read.found || typeof read.value !== 'string') {
+    return { present: true, value: context.sector };
+  }
 
   /*
-   * Três situações diferentes, e a receita precisa distingui-las:
+   * COM chave `folder`, o carimbo nunca entra — nem quando a tabela falta.
    *
-   *   chave ausente (ou nula)  o pack não organiza em pastas. AUSENTE, e o valor padrão
-   *                            da receita vale — é o que marca as ações de aventura.
-   *   sem tabela de pastas     não dá para resolver. PRESENTE com vazio, e não ausente:
-   *                            senão todo documento viraria o padrão por falta da tabela.
-   *   pasta órfã               a chave aponta para uma pasta que não está no arquivo.
-   *                            Acontece: `Disengage` aponta para `fn4rMlw19rVjvyjV`, que
-   *                            não existe. É defeito do dado, não ausência de organização.
+   * O carimbo significa "este pack não organiza em pastas". Um documento que declara
+   * pasta está dizendo o contrário, e carimbá-lo seria contradizer o dado: marcaria como
+   * "de aventura" um punhado de ações de classe. Vazio é a resposta honesta para
+   * "declarou pasta, e não consegui resolver qual".
    */
-  if (typeof read.value !== 'string') return { present: false, value: undefined };
-  if (folders === undefined) return { present: true, value: '' };
-  return { present: true, value: folders.get(read.value) ?? '' };
+  return { present: true, value: context.folders?.get(read.value) ?? '' };
 }
 
 function readFromLanguage(
