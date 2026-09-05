@@ -98,6 +98,22 @@ export function FilterBar({
 
       {aplicados.length > 0 && (
         <ScrollRail className={styles['applied']} label={t.activeFilters}>
+          {/*
+            "Limpar tudo" PRIMEIRO, e não no fim.
+            No fim ele ia junto com a fileira quando havia muitos filtros — a pessoa que
+            mais precisa dele é justamente quem tem filtros demais, e era ela quem não o
+            alcançava sem rolar.
+          */}
+          <button
+            type="button"
+            className={cx(styles['clearAll'], 'chamfer-sm')}
+            onClick={() => {
+              onChange({});
+            }}
+          >
+            {t.clearFilters}
+          </button>
+
           {aplicados.map(({ spec, value }) => (
             <button
               key={`${spec.id}:${value}`}
@@ -113,15 +129,6 @@ export function FilterBar({
               <span className={styles['chipX']}>×</span>
             </button>
           ))}
-          <button
-            type="button"
-            className={cx(styles['clearAll'], 'chamfer-sm')}
-            onClick={() => {
-              onChange({});
-            }}
-          >
-            {t.clearFilters}
-          </button>
         </ScrollRail>
       )}
     </div>

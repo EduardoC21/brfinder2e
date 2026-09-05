@@ -23,8 +23,17 @@ interface StoredSelection {
 }
 
 export interface SourcePreferences {
-  /** Ids das colunas visíveis, NA ORDEM em que aparecem. Vazio = usa o padrão da fonte. */
-  readonly columns: readonly string[];
+  /**
+   * Ids das colunas visíveis, NA ORDEM em que aparecem.
+   *
+   * ⚠️ `null` e `[]` são coisas DIFERENTES: `null` é "nunca configurei, use o padrão da
+   * fonte"; `[]` é "escolhi nenhuma coluna além do nome".
+   *
+   * Eram a mesma coisa, e o efeito era um defeito: desmarcar a ÚLTIMA coluna deixava a
+   * lista vazia, caía no padrão, e a coluna voltava sozinha. Não havia como desligar
+   * `setor` em Ações nem `grupo` em Condições.
+   */
+  readonly columns: readonly string[] | null;
   /** O último filtro aplicado, por id de tópico. */
   readonly filters: Readonly<Record<string, StoredSelection>>;
 }
@@ -41,7 +50,7 @@ export interface Preferences {
   readonly layout: LayoutPreferences;
 }
 
-export const EMPTY_SOURCE_PREFERENCES: SourcePreferences = { columns: [], filters: {} };
+export const EMPTY_SOURCE_PREFERENCES: SourcePreferences = { columns: null, filters: {} };
 
 export const DEFAULT_PREFERENCES: Preferences = {
   sources: {},
@@ -81,7 +90,9 @@ function readSource(value: unknown): SourcePreferences {
     }
   }
 
-  return { columns: textList(value['columns']), filters };
+  // Chave ausente é "nunca configurei"; array presente, mesmo vazio, é escolha.
+  const columns = Array.isArray(value['columns']) ? textList(value['columns']) : null;
+  return { columns, filters };
 }
 
 /** Decodifica o que está gravado. Nunca lança; o ilegível vira o padrão. */

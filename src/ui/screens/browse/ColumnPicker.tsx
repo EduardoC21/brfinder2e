@@ -23,6 +23,8 @@ interface ColumnPickerProps {
   readonly available: readonly ColumnSpec[];
   /** Ids visíveis, na ordem em que aparecem. */
   readonly selected: readonly string[];
+  /** Verdadeiro quando o que está na tela é o padrão da fonte, e não escolha do usuário. */
+  readonly noPadrao: boolean;
   readonly onChange: (columns: readonly string[]) => void;
   readonly onReset: () => void;
   readonly onClose: () => void;
@@ -42,6 +44,7 @@ interface ColumnPickerProps {
 export function ColumnPicker({
   available,
   selected,
+  noPadrao,
   onChange,
   onReset,
   onClose,
@@ -60,8 +63,20 @@ export function ColumnPicker({
   return (
     <section className={styles['panel']} aria-label={t.columns}>
       <header className={styles['head']}>
+        {/* Mesmo desenho do painel de filtro: o "voltar ao padrão" na linha do título,
+            desabilitado quando não há o que desfazer. */}
         <div className={styles['titleRow']}>
           <h2 className={styles['title']}>{t.columns}</h2>
+          <button
+            type="button"
+            className={cx(styles['close'], 'chamfer-sm')}
+            aria-label={t.columnsReset}
+            title={t.columnsReset}
+            disabled={noPadrao}
+            onClick={onReset}
+          >
+            ⟲
+          </button>
           <button
             type="button"
             className={cx(styles['close'], 'chamfer-sm')}
@@ -74,10 +89,6 @@ export function ColumnPicker({
         </div>
 
         <p className={proprio['hint']}>{t.columnsHint(MAXIMO)}</p>
-
-        <button type="button" className={cx(styles['clear'], 'chamfer-sm')} onClick={onReset}>
-          {t.columnsReset}
-        </button>
       </header>
 
       <div className={styles['options']}>

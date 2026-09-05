@@ -1,4 +1,4 @@
-import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   DEFAULT_PREFERENCES,
@@ -8,24 +8,12 @@ import {
 } from '@core/prefs/index';
 import { createIndexedDbStore } from '@platform/store-indexeddb';
 
+import { PreferencesContext, type PreferencesValue } from './PreferencesContext';
+
 const store = createIndexedDbStore();
 
 /** Quanto tempo o gesto precisa ficar parado antes de gravar. */
 const ESPERA_PARA_GRAVAR = 400;
-
-export interface PreferencesValue {
-  readonly prefs: Preferences;
-  /** Aplica uma transformação e agenda a gravação. */
-  readonly update: (change: (atual: Preferences) => Preferences) => void;
-  /** Falso até a leitura terminar. Quem desenha layout deve esperar. */
-  readonly ready: boolean;
-}
-
-export const PreferencesContext = createContext<PreferencesValue>({
-  prefs: DEFAULT_PREFERENCES,
-  update: () => undefined,
-  ready: false,
-});
 
 /**
  * Carrega as preferências uma vez e mantém quem as usa em dia.

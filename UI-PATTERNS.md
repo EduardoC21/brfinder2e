@@ -322,32 +322,27 @@ item feito sai daqui e o que virou regra sobe para as seções acima.
 
 ### Defeitos confirmados (medidos)
 
-1. **O campo de busca principal tem DUAS bordas e dois fundos.** `styles['search']` foi
-   passado como `className` para o `SearchInput`, e ele vai para o INVÓLUCRO, não para o
-   campo. Medido: invólucro 284×42 com fundo ardósia e borda; campo 260×26 com fundo breu e
-   outra borda. O `×`, posicionado a `right: 2px` do invólucro, cai fora da área do campo.
-   Regressão introduzida na Etapa 8c. O conserto pede uma variante de tamanho no
-   `SearchInput`, porque a busca principal é maior que as de filtro.
-2. **A prosa do detalhe trava em 515px** (`max-width: 66ch`) enquanto o painel vai a 720.
-   As réguas `<hr>` param junto, e sobra uma faixa vazia à direita.
-3. **Os rótulos de bloco (`Effect`, `Frequency`) têm o MESMO tamanho do corpo** — 13px — e
-   `font-variant-caps: all-small-caps` os faz parecer menores. Deviam ser um degrau maiores.
-4. **O painel de filtro não fecha ao clicar numa entrada da lista.** Fica por cima, e a
-   entrada escolhida não aparece até fechar o filtro à mão.
-5. **"Limpar este filtro" aparece e some, empurrando a lista para baixo.** Ou reservar o
-   espaço, ou virar símbolo ao lado do título. Vale o mesmo para o painel de colunas.
-6. **As colunas personalizadas não têm cabeçalho** e ficam amontoadas à direita, sem
+Nove foram corrigidos na Etapa 8g. Sobraram dois, e eles são **um trabalho só** com as
+colunas especiais — o cabeçalho só alinha se a linha virar grade, que é exatamente o que
+Nível/Raridade/Traços vão exigir:
+
+1. **As colunas personalizadas não têm cabeçalho** e ficam amontoadas à direita, sem
    alinhamento entre linhas.
-7. **Umas colunas saem em caixinha, outras em texto cru.** Todas deviam ter o mesmo
+2. **Umas colunas saem em caixinha, outras em texto cru.** Todas deviam ter o mesmo
    tratamento, com inicial maiúscula e alinhadas na coluna.
-8. **"Limpar tudo" fica no FIM da fileira de filtros aplicados** e some para a direita
-   quando há muitos. Deve ficar fixo no começo.
-9. **O pop-out pode ser arrastado para fora da tela.** Deve ficar inteiro dentro. E
-   minimizado junto a uma borda, ao restaurar deve caber — encolhendo ou reposicionando.
-10. **A mensagem de pack não lido está escrita para quem programa**, não para quem usa.
 
 ### Decisões tomadas na conferência
 
+- **Raridade: contorno de latão, miolo oco, letra em latão, canto cortado.** Medido, ela
+  não é rara nas fontes que vêm: 53,6% das magias e 49,2% dos equipamentos são não-comuns
+  (contra 0,3% das ações). Latão maciço em metade das linhas competiria com o nome. A cor
+  sai de uma variável por raridade, para trocar num lugar só se o padrão do PF2e
+  (laranja/azul/roxo) for adotado depois.
+- **A prosa do detalhe não tem teto próprio; o painel para em 640px.**
+- **Traços na coluna: orçamento de caracteres e um chip `+N`**, não rolagem por linha. Um
+  trilho rolável por linha significa um `ResizeObserver` e um container de rolagem vezes
+  766 linhas hoje e 6.284 quando chegarem os talentos.
+- **Nível, Raridade e Traços ficam fora do teto de personalizadas**, que cai para duas.
 - **Não existe ação de custo variável.** Medido nas 574 ações, 208 de aventura e 6.284
   talentos: `system.actions.value` é só `1`, `2`, `3` ou `null`. O filtro de custo cobre
   tudo, e o par E/OU continua sem sentido nele — nada tem dois custos ao mesmo tempo.
@@ -355,9 +350,8 @@ item feito sai daqui e o que virou regra sobe para as seções acima.
 ### Em desenho, aguardando decisão
 
 - **Recolher as barras laterais**, as duas, com botão de abrir e fechar.
-- **Nível, Raridade e Traços como colunas especiais**, fora do teto de personalizadas e
-  ligadas por padrão onde existirem.
-- **Símbolo no lugar da palavra** para raridade e para booleanos.
+- **Nível, Raridade e Traços como colunas especiais** — desenho decidido, falta construir.
+- **Símbolo no lugar da palavra** para booleanos.
 - **Linha de títulos da tabela**, com ordenação (possivelmente hierárquica).
 - **Texto justificado** no corpo da descrição.
 - **Marcar os blocos de rótulo na máscara**, invisível ao usuário, para a tradução da

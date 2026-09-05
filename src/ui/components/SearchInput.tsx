@@ -13,6 +13,15 @@ interface SearchInputProps {
   readonly onKeyDown?: (event: React.KeyboardEvent<HTMLInputElement>) => void;
   readonly className?: string | undefined;
   /**
+   * `lg` para a busca principal da lista; ausente, o tamanho compacto dos filtros.
+   *
+   * ⚠️ Existe porque `className` vai para o INVÓLUCRO, não para o campo. A tela principal
+   * passava o estilo dela por `className` e o resultado eram DUAS bordas e dois fundos
+   * aninhados, com o × posicionado sobre a borda de fora. Tamanho é assunto do
+   * componente; `className` fica só para posicionar o invólucro no layout de quem usa.
+   */
+  readonly size?: 'lg';
+  /**
    * Fiação de caixa de combinação, para o campo que comanda uma lista pelo teclado.
    *
    * Existe porque o campo principal da busca era um `<input>` cru, escrito à parte só por
@@ -38,7 +47,7 @@ interface SearchInputProps {
  * `<input>` solto não o enxerga.
  */
 export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(function SearchInput(
-  { value, onChange, placeholder, label, onKeyDown, className, controls },
+  { value, onChange, placeholder, label, onKeyDown, className, controls, size },
   ref,
 ) {
   return (
@@ -46,7 +55,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(functi
       <input
         ref={ref}
         type="search"
-        className={cx(styles['input'], 'chamfer-sm')}
+        className={cx(styles['input'], size === 'lg' && styles['lg'], 'chamfer-sm')}
         value={value}
         placeholder={placeholder}
         aria-label={label}

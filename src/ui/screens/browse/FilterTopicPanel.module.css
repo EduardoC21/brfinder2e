@@ -48,10 +48,17 @@
   cursor: pointer;
 }
 
-.close:hover {
+.close:hover:not(:disabled) {
   background: var(--color-state);
   border-color: transparent;
   color: #f6edea;
+}
+
+/* Sem o que limpar: o botão fica, e PARECE que não faz nada. */
+.close:disabled {
+  color: #453a3d;
+  border-color: rgb(255 255 255 / 4%);
+  cursor: not-allowed;
 }
 
 /*

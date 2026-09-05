@@ -151,12 +151,17 @@ export const ptBR = {
       updateTo: 'Atualizar para',
       incompatible:
         'Esta versão mudou de estrutura e o aplicativo ainda não a acompanha. A base atual continua valendo — atualize o aplicativo e tente de novo.',
+      /*
+       * Escrito para quem USA o app, não para quem o programa.
+       *
+       * A versão anterior falava em "receita" e "tipo que importamos" — vocabulário de
+       * dentro do código. Quem lê isto quer saber uma coisa só: o que ficou de fora.
+       */
       unreadPacks: {
-        title: 'Conteúdo novo que ninguém está lendo',
+        title: 'O que não foi sincronizado',
         hint:
-          'Esses pacotes trazem entradas do tipo que importamos, mas nenhuma receita os lê. ' +
-          'Nada dentro do arquivo diz se é conteúdo de jogador ou de mestre — por isso a ' +
-          'decisão é sua, e nada foi importado automaticamente.',
+          'Estes pacotes do Pathfinder 2e ficaram de fora. São, na maior parte, habilidades ' +
+          'de criatura e de familiar, que ainda não têm lugar no app.',
       },
       stayedOn: (tag: string) => `Continua em ${tag}.`,
       upgradeFailed: (tag: string, failures: number) =>

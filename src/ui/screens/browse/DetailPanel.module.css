@@ -169,9 +169,14 @@
   padding: var(--space-4);
 }
 
-/* Medida de leitura: linha muito longa cansa. 66ch é o limite clássico. */
+/*
+ * SEM teto de largura aqui — quem limita é o painel (`DetailPane`, MAX de 640px).
+ *
+ * O teto de 66ch travava a prosa em 515px enquanto o painel ia a 720, deixando uma faixa
+ * vazia à direita e cortando as réguas `<hr>` no meio. Quem alarga o painel quer mais
+ * texto por linha; travar a prosa transformava o arrasto em nada.
+ */
 .prose {
-  max-width: 66ch;
   font: 400 var(--text-md) / 1.6 var(--font-body);
   color: var(--color-text);
 }

@@ -27,6 +27,14 @@
  * a linha, e é exatamente o que estava acontecendo antes com o negrito quase invisível.
  */
 .blockLabel {
+  /*
+   * Um degrau ACIMA do corpo, e não igual.
+   *
+   * `all-small-caps` desenha as maiúsculas na altura do x, então o mesmo tamanho em pixels
+   * lê como menor que o texto ao redor — era exatamente o que acontecia com os dois em
+   * 13px. Subindo para 15px, o rótulo volta a pesar como cabeçalho.
+   */
+  font-size: var(--text-lg);
   font-weight: 500;
   font-variant-caps: all-small-caps;
   letter-spacing: 0.04em;

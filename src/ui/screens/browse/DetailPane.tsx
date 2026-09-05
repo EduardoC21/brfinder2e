@@ -12,7 +12,8 @@ import styles from './DetailPane.module.css';
 const t = strings.browse.detail;
 
 const MIN = 300;
-const MAX = 720;
+/* Onde a linha de texto ainda se lê bem. Acima disto o olho perde o começo da linha. */
+const MAX = 640;
 const PADRAO = 420;
 
 interface DetailPaneProps {

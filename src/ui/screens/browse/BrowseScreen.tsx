@@ -145,6 +145,18 @@ function SourcePane({
   }, [entities, source.filters, filters, deferredTerm, index]);
 
   const opened = results.find((entity) => entity.key === openedKey) ?? null;
+  /**
+   * Escolher uma entrada FECHA o que estiver por cima da lateral.
+   *
+   * O painel de filtro cobre o detalhe, então escolher uma entrada com ele aberto não
+   * mostrava nada — era preciso fechá-lo à mão para ver o que se acabou de clicar. Clicar
+   * numa entrada é dizer "me mostra esta", e a camada de escolha já cumpriu o papel dela.
+   */
+  const escolher = (key: string): void => {
+    setOpenedKey(key);
+    setOverlay(null);
+  };
+
   const openTopic = overlay?.kind === 'topic' ? overlay.id : null;
   const topicoAberto = source.filters.find((spec) => spec.id === openTopic);
 
@@ -153,8 +165,11 @@ function SourcePane({
    * escolheu. `ready` importa aqui — antes da leitura terminar as preferências estão
    * vazias, e usar o padrão nesse instante evitaria o piscar, mas gravaria o padrão por
    * cima da escolha dele se ele mexesse rápido demais.
+   *
+   * `?? ` e não `.length > 0`: `[]` é uma escolha legítima ("nenhuma coluna"), e tratá-la
+   * como ausência ressuscitava a coluna que o usuário acabara de desmarcar.
    */
-  const idsVisiveis = ready && salvas.columns.length > 0 ? salvas.columns : source.defaultColumns;
+  const idsVisiveis = (ready ? salvas.columns : null) ?? source.defaultColumns;
   const colunasVisiveis = idsVisiveis
     .map((id) => source.columns.find((column) => column.id === id))
     .filter((column) => column !== undefined);
@@ -185,7 +200,7 @@ function SourcePane({
       event.preventDefault();
       const chosen = results[activeIndex >= 0 ? activeIndex : 0];
       if (chosen) {
-        setOpenedKey(chosen.key);
+        escolher(chosen.key);
         if (activeIndex < 0) setActiveIndex(0);
       }
       return;
@@ -215,11 +230,13 @@ function SourcePane({
       <ColumnPicker
         available={source.columns}
         selected={idsVisiveis}
+        noPadrao={salvas.columns === null}
         onChange={(columns) => {
           update((atual) => withSource(atual, source.id, { columns }));
         }}
         onReset={() => {
-          update((atual) => withSource(atual, source.id, { columns: [] }));
+          // `null` devolve a fonte ao padrão dela; `[]` seria "nenhuma coluna".
+          update((atual) => withSource(atual, source.id, { columns: null }));
         }}
         onClose={() => {
           setOverlay(null);
@@ -298,12 +315,12 @@ function SourcePane({
               onActivate={(index) => {
                 setActiveIndex(index);
                 const chosen = results[index];
-                if (chosen) setOpenedKey(chosen.key);
+                if (chosen) escolher(chosen.key);
                 input.current?.focus();
               }}
               onOpen={(index) => {
                 const chosen = results[index];
-                if (chosen) setOpenedKey(chosen.key);
+                if (chosen) escolher(chosen.key);
               }}
             />
           )}

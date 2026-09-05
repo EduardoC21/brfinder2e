@@ -89,8 +89,28 @@ export function FilterTopicPanel({
   return (
     <section className={styles['panel']} aria-label={topicLabel(spec)}>
       <header className={styles['head']}>
+        {/*
+          O "limpar" mora na linha do TÍTULO, e fica desabilitado quando não há o que
+          limpar — em vez de aparecer e sumir.
+
+          Ele era um botão em bloco que só existia com algo marcado, e cada aparição
+          empurrava a lista de opções inteira para baixo. Um controle que muda a altura do
+          que está abaixo dele desloca a coisa que a pessoa estava prestes a clicar.
+        */}
         <div className={styles['titleRow']}>
           <h2 className={styles['title']}>{topicLabel(spec)}</h2>
+          <button
+            type="button"
+            className={cx(styles['close'], 'chamfer-sm')}
+            aria-label={t.clearTopic}
+            title={t.clearTopic}
+            disabled={marcados.length === 0}
+            onClick={() => {
+              onChange({ ...state, [spec.id]: { ...state[spec.id], values: [] } });
+            }}
+          >
+            ⟲
+          </button>
           <button
             type="button"
             className={cx(styles['close'], 'chamfer-sm')}
@@ -129,18 +149,6 @@ export function FilterTopicPanel({
             value={busca}
             onChange={setBusca}
           />
-        )}
-
-        {marcados.length > 0 && (
-          <button
-            type="button"
-            className={cx(styles['clear'], 'chamfer-sm')}
-            onClick={() => {
-              onChange({ ...state, [spec.id]: { ...state[spec.id], values: [] } });
-            }}
-          >
-            {t.clearTopic}
-          </button>
         )}
       </header>
 

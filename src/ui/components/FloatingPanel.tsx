@@ -68,27 +68,40 @@ export function FloatingPanel({
   const [minimized, setMinimized] = useState(false);
   const panel = useRef<HTMLDivElement>(null);
 
+  /**
+   * Prende o painel INTEIRO dentro da janela.
+   *
+   * Antes só uma faixa de 80px precisava ficar visível, e o resto podia sair da tela —
+   * dava para deixar metade do texto para fora. Agora o retângulo todo cabe: o canto
+   * superior esquerdo nunca é negativo, e o inferior direito nunca passa da borda.
+   *
+   * A conta usa o tamanho MEDIDO e não o guardado: minimizado, a largura vem do nome
+   * (`max-content`), e o estado não sabe quanto isso deu.
+   */
+  const preso = (x: number, y: number): { x: number; y: number } => {
+    const caixa = panel.current;
+    const largura = caixa?.offsetWidth ?? tamanho.w;
+    const altura = caixa?.offsetHeight ?? tamanho.h;
+    return {
+      x: Math.max(0, Math.min(x, window.innerWidth - largura)),
+      y: Math.max(0, Math.min(y, window.innerHeight - altura)),
+    };
+  };
+
   const arrasto = usePointerDrag(
     () => pos,
     (inicio, dx, dy) => {
-      /*
-       * Prende dentro da janela, deixando sempre uma faixa visível. Sem isso dá para
-       * arrastar o painel para fora e nunca mais alcançá-lo — e como a posição é do
-       * componente, nem recarregar traria de volta.
-       */
-      const largura = panel.current?.offsetWidth ?? tamanho.w;
-      const x = Math.min(Math.max(inicio.x + dx, 8 - largura + 80), window.innerWidth - 80);
-      const y = Math.min(Math.max(inicio.y + dy, 0), window.innerHeight - 32);
-      setPos({ x, y });
+      setPos(preso(inicio.x + dx, inicio.y + dy));
     },
   );
 
   const redimensiona = usePointerDrag(
     () => tamanho,
     (inicio, dx, dy) => {
+      /* Redimensionar também não pode empurrar o painel para fora pela direita. */
       setRascunho({
-        w: Math.max(MIN_LARGURA, inicio.w + dx),
-        h: Math.max(MIN_ALTURA, inicio.h + dy),
+        w: Math.max(MIN_LARGURA, Math.min(inicio.w + dx, window.innerWidth - pos.x)),
+        h: Math.max(MIN_ALTURA, Math.min(inicio.h + dy, window.innerHeight - pos.y)),
       });
     },
     () => {
@@ -125,6 +138,26 @@ export function FloatingPanel({
     ? { width: 'max-content' }
     : { width: `${String(tamanho.w)}px`, height: `${String(tamanho.h)}px` };
 
+  /**
+   * Alternar minimizado, recolocando o painel na tela ao restaurar.
+   *
+   * Minimizado ele é uma barra estreita e cabe em qualquer canto; ao voltar ao tamanho
+   * cheio junto a uma borda, passaria para fora. O ajuste acontece AQUI, no gesto, e não
+   * num efeito: no efeito seria estado mudando estado, e a conta pode ser feita sem medir
+   * nada — ao restaurar, o tamanho de destino é exatamente o que está guardado.
+   */
+  const alternarMinimizado = (): void => {
+    setMinimized((estava) => {
+      if (estava) {
+        setPos((atual) => ({
+          x: Math.max(0, Math.min(atual.x, window.innerWidth - tamanho.w)),
+          y: Math.max(0, Math.min(atual.y, window.innerHeight - tamanho.h)),
+        }));
+      }
+      return !estava;
+    });
+  };
+
   return (
     <div
       ref={panel}
@@ -138,13 +171,7 @@ export function FloatingPanel({
       aria-label={title}
       onPointerDownCapture={onFocus}
     >
-      <div
-        className={styles['bar']}
-        {...arrasto}
-        onDoubleClick={() => {
-          setMinimized((valor) => !valor);
-        }}
-      >
+      <div className={styles['bar']} {...arrasto} onDoubleClick={alternarMinimizado}>
         <span className={styles['title']}>{title}</span>
 
         <button
@@ -152,9 +179,7 @@ export function FloatingPanel({
           className={styles['action']}
           aria-label={minimized ? t.restore : t.minimize}
           title={minimized ? t.restore : t.minimize}
-          onClick={() => {
-            setMinimized((valor) => !valor);
-          }}
+          onClick={alternarMinimizado}
         >
           {minimized ? '▢' : '—'}
         </button>
