@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   fieldValue,
   parseDurationCode,
+  rarityLetter,
   type BrowseEntity,
   type DetailFieldSpec,
 } from '@core/browse/index';
@@ -12,7 +13,9 @@ import { readDesc } from '@core/store/index';
 import { strings } from '@i18n/index';
 import { createIndexedDbStore } from '@platform/store-indexeddb';
 import { ActionCost } from '@ui/components/ActionCost';
+import { RarityMark } from '@ui/components/RarityMark';
 import { RichText } from '@ui/components/RichText';
+import { CollapseToggle } from '@ui/components/CollapseToggle';
 import { cx } from '@ui/cx';
 
 import styles from './DetailPanel.module.css';
@@ -25,7 +28,13 @@ export interface DetailPanelProps {
   readonly entity: BrowseEntity;
   readonly entityType: string;
   readonly fields: readonly DetailFieldSpec[];
-  readonly onClose: () => void;
+  /**
+   * Recolher o painel. Ausente no flutuante, que não recolhe — ele fecha.
+   *
+   * Substituiu um `onClose` com `×`. O × ficava sobre a seta de recolher na lateral e
+   * aparecia DE NOVO dentro do pop-out, que já tem o próprio × na barra de título.
+   */
+  readonly onCollapse?: () => void;
   /** Ausente quando já está flutuando: não se destaca o que já está destacado. */
   readonly onPopOut?: () => void;
 }
@@ -38,12 +47,20 @@ export interface DetailPanelProps {
  * está: um componente que pergunta "estou flutuando?" acaba com dois desenhos que
  * divergem no primeiro ajuste.
  */
-export function DetailPanel({ entity, entityType, fields, onClose, onPopOut }: DetailPanelProps) {
+export function DetailPanel({
+  entity,
+  entityType,
+  fields,
+  onCollapse,
+  onPopOut,
+}: DetailPanelProps) {
   const description = useDescription(entityType, entity.key);
   const nodes = useMemo(
     () => (description === null ? null : parseDescription(description)),
     [description],
   );
+
+  const letraDaRaridade = rarityLetter(fieldValue(entity, 'rarity'));
 
   return (
     <section className={styles['panel']} aria-label={fieldValue(entity, 'name')}>
@@ -55,9 +72,23 @@ export function DetailPanel({ entity, entityType, fields, onClose, onPopOut }: D
         separadas, o nome fica com a largura inteira e nada o disputa.
       */}
       <header className={styles['head']}>
-        <Actions onClose={onClose} onPopOut={onPopOut} />
+        <Actions onCollapse={onCollapse} onPopOut={onPopOut} />
 
-        <h2 className={styles['name']}>{fieldValue(entity, 'name')}</h2>
+        {/*
+          Nome e raridade juntos, como na lista.
+          A raridade deixou de ser um campo do `<dl>`: ela identifica a entrada junto com
+          o nome, e uma linha "RARIDADE: comum" repetia em quase toda entrada o que é o
+          normal. Fora do `<dl>`, ela também não some quando o campo `rarity` não existir.
+        */}
+        <div className={styles['nameRow']}>
+          <h2 className={styles['name']}>{fieldValue(entity, 'name')}</h2>
+          {letraDaRaridade !== null && (
+            <RarityMark
+              letter={letraDaRaridade}
+              label={b.rarity[fieldValue(entity, 'rarity')] ?? ''}
+            />
+          )}
+        </div>
 
         {entity.retiredIn !== undefined && (
           <p className={styles['retired']}>
@@ -103,14 +134,29 @@ export function DetailPanel({ entity, entityType, fields, onClose, onPopOut }: D
  * desenho; clicável seria fingir que funciona. O motivo vai no `title`.
  */
 function Actions({
-  onClose,
+  onCollapse,
   onPopOut,
 }: {
-  readonly onClose: () => void;
+  readonly onCollapse?: (() => void) | undefined;
   readonly onPopOut?: (() => void) | undefined;
 }) {
   return (
     <div className={styles['actions']}>
+      {/*
+        Recolher fica à ESQUERDA, na MESMA linha da tradução e do pop-out.
+        Estava flutuando sobre o canto do painel, em cima do ×, e a barra subia e descia
+        conforme o painel abria e fechava. Na linha, tudo alinha e nada se mexe.
+      */}
+      {onCollapse && (
+        <CollapseToggle
+          side="right"
+          collapsed={false}
+          label={strings.browse.collapseDetail}
+          onToggle={onCollapse}
+        />
+      )}
+      <span className={styles['espaco']} />
+
       <button
         type="button"
         className={cx(styles['action'], 'chamfer-sm')}
@@ -131,15 +177,6 @@ function Actions({
           ⤢
         </button>
       )}
-      <button
-        type="button"
-        className={cx(styles['icon'], 'chamfer-sm')}
-        aria-label={t.close}
-        title={t.close}
-        onClick={onClose}
-      >
-        ×
-      </button>
     </div>
   );
 }

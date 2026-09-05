@@ -3,6 +3,8 @@
  * que sobra quando ela recolhe. Por isso é quadrado e pequeno: 22px cabe nos dois.
  */
 .botao {
+  --chamfer-line: var(--color-hairline);
+
   flex: none;
   display: grid;
   place-items: center;
@@ -12,8 +14,17 @@
   padding: 0;
   background: transparent;
   color: var(--color-text-muted);
-  font: 400 var(--text-lg) / 1 var(--font-body);
   cursor: pointer;
+
+  /*
+   * A seta centralizada de verdade.
+   *
+   * `‹` e `›` têm muito espaço lateral embutido no glifo e uma altura de x baixa: numa
+   * caixa de 22px com `place-items: center`, o resultado parecia torto para os dois lados.
+   * `line-height: 0` tira o desalinhamento vertical da caixa da linha, e a fonte MONO,
+   * cujo avanço é igual para todo glifo, tira o horizontal.
+   */
+  font: 400 var(--text-xl) / 0 var(--font-mono);
 }
 
 .botao:hover {

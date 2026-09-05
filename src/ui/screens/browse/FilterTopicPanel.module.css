@@ -42,6 +42,8 @@
 }
 
 .close {
+  --chamfer-line: var(--color-hairline);
+
   display: grid;
   place-items: center;
   width: 22px;
@@ -104,6 +106,8 @@
 }
 
 .clear {
+  --chamfer-line: var(--color-hairline);
+
   margin-top: var(--space-3);
   border: 1px solid var(--color-hairline);
   padding: var(--space-1) var(--space-2);

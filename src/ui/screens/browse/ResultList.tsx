@@ -227,9 +227,16 @@ function Linha({
               </span>
             ))}
             {traços.hidden > 0 && (
+              /*
+                O `title` lista os traços ESCONDIDOS, e não só quantos são.
+                "mais 2" obriga a abrir a entrada para saber quais; a lista responde na
+                hora, do mesmo jeito que o símbolo de custo responde ao passar o mouse.
+              */
               <span
                 className={cx(styles['chip'], styles['resto'])}
-                title={strings.browse.moreTraits(traços.hidden)}
+                title={fieldList(entity, specials.traits ?? '')
+                  .slice(traços.shown.length)
+                  .join(', ')}
               >
                 +{traços.hidden}
               </span>

@@ -52,6 +52,19 @@ export function ActionCost({ kind, count }: ActionCostProps) {
       </span>
     );
   }
-  if (kind === 'passive') return <span className={styles['label']}>{t.passive}</span>;
+  /*
+   * Passiva é um TRAÇO, não a palavra.
+   *
+   * Ela é a ausência de custo, e a ausência precisa ocupar a coluna — deixar a célula
+   * vazia faria a linha parecer que faltou dado. O travessão diz "nenhum" com a mesma
+   * largura visual dos losangos, e a palavra fica no `title`, como nos outros custos.
+   */
+  if (kind === 'passive') {
+    return (
+      <span className={styles['glyph']} aria-label={t.passive} title={t.passive}>
+        —
+      </span>
+    );
+  }
   return null;
 }

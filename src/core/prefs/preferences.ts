@@ -55,7 +55,12 @@ export interface LayoutPreferences {
   readonly detailWidth: number | null;
   /** O trilho de fontes recolhido por escolha do usuário. */
   readonly railCollapsed: boolean;
-  /** A coluna de detalhe recolhida por escolha do usuário. */
+  /**
+   * A coluna de detalhe recolhida.
+   *
+   * Nasce RECOLHIDA: sem nada selecionado ela não teria o que mostrar, e a lista aproveita
+   * a largura inteira até alguém pedir um detalhe.
+   */
   readonly detailCollapsed: boolean;
   readonly popoutWidth: number | null;
   readonly popoutHeight: number | null;
@@ -77,7 +82,7 @@ export const DEFAULT_PREFERENCES: Preferences = {
   layout: {
     detailWidth: null,
     railCollapsed: false,
-    detailCollapsed: false,
+    detailCollapsed: true,
     popoutWidth: null,
     popoutHeight: null,
   },
@@ -137,7 +142,8 @@ export function readPreferences(stored: unknown): Preferences {
     layout: {
       detailWidth: positive(layout['detailWidth']),
       railCollapsed: layout['railCollapsed'] === true,
-      detailCollapsed: layout['detailCollapsed'] === true,
+      // Ausente é RECOLHIDO, que é o padrão. Só `false` explícito abre.
+      detailCollapsed: layout['detailCollapsed'] !== false,
       popoutWidth: positive(layout['popoutWidth']),
       popoutHeight: positive(layout['popoutHeight']),
     },

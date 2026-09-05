@@ -76,6 +76,13 @@
    * Usa-se com clip-path, não com border-radius:
    *   clip-path: polygon(var(--chamfer-md) 0, 100% 0, 100% 100%, 0 100%, 0 var(--chamfer-md));
    */
+  /*
+   * A cor da DOBRA do chanfro. `transparent` por padrão: quem não tem borda não ganha
+   * risco nenhum. Quem tem redeclara com a mesma cor da borda, e a diagonal — que o
+   * `clip-path` corta junto com ela — reaparece.
+   */
+  --chamfer-line: transparent;
+
   --chamfer-sm: 5px;
   --chamfer-md: 7px;
   --chamfer-lg: 11px;

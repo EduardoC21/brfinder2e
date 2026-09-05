@@ -34,7 +34,6 @@ interface DetailPaneProps {
   readonly entity: BrowseEntity | null;
   readonly entityType: string;
   readonly fields: readonly DetailFieldSpec[];
-  readonly onClose: () => void;
   readonly onPopOut: () => void;
   /**
    * O painel de um tópico de filtro, quando há um aberto.
@@ -63,7 +62,6 @@ export function DetailPane({
   entity,
   entityType,
   fields,
-  onClose,
   onPopOut,
   overlay,
   collapsed,
@@ -148,23 +146,18 @@ export function DetailPane({
         }}
       />
 
-      <div className={styles['recolher']}>
-        <CollapseToggle
-          side="right"
-          collapsed={false}
-          label={strings.browse.collapseDetail}
-          onToggle={onToggleCollapsed}
-        />
-      </div>
-
-      {entity === null ? (
-        <p className={styles['empty']}>{t.nothingSelected}</p>
-      ) : (
+      {/*
+        Nada selecionado e sem camada: o painel não desenha nada.
+        Havia uma frase "Escolha uma entrada…" ali. Ela explicava o óbvio para quem já
+        está olhando a lista, e o painel agora nasce RECOLHIDO — quem o abre já sabe o
+        que quer ver.
+      */}
+      {entity === null ? null : (
         <DetailPanel
           entity={entity}
           entityType={entityType}
           fields={fields}
-          onClose={onClose}
+          onCollapse={onToggleCollapsed}
           onPopOut={onPopOut}
         />
       )}

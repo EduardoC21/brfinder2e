@@ -130,6 +130,34 @@ function SourcePane({
   const [overlay, setOverlay] = useState<
     { kind: 'topic'; id: string } | { kind: 'columns' } | null
   >(null);
+
+  /**
+   * Abrir uma camada ABRE o painel, se ele estiver recolhido.
+   *
+   * A camada é desenhada DENTRO do painel. Sem isto, clicar num tópico de filtro com o
+   * painel fechado não mostrava nada, e o clique parecia não ter efeito.
+   */
+  const mostrarCamada = (proxima: typeof overlay): void => {
+    setOverlay(proxima);
+
+    if (proxima !== null) {
+      if (prefs.layout.detailCollapsed) {
+        update((atual) => withLayout(atual, { detailCollapsed: false }));
+      }
+      return;
+    }
+
+    /*
+     * Fechar a camada sem nada selecionado RECOLHE o painel.
+     *
+     * O painel só existe aberto quando tem o que mostrar. Sem esta regra sobrava um estado
+     * sem saída: painel aberto, vazio, e sem botão de recolher — ele mora na linha de
+     * ações da entrada, que não existe quando não há entrada.
+     */
+    if (opened === null && !prefs.layout.detailCollapsed) {
+      update((atual) => withLayout(atual, { detailCollapsed: true }));
+    }
+  };
   const [activeIndex, setActiveIndex] = useState(-1);
   const [openedKey, setOpenedKey] = useState<string | null>(null);
   /*
@@ -301,7 +329,7 @@ function SourcePane({
           update((atual) => withSource(atual, source.id, { columns: null, hiddenSpecials: [] }));
         }}
         onClose={() => {
-          setOverlay(null);
+          mostrarCamada(null);
         }}
       />
     ) : topicoAberto === undefined ? null : (
@@ -314,7 +342,7 @@ function SourcePane({
           setActiveIndex(-1);
         }}
         onClose={() => {
-          setOverlay(null);
+          mostrarCamada(null);
         }}
       />
     );
@@ -352,11 +380,11 @@ function SourcePane({
           state={filters}
           openTopic={openTopic}
           onOpenTopic={(id) => {
-            setOverlay(id === null ? null : { kind: 'topic', id });
+            mostrarCamada(id === null ? null : { kind: 'topic', id });
           }}
           columnsOpen={overlay?.kind === 'columns'}
           onOpenColumns={() => {
-            setOverlay((atual) => (atual?.kind === 'columns' ? null : { kind: 'columns' }));
+            mostrarCamada(overlay?.kind === 'columns' ? null : { kind: 'columns' });
           }}
           onChange={(next) => {
             setFilters(next);
@@ -394,9 +422,6 @@ function SourcePane({
         entity={opened}
         entityType={source.entityType ?? ''}
         fields={source.detail}
-        onClose={() => {
-          setOpenedKey(null);
-        }}
         onPopOut={() => {
           if (opened !== null) despacharPopout({ kind: 'open', entity: opened });
         }}
@@ -420,13 +445,15 @@ function SourcePane({
             despacharPopout({ kind: 'close', id: item.id });
           }}
         >
+          {/*
+            Sem `onCollapse` e sem `onPopOut`: o flutuante não recolhe (ele fecha, pelo ×
+            da própria barra de título) e não se destaca de novo. Ausência de callback é o
+            que apaga cada botão — o painel não pergunta onde está.
+          */}
           <DetailPanel
             entity={item.entity}
             entityType={source.entityType ?? ''}
             fields={source.detail}
-            onClose={() => {
-              despacharPopout({ kind: 'close', id: item.id });
-            }}
           />
         </FloatingPanel>
       ))}

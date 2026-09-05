@@ -228,7 +228,7 @@ export const SOURCES: readonly SourceSpec[] = [
       { kind: 'text', field: 'sector' },
       { kind: 'text', field: 'category' },
       { kind: 'chips', field: 'traits' },
-      { kind: 'text', field: 'rarity' },
+      // Raridade NÃO é campo: vira etiqueta ao lado do nome, como na lista.
       { kind: 'frequency', field: 'frequency' },
       { kind: 'source' },
     ],

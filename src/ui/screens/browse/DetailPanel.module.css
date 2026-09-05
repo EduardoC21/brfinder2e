@@ -27,7 +27,7 @@
  * o nome era o único elemento sem largura fixa, e por isso o único que cedia.
  */
 .name {
-  margin: var(--space-2) 0 0;
+  margin: 0;
   min-width: 0;
   font: 400 var(--text-2xl) / 1.15 var(--font-display);
   color: var(--color-text);
@@ -35,16 +35,27 @@
   overflow-wrap: anywhere;
 }
 
-/* A linha de ações fica encostada à direita, acima do nome. */
+/*
+ * A linha de ações: recolher à esquerda, tradução e pop-out à direita.
+ *
+ * O `.espaco` entre eles é quem empurra — sem ele, ou tudo fica à esquerda ou tudo à
+ * direita. E a linha existe SEMPRE com a mesma altura, então abrir e fechar o painel não
+ * faz o cabeçalho subir e descer, que era o efeito do botão flutuante de antes.
+ */
 .actions {
   display: flex;
   align-items: center;
   gap: var(--space-1);
-  flex-wrap: wrap;
-  justify-content: flex-end;
+  min-height: 22px;
+}
+
+.espaco {
+  flex: 1;
 }
 
 .action {
+  --chamfer-line: var(--color-hairline);
+
   border: 1px solid var(--color-hairline);
   padding: var(--space-1) var(--space-2);
   background: transparent;
@@ -134,6 +145,8 @@
  * mais peso que o próprio nome do livro, que é a informação principal da linha.
  */
 .legacy {
+  --chamfer-line: var(--color-hairline);
+
   margin-left: var(--space-2);
   padding: 1px var(--space-2);
   border: 1px solid var(--color-hairline);
