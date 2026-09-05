@@ -55,11 +55,11 @@ superfície de trás, que muda em três estados; `border-image` de 9 fatias só 
 `border-image-width: 6px`, que pinta 6px para dentro dos quatro lados e cobre o conteúdo
 num quadrado de 16px.
 
-**A exceção continua sendo a marca de raridade** (`RarityMark`), que desenha o próprio SVG
-com a diagonal 1,3 contra 1 das retas — uma reta de 1px encaixa na grade de pixels e sai
-cheia, uma diagonal de 1px é espalhada por ~1,41px de antialiasing e lê como mais clara.
-Ela poderia passar a usar a utilitária agora que o nativo fecha a diagonal; segue como
-está porque foi aprovada assim.
+**Não há exceção.** A marca de raridade já teve SVG próprio, com a diagonal traçada à
+parte e mais grossa que as retas para compensar o antialiasing. Isso existia porque o
+`clip-path` deixava a diagonal sem contorno e ali o contorno É o desenho — com
+`corner-shape` deixou de ser verdade, e ela passou a usar a mesma utilitária. Uma forma só
+de construir a mesma coisa.
 
 ### Glifos de custo
 
