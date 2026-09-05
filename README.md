@@ -9,21 +9,26 @@ Não é um VTT: sem rolagem, combate, iniciativa, tokens, mapas ou bestiário.
 
 ## Estado
 
-**Etapa 7 concluída** — analisador das dez sintaxes de marcação, com o invariante de ida
-e volta valendo em 100% da base (2,87 milhões de strings, zero quebras). Antes:
-**Etapa 6** — receita de `action`: 766 normalizadas de dois packs, 0 falhas,
+**Etapa 8 concluída** — a tela de consulta e detalhe. Lista em grade única com nome, nível,
+raridade e traços colados ao nome; quantos traços cabem é aritmética sobre uma largura
+medida uma vez, e o que não cabe vira `+N`. Filtros derivados do dado, com E/OU por tópico;
+colunas escolhidas e reordenadas pela pessoa; laterais recolhíveis; painel flutuante; e o
+chanfro do sistema feito com `corner-shape: bevel` nativo.
+
+Antes: **Etapa 7** — analisador das dez sintaxes de marcação, com o invariante de ida e
+volta valendo em 100% da base (2,87 milhões de strings, zero quebras).
+Antes: **Etapa 6** — receita de `action`: 766 normalizadas de dois packs, 0 falhas,
 relatório limpo, com o setor vindo da pasta do compêndio (Class 196, Adventure 192,
 Archetype 140, Skill 54, Basic 30…).
 Antes: **Etapa 5** — tela de consulta: trilho de fontes, busca com MiniSearch, filtros
-derivados do dado e navegação por teclado. Antes: **Etapa 4** — sistema de design do mockup fixado nos tokens, fontes embarcadas,
+derivados do dado e navegação por teclado.
+Antes: **Etapa 4** — sistema de design do mockup fixado nos tokens, fontes embarcadas,
 casca com barra de topo, e a sincronização pelo botão da engrenagem: baixa, normaliza,
 **grava em IndexedDB** e mostra o que entrou, o que mudou e o que sumiu. A base sobrevive
 ao recarregar a janela. E `source/` (Etapa 1), motor de receita (Etapa 2) e a receita de
 `condition` (Etapa 3).
 
-Próxima: **Etapa 8**, a tela de detalhe da entrada.
-
-Próxima: **Etapa 5**, a tela de busca.
+Próxima: **Etapa 9**, a receita de `feat` — os 6.284 talentos.
 
 ## Requisitos
 
