@@ -64,9 +64,20 @@ describe('traitSpace', () => {
     expect(traitSpace(600, 'Trip', true)).toBeLessThan(traitSpace(600, 'Trip', false));
   });
 
-  /* Um nome absurdo não pode zerar os traços: ele mesmo é cortado com reticências. */
-  it('o nome nunca come mais que 60% da trilha', () => {
-    expect(traitSpace(600, 'x'.repeat(500), false)).toBeGreaterThan(200);
+  /*
+   * A ORDEM de quem cede. O nome toma o espaço que precisar e só para no piso do `+N`:
+   * "esta entrada tem traços" cabe em 40px e não tem substituto, enquanto um traço
+   * espremido não diz nem isso.
+   */
+  it('nome enorme empurra o traço até o piso do +N, e não além', () => {
+    const espaco = traitSpace(600, 'x'.repeat(500), false);
+    expect(espaco).toBeGreaterThan(0);
+    expect(espaco).toBeLessThan(45);
+  });
+
+  /* E com nome curto o traço fica com tudo que sobra, sem teto artificial. */
+  it('nome curto deixa mais que 60% da trilha para o traço', () => {
+    expect(traitSpace(600, 'Trip', false)).toBeGreaterThan(600 * 0.6);
   });
 
   it('trilha estreita nunca devolve espaço negativo', () => {

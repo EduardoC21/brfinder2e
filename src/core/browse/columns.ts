@@ -79,11 +79,24 @@ export function fitTraits(traits: readonly string[], disponivel: number): TraitB
   return { shown, hidden: traits.length - shown.length };
 }
 
-/** O espaço que sobra para os traços numa linha, depois do nome e da raridade. */
+/**
+ * O espaço que sobra para os traços numa linha, depois do nome e da raridade.
+ *
+ * A ORDEM em que as duas coisas cedem é a regra aqui, e ela é deliberada: o traço cede
+ * primeiro, até sobrar só o `+N`, e só depois o nome começa a ser cortado.
+ *
+ * Antes o nome era limitado a 60% da trilha, o que garantia 40% aos traços sempre. Numa
+ * janela estreita os dois encolhiam juntos, e a lista ficava com nome cortado E traço
+ * cortado ao mesmo tempo — duas informações pela metade em vez de uma inteira.
+ *
+ * O piso de `+N` é o único espaço que o nome não pode tomar: "esta entrada tem traços"
+ * cabe em 40px e não tem substituto. O resto é do nome enquanto ele precisar.
+ */
 export function traitSpace(larguraDaTrilha: number, name: string, temRaridade: boolean): number {
-  const nome = Math.min(name.length * NAME_CHAR_PX, larguraDaTrilha * 0.6);
   const raridade = temRaridade ? 24 : 0;
-  return Math.max(0, larguraDaTrilha - nome - raridade - 16);
+  const cabeNaTrilha = larguraDaTrilha - raridade - 16;
+  const sobraDepoisDoNome = cabeNaTrilha - name.length * NAME_CHAR_PX;
+  return Math.max(0, Math.min(Math.max(sobraDepoisDoNome, larguraDe('+99')), cabeNaTrilha));
 }
 
 export type Rarity = 'common' | 'uncommon' | 'rare' | 'unique';

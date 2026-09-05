@@ -5,6 +5,7 @@ import { withLayout } from '@core/prefs/index';
 import { strings } from '@i18n/index';
 import { CollapseToggle } from '@ui/components/CollapseToggle';
 import { usePointerDrag } from '@ui/hooks/usePointerDrag';
+import { useWindowWidth } from '@ui/hooks/useWindowWidth';
 import { usePreferences } from '@ui/prefs/usePreferences';
 
 import { DetailPanel } from './DetailPanel';
@@ -17,14 +18,17 @@ const MIN = 300;
 const MAX = 640;
 
 /**
- * O teto REAL: 640px, mas nunca mais que metade da janela.
+ * O teto REAL: 640px, mas nunca mais que metade da janela — e nunca menos que `MIN`.
  *
  * Medido numa janela de 900px com a largura guardada em 640: sobravam 70px para a lista
  * inteira, e nela cabia um traço. Um teto absoluto ignora que a lista também precisa
  * existir — em tela pequena, metade para cada um é o mínimo defensável.
+ *
+ * Recebe a largura por PARÂMETRO e não lê `window` por dentro. Lendo por dentro, o valor
+ * só se atualizava quando algo ACIDENTALMENTE re-renderizava este componente: a janela
+ * encolhia, a coluna continuava nos 420px gravados, e a lista é que perdia o espaço.
  */
-function teto(): number {
-  const janela = typeof window === 'undefined' ? MAX : window.innerWidth;
+function teto(janela: number): number {
   return Math.max(MIN, Math.min(MAX, Math.round(janela / 2)));
 }
 const PADRAO = 420;
@@ -73,7 +77,12 @@ export function DetailPane({
    * ter mudado desde a gravação — um valor gravado por uma versão anterior não é promessa.
    */
   const { prefs, update } = usePreferences();
-  const preso = (valor: number): number => Math.min(teto(), Math.max(MIN, valor));
+  /*
+   * A largura da janela é estado, e não leitura de uma vez: encolher a janela tem de
+   * apertar o teto na hora, senão a coluna guarda uma largura que a tela já não comporta.
+   */
+  const janela = useWindowWidth();
+  const preso = (valor: number): number => Math.min(teto(janela), Math.max(MIN, valor));
   const salva = preso(prefs.layout.detailWidth ?? PADRAO);
 
   /*
@@ -130,7 +139,7 @@ export function DetailPane({
         aria-label={t.resizeSidebar}
         aria-valuenow={largura}
         aria-valuemin={MIN}
-        aria-valuemax={teto()}
+        aria-valuemax={teto(janela)}
         tabIndex={0}
         {...arrasto}
         onKeyDown={(event) => {

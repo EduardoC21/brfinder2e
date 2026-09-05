@@ -158,9 +158,10 @@
  * todo nome menor que isso era inflado até lá. Medido: `Anchor` tem 50px de texto numa
  * caixa de 75px — 25px de vazio antes do primeiro traço.
  *
- * A proteção mudou de lado: quem cede agora é o traço (ver `.tracos`), e o nome fica
- * inteiro. Se a estimativa de `fitTraits` errar para mais, é melhor perder um traço do
- * que perder o nome, que é a informação que identifica a linha.
+ * Quem cede espaço é este elemento, e só depois que os traços já desceram ao `+N` — a
+ * ordem é imposta pela conta em `core/browse/columns.ts`, não pelo flex. O nome degrada
+ * para reticências, que ainda dizem o começo da palavra; o `+N` não tem degradação, ou
+ * aparece inteiro ou vira "+…" e não diz nada.
  */
 .name {
   flex: 0 1 auto;
@@ -193,14 +194,15 @@
  * (`core/browse/columns.ts`). O que não cabe vira `+N`.
  */
 /*
- * `flex-shrink: 100` contra o `1` do nome: se a linha apertar, quem cede é daqui.
- * Na prática isto não deve acontecer nunca — `fitTraits` já empurra para o `+N` tudo que
- * não couber. É rede para o erro da estimativa, e o recorte final é do
- * `overflow: hidden` da célula.
+ * `flex: none`: o bloco de traços NUNCA encolhe.
+ *
+ * Quem decide quantos traços cabem é `fitTraits`, e ele já empurra o resto para o `+N`.
+ * Se o flex também pudesse encolher aqui, o último elemento da fila — justamente o `+N` —
+ * seria o cortado, e "+2" virava "+…". Quem cede espaço é o nome, que ao menos degrada
+ * para reticências dizendo o começo da palavra.
  */
 .tracos {
-  flex: 0 100 auto;
-  min-width: 0;
+  flex: none;
   display: flex;
   align-items: center;
   gap: var(--space-1);
