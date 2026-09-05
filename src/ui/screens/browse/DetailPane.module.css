@@ -22,6 +22,28 @@
  * gesto raro. Sobreposta, ela mora sobre a linha de 1px que já existe. `z-index` baixo,
  * mas acima do conteúdo: um `<p>` de descrição colado à borda roubaria o cursor.
  */
+/* A tira que sobra recolhida: só o botão de reabrir. */
+.tira {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-3) var(--space-1);
+  border-left: 1px solid var(--color-hairline);
+  background: var(--color-panel);
+}
+
+/*
+ * O botão de recolher flutua sobre o canto superior direito do painel.
+ *
+ * Flutuando e não numa linha própria: uma linha empurraria o cabeçalho do detalhe para
+ * baixo em todas as entradas para servir a um gesto raro.
+ */
+.recolher {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  z-index: 2;
+}
+
 .divider {
   position: absolute;
   top: 0;

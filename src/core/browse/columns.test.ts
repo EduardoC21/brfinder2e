@@ -34,9 +34,18 @@ describe('fitTraits', () => {
     expect(r.shown).toHaveLength(1);
   });
 
-  it('mostra ao menos um, mesmo que ele sozinho estoure', () => {
+  /*
+   * Nem um traço cabendo, a linha fica só com o `+N`. O `+3` sozinho já diz "esta entrada
+   * tem traços, abra para ver", enquanto um traço espremido até as reticências não diz nem
+   * isso e ainda empurra o nome.
+   */
+  it('sem espaço para nenhum, sobra só o +N', () => {
+    expect(fitTraits(['brandish', 'commander'], 10)).toEqual({ shown: [], hidden: 2 });
+  });
+
+  it('um traço enorme sozinho também não força a barra', () => {
     const enorme = 'um-traco-absurdamente-comprido';
-    expect(fitTraits([enorme, 'fire'], 10)).toEqual({ shown: [enorme], hidden: 1 });
+    expect(fitTraits([enorme], 10)).toEqual({ shown: [], hidden: 1 });
   });
 
   it('sem traços, nada a mostrar e nada escondido', () => {

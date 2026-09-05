@@ -11,11 +11,12 @@ import {
   type FilterState,
   type SourceSpec,
 } from '@core/browse/index';
-import { sourcePreferences, withSource } from '@core/prefs/index';
+import { sourcePreferences, withLayout, withSource } from '@core/prefs/index';
 import { strings } from '@i18n/index';
 import { FloatingPanel } from '@ui/components/FloatingPanel';
 import { SearchInput } from '@ui/components/SearchInput';
 import { useBase } from '@ui/hooks/useBase';
+import { useNarrowScreen } from '@ui/hooks/useNarrowScreen';
 import { usePreferences } from '@ui/prefs/usePreferences';
 
 import { DetailPane } from './DetailPane';
@@ -42,12 +43,33 @@ export function BrowseScreen({ baseVersion }: BrowseScreenProps) {
   const base = useBase(source?.entityType ?? null, baseVersion);
   const entities = base.status === 'ready' ? base.entities : EMPTY;
 
+  const { prefs, update } = usePreferences();
+
+  /*
+   * O trilho recolhe SOZINHO em tela estreita, e isso não vira preferência.
+   *
+   * São coisas diferentes: "eu quero ele fechado" é escolha e fica gravada; "não cabe
+   * agora" é circunstância e passa quando a janela cresce. Guardar a segunda como se
+   * fosse a primeira faria o trilho continuar fechado depois, sem ninguém ter pedido.
+   *
+   * 900px é 190 do trilho + 260 de lista + 450 de painel, que é o mínimo em que os três
+   * ainda são utilizáveis ao mesmo tempo.
+   */
+  const telaEstreita = useNarrowScreen(900);
+  const trilhoRecolhido = prefs.layout.railCollapsed || telaEstreita;
+
+  const alternarTrilho = (): void => {
+    update((atual) => withLayout(atual, { railCollapsed: !trilhoRecolhido }));
+  };
+
   return (
     <div className={styles['screen']}>
       <SourceRail
         sources={SOURCES}
         currentId={sourceId}
         currentCount={entities.length}
+        collapsed={trilhoRecolhido}
+        onToggle={alternarTrilho}
         onSelect={setSourceId}
       />
 
@@ -160,6 +182,16 @@ function SourcePane({
   const escolher = (key: string): void => {
     setOpenedKey(key);
     setOverlay(null);
+    /*
+     * Clicar numa entrada REABRE o painel recolhido.
+     *
+     * Recolher é um gesto de espaço, temporário; clicar numa entrada é dizer "me mostra
+     * esta". A alternativa — abrir um pop-out — faria o mesmo clique produzir coisas
+     * diferentes conforme um estado invisível, e cinco cliques deixariam cinco janelas.
+     */
+    if (prefs.layout.detailCollapsed) {
+      update((atual) => withLayout(atual, { detailCollapsed: false }));
+    }
   };
 
   const openTopic = overlay?.kind === 'topic' ? overlay.id : null;
@@ -367,6 +399,10 @@ function SourcePane({
         }}
         onPopOut={() => {
           if (opened !== null) despacharPopout({ kind: 'open', entity: opened });
+        }}
+        collapsed={prefs.layout.detailCollapsed}
+        onToggleCollapsed={() => {
+          update((atual) => withLayout(atual, { detailCollapsed: !atual.layout.detailCollapsed }));
         }}
         {...(camada === null ? {} : { overlay: camada })}
       />

@@ -11,6 +11,7 @@ import {
 } from '@core/browse/index';
 import { strings } from '@i18n/index';
 import { ActionCost } from '@ui/components/ActionCost';
+import { RarityMark } from '@ui/components/RarityMark';
 import { cx } from '@ui/cx';
 import { useTrackWidth } from '@ui/hooks/useTrackWidth';
 
@@ -209,9 +210,7 @@ function Linha({
         <span className={styles['name']}>{nome}</span>
 
         {letra !== null && raridade !== null && (
-          <span className={cx(styles['raridade'], 'chamfer-sm')} title={rarityTitle(raridade)}>
-            {letra}
-          </span>
+          <RarityMark letter={letra} label={rarityTitle(raridade)} />
         )}
 
         {entity.retiredIn !== undefined && (
@@ -220,7 +219,7 @@ function Linha({
           </span>
         )}
 
-        {traços !== null && traços.shown.length > 0 && (
+        {traços !== null && (traços.shown.length > 0 || traços.hidden > 0) && (
           <span className={styles['tracos']}>
             {traços.shown.map((trait) => (
               <span key={trait} className={styles['chip']}>

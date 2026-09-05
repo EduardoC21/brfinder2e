@@ -37,7 +37,13 @@ describe('readPreferences', () => {
       values: ['attack'],
       combine: 'all',
     });
-    expect(lido.layout).toEqual({ detailWidth: 500, popoutWidth: 600, popoutHeight: 700 });
+    expect(lido.layout).toEqual({
+      detailWidth: 500,
+      railCollapsed: false,
+      detailCollapsed: false,
+      popoutWidth: 600,
+      popoutHeight: 700,
+    });
   });
 
   it('descarta o que não reconhece em vez de quebrar', () => {
@@ -110,6 +116,12 @@ describe('withSource', () => {
 });
 
 describe('withLayout', () => {
+  /* Recolhido só é verdade se estiver gravado como `true`; qualquer outra coisa é falso. */
+  it('recolhido é booleano de verdade, não valor conversível', () => {
+    expect(readPreferences({ layout: { railCollapsed: 'sim' } }).layout.railCollapsed).toBe(false);
+    expect(readPreferences({ layout: { railCollapsed: true } }).layout.railCollapsed).toBe(true);
+  });
+
   it('troca só o que veio no remendo', () => {
     const p = withLayout(DEFAULT_PREFERENCES, { detailWidth: 480 });
     expect(p.layout.detailWidth).toBe(480);

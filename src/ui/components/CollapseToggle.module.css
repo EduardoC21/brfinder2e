@@ -1,0 +1,34 @@
+/*
+ * O botão de recolher, desenhado para caber tanto na barra aberta quanto na tira estreita
+ * que sobra quando ela recolhe. Por isso é quadrado e pequeno: 22px cabe nos dois.
+ */
+.botao {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--color-hairline);
+  padding: 0;
+  background: transparent;
+  color: var(--color-text-muted);
+  font: 400 var(--text-lg) / 1 var(--font-body);
+  cursor: pointer;
+}
+
+.botao:hover {
+  background: var(--color-state);
+  border-color: transparent;
+  color: #f6edea;
+}
+
+.botao:focus-visible {
+  outline: 2px solid var(--color-data);
+  outline-offset: 1px;
+}
+
+/* Recolhido, o botão é a única coisa visível — então ele fica mais evidente. */
+.recolhido {
+  border-color: var(--color-hairline);
+  color: var(--color-text);
+}

@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import { foldTerm, type SourceSpec } from '@core/browse/index';
 import { strings } from '@i18n/index';
 import { cx } from '@ui/cx';
+import { CollapseToggle } from '@ui/components/CollapseToggle';
 import { SearchInput } from '@ui/components/SearchInput';
 
 import styles from './SourceRail.module.css';
@@ -13,6 +14,8 @@ interface SourceRailProps {
   /** Quantas entradas a fonte atual tem. As outras não sabemos sem ler o armazenamento. */
   readonly currentCount: number;
   readonly onSelect: (id: string) => void;
+  readonly collapsed: boolean;
+  readonly onToggle: () => void;
 }
 
 const t = strings.browse;
@@ -30,7 +33,14 @@ const sourceLabel = (source: SourceSpec): string => strings.sources[source.id] ?
  * A divisória vem antes de misturar pronta com não-pronta: uma lista onde as utilizáveis
  * estão espalhadas obriga a ler tudo para achar as duas que funcionam.
  */
-export function SourceRail({ sources, currentId, currentCount, onSelect }: SourceRailProps) {
+export function SourceRail({
+  sources,
+  currentId,
+  currentCount,
+  collapsed,
+  onToggle,
+  onSelect,
+}: SourceRailProps) {
   const [term, setTerm] = useState('');
 
   const { ready, pending } = useMemo(() => {
@@ -66,9 +76,29 @@ export function SourceRail({ sources, currentId, currentCount, onSelect }: Sourc
     );
   };
 
+  /*
+   * Recolhido, o trilho vira uma tira com o botão e nada mais.
+   *
+   * Devolver `null` seria mais curto e tiraria o caminho de volta: sem a tira, não há onde
+   * clicar para reabrir, e a única saída seria alargar a janela.
+   *
+   * O `return` fica DEPOIS de todos os hooks: saindo antes do `useMemo`, a ordem de
+   * chamada mudaria entre um render e outro, que é o que os hooks não permitem.
+   */
+  if (collapsed) {
+    return (
+      <div className={styles['tira']}>
+        <CollapseToggle side="left" collapsed label={t.expandRail} onToggle={onToggle} />
+      </div>
+    );
+  }
+
   return (
     <nav className={styles['rail']} aria-label={t.sourcesLabel}>
-      <h2 className={styles['title']}>{t.sourcesLabel}</h2>
+      <div className={styles['tituloLinha']}>
+        <h2 className={styles['title']}>{t.sourcesLabel}</h2>
+        <CollapseToggle side="left" collapsed={false} label={t.collapseRail} onToggle={onToggle} />
+      </div>
 
       {sources.length >= 8 && (
         <SearchInput

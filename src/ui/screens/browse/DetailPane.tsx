@@ -3,6 +3,7 @@ import { useState } from 'react';
 import type { BrowseEntity, DetailFieldSpec } from '@core/browse/index';
 import { withLayout } from '@core/prefs/index';
 import { strings } from '@i18n/index';
+import { CollapseToggle } from '@ui/components/CollapseToggle';
 import { usePointerDrag } from '@ui/hooks/usePointerDrag';
 import { usePreferences } from '@ui/prefs/usePreferences';
 
@@ -42,6 +43,8 @@ interface DetailPaneProps {
    * componente só empresta o espaço.
    */
   readonly overlay?: React.ReactNode;
+  readonly collapsed: boolean;
+  readonly onToggleCollapsed: () => void;
 }
 
 /**
@@ -63,6 +66,8 @@ export function DetailPane({
   onClose,
   onPopOut,
   overlay,
+  collapsed,
+  onToggleCollapsed,
 }: DetailPaneProps) {
   /*
    * A largura vem da preferência, não de um `useState` local: ela precisa sobreviver ao
@@ -104,6 +109,20 @@ export function DetailPane({
     },
   );
 
+  /* Recolhida, a coluna vira uma tira com o botão — o caminho de volta. */
+  if (collapsed) {
+    return (
+      <div className={styles['tira']}>
+        <CollapseToggle
+          side="right"
+          collapsed
+          label={strings.browse.expandDetail}
+          onToggle={onToggleCollapsed}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className={styles['pane']} style={{ width: `${String(largura)}px` }}>
       <div
@@ -128,6 +147,15 @@ export function DetailPane({
           }
         }}
       />
+
+      <div className={styles['recolher']}>
+        <CollapseToggle
+          side="right"
+          collapsed={false}
+          label={strings.browse.collapseDetail}
+          onToggle={onToggleCollapsed}
+        />
+      </div>
 
       {entity === null ? (
         <p className={styles['empty']}>{t.nothingSelected}</p>

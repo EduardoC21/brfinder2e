@@ -53,6 +53,10 @@ export interface SourcePreferences {
 export interface LayoutPreferences {
   /** Largura da coluna de detalhe, em pixels. */
   readonly detailWidth: number | null;
+  /** O trilho de fontes recolhido por escolha do usuário. */
+  readonly railCollapsed: boolean;
+  /** A coluna de detalhe recolhida por escolha do usuário. */
+  readonly detailCollapsed: boolean;
   readonly popoutWidth: number | null;
   readonly popoutHeight: number | null;
 }
@@ -70,7 +74,13 @@ export const EMPTY_SOURCE_PREFERENCES: SourcePreferences = {
 
 export const DEFAULT_PREFERENCES: Preferences = {
   sources: {},
-  layout: { detailWidth: null, popoutWidth: null, popoutHeight: null },
+  layout: {
+    detailWidth: null,
+    railCollapsed: false,
+    detailCollapsed: false,
+    popoutWidth: null,
+    popoutHeight: null,
+  },
 };
 
 /** Onde as preferências moram. Chave única: elas são poucas e sempre lidas juntas. */
@@ -126,6 +136,8 @@ export function readPreferences(stored: unknown): Preferences {
     sources,
     layout: {
       detailWidth: positive(layout['detailWidth']),
+      railCollapsed: layout['railCollapsed'] === true,
+      detailCollapsed: layout['detailCollapsed'] === true,
       popoutWidth: positive(layout['popoutWidth']),
       popoutHeight: positive(layout['popoutHeight']),
     },

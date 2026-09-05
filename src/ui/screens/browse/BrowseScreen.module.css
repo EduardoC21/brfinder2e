@@ -5,16 +5,19 @@
  * filha, e por isso a barra de filtros (que mora na área da lista) passava por cima dele.
  * Como coluna própria, o painel vai do topo até o rodapé e nada o cobre.
  *
- * A primeira coluna é fixa: o trilho não pode encolher quando um nome de fonte for mais
- * longo, senão a lista "pula" de largura ao trocar de fonte. A terceira é `auto`, porque
- * quem manda na largura dela é o próprio painel — o usuário a escolhe arrastando.
+ * A primeira e a terceira são `auto`: quem manda na largura delas é o próprio painel.
+ * O trilho declara 190px quando aberto e vira uma tira estreita quando recolhido; a
+ * coluna acompanha. Fixar 190px aqui deixava a tira ocupando 190px vazios ao recolher.
+ *
+ * O trilho continua com largura FIXA quando aberto — ele não pode encolher porque um nome
+ * de fonte é mais longo, senão a lista "pula" de largura ao trocar de fonte.
  *
  * `min-height: 0` nas células é o que permite a lista rolar dentro do grid em vez de
  * esticar a página — sem isso, um filho com overflow força a altura do avô.
  */
 .screen {
   display: grid;
-  grid-template-columns: 190px minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   height: 100%;
   min-height: 0;
 }

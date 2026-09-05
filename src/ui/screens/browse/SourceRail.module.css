@@ -6,6 +6,9 @@
  * por dentro, e um campo de busca acha a fonte sem rolar.
  */
 .rail {
+  /* Aberto, o trilho tem largura fixa: sem isso ele encolheria e cresceria conforme o
+     nome da fonte mais longa visível, e a lista pularia de largura ao filtrar. */
+  width: 190px;
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
@@ -14,7 +17,27 @@
   border-right: 1px solid var(--color-hairline);
 }
 
+/*
+ * A tira que sobra quando o trilho recolhe: só o botão de reabrir.
+ *
+ * Ela existe para haver um caminho de volta. Sem tira, reabrir dependeria de alargar a
+ * janela — e numa janela pequena isso é impossível.
+ */
+.tira {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-3) var(--space-1);
+  border-right: 1px solid var(--color-hairline);
+}
+
+.tituloLinha {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
 .title {
+  flex: 1;
   margin: 0 0 0 var(--space-2);
   font: 400 var(--text-xs) / 1 var(--font-mono);
   letter-spacing: 0.1em;

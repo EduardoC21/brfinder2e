@@ -71,6 +71,11 @@
   color: #f6edea;
 }
 
+/* Selecionada, a etiqueta acende junto com o resto da linha. */
+.ativa .nomeCelula {
+  --cor-raridade: #f2c070;
+}
+
 .ativa .chip {
   background: rgb(0 0 0 / 25%);
   color: #f0dfe2;
@@ -144,34 +149,6 @@
   color: var(--color-data);
   font: 400 var(--text-sm) / 1 var(--font-mono);
   font-variant-numeric: tabular-nums;
-}
-
-/*
- * A etiqueta de raridade: contorno de latão, miolo oco, letra em latão.
- *
- * Contorno e não preenchimento porque ela NÃO é rara nas fontes que vêm — medido no
- * pf2e-8.5.0, 53,6% das magias e 49,2% dos equipamentos são não-comuns. Latão maciço em
- * metade das linhas competiria com o nome.
- *
- * A cor vem de uma variável POR RARIDADE, todas em latão hoje. Adotar o padrão do PF2e
- * (laranja, azul, roxo) depois é trocar três linhas, num lugar só.
- */
-.raridade {
-  --cor-raridade: var(--color-data);
-
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: 16px;
-  height: 16px;
-  border: 1px solid var(--cor-raridade);
-  color: var(--cor-raridade);
-  font: 500 var(--text-xs) / 1 var(--font-mono);
-  cursor: help;
-}
-
-.ativa .raridade {
-  --cor-raridade: #f2c070;
 }
 
 /* ── Traços ────────────────────────────────────────────────────────────── */

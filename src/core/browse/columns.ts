@@ -50,8 +50,9 @@ function larguraDe(trait: string): number {
  * Erra alguns pixels, e o erro aparece como um traço a mais ou a menos — não como layout
  * quebrado, porque a célula corta o que passar.
  *
- * Sempre mostra ao menos UM, mesmo que ele sozinho estoure: uma linha com `+3` e nenhum
- * traço não diz nada, e o primeiro é quase sempre o mais característico da entrada.
+ * Quando nem UM cabe, a linha fica só com o `+N`. Foi decisão do autor, e é a certa: o
+ * `+3` sozinho já diz "esta entrada tem traços, abra para ver", enquanto um traço espremido
+ * até as reticências não diz nem isso e ainda empurra o nome.
  */
 export function fitTraits(traits: readonly string[], disponivel: number): TraitBudget {
   if (traits.length === 0) return { shown: [], hidden: 0 };
@@ -68,10 +69,9 @@ export function fitTraits(traits: readonly string[], disponivel: number): TraitB
      * último traço a caber empurraria o `+N` para fora — e a informação "tem mais" é a
      * que menos pode faltar.
      */
-    const sobraDepois = i < traits.length - 1;
-    const reserva = sobraDepois ? larguraDe('+99') : 0;
+    const reserva = i < traits.length - 1 ? larguraDe('+99') : 0;
 
-    if (shown.length > 0 && usado + larguraDe(trait) + reserva > disponivel) break;
+    if (usado + larguraDe(trait) + reserva > disponivel) break;
     shown.push(trait);
     usado += larguraDe(trait);
   }

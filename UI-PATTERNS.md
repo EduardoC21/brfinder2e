@@ -379,6 +379,26 @@ só o nome e os dados fixos que ela tiver. Coluna é escolha, não herança.
 A largura da lateral tem teto de 640px **e nunca mais que metade da janela**: medido numa
 janela de 900px com 640 guardados, sobravam 70px para a lista inteira.
 
+### Recolher as laterais
+
+As duas recolhem, e recolhidas viram uma **tira de 31px com o botão de reabrir**. A tira
+existe para haver caminho de volta: devolvendo `null`, reabrir dependeria de alargar a
+janela — impossível numa tela pequena.
+
+O trilho de fontes recolhe **sozinho** abaixo de 900px, e isso **não vira preferência**.
+São coisas diferentes: "eu quero ele fechado" é escolha e fica gravada; "não cabe agora" é
+circunstância e passa quando a janela cresce. Guardar a segunda como se fosse a primeira
+deixaria o trilho fechado depois, sem ninguém ter pedido.
+
+Clicar numa entrada **reabre** o painel recolhido. A alternativa — abrir um pop-out — faria
+o mesmo clique produzir coisas diferentes conforme um estado invisível, e cinco cliques
+deixariam cinco janelas para fechar.
+
+⚠️ **Nem toda leitura inicial vem do ouvinte.** `matchMedia` e `ResizeObserver` avisam de
+MUDANÇAS. Uma janela que já nasce estreita nunca dispara uma, e uma trilha que já nasce
+com 570px também não. Os dois hooks (`useNarrowScreen`, `useTrackWidth`) leem o valor na
+hora e usam o ouvinte só para o que vier depois.
+
 ## 8. Pendências abertas
 
 Feedback da conferência manual da Etapa 8, feita em 04/09/2026. Este bloco **encolhe**:
@@ -406,7 +426,6 @@ Todos os onze foram corrigidos: nove na Etapa 8g, os dois de coluna na 8h.
 
 ### Em desenho, aguardando decisão
 
-- **Recolher as barras laterais**, as duas, com botão de abrir e fechar.
 - **Ordenação pelo cabeçalho** (possivelmente hierárquica). A linha de títulos já existe e
   é grade irmã das linhas, então a ordenação tem onde morar.
 - **Texto justificado** no corpo da descrição.
