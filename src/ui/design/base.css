@@ -62,34 +62,23 @@ body {
  * contorno era o próprio desenho.
  */
 /*
- * A BORDA de um elemento chanfrado.
+ * ⚠️ `clip-path` corta o elemento E A BORDA junto: a diagonal fica sem contorno.
  *
- * `clip-path` corta o elemento E A BORDA junto: a diagonal fica sem contorno. Esta classe
- * devolve o contorno inteiro, diagonal incluída.
+ * Tentei devolvê-la três vezes, e as três saíram piores que a borda interrompida:
  *
- * `border-image` de 9 fatias, e não pseudo-elemento nem componente:
+ *   pseudo-elemento girado   erra por construção — filho absoluto se posiciona contra o
+ *                            PADDING box, e o corte acontece no BORDER box.
+ *   duas camadas             o miolo precisaria da cor da superfície de trás, e ela muda
+ *                            em três estados.
+ *   `border-image` 9 fatias  o canto só sai 1:1 com `border-image-width: 6px`, e isso
+ *                            pinta 6px para DENTRO de cada lado. Some num botão largo; num
+ *                            quadrado de 16px, os dois lados quase se encontram por cima
+ *                            do conteúdo.
  *
- *   o pseudo-elemento ERRA por construção — um filho absoluto se posiciona contra o
- *   PADDING box e o corte acontece no BORDER box, então a linha nasce deslocada pela
- *   espessura da borda. Tentei, medi, e reverti.
- *
- *   um componente de SVG precisaria saber a largura do botão para desenhar o contorno, e
- *   a largura varia. As 9 fatias resolvem isso de graça: os cantos saem em tamanho fixo,
- *   1 para 1, e só as arestas esticam.
- *
- *   e uma classe custa ZERO DOM. Um componente por botão chanfrado custaria um elemento
- *   e um SVG cada.
- *
- * Quem usa troca `border-color` por `--chamfer-edge`, que é a imagem da cor certa.
+ * Onde o contorno É o desenho — a etiqueta de raridade — vale um SVG próprio, de tamanho
+ * fixo, com controle exato. Nos demais, a diagonal fica sem borda, e está tudo bem: é
+ * discreto, previsível, e igual em todo lugar.
  */
-.chamfer-edge {
-  border: 1px solid transparent;
-  border-image-source: var(--chamfer-edge);
-  border-image-slice: 6;
-  border-image-width: 6px;
-  border-image-repeat: stretch;
-}
-
 .chamfer-sm {
   clip-path: polygon(var(--chamfer-sm) 0, 100% 0, 100% 100%, 0 100%, 0 var(--chamfer-sm));
 }

@@ -26,9 +26,14 @@
  * O `h2` é bloco: solto, ele ocupa a largura inteira e empurra a etiqueta para a linha de
  * baixo. O invólucro em flex é o que os mantém lado a lado.
  */
+/*
+ * `center` e não `baseline`: a etiqueta é um quadrado com `display: grid`, e a linha de
+ * base dela não tem relação com a do texto — alinhada assim, ela descia alguns pixels
+ * abaixo do nome. Na lista isso não aparecia, porque lá a célula já centraliza tudo.
+ */
 .nameRow {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: var(--space-2);
   margin-top: var(--space-2);
 }
@@ -76,6 +81,7 @@
   display: inline-flex;
   align-items: center;
   height: 22px;
+  border: 1px solid var(--color-hairline);
   padding: 0 var(--space-2);
   background: transparent;
   color: var(--color-text-muted);
@@ -101,6 +107,7 @@
   place-items: center;
   width: 22px;
   height: 22px;
+  border: 1px solid var(--color-hairline);
   padding: 0;
   background: transparent;
   color: var(--color-text-muted);

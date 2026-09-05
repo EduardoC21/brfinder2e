@@ -25,12 +25,7 @@ export function CollapseToggle({ side, collapsed, label, onToggle }: CollapseTog
   return (
     <button
       type="button"
-      className={cx(
-        styles['botao'],
-        'chamfer-sm',
-        'chamfer-edge',
-        collapsed && styles['recolhido'],
-      )}
+      className={cx(styles['botao'], 'chamfer-sm', collapsed && styles['recolhido'])}
       aria-label={label}
       aria-expanded={!collapsed}
       title={label}

@@ -82,7 +82,7 @@ export function ColumnPicker({
           <h2 className={styles['title']}>{t.columns}</h2>
           <button
             type="button"
-            className={cx(styles['close'], 'chamfer-sm', 'chamfer-edge')}
+            className={cx(styles['close'], 'chamfer-sm')}
             aria-label={t.columnsReset}
             title={t.columnsReset}
             disabled={noPadrao}
@@ -92,7 +92,7 @@ export function ColumnPicker({
           </button>
           <button
             type="button"
-            className={cx(styles['close'], 'chamfer-sm', 'chamfer-edge')}
+            className={cx(styles['close'], 'chamfer-sm')}
             aria-label={t.detail.close}
             title={t.detail.close}
             onClick={onClose}

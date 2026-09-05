@@ -76,24 +76,6 @@
    * Usa-se com clip-path, não com border-radius:
    *   clip-path: polygon(var(--chamfer-md) 0, 100% 0, 100% 100%, 0 100%, 0 var(--chamfer-md));
    */
-  /*
-   * A BORDA do canto cortado, como imagem de 9 fatias.
-   *
-   * Uma por cor, porque `currentColor` não atravessa: o SVG numa `data:` URI é um
-   * documento próprio, e resolve as cores dele mesmo. São duas hoje — o fio de sempre e o
-   * latão da raridade — e acrescentar uma terceira é acrescentar uma linha aqui.
-   *
-   * A DIAGONAL nasce mais grossa que as retas (1,4 contra 1). Não é capricho: uma reta de
-   * 1px encaixa na grade de pixels e sai cheia, enquanto uma diagonal de 1px é espalhada
-   * por ~1,41px de antialiasing e LÊ como mais clara. Sem compensar, o corte parece um
-   * risco fino no meio de uma borda sólida.
-   */
-  --chamfer-edge-hairline: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13' height='13'%3E%3Cpath d='M12.5 0.5 V12.5 H0.5 V6' fill='none' stroke='rgba(255,255,255,0.09)' stroke-width='1'/%3E%3Cpath d='M0.9 6.1 L6.1 0.9' fill='none' stroke='rgba(255,255,255,0.09)' stroke-width='1.4'/%3E%3Cpath d='M6 0.5 H12.5' fill='none' stroke='rgba(255,255,255,0.09)' stroke-width='1'/%3E%3C/svg%3E");
-  --chamfer-edge-data: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13' height='13'%3E%3Cpath d='M12.5 0.5 V12.5 H0.5 V6' fill='none' stroke='%23e5a84b' stroke-width='1'/%3E%3Cpath d='M0.9 6.1 L6.1 0.9' fill='none' stroke='%23e5a84b' stroke-width='1.4'/%3E%3Cpath d='M6 0.5 H12.5' fill='none' stroke='%23e5a84b' stroke-width='1'/%3E%3C/svg%3E");
-
-  /* Qual das imagens acima a utilitária `chamfer-edge` usa. O fio é o caso comum. */
-  --chamfer-edge: var(--chamfer-edge-hairline);
-
   --chamfer-sm: 5px;
   --chamfer-md: 7px;
   --chamfer-lg: 11px;

@@ -1,21 +1,47 @@
 /*
  * A etiqueta de raridade.
  *
- * O contorno vem da utilitária `chamfer-edge`; aqui só se escolhe a COR dela. Hoje as três
- * raridades usam latão, porque o sistema tem seis cores com trabalho definido e raridade é
- * dado de jogo. Adotar o padrão do PF2e (laranja, azul, roxo) depois é acrescentar duas
- * imagens em `tokens.css` e trocar esta linha.
+ * A cor vem de `--cor-raridade`, herdada de quem usa. Hoje as três raridades são latão,
+ * porque o sistema tem seis cores com trabalho definido e raridade é dado de jogo. Adotar
+ * o padrão do PF2e (laranja, azul, roxo) depois é trocar esta variável, num lugar só.
  */
 .marca {
-  --chamfer-edge: var(--chamfer-edge-data);
+  --cor-raridade: var(--color-data);
 
+  position: relative;
   flex: none;
   display: grid;
   place-items: center;
   width: 16px;
   height: 16px;
-  color: var(--color-data);
+  color: var(--cor-raridade);
   cursor: help;
+}
+
+.contorno {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: currentColor;
+  /* `miter` fecha o bico dos cantos; `round` os arredondaria e a caixa perderia a forma. */
+  stroke-linejoin: miter;
+}
+
+.retas {
+  stroke-width: 1;
+}
+
+/*
+ * A dobra, mais grossa que as retas.
+ *
+ * 1,3 e não 1: uma diagonal de 1px é espalhada por ~1,41px de antialiasing e LÊ mais clara
+ * que uma reta de 1px, que encaixa na grade de pixels. O número é o que faz as duas
+ * pesarem igual — não é decoração.
+ */
+.dobra {
+  stroke-width: 1.3;
 }
 
 /*
