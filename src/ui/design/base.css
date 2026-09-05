@@ -61,6 +61,35 @@ body {
  * deixa o miolo transparente. Custa um componente por lugar, então só entrou onde o
  * contorno era o próprio desenho.
  */
+/*
+ * A BORDA de um elemento chanfrado.
+ *
+ * `clip-path` corta o elemento E A BORDA junto: a diagonal fica sem contorno. Esta classe
+ * devolve o contorno inteiro, diagonal incluída.
+ *
+ * `border-image` de 9 fatias, e não pseudo-elemento nem componente:
+ *
+ *   o pseudo-elemento ERRA por construção — um filho absoluto se posiciona contra o
+ *   PADDING box e o corte acontece no BORDER box, então a linha nasce deslocada pela
+ *   espessura da borda. Tentei, medi, e reverti.
+ *
+ *   um componente de SVG precisaria saber a largura do botão para desenhar o contorno, e
+ *   a largura varia. As 9 fatias resolvem isso de graça: os cantos saem em tamanho fixo,
+ *   1 para 1, e só as arestas esticam.
+ *
+ *   e uma classe custa ZERO DOM. Um componente por botão chanfrado custaria um elemento
+ *   e um SVG cada.
+ *
+ * Quem usa troca `border-color` por `--chamfer-edge`, que é a imagem da cor certa.
+ */
+.chamfer-edge {
+  border: 1px solid transparent;
+  border-image-source: var(--chamfer-edge);
+  border-image-slice: 6;
+  border-image-width: 6px;
+  border-image-repeat: stretch;
+}
+
 .chamfer-sm {
   clip-path: polygon(var(--chamfer-sm) 0, 100% 0, 100% 100%, 0 100%, 0 var(--chamfer-sm));
 }

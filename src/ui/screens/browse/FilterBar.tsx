@@ -66,6 +66,7 @@ export function FilterBar({
               className={cx(
                 styles['topic'],
                 'chamfer-sm',
+                'chamfer-edge',
                 openTopic === spec.id && styles['topicOpen'],
                 marcados > 0 && styles['topicActive'],
               )}
@@ -88,7 +89,12 @@ export function FilterBar({
         <span className={styles['divider']} aria-hidden="true" />
         <button
           type="button"
-          className={cx(styles['topic'], 'chamfer-sm', columnsOpen && styles['topicOpen'])}
+          className={cx(
+            styles['topic'],
+            'chamfer-sm',
+            'chamfer-edge',
+            columnsOpen && styles['topicOpen'],
+          )}
           aria-expanded={columnsOpen}
           onClick={onOpenColumns}
         >
@@ -105,7 +111,7 @@ export function FilterBar({
           */}
           <button
             type="button"
-            className={cx(styles['clearAll'], 'chamfer-sm')}
+            className={cx(styles['clearAll'], 'chamfer-sm', 'chamfer-edge')}
             onClick={() => {
               onChange({});
             }}
@@ -118,7 +124,7 @@ export function FilterBar({
               <button
                 key={`${spec.id}:${value}`}
                 type="button"
-                className={cx(styles['chip'], 'chamfer-sm')}
+                className={cx(styles['chip'], 'chamfer-sm', 'chamfer-edge')}
                 title={t.removeFilter}
                 onClick={() => {
                   desmarcar(spec, value);

@@ -101,7 +101,7 @@ export function FilterTopicPanel({
           <h2 className={styles['title']}>{topicLabel(spec)}</h2>
           <button
             type="button"
-            className={cx(styles['close'], 'chamfer-sm')}
+            className={cx(styles['close'], 'chamfer-sm', 'chamfer-edge')}
             aria-label={t.clearTopic}
             title={t.clearTopic}
             disabled={marcados.length === 0}
@@ -113,7 +113,7 @@ export function FilterTopicPanel({
           </button>
           <button
             type="button"
-            className={cx(styles['close'], 'chamfer-sm')}
+            className={cx(styles['close'], 'chamfer-sm', 'chamfer-edge')}
             aria-label={t.detail.close}
             title={t.detail.close}
             onClick={onClose}

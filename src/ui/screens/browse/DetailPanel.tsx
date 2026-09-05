@@ -159,7 +159,7 @@ function Actions({
 
       <button
         type="button"
-        className={cx(styles['action'], 'chamfer-sm')}
+        className={cx(styles['action'], 'chamfer-sm', 'chamfer-edge')}
         disabled
         title={t.translationPending}
       >
@@ -169,7 +169,7 @@ function Actions({
       {onPopOut && (
         <button
           type="button"
-          className={cx(styles['icon'], 'chamfer-sm')}
+          className={cx(styles['icon'], 'chamfer-sm', 'chamfer-edge')}
           aria-label={t.popOut}
           title={t.popOut}
           onClick={onPopOut}
@@ -239,7 +239,7 @@ function Field({
         <Row label={label(spec.field)}>
           <span className={styles['chips']}>
             {list.map((item) => (
-              <span key={item} className={cx(styles['chip'], 'chamfer-sm')}>
+              <span key={item} className={cx(styles['chip'], 'chamfer-sm', 'chamfer-edge')}>
                 {item}
               </span>
             ))}
@@ -265,7 +265,10 @@ function Field({
         <Row label={label('source.title')}>
           {title}
           {legado && (
-            <span className={cx(styles['legacy'], 'chamfer-sm')} title={b.legacyHint}>
+            <span
+              className={cx(styles['legacy'], 'chamfer-sm', 'chamfer-edge')}
+              title={b.legacyHint}
+            >
               {b.legacy}
             </span>
           )}

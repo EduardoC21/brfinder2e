@@ -55,7 +55,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(functi
       <input
         ref={ref}
         type="search"
-        className={cx(styles['input'], size === 'lg' && styles['lg'], 'chamfer-sm')}
+        className={cx(styles['input'], size === 'lg' && styles['lg'], 'chamfer-sm', 'chamfer-edge')}
         value={value}
         placeholder={placeholder}
         aria-label={label}

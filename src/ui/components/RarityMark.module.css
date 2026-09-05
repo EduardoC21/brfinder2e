@@ -1,44 +1,29 @@
 /*
  * A etiqueta de raridade.
  *
- * A cor vem de `--cor-raridade`, herdada de quem usa. Hoje as três são latão, porque o
- * sistema tem seis cores com trabalho definido e raridade é dado de jogo. Adotar o padrão
- * do PF2e (laranja, azul, roxo) depois é trocar o valor dessa variável, num lugar só.
+ * O contorno vem da utilitária `chamfer-edge`; aqui só se escolhe a COR dela. Hoje as três
+ * raridades usam latão, porque o sistema tem seis cores com trabalho definido e raridade é
+ * dado de jogo. Adotar o padrão do PF2e (laranja, azul, roxo) depois é acrescentar duas
+ * imagens em `tokens.css` e trocar esta linha.
  */
 .marca {
-  --cor-raridade: var(--color-data);
+  --chamfer-edge: var(--chamfer-edge-data);
 
-  position: relative;
   flex: none;
   display: grid;
   place-items: center;
   width: 16px;
   height: 16px;
-  color: var(--cor-raridade);
+  color: var(--color-data);
   cursor: help;
-}
-
-/* O contorno cobre a caixa inteira; a letra fica por cima, centralizada. */
-.contorno {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1;
-  /* `stroke-linejoin: miter` deixa o bico da dobra fechado; `round` o arredondaria. */
-  stroke-linejoin: miter;
 }
 
 /*
  * A letra centralizada de verdade.
  *
- * Estava com `top: 1px; left: 1px` — um empurrão que eu justifiquei como compensação do
- * corte no canto, e que na tela só a deixou torta nos dois eixos. O que desalinhava era a
- * caixa da linha: `line-height: 1` reserva espaço para descendentes que `I`, `R` e `U` não
- * têm. Com `line-height: 0` a caixa colapsa e o `place-items: center` do pai centraliza o
- * glifo, e não a linha ao redor dele.
+ * `line-height: 1` reserva espaço para descendentes que `I`, `R` e `U` não têm, e o
+ * `place-items: center` acabava centralizando a LINHA, não o glifo. Com `0` a caixa
+ * colapsa e sobra só a letra.
  */
 .letra {
   font: 500 var(--text-xs) / 0 var(--font-mono);
