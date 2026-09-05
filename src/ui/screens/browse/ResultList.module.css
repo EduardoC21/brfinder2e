@@ -151,12 +151,20 @@
 
 /* Nome de entrada é Spectral — o papel de "nome" na tipografia do sistema. */
 /*
- * `flex: 0 1 auto` com piso: o nome ocupa o que precisa e cede quando os traços apertam,
- * mas nunca abaixo de 10 caracteres — abaixo disso ele deixa de identificar a entrada.
+ * Sem piso de largura, e isso é uma correção.
+ *
+ * Havia um `min-width: 10ch` aqui para o nome não ser espremido até sumir. Só que
+ * `min-width` é piso de TAMANHO, não de ENCOLHIMENTO: em Spectral 15px, `10ch` dá 75px, e
+ * todo nome menor que isso era inflado até lá. Medido: `Anchor` tem 50px de texto numa
+ * caixa de 75px — 25px de vazio antes do primeiro traço.
+ *
+ * A proteção mudou de lado: quem cede agora é o traço (ver `.tracos`), e o nome fica
+ * inteiro. Se a estimativa de `fitTraits` errar para mais, é melhor perder um traço do
+ * que perder o nome, que é a informação que identifica a linha.
  */
 .name {
   flex: 0 1 auto;
-  min-width: 10ch;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -184,8 +192,15 @@
  * medida UMA vez, na trilha do nome, e cada linha só faz aritmética
  * (`core/browse/columns.ts`). O que não cabe vira `+N`.
  */
+/*
+ * `flex-shrink: 100` contra o `1` do nome: se a linha apertar, quem cede é daqui.
+ * Na prática isto não deve acontecer nunca — `fitTraits` já empurra para o `+N` tudo que
+ * não couber. É rede para o erro da estimativa, e o recorte final é do
+ * `overflow: hidden` da célula.
+ */
 .tracos {
-  flex: none;
+  flex: 0 100 auto;
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: var(--space-1);
