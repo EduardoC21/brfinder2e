@@ -12,36 +12,54 @@ genérico o bastante para as outras onze, ou a diferença tem que estar escrita 
 
 ## 1. Vocabulário visual
 
-| Coisa                        | Significado                                                             | Onde                        |
-| ---------------------------- | ----------------------------------------------------------------------- | --------------------------- |
-| **Bordô** (`--color-state`)  | ESTADO da aplicação: selecionado, ativo, aposentado, barra do flutuante | nunca em dado de jogo       |
-| **Latão** (`--color-data`)   | DADO DE JOGO: custo, referência cruzada, número que veio do Paizo       | nunca em estado             |
-| Chanfro (`clip-path`)        | superfície clicável ou recorte de conteúdo                              | `chamfer-sm` / `chamfer-lg` |
+| Coisa                       | Significado                                                             | Onde                        |
+| --------------------------- | ----------------------------------------------------------------------- | --------------------------- |
+| **Bordô** (`--color-state`) | ESTADO da aplicação: selecionado, ativo, aposentado, barra do flutuante | nunca em dado de jogo       |
+| **Latão** (`--color-data`)  | DADO DE JOGO: custo, referência cruzada, número que veio do Paizo       | nunca em estado             |
+| Chanfro (`clip-path`)       | superfície clicável ou recorte de conteúdo                              | `chamfer-sm` / `chamfer-lg` |
 
-#### O chanfro NÃO tem borda na diagonal, e é de propósito
+#### O chanfro: `corner-shape: bevel`, com `clip-path` de reserva
 
-O corte é `clip-path`, que recorta a caixa inteira — inclusive a borda. Onde há
-`border: 1px solid var(--color-hairline)`, as quatro retas aparecem e a diagonal fica
-aberta. É assim nos 24 usos do projeto, e uniforme é melhor que meio-certo.
+O corte é nativo. A utilitária `chamfer-sm` / `chamfer-md` / `chamfer-lg` declara
+`border-top-left-radius` mais `corner-shape: bevel` dentro de um `@supports`, e deixa o
+`clip-path` de fora como caminho de queda. Nunca aplique o corte à mão.
 
-Três técnicas foram tentadas para fechar a diagonal, e as três foram revertidas:
+Por que nativo ganha: `clip-path` recorta a caixa DEPOIS de pintada — borda, sombra e
+filhos junto —, e por isso a diagonal ficava sem contorno. `corner-shape` diz ao motor
+qual é a forma do canto, então quem desenha a diagonal é o mesmo código que desenha as
+quatro retas: mesma espessura, emenda exata, e de graça em foco e sombra.
 
-1. `::before` girado — erra por construção: um filho posicionado se mede pela caixa de
-   PADDING, e o `clip-path` corta pela caixa de BORDA. Nunca coincidem.
-2. Dois `clip-path` empilhados — o de dentro precisaria da cor da superfície atrás, que
-   muda em três estados (normal, sob o cursor, selecionado).
-3. `border-image` 9-slice — para desenhar o canto 1:1 exige `border-image-width: 6px`,
-   que pinta 6px para dentro NOS QUATRO LADOS; num quadrado de 16px os lados quase se
-   encontram sobre o conteúdo. E uma diagonal que termina a 0,1px da aresta cai dentro
-   da fatia lateral, que o 9-slice estica pela lateral inteira.
+Medido antes de adotar, e não pela documentação: WebView2 desta máquina em 152.0.4191.66,
+e a propriedade entrou no Chromium 139. O app empacota só para Windows (`targets:
+["nsis"]`), então o motor é conhecido.
 
-**A exceção é a marca de raridade** (`RarityMark`), que desenha o próprio SVG: ali o
-contorno É o desenho e a caixa tem tamanho fixo, então nenhuma das objeções acima vale.
-A diagonal é traçada à parte com 1,3 de espessura contra 1 das retas — uma reta de 1px
-encaixa na grade de pixels e sai cheia, uma diagonal de 1px é espalhada por ~1,41px de
-antialiasing e lê como mais clara.
-| Spectral (`--font-display`)  | nomes de entrada e títulos                                              |                             |
-| Mono (`--font-mono`)         | identificadores: traços, rótulos de campo, chaves                       |                             |
+**A trava do `@supports` não é zelo à toa.** Sem ela, um motor sem a propriedade obedeceria
+o `border-top-left-radius` sozinho e desenharia um canto ARREDONDADO — o oposto exato da
+assinatura. Fora do bloco fica o `clip-path` de sempre, e a degradação é para o que a
+gente já tinha.
+
+**Duas coisas que o `clip-path` fazia de brinde e o nativo não faz:**
+
+1. _Recortar os filhos._ `border-radius` recorta só o fundo e a borda do próprio elemento.
+   Quem tem filho com fundo próprio encostado na quina precisa pedir `overflow: clip` no
+   seu módulo. Hoje só o `FloatingPanel` precisa (a barra de título é bordô e ocupa a
+   largura toda). Isso NÃO vai na utilitária: `SettingsPanel .panel` é chanfrado E é o
+   próprio rolador, e um `overflow` global mataria a rolagem dele.
+2. _Comer a sombra._ O `clip-path` vinha apagando a única sombra do app, a do flutuante.
+   Com o nativo ela aparece.
+
+**Ficou registrado, para não se tentar de novo.** Com `clip-path`, a diagonal não tem
+conserto por cima: pseudo-elemento girado erra por construção (filho absoluto se posiciona
+contra o padding box, o corte acontece no border box); duas camadas exigem saber a cor da
+superfície de trás, que muda em três estados; `border-image` de 9 fatias só sai 1:1 com
+`border-image-width: 6px`, que pinta 6px para dentro dos quatro lados e cobre o conteúdo
+num quadrado de 16px.
+
+**A exceção continua sendo a marca de raridade** (`RarityMark`), que desenha o próprio SVG
+com a diagonal 1,3 contra 1 das retas — uma reta de 1px encaixa na grade de pixels e sai
+cheia, uma diagonal de 1px é espalhada por ~1,41px de antialiasing e lê como mais clara.
+Ela poderia passar a usar a utilitária agora que o nativo fecha a diagonal; segue como
+está porque foi aprovada assim.
 
 ### Glifos de custo
 

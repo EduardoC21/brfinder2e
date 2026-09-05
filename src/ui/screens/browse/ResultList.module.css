@@ -71,8 +71,21 @@
   background: var(--color-state);
 }
 
+/*
+ * O corte vai escrito aqui, e não pela utilitária, porque quem o recebe é uma célula
+ * escolhida por seletor (`:first-child`) e não um elemento com `className` próprio.
+ * A regra é a mesma de `base.css`: nativo onde há, `clip-path` onde não há.
+ */
 .ativa .celula:first-child {
   clip-path: polygon(var(--chamfer-sm) 0, 100% 0, 100% 100%, 0 100%, 0 var(--chamfer-sm));
+}
+
+@supports (corner-shape: bevel) {
+  .ativa .celula:first-child {
+    clip-path: none;
+    border-top-left-radius: var(--chamfer-sm);
+    corner-shape: bevel;
+  }
 }
 
 .ativa .name,
