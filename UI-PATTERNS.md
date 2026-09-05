@@ -317,13 +317,58 @@ funcionam com teclado sem mecanismo extra.
 
 ## 8. Pendências abertas
 
-O feedback das Etapas 8a/8b foi todo implementado: **A** e **B** na 8c, **C** na 8d,
-**D** na 8e, **E** na 8f. Nada em aberto vindo dele.
+Feedback da conferência manual da Etapa 8, feita em 04/09/2026. Este bloco **encolhe**:
+item feito sai daqui e o que virou regra sobe para as seções acima.
 
-O que ficou registrado como próximo, e NÃO é dívida deste feedback:
+### Defeitos confirmados (medidos)
 
-1. Coluna de traços com orçamento de caracteres — precisa de espécie própria que corte a
-   lista, e não de mais um `chip`. Etapa 10.
-2. Virtualizar a lista. A altura de linha já é constante para isso; a conta muda quando
-   forem os 6.283 talentos, não com 766 ações.
-3. O botão de tradução segue desabilitado até a Etapa 15.
+1. **O campo de busca principal tem DUAS bordas e dois fundos.** `styles['search']` foi
+   passado como `className` para o `SearchInput`, e ele vai para o INVÓLUCRO, não para o
+   campo. Medido: invólucro 284×42 com fundo ardósia e borda; campo 260×26 com fundo breu e
+   outra borda. O `×`, posicionado a `right: 2px` do invólucro, cai fora da área do campo.
+   Regressão introduzida na Etapa 8c. O conserto pede uma variante de tamanho no
+   `SearchInput`, porque a busca principal é maior que as de filtro.
+2. **A prosa do detalhe trava em 515px** (`max-width: 66ch`) enquanto o painel vai a 720.
+   As réguas `<hr>` param junto, e sobra uma faixa vazia à direita.
+3. **Os rótulos de bloco (`Effect`, `Frequency`) têm o MESMO tamanho do corpo** — 13px — e
+   `font-variant-caps: all-small-caps` os faz parecer menores. Deviam ser um degrau maiores.
+4. **O painel de filtro não fecha ao clicar numa entrada da lista.** Fica por cima, e a
+   entrada escolhida não aparece até fechar o filtro à mão.
+5. **"Limpar este filtro" aparece e some, empurrando a lista para baixo.** Ou reservar o
+   espaço, ou virar símbolo ao lado do título. Vale o mesmo para o painel de colunas.
+6. **As colunas personalizadas não têm cabeçalho** e ficam amontoadas à direita, sem
+   alinhamento entre linhas.
+7. **Umas colunas saem em caixinha, outras em texto cru.** Todas deviam ter o mesmo
+   tratamento, com inicial maiúscula e alinhadas na coluna.
+8. **"Limpar tudo" fica no FIM da fileira de filtros aplicados** e some para a direita
+   quando há muitos. Deve ficar fixo no começo.
+9. **O pop-out pode ser arrastado para fora da tela.** Deve ficar inteiro dentro. E
+   minimizado junto a uma borda, ao restaurar deve caber — encolhendo ou reposicionando.
+10. **A mensagem de pack não lido está escrita para quem programa**, não para quem usa.
+
+### Decisões tomadas na conferência
+
+- **Não existe ação de custo variável.** Medido nas 574 ações, 208 de aventura e 6.284
+  talentos: `system.actions.value` é só `1`, `2`, `3` ou `null`. O filtro de custo cobre
+  tudo, e o par E/OU continua sem sentido nele — nada tem dois custos ao mesmo tempo.
+
+### Em desenho, aguardando decisão
+
+- **Recolher as barras laterais**, as duas, com botão de abrir e fechar.
+- **Nível, Raridade e Traços como colunas especiais**, fora do teto de personalizadas e
+  ligadas por padrão onde existirem.
+- **Símbolo no lugar da palavra** para raridade e para booleanos.
+- **Linha de títulos da tabela**, com ordenação (possivelmente hierárquica).
+- **Texto justificado** no corpo da descrição.
+- **Marcar os blocos de rótulo na máscara**, invisível ao usuário, para a tradução da
+  Etapa 15 não embaralhar `Effect`/`Trigger` com o texto ao redor.
+- **Abrir pop-out a partir de uma referência em latão.** Depende do índice: 3.477
+  referências apontam por NOME e só 311 por id (briefing 7.8).
+- **Lista de packs a ignorar**, para o aviso não repetir para sempre. Fica para depois de
+  toda a importação e normalização.
+
+### Registrado como próximo, e não é dívida do feedback
+
+- Coluna de traços com orçamento de caracteres — Etapa 10.
+- Virtualizar a lista, quando forem os 6.284 talentos.
+- O botão de tradução segue desabilitado até a Etapa 15.
