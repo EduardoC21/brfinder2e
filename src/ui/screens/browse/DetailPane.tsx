@@ -14,6 +14,18 @@ const t = strings.browse.detail;
 const MIN = 300;
 /* Onde a linha de texto ainda se lê bem. Acima disto o olho perde o começo da linha. */
 const MAX = 640;
+
+/**
+ * O teto REAL: 640px, mas nunca mais que metade da janela.
+ *
+ * Medido numa janela de 900px com a largura guardada em 640: sobravam 70px para a lista
+ * inteira, e nela cabia um traço. Um teto absoluto ignora que a lista também precisa
+ * existir — em tela pequena, metade para cada um é o mínimo defensável.
+ */
+function teto(): number {
+  const janela = typeof window === 'undefined' ? MAX : window.innerWidth;
+  return Math.max(MIN, Math.min(MAX, Math.round(janela / 2)));
+}
 const PADRAO = 420;
 
 interface DetailPaneProps {
@@ -58,7 +70,7 @@ export function DetailPane({
    * ter mudado desde a gravação — um valor gravado por uma versão anterior não é promessa.
    */
   const { prefs, update } = usePreferences();
-  const preso = (valor: number): number => Math.min(MAX, Math.max(MIN, valor));
+  const preso = (valor: number): number => Math.min(teto(), Math.max(MIN, valor));
   const salva = preso(prefs.layout.detailWidth ?? PADRAO);
 
   /*
@@ -101,7 +113,7 @@ export function DetailPane({
         aria-label={t.resizeSidebar}
         aria-valuenow={largura}
         aria-valuemin={MIN}
-        aria-valuemax={MAX}
+        aria-valuemax={teto()}
         tabIndex={0}
         {...arrasto}
         onKeyDown={(event) => {

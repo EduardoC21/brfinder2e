@@ -1,44 +1,72 @@
 import { describe, expect, it } from 'vitest';
 
-import { budgetTraits, isMarkedRarity, rarityLetter } from './columns';
+import { fitTraits, isMarkedRarity, rarityLetter, traitSpace } from './columns';
 
-describe('budgetTraits', () => {
-  it('cabendo tudo, não sobra nada', () => {
-    expect(budgetTraits(['fire'])).toEqual({ shown: ['fire'], hidden: 0 });
+/* Largura de um traço: comprimento × 6,6 + 20 de recheio. `fire` custa 46px. */
+
+describe('fitTraits', () => {
+  it('cabendo tudo, não sobra nada e não reserva espaço à toa', () => {
+    expect(fitTraits(['fire'], 60)).toEqual({ shown: ['fire'], hidden: 0 });
   });
 
-  it('corta no orçamento e conta o resto', () => {
-    // 'concentrate' 11 + ' ' + 'manipulate' 10 = 22; 'attack' levaria a 29, passa de 26.
-    expect(budgetTraits(['concentrate', 'manipulate', 'attack', 'aura'])).toEqual({
+  it('corta no espaço e conta o resto', () => {
+    // concentrate 92,6 + manipulate 86 + reserva do +N 39,8 = 218,4, que cabe em 225.
+    // Depois, attack levaria a 238,2 e não cabe.
+    expect(fitTraits(['concentrate', 'manipulate', 'attack'], 225)).toEqual({
       shown: ['concentrate', 'manipulate'],
-      hidden: 2,
+      hidden: 1,
     });
+  });
+
+  it('mais espaço mostra mais traços — é o que faz a lista responder à tela', () => {
+    const todos = ['fire', 'water', 'earth', 'air'];
+    expect(fitTraits(todos, 100).shown).toHaveLength(1);
+    expect(fitTraits(todos, 400).shown).toHaveLength(4);
   });
 
   /*
-   * Uma linha com `+3` e nenhum traço não diz nada, e o primeiro é quase sempre o mais
-   * característico da entrada.
+   * A informação "tem mais" é a que menos pode faltar: sem reserva, o último traço a caber
+   * empurraria o +N para fora e a linha mentiria por omissão.
    */
+  it('guarda espaço para o +N quando ainda sobra traço', () => {
+    const r = fitTraits(['fire', 'water', 'earth'], 100);
+    expect(r.hidden).toBeGreaterThan(0);
+    expect(r.shown).toHaveLength(1);
+  });
+
   it('mostra ao menos um, mesmo que ele sozinho estoure', () => {
     const enorme = 'um-traco-absurdamente-comprido';
-    expect(budgetTraits([enorme, 'fire'])).toEqual({ shown: [enorme], hidden: 1 });
+    expect(fitTraits([enorme, 'fire'], 10)).toEqual({ shown: [enorme], hidden: 1 });
   });
 
   it('sem traços, nada a mostrar e nada escondido', () => {
-    expect(budgetTraits([])).toEqual({ shown: [], hidden: 0 });
+    expect(fitTraits([], 500)).toEqual({ shown: [], hidden: 0 });
+  });
+});
+
+describe('traitSpace', () => {
+  it('nome comprido deixa menos espaço para traço', () => {
+    expect(traitSpace(600, 'Trip', false)).toBeGreaterThan(
+      traitSpace(600, 'Demoralizing Charge of the Endless Night', false),
+    );
   });
 
-  it('o orçamento é ajustável, para a coluna caber em telas diferentes', () => {
-    expect(budgetTraits(['concentrate', 'manipulate'], 12)).toEqual({
-      shown: ['concentrate'],
-      hidden: 1,
-    });
+  it('a etiqueta de raridade cobra o espaço dela', () => {
+    expect(traitSpace(600, 'Trip', true)).toBeLessThan(traitSpace(600, 'Trip', false));
+  });
+
+  /* Um nome absurdo não pode zerar os traços: ele mesmo é cortado com reticências. */
+  it('o nome nunca come mais que 60% da trilha', () => {
+    expect(traitSpace(600, 'x'.repeat(500), false)).toBeGreaterThan(200);
+  });
+
+  it('trilha estreita nunca devolve espaço negativo', () => {
+    expect(traitSpace(10, 'Trip', true)).toBe(0);
   });
 });
 
 describe('rarityLetter', () => {
   it('comum não desenha nada', () => {
-    // 87% dos talentos e 46% das magias são comuns: etiqueta em quase toda linha é ruído.
     expect(rarityLetter('common')).toBeNull();
     expect(rarityLetter('')).toBeNull();
     expect(rarityLetter('inventada')).toBeNull();

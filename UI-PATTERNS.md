@@ -338,27 +338,46 @@ Elas pertencem ao NOME, e por isso ficam fora do teto de personalizadas:
 calha nome   raridade  traços
 ```
 
-| coluna   | trilha                   | por quê                                                                                              |
-| -------- | ------------------------ | ---------------------------------------------------------------------------------------------------- |
-| nível    | `3ch`, dígitos tabulares | largura fixa faz os nomes alinharem entre si                                                         |
-| raridade | **nenhuma**              | é etiqueta dentro da célula do nome; trilha própria abriria vão em toda linha comum, que é a maioria |
-| traços   | `auto`                   | limitado pelo orçamento de caracteres, não pela tela                                                 |
+| dado     | trilha                   | por quê                                      |
+| -------- | ------------------------ | -------------------------------------------- |
+| nível    | `3ch`, dígitos tabulares | largura fixa faz os nomes alinharem entre si |
+| raridade | **nenhuma**              | etiqueta dentro da célula do nome            |
+| traços   | **nenhuma**              | também na célula do nome, e por isso colados |
+
+Raridade e traços não têm trilha própria porque, tendo, um nome curto deixaria os traços a
+meia tela de distância dele. Na mesma célula, eles colam.
 
 `SpecialColumns` no descritor diz quais a fonte TEM (`null` = não tem esse dado), e a
 preferência guarda quais foram **desligadas** — assim a ausência já significa "todas
-ligadas", e uma especial nova nasce visível sem migrar nada do gravado.
+ligadas", e um dado fixo novo nasce visível sem migrar nada do gravado.
 
-⚠️ **Traços não rolam por linha.** Um trilho rolável seria um contêiner de rolagem e um
-`ResizeObserver` por linha, vezes 766 hoje e 6.284 nos talentos. O corte é por CARACTERE
-(`core/browse/columns.ts`, orçamento de 26), feito no dado: determinístico, sem medir nada,
-e o resto vira `+N`.
+⚠️ **Quantos traços cabem é dinâmico, com UMA medição para a lista inteira.**
+
+O elemento medido é a célula de TÍTULO do nome, que ocupa exatamente a trilha do nome. Uma
+observação, e não uma por linha — 766 hoje, 6.284 nos talentos. Como o que se mede é a
+trilha, a medida já responde a abrir a lateral, arrastar a borda e redimensionar a janela
+sem saber que essas coisas existem. Cada linha só faz aritmética, a partir de constantes
+medidas na tela: mono a 11px dá **6,6px por caractere**, Spectral a 15px dá **7,52px**.
+
+A primeira medida é feita à mão em `useLayoutEffect`, e não esperada do observador. O
+`ResizeObserver` avisa de MUDANÇAS, e há ambientes em que ele não roda — no painel de
+automação do navegador, um observador avulso num elemento de 570px não disparou uma vez.
+Confiando só nele, a largura ficava em zero e a lista mostrava um traço por linha achando
+que não cabia mais nada.
+
+O `+N` tem espaço RESERVADO sempre que ainda sobra traço: sem isso o último a caber
+empurraria o `+N` para fora, e a linha mentiria por omissão.
 
 ⚠️ **A raridade é distinguida pela LETRA, não pela cor.** `I`, `R`, `Ú` em contorno de
 latão; comum não desenha nada. O PF2e usa laranja/azul/roxo, mas o sistema tem seis cores
 com trabalho definido. A cor sai de `--cor-raridade`, num lugar só, se o padrão do PF2e for
 adotado depois.
 
-Teto de personalizadas: **duas**.
+Teto de personalizadas: **duas**. E o padrão de toda fonte é **nenhuma coluna ligada** —
+só o nome e os dados fixos que ela tiver. Coluna é escolha, não herança.
+
+A largura da lateral tem teto de 640px **e nunca mais que metade da janela**: medido numa
+janela de 900px com 640 guardados, sobravam 70px para a lista inteira.
 
 ## 8. Pendências abertas
 

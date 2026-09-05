@@ -1,21 +1,23 @@
 import { useEffect, useRef } from 'react';
 
 import {
-  budgetTraits,
   fieldList,
   fieldValue,
+  fitTraits,
   rarityLetter,
+  traitSpace,
   type BrowseEntity,
   type ColumnSpec,
 } from '@core/browse/index';
 import { strings } from '@i18n/index';
 import { ActionCost } from '@ui/components/ActionCost';
 import { cx } from '@ui/cx';
+import { useTrackWidth } from '@ui/hooks/useTrackWidth';
 
 import { columnLabel } from './filterLabels';
 import styles from './ResultList.module.css';
 
-/** Quais especiais estão ligadas nesta fonte, depois da escolha do usuário. */
+/** Quais dados fixos estão ligados nesta fonte, depois da escolha do usuário. */
 export interface ActiveSpecials {
   readonly level: string | null;
   readonly rarity: string | null;
@@ -42,14 +44,15 @@ interface ResultListProps {
  * tirar o foco do campo (Anexo A do briefing). Por isso as linhas são `option` dentro de
  * um `listbox`, e não botões — quem tem o foco é o campo.
  *
- * ⚠️ A linha é uma GRADE, e não uma fileira flexível.
+ * ⚠️ UMA grade para o cabeçalho e para todas as linhas.
  *
- * Era `flex` com `gap`, e o alinhamento à direita vinha de um `margin-left: auto`. Aquilo
- * desenha uma linha bonita e nada mais: cada linha resolvia o próprio espaço, então a
- * coluna "categoria" da linha 1 não ficava sob a da linha 2, e não havia onde pendurar um
- * cabeçalho. Com `grid-template-columns` declarado uma vez e herdado por todas as linhas
- * E pelo cabeçalho, o alinhamento sai de graça — e a ordenação por cabeçalho, depois,
- * tem onde morar.
+ * Havia duas: o cabeçalho numa e as linhas noutra, com o mesmo molde de trilhas. Mas
+ * trilha `auto` se dimensiona pelo CONTEÚDO, e o conteúdo era diferente — o cabeçalho
+ * media as palavras "nome/traços/setor" e as linhas mediam os valores. Resultado medido:
+ * cabeçalho em 32,7 | 58,9 | 58,4 e linhas em 0 | 71,5 | 78,5. Nunca iam alinhar.
+ *
+ * Agora o `listbox` é `display: contents`: ele some do layout e as células das linhas
+ * entram na MESMA grade das células de título.
  */
 export function ResultList({
   entities,
@@ -60,6 +63,16 @@ export function ResultList({
   onOpen,
 }: ResultListProps) {
   const container = useRef<HTMLDivElement>(null);
+  const trilhaDoNome = useRef<HTMLSpanElement>(null);
+
+  /*
+   * UMA medida para a lista inteira: a largura da trilha do nome.
+   *
+   * É dela que sai quantos traços cabem em cada linha. Uma observação, e não uma por
+   * linha — e como o elemento observado É a trilha, a medida já responde a abrir a
+   * lateral, arrastar a borda e redimensionar a janela sem saber que isso existe.
+   */
+  const larguraDoNome = useTrackWidth(trilhaDoNome);
 
   /*
    * Rola a linha ativa para dentro da vista quando ela muda por teclado. `block: 'nearest'`
@@ -68,26 +81,23 @@ export function ResultList({
    */
   useEffect(() => {
     if (activeIndex < 0) return;
-    const lista = container.current;
-    const node = lista?.querySelector(`[data-indice="${String(activeIndex)}"]`);
+    const node = container.current?.querySelector(`[data-indice="${String(activeIndex)}"]`);
     if (node instanceof HTMLElement) node.scrollIntoView({ block: 'nearest' });
   }, [activeIndex]);
 
   /*
-   * O molde das colunas, montado uma vez e usado pelo cabeçalho e por toda linha.
+   * O molde das trilhas.
    *
-   *   nível     calha estreita de largura fixa, para os nomes alinharem entre si
-   *   nome      `minmax(0, 1fr)` — é quem cede quando falta espaço
-   *   traços    `auto`, limitado pelo orçamento de caracteres
+   *   nível     calha estreita e fixa, para os nomes alinharem entre si
+   *   nome      `minmax(0, 1fr)` — leva junto a raridade e os traços, colados
    *   demais    `auto`, cada uma do tamanho do conteúdo
    *
-   * A raridade NÃO tem trilha própria: ela é uma etiqueta colada ao nome, dentro da
-   * célula dele. Trilha própria abriria um vão em toda linha comum, que é a maioria.
+   * Raridade e traços NÃO têm trilha: são informação do item, não coluna. Colados ao nome
+   * eles acompanham nomes curtos em vez de flutuarem a meia tela de distância.
    */
   const trilhas = [
     specials.level !== null ? '3ch' : null,
     'minmax(0, 1fr)',
-    specials.traits !== null ? 'auto' : null,
     ...columns.map(() => 'auto'),
   ]
     .filter((trilha) => trilha !== null)
@@ -95,12 +105,19 @@ export function ResultList({
 
   return (
     <div className={styles['tabela']} style={{ gridTemplateColumns: trilhas }}>
-      <Cabecalho columns={columns} specials={specials} />
+      {specials.level !== null && <span className={cx(styles['titulo'], styles['nivel'])} />}
+      <span ref={trilhaDoNome} className={styles['titulo']}>
+        {strings.browse.columnName}
+      </span>
+      {columns.map((column) => (
+        <span key={column.id} className={cx(styles['titulo'], alinhamento(column))}>
+          {columnLabel(column)}
+        </span>
+      ))}
 
       <div
         ref={container}
         className={styles['corpo']}
-        style={{ gridTemplateColumns: trilhas }}
         role="listbox"
         aria-label={strings.browse.sourcesLabel}
         tabIndex={-1}
@@ -112,6 +129,7 @@ export function ResultList({
             index={index}
             columns={columns}
             specials={specials}
+            larguraDoNome={larguraDoNome}
             ativa={index === activeIndex}
             onActivate={onActivate}
             onOpen={onOpen}
@@ -126,14 +144,15 @@ export function ResultList({
  * A linha, como `display: contents`.
  *
  * O elemento da linha não desenha caixa nenhuma: os filhos dele participam DIRETAMENTE da
- * grade do contêiner, que é a única forma de as células de linhas diferentes caírem na
- * mesma trilha. O fundo de seleção e o `hover` vêm das próprias células.
+ * grade do avô, que é a única forma de as células de linhas diferentes caírem na mesma
+ * trilha. O fundo de seleção e o `hover` vêm das próprias células.
  */
 function Linha({
   entity,
   index,
   columns,
   specials,
+  larguraDoNome,
   ativa,
   onActivate,
   onOpen,
@@ -142,14 +161,24 @@ function Linha({
   readonly index: number;
   readonly columns: readonly ColumnSpec[];
   readonly specials: ActiveSpecials;
+  readonly larguraDoNome: number;
   readonly ativa: boolean;
   readonly onActivate: (index: number) => void;
   readonly onOpen: (index: number) => void;
 }) {
+  const nome = fieldValue(entity, 'name');
   const nivel = specials.level === null ? null : fieldValue(entity, specials.level);
   const raridade = specials.rarity === null ? null : fieldValue(entity, specials.rarity);
   const letra = raridade === null ? null : rarityLetter(raridade);
-  const traços = specials.traits === null ? null : budgetTraits(fieldList(entity, specials.traits));
+
+  /* Aritmética, não medição: a largura da trilha veio de uma observação só, lá em cima. */
+  const traços =
+    specials.traits === null
+      ? null
+      : fitTraits(
+          fieldList(entity, specials.traits),
+          traitSpace(larguraDoNome, nome, letra !== null),
+        );
 
   return (
     <div
@@ -172,72 +201,47 @@ function Linha({
         <span className={cx(styles['celula'], styles['nivel'])}>{nivel === '' ? '0' : nivel}</span>
       )}
 
+      {/*
+        Nome, raridade e traços na MESMA célula: é o que os mantém colados. Em trilhas
+        separadas, um nome curto deixava os traços a meia tela de distância dele.
+      */}
       <span className={cx(styles['celula'], styles['nomeCelula'])}>
-        <span className={styles['name']}>{fieldValue(entity, 'name')}</span>
+        <span className={styles['name']}>{nome}</span>
+
         {letra !== null && raridade !== null && (
           <span className={cx(styles['raridade'], 'chamfer-sm')} title={rarityTitle(raridade)}>
             {letra}
           </span>
         )}
+
         {entity.retiredIn !== undefined && (
           <span className={styles['retired']} title={entity.retiredIn}>
             {strings.browse.retired}
           </span>
         )}
-      </span>
 
-      {traços !== null && (
-        <span className={cx(styles['celula'], styles['tracos'])}>
-          {traços.shown.map((trait) => (
-            <span key={trait} className={styles['chip']}>
-              {trait}
-            </span>
-          ))}
-          {traços.hidden > 0 && (
-            <span
-              className={cx(styles['chip'], styles['resto'])}
-              title={strings.browse.moreTraits(traços.hidden)}
-            >
-              +{traços.hidden}
-            </span>
-          )}
-        </span>
-      )}
+        {traços !== null && traços.shown.length > 0 && (
+          <span className={styles['tracos']}>
+            {traços.shown.map((trait) => (
+              <span key={trait} className={styles['chip']}>
+                {trait}
+              </span>
+            ))}
+            {traços.hidden > 0 && (
+              <span
+                className={cx(styles['chip'], styles['resto'])}
+                title={strings.browse.moreTraits(traços.hidden)}
+              >
+                +{traços.hidden}
+              </span>
+            )}
+          </span>
+        )}
+      </span>
 
       {columns.map((column) => (
         <span key={column.id} className={cx(styles['celula'], alinhamento(column))}>
           <Column spec={column} entity={entity} />
-        </span>
-      ))}
-    </div>
-  );
-}
-
-/**
- * A linha de títulos.
- *
- * Não é decoração: é o que diz o que cada coluna significa quando o usuário escolheu
- * quatro delas. E é onde a ordenação vai morar — por isso ela nasce como grade irmã das
- * linhas, e não como um bloco solto acima.
- */
-function Cabecalho({
-  columns,
-  specials,
-}: {
-  readonly columns: readonly ColumnSpec[];
-  readonly specials: ActiveSpecials;
-}) {
-  const t = strings.browse;
-  return (
-    <div className={styles['cabecalho']} role="presentation">
-      {specials.level !== null && (
-        <span className={cx(styles['titulo'], styles['nivel'])}>{t.columnLevel}</span>
-      )}
-      <span className={styles['titulo']}>{t.columnName}</span>
-      {specials.traits !== null && <span className={styles['titulo']}>{t.columnTraits}</span>}
-      {columns.map((column) => (
-        <span key={column.id} className={cx(styles['titulo'], alinhamento(column))}>
-          {columnLabel(column)}
         </span>
       ))}
     </div>

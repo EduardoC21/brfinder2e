@@ -48,8 +48,6 @@ export const ptBR = {
     combineAll: 'Todos (E)',
     columns: 'Colunas',
     columnName: 'nome',
-    columnLevel: 'nv',
-    columnTraits: 'traços',
     moreTraits: (n: number) => (n === 1 ? 'mais 1 traço' : `mais ${String(n)} traços`),
     /** Os nomes de raridade, para o `title` da etiqueta de uma letra. */
     rarity: {
@@ -58,8 +56,8 @@ export const ptBR = {
       unique: 'única',
     } as Record<string, string>,
     columnsHint: (max: number) =>
-      `Até ${String(max)} colunas à direita, além das que acompanham o nome.`,
-    columnsAlways: 'sempre ao lado do nome',
+      `Até ${String(max)} colunas à direita. Os dados fixos acompanham o nome e não contam.`,
+    columnsAlways: 'dados fixos',
     columnsShown: 'mostrando',
     specialLabel: {
       level: 'nível',

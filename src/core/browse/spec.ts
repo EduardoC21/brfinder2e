@@ -131,7 +131,12 @@ export interface SourceSpec {
    * empurrá-la para quem já configurou as dele.
    */
   readonly columns: readonly ColumnSpec[];
-  /** Ids visíveis quando o usuário nunca mexeu. */
+  /**
+   * Ids visíveis quando o usuário nunca mexeu.
+   *
+   * VAZIO em todas as fontes, de propósito: o padrão é a lista limpa, com nome e os dados
+   * fixos que a fonte tiver. Coluna é escolha, não herança — quem quer `setor` marca.
+   */
   readonly defaultColumns: readonly string[];
   /** Nível, raridade e traços — fora do teto, ligadas por padrão. */
   readonly special: SpecialColumns;
@@ -159,7 +164,7 @@ export const SOURCES: readonly SourceSpec[] = [
       { kind: 'text', id: 'valued', field: 'valued' },
       { kind: 'text', id: 'source', field: 'source.title' },
     ],
-    defaultColumns: ['group'],
+    defaultColumns: [],
     // Condição não tem nível, raridade nem traço: o dado simplesmente não existe.
     special: NO_SPECIAL_COLUMNS,
     filters: [
@@ -193,7 +198,7 @@ export const SOURCES: readonly SourceSpec[] = [
       { kind: 'text', id: 'category', field: 'category' },
       { kind: 'text', id: 'source', field: 'source.title' },
     ],
-    defaultColumns: ['sector'],
+    defaultColumns: [],
     /*
      * Ação não tem nível — isso é de talento e de magia. Raridade e traço tem, e os dois
      * saem da coluna comum: `traits` deixa de ser oferecido como `chip` porque agora é

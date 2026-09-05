@@ -16,13 +16,14 @@
 }
 
 /*
- * O corpo herda as MESMAS trilhas do cabeçalho — quem as passa é o componente, porque só
- * ele sabe quais colunas estão ligadas. Sem repetir aqui, as duas grades poderiam divergir.
+ * O `listbox` some do layout: as células das linhas entram na grade do CABEÇALHO.
+ *
+ * Ele era uma grade própria com o mesmo molde de trilhas, e não bastava: trilha `auto` se
+ * dimensiona pelo conteúdo, e o conteúdo era diferente — o cabeçalho media as palavras,
+ * as linhas mediam os valores. Medido: cabeçalho 32,7|58,9|58,4 contra linhas 0|71,5|78,5.
  */
 .corpo {
-  display: grid;
-  grid-column: 1 / -1;
-  min-width: 0;
+  display: contents;
 }
 
 /* `display: contents` faz as CÉLULAS entrarem na grade do avô, não a linha. */
@@ -109,13 +110,25 @@
 
 /* ── Nome, e o que cola nele ───────────────────────────────────────────── */
 
+/*
+ * Nome, raridade e traços na mesma célula.
+ *
+ * `overflow: hidden` porque a conta dos traços é estimativa: quando ela erra para mais, a
+ * célula corta em vez de empurrar as colunas da direita para fora da linha.
+ */
 .nomeCelula {
   gap: var(--space-2);
+  overflow: hidden;
 }
 
 /* Nome de entrada é Spectral — o papel de "nome" na tipografia do sistema. */
+/*
+ * `flex: 0 1 auto` com piso: o nome ocupa o que precisa e cede quando os traços apertam,
+ * mas nunca abaixo de 10 caracteres — abaixo disso ele deixa de identificar a entrada.
+ */
 .name {
-  min-width: 0;
+  flex: 0 1 auto;
+  min-width: 10ch;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -164,13 +177,17 @@
 /* ── Traços ────────────────────────────────────────────────────────────── */
 
 /*
- * Sem rolagem e sem `overflow` por linha, de propósito.
+ * Sem rolagem e sem observador por linha, de propósito.
  *
  * Um trilho rolável aqui significaria um contêiner de rolagem e um `ResizeObserver` por
- * linha — vezes 766 hoje e 6.284 quando chegarem os talentos. O corte é feito no DADO,
- * por orçamento de caracteres (`core/browse/columns.ts`), e o resto vira `+N`.
+ * linha — vezes 766 hoje e 6.284 quando chegarem os talentos. A largura disponível é
+ * medida UMA vez, na trilha do nome, e cada linha só faz aritmética
+ * (`core/browse/columns.ts`). O que não cabe vira `+N`.
  */
 .tracos {
+  flex: none;
+  display: flex;
+  align-items: center;
   gap: var(--space-1);
   white-space: nowrap;
 }

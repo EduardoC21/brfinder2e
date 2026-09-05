@@ -1,31 +1,31 @@
 /**
  * As colunas ESPECIAIS: nível, raridade e traços.
  *
- * Especiais porque não são "mais uma coluna à direita". Elas pertencem ao NOME:
+ * Especiais porque não são coluna: são informações do próprio item, coladas ao nome.
  *
- *   ` 12  Godbreaker  ⌷R⌷  ⌷concentrate⌷ ⌷manipulate⌷ ⌷+2⌷`
- *      ^  ^           ^     ^
- *   calha  nome    raridade  traços
+ *   ` 12  Godbreaker ⌷R⌷ ⌷concentrate⌷ ⌷manipulate⌷ ⌷+2⌷`
+ *      ^  ^          ^   ^
+ *   calha  nome  raridade  traços
  *
- * O nível vem antes porque é por ele que se procura numa lista de talentos. A raridade
- * cola no nome, como etiqueta. Os traços vêm depois, porque são muitos e variam de
- * largura. E as três ficam FORA do teto de colunas personalizadas: elas não disputam o
- * espaço da direita, ocupam o espaço do meio.
+ * Por isso não têm título no cabeçalho, não entram no teto de colunas personalizadas e não
+ * mudam de lugar — a posição delas em relação ao nome é fixa e significa algo. O que se
+ * pode fazer é ligá-las e desligá-las.
  *
  * Aqui mora só o que é DADO. O desenho é da UI, como sempre.
  */
 
 /**
- * Quantos caracteres de traço cabem antes de virar `+N`.
+ * Largura média de um caractere nos traços, medida na tela.
  *
- * ⚠️ O corte é por CARACTERE, e não por medição de tela. Medir exigiria um contêiner de
- * rolagem e um `ResizeObserver` por linha — vezes 766 linhas hoje e 6.284 quando chegarem
- * os talentos. A conta por caractere é feita no dado, é determinística, e não custa nada.
- *
- * O preço é que o corte não é exato: `manipulate` é mais largo que `fire` no mesmo número
- * de letras. Em fonte mono, que é onde os traços são desenhados, o erro é pequeno.
+ * IBM Plex Mono a 11px dá 6,6px por caractere — mono, então a média é o valor exato.
  */
-export const TRAIT_BUDGET = 26;
+export const TRAIT_CHAR_PX = 6.6;
+
+/** Recheio e vão de uma caixinha de traço: 8px de cada lado mais 4px até a seguinte. */
+export const TRAIT_CHIP_PX = 20;
+
+/** Nome em Spectral a 15px: 7,52px por caractere, medido. É média, porque é serifada. */
+export const NAME_CHAR_PX = 7.52;
 
 export interface TraitBudget {
   /** Os traços que cabem, na ordem original. */
@@ -34,26 +34,56 @@ export interface TraitBudget {
   readonly hidden: number;
 }
 
+function larguraDe(trait: string): number {
+  return trait.length * TRAIT_CHAR_PX + TRAIT_CHIP_PX;
+}
+
 /**
- * Corta a lista de traços no orçamento.
+ * Quantos traços cabem em `disponivel` pixels.
  *
- * Sempre mostra ao menos UM, mesmo que estoure: uma linha com `+3` e nenhum traço não diz
- * nada, e o primeiro traço é quase sempre o mais característico.
+ * ⚠️ A conta é feita no DADO, a partir de uma largura medida UMA vez — e não medindo cada
+ * linha. Medir por linha exigiria um `ResizeObserver` por linha, vezes 766 hoje e 6.284
+ * quando chegarem os talentos. Aqui a UI mede a trilha do nome uma vez (uma observação
+ * para a lista inteira) e cada linha faz aritmética.
+ *
+ * O preço é ser estimativa: a largura do nome é média de caractere numa fonte serifada.
+ * Erra alguns pixels, e o erro aparece como um traço a mais ou a menos — não como layout
+ * quebrado, porque a célula corta o que passar.
+ *
+ * Sempre mostra ao menos UM, mesmo que ele sozinho estoure: uma linha com `+3` e nenhum
+ * traço não diz nada, e o primeiro é quase sempre o mais característico da entrada.
  */
-export function budgetTraits(traits: readonly string[], budget = TRAIT_BUDGET): TraitBudget {
+export function fitTraits(traits: readonly string[], disponivel: number): TraitBudget {
   if (traits.length === 0) return { shown: [], hidden: 0 };
 
   const shown: string[] = [];
   let usado = 0;
 
-  for (const trait of traits) {
-    const custo = trait.length + (shown.length === 0 ? 0 : 1);
-    if (shown.length > 0 && usado + custo > budget) break;
+  for (let i = 0; i < traits.length; i++) {
+    const trait = traits[i];
+    if (trait === undefined) continue;
+
+    /*
+     * Guarda espaço para o `+N` sempre que ainda houver traço depois deste. Sem isso, o
+     * último traço a caber empurraria o `+N` para fora — e a informação "tem mais" é a
+     * que menos pode faltar.
+     */
+    const sobraDepois = i < traits.length - 1;
+    const reserva = sobraDepois ? larguraDe('+99') : 0;
+
+    if (shown.length > 0 && usado + larguraDe(trait) + reserva > disponivel) break;
     shown.push(trait);
-    usado += custo;
+    usado += larguraDe(trait);
   }
 
   return { shown, hidden: traits.length - shown.length };
+}
+
+/** O espaço que sobra para os traços numa linha, depois do nome e da raridade. */
+export function traitSpace(larguraDaTrilha: number, name: string, temRaridade: boolean): number {
+  const nome = Math.min(name.length * NAME_CHAR_PX, larguraDaTrilha * 0.6);
+  const raridade = temRaridade ? 24 : 0;
+  return Math.max(0, larguraDaTrilha - nome - raridade - 16);
 }
 
 export type Rarity = 'common' | 'uncommon' | 'rare' | 'unique';
@@ -61,8 +91,8 @@ export type Rarity = 'common' | 'uncommon' | 'rare' | 'unique';
 /**
  * A letra que representa a raridade, ou `null` para comum.
  *
- * Comum não desenha nada: medido no `pf2e-8.5.0`, 87% dos talentos e 46% das magias são
- * comuns, e uma etiqueta em quase toda linha seria ruído, não sinal.
+ * Comum não desenha nada: medido no `pf2e-8.5.0`, 87% dos talentos são comuns, e uma
+ * etiqueta em quase toda linha seria ruído, não sinal.
  *
  * A LETRA é o sinal, e não a cor. O PF2e usa laranja/azul/roxo, mas o sistema deste app
  * tem seis cores com trabalho definido — latão é dado de jogo, bordô é estado. Somar dois
