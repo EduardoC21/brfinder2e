@@ -15,8 +15,31 @@ genérico o bastante para as outras onze, ou a diferença tem que estar escrita 
 | Coisa                        | Significado                                                             | Onde                        |
 | ---------------------------- | ----------------------------------------------------------------------- | --------------------------- |
 | **Bordô** (`--color-state`)  | ESTADO da aplicação: selecionado, ativo, aposentado, barra do flutuante | nunca em dado de jogo       |
-| **Latão** (`--color-accent`) | DADO DE JOGO: custo, referência cruzada, número que veio do Paizo       | nunca em estado             |
+| **Latão** (`--color-data`)   | DADO DE JOGO: custo, referência cruzada, número que veio do Paizo       | nunca em estado             |
 | Chanfro (`clip-path`)        | superfície clicável ou recorte de conteúdo                              | `chamfer-sm` / `chamfer-lg` |
+
+#### O chanfro NÃO tem borda na diagonal, e é de propósito
+
+O corte é `clip-path`, que recorta a caixa inteira — inclusive a borda. Onde há
+`border: 1px solid var(--color-hairline)`, as quatro retas aparecem e a diagonal fica
+aberta. É assim nos 24 usos do projeto, e uniforme é melhor que meio-certo.
+
+Três técnicas foram tentadas para fechar a diagonal, e as três foram revertidas:
+
+1. `::before` girado — erra por construção: um filho posicionado se mede pela caixa de
+   PADDING, e o `clip-path` corta pela caixa de BORDA. Nunca coincidem.
+2. Dois `clip-path` empilhados — o de dentro precisaria da cor da superfície atrás, que
+   muda em três estados (normal, sob o cursor, selecionado).
+3. `border-image` 9-slice — para desenhar o canto 1:1 exige `border-image-width: 6px`,
+   que pinta 6px para dentro NOS QUATRO LADOS; num quadrado de 16px os lados quase se
+   encontram sobre o conteúdo. E uma diagonal que termina a 0,1px da aresta cai dentro
+   da fatia lateral, que o 9-slice estica pela lateral inteira.
+
+**A exceção é a marca de raridade** (`RarityMark`), que desenha o próprio SVG: ali o
+contorno É o desenho e a caixa tem tamanho fixo, então nenhuma das objeções acima vale.
+A diagonal é traçada à parte com 1,3 de espessura contra 1 das retas — uma reta de 1px
+encaixa na grade de pixels e sai cheia, uma diagonal de 1px é espalhada por ~1,41px de
+antialiasing e lê como mais clara.
 | Spectral (`--font-display`)  | nomes de entrada e títulos                                              |                             |
 | Mono (`--font-mono`)         | identificadores: traços, rótulos de campo, chaves                       |                             |
 
