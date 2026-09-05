@@ -53,15 +53,15 @@ export interface SourcePreferences {
 export interface LayoutPreferences {
   /** Largura da coluna de detalhe, em pixels. */
   readonly detailWidth: number | null;
-  /** O trilho de fontes recolhido por escolha do usuário. */
-  readonly railCollapsed: boolean;
   /**
-   * A coluna de detalhe recolhida.
+   * O trilho de fontes recolhido por escolha do usuário.
    *
-   * Nasce RECOLHIDA: sem nada selecionado ela não teria o que mostrar, e a lista aproveita
-   * a largura inteira até alguém pedir um detalhe.
+   * ⚠️ O painel de DETALHE não tem par aqui, e é de propósito. O estado dele é DERIVADO:
+   * ele está aberto quando há o que mostrar (uma entrada escolhida ou uma camada aberta) e
+   * o usuário não o fechou. Gravar isso fazia a página abrir com o painel escancarado e
+   * vazio, porque a escolha sobrevivia ao recarregamento e a seleção não.
    */
-  readonly detailCollapsed: boolean;
+  readonly railCollapsed: boolean;
   readonly popoutWidth: number | null;
   readonly popoutHeight: number | null;
 }
@@ -82,7 +82,6 @@ export const DEFAULT_PREFERENCES: Preferences = {
   layout: {
     detailWidth: null,
     railCollapsed: false,
-    detailCollapsed: true,
     popoutWidth: null,
     popoutHeight: null,
   },
@@ -142,8 +141,6 @@ export function readPreferences(stored: unknown): Preferences {
     layout: {
       detailWidth: positive(layout['detailWidth']),
       railCollapsed: layout['railCollapsed'] === true,
-      // Ausente é RECOLHIDO, que é o padrão. Só `false` explícito abre.
-      detailCollapsed: layout['detailCollapsed'] !== false,
       popoutWidth: positive(layout['popoutWidth']),
       popoutHeight: positive(layout['popoutHeight']),
     },

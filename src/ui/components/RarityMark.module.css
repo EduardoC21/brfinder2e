@@ -36,7 +36,7 @@
  *
  * Estava com `top: 1px; left: 1px` — um empurrão que eu justifiquei como compensação do
  * corte no canto, e que na tela só a deixou torta nos dois eixos. O que desalinhava era a
- * caixa da linha: `line-height: 1` reserva espaço para descendentes que `I`, `R` e `Ú` não
+ * caixa da linha: `line-height: 1` reserva espaço para descendentes que `I`, `R` e `U` não
  * têm. Com `line-height: 0` a caixa colapsa e o `place-items: center` do pai centraliza o
  * glifo, e não a linha ao redor dele.
  */

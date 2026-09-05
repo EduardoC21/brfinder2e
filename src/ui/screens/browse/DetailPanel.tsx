@@ -214,10 +214,22 @@ function Field({
       return <Row label={label(spec.field)}>{value}</Row>;
     }
 
+    /*
+     * Sim vira SÍMBOLO; não some a linha inteira.
+     *
+     * "VALORADA: não" gasta uma linha do cabeçalho para dizer o que é o normal — 31 das 43
+     * condições não são valoradas. A ausência da linha já é a resposta, e quem quer saber
+     * o que a linha significa passa o mouse no ✓.
+     */
     case 'boolean': {
-      const value = fieldValue(entity, spec.field);
-      if (value === '') return null;
-      return <Row label={label(spec.field)}>{value === 'true' ? b.yes : b.no}</Row>;
+      if (fieldValue(entity, spec.field) !== 'true') return null;
+      return (
+        <Row label={label(spec.field)}>
+          <span className={styles['sim']} title={b.yes}>
+            ✓
+          </span>
+        </Row>
+      );
     }
 
     case 'chips': {

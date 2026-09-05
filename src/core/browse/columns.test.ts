@@ -84,7 +84,7 @@ describe('rarityLetter', () => {
   it('as três marcadas têm letra própria', () => {
     expect(rarityLetter('uncommon')).toBe('I');
     expect(rarityLetter('rare')).toBe('R');
-    expect(rarityLetter('unique')).toBe('Ú');
+    expect(rarityLetter('unique')).toBe('U');
   });
 
   it('isMarkedRarity concorda com rarityLetter', () => {

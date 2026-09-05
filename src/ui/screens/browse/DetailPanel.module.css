@@ -21,6 +21,19 @@
 }
 
 /*
+ * Nome e etiqueta de raridade na MESMA linha.
+ *
+ * O `h2` é bloco: solto, ele ocupa a largura inteira e empurra a etiqueta para a linha de
+ * baixo. O invólucro em flex é o que os mantém lado a lado.
+ */
+.nameRow {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+/*
  * Nome de entrada é Spectral — o papel de "nome" na tipografia do sistema.
  *
  * Linha inteira para ele, com os botões numa linha própria acima. Compartilhando a linha,
@@ -53,11 +66,18 @@
   flex: 1;
 }
 
+/*
+ * Mesma altura dos botões de ícone (22px).
+ *
+ * Ele era mais alto, e `align-items: center` alinhava os CENTROS — o que deixava as bordas
+ * de cima e de baixo desencontradas, e a linha parecia torta. Altura igual alinha as duas.
+ */
 .action {
-  --chamfer-line: var(--color-hairline);
-
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
   border: 1px solid var(--color-hairline);
-  padding: var(--space-1) var(--space-2);
+  padding: 0 var(--space-2);
   background: transparent;
   color: var(--color-text-muted);
   font: 400 var(--text-xs) / 1.6 var(--font-body);
@@ -145,8 +165,6 @@
  * mais peso que o próprio nome do livro, que é a informação principal da linha.
  */
 .legacy {
-  --chamfer-line: var(--color-hairline);
-
   margin-left: var(--space-2);
   padding: 1px var(--space-2);
   border: 1px solid var(--color-hairline);
@@ -192,4 +210,10 @@
 .prose {
   font: 400 var(--text-md) / 1.6 var(--font-body);
   color: var(--color-text);
+}
+
+/* O sim de um booleano, com o mesmo desenho da coluna da lista. */
+.sim {
+  color: var(--color-data);
+  font: 500 var(--text-lg) / 1 var(--font-body);
 }

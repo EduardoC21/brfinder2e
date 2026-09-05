@@ -106,7 +106,9 @@ export function rarityLetter(rarity: string): string | null {
     case 'rare':
       return 'R';
     case 'unique':
-      return 'Ú';
+      // `U` e não `Ú`: nada é único na base de hoje, e o acento só complicaria a leitura
+      // de uma letra sozinha dentro de um quadrado de 16px.
+      return 'U';
     default:
       return null;
   }

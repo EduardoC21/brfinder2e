@@ -51,59 +51,24 @@ body {
  * das duas — separa superfície por cor, não por contorno — então não há o que perder.
  */
 /*
- * ⚠️ `clip-path` corta o elemento E A BORDA junto.
+ * ⚠️ `clip-path` corta o elemento E A BORDA junto: a diagonal fica sem contorno.
  *
- * O canto some, mas a diagonal fica sem contorno — e o efeito é de borda quebrada, não de
- * papel dobrado. Quem tem borda visível declara `--chamfer-line` com a MESMA cor dela, e
- * o pseudo-elemento abaixo desenha a diagonal que faltava.
+ * Tentei desenhar a dobra com um pseudo-elemento girado, e ERRA POR CONSTRUÇÃO: um filho
+ * absoluto se posiciona contra o PADDING box, e o corte acontece no BORDER box. A linha
+ * nasce deslocada pela espessura da borda, e o resultado é pior que a borda interrompida.
  *
- * Fica em `transparent` por padrão: quem não tem borda não ganha risco nenhum.
- *
- * É uma linha girada, e não um segundo `clip-path` sobreposto: a técnica das duas camadas
- * precisaria pintar o miolo com a cor da superfície de trás, que aqui muda em três
- * estados (normal, sob o cursor, selecionado).
+ * O jeito que funciona é o do `RarityMark`: um traço em SVG, que segue a forma inteira e
+ * deixa o miolo transparente. Custa um componente por lugar, então só entrou onde o
+ * contorno era o próprio desenho.
  */
-.chamfer-sm,
-.chamfer-md,
-.chamfer-lg {
-  position: relative;
-}
-
-.chamfer-sm::before,
-.chamfer-md::before,
-.chamfer-lg::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  border-top: 1px solid var(--chamfer-line);
-  transform-origin: top left;
-  pointer-events: none;
-}
-
 .chamfer-sm {
   clip-path: polygon(var(--chamfer-sm) 0, 100% 0, 100% 100%, 0 100%, 0 var(--chamfer-sm));
-}
-
-.chamfer-sm::before {
-  width: calc(var(--chamfer-sm) * 1.4143);
-  transform: translateY(var(--chamfer-sm)) rotate(-45deg);
 }
 
 .chamfer-md {
   clip-path: polygon(var(--chamfer-md) 0, 100% 0, 100% 100%, 0 100%, 0 var(--chamfer-md));
 }
 
-.chamfer-md::before {
-  width: calc(var(--chamfer-md) * 1.4143);
-  transform: translateY(var(--chamfer-md)) rotate(-45deg);
-}
-
 .chamfer-lg {
   clip-path: polygon(var(--chamfer-lg) 0, 100% 0, 100% 100%, 0 100%, 0 var(--chamfer-lg));
-}
-
-.chamfer-lg::before {
-  width: calc(var(--chamfer-lg) * 1.4143);
-  transform: translateY(var(--chamfer-lg)) rotate(-45deg);
 }

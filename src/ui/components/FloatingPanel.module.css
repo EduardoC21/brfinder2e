@@ -11,8 +11,6 @@
  * escolhe arrastando, e valor escolhido em tempo de execução não cabe em folha de estilo.
  */
 .panel {
-  --chamfer-line: var(--color-hairline);
-
   position: fixed;
   top: 0;
   left: 0;

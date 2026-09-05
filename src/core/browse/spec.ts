@@ -173,8 +173,14 @@ export const SOURCES: readonly SourceSpec[] = [
       { kind: 'options', id: 'source', field: 'source.title' },
     ],
     searchFields: ['name', 'summary'],
+    /*
+     * A ordem é do autor, e é a ordem de LEITURA de uma condição: o que ela é, se leva
+     * número, o que ela anula, e de onde veio.
+     *
+     * `summary` saiu: ele repete na íntegra a primeira frase da descrição, que está logo
+     * abaixo.
+     */
     detail: [
-      { kind: 'text', field: 'summary' },
       { kind: 'text', field: 'group' },
       { kind: 'boolean', field: 'valued' },
       { kind: 'chips', field: 'overrides' },
@@ -223,13 +229,18 @@ export const SOURCES: readonly SourceSpec[] = [
       { kind: 'options', id: 'source', field: 'source.title' },
     ],
     searchFields: ['name'],
+    /*
+     * A ordem é do autor, e segue a da ficha do jogo: o que a ação É (traços), quanto
+     * custa, com que frequência, e só então de onde ela vem.
+     *
+     * Raridade NÃO é campo: vira etiqueta ao lado do nome, como na lista.
+     */
     detail: [
+      { kind: 'chips', field: 'traits' },
       { kind: 'cost' },
+      { kind: 'frequency', field: 'frequency' },
       { kind: 'text', field: 'sector' },
       { kind: 'text', field: 'category' },
-      { kind: 'chips', field: 'traits' },
-      // Raridade NÃO é campo: vira etiqueta ao lado do nome, como na lista.
-      { kind: 'frequency', field: 'frequency' },
       { kind: 'source' },
     ],
   },

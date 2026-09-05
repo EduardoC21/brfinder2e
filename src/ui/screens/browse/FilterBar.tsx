@@ -97,12 +97,11 @@ export function FilterBar({
       </ScrollRail>
 
       {aplicados.length > 0 && (
-        <ScrollRail className={styles['applied']} label={t.activeFilters}>
+        <div className={styles['appliedRow']}>
           {/*
-            "Limpar tudo" PRIMEIRO, e não no fim.
-            No fim ele ia junto com a fileira quando havia muitos filtros — a pessoa que
-            mais precisa dele é justamente quem tem filtros demais, e era ela quem não o
-            alcançava sem rolar.
+            "Limpar tudo" FORA do carrossel, e por isso sempre visível.
+            Dentro dele, o botão rolava junto e sumia quando havia muitos filtros — e quem
+            mais precisa dele é justamente quem tem filtros demais.
           */}
           <button
             type="button"
@@ -114,22 +113,24 @@ export function FilterBar({
             {t.clearFilters}
           </button>
 
-          {aplicados.map(({ spec, value }) => (
-            <button
-              key={`${spec.id}:${value}`}
-              type="button"
-              className={cx(styles['chip'], 'chamfer-sm')}
-              title={t.removeFilter}
-              onClick={() => {
-                desmarcar(spec, value);
-              }}
-            >
-              <span className={styles['chipTopic']}>{topicLabel(spec)}</span>
-              {valueLabel(spec, value)}
-              <span className={styles['chipX']}>×</span>
-            </button>
-          ))}
-        </ScrollRail>
+          <ScrollRail className={styles['applied']} label={t.activeFilters}>
+            {aplicados.map(({ spec, value }) => (
+              <button
+                key={`${spec.id}:${value}`}
+                type="button"
+                className={cx(styles['chip'], 'chamfer-sm')}
+                title={t.removeFilter}
+                onClick={() => {
+                  desmarcar(spec, value);
+                }}
+              >
+                <span className={styles['chipTopic']}>{topicLabel(spec)}</span>
+                {valueLabel(spec, value)}
+                <span className={styles['chipX']}>×</span>
+              </button>
+            ))}
+          </ScrollRail>
+        </div>
       )}
     </div>
   );

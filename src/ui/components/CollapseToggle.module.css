@@ -3,8 +3,6 @@
  * que sobra quando ela recolhe. Por isso é quadrado e pequeno: 22px cabe nos dois.
  */
 .botao {
-  --chamfer-line: var(--color-hairline);
-
   flex: none;
   display: grid;
   place-items: center;

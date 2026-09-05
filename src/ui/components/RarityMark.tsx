@@ -1,7 +1,7 @@
 import styles from './RarityMark.module.css';
 
 interface RarityMarkProps {
-  /** `I`, `R` ou `Ú`. */
+  /** `I`, `R` ou `U`. */
   readonly letter: string;
   /** O nome por extenso, para quem passa o mouse. */
   readonly label: string;

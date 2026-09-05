@@ -17,6 +17,18 @@
   min-width: 0;
 }
 
+/* O "limpar tudo" fixo à esquerda; só os chips rolam. */
+.appliedRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.applied {
+  flex: 1;
+}
+
 /* "FILTROS:" como rótulo da fileira, no lugar do antigo botão que abria tudo. */
 .legend {
   flex: none;
@@ -29,8 +41,6 @@
 }
 
 .topic {
-  --chamfer-line: var(--color-hairline);
-
   flex: none;
   display: inline-flex;
   align-items: center;
@@ -114,8 +124,6 @@
 }
 
 .clearAll {
-  --chamfer-line: var(--color-hairline);
-
   flex: none;
   border: 1px solid var(--color-hairline);
   padding: var(--space-1) var(--space-2);

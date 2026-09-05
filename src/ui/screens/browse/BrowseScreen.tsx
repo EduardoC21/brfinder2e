@@ -132,31 +132,21 @@ function SourcePane({
   >(null);
 
   /**
-   * Abrir uma camada ABRE o painel, se ele estiver recolhido.
+   * O painel de detalhe é DERIVADO, não gravado.
    *
-   * A camada é desenhada DENTRO do painel. Sem isto, clicar num tópico de filtro com o
-   * painel fechado não mostrava nada, e o clique parecia não ter efeito.
+   * Ele está aberto quando há o que mostrar — uma entrada escolhida ou uma camada aberta —
+   * e o usuário não o fechou. Nada disso vira preferência, e é o que conserta a página
+   * abrindo com o painel escancarado e vazio: a escolha sobrevivia ao recarregamento e a
+   * seleção não.
+   *
+   * `fechadoAMao` volta a `false` sozinho toda vez que aparece algo novo para mostrar, e
+   * por isso não precisa ser desfeito em lugar nenhum.
    */
+  const [fechadoAMao, setFechadoAMao] = useState(false);
+
   const mostrarCamada = (proxima: typeof overlay): void => {
     setOverlay(proxima);
-
-    if (proxima !== null) {
-      if (prefs.layout.detailCollapsed) {
-        update((atual) => withLayout(atual, { detailCollapsed: false }));
-      }
-      return;
-    }
-
-    /*
-     * Fechar a camada sem nada selecionado RECOLHE o painel.
-     *
-     * O painel só existe aberto quando tem o que mostrar. Sem esta regra sobrava um estado
-     * sem saída: painel aberto, vazio, e sem botão de recolher — ele mora na linha de
-     * ações da entrada, que não existe quando não há entrada.
-     */
-    if (opened === null && !prefs.layout.detailCollapsed) {
-      update((atual) => withLayout(atual, { detailCollapsed: true }));
-    }
+    if (proxima !== null) setFechadoAMao(false);
   };
   const [activeIndex, setActiveIndex] = useState(-1);
   const [openedKey, setOpenedKey] = useState<string | null>(null);
@@ -210,16 +200,7 @@ function SourcePane({
   const escolher = (key: string): void => {
     setOpenedKey(key);
     setOverlay(null);
-    /*
-     * Clicar numa entrada REABRE o painel recolhido.
-     *
-     * Recolher é um gesto de espaço, temporário; clicar numa entrada é dizer "me mostra
-     * esta". A alternativa — abrir um pop-out — faria o mesmo clique produzir coisas
-     * diferentes conforme um estado invisível, e cinco cliques deixariam cinco janelas.
-     */
-    if (prefs.layout.detailCollapsed) {
-      update((atual) => withLayout(atual, { detailCollapsed: false }));
-    }
+    setFechadoAMao(false);
   };
 
   const openTopic = overlay?.kind === 'topic' ? overlay.id : null;
@@ -425,9 +406,9 @@ function SourcePane({
         onPopOut={() => {
           if (opened !== null) despacharPopout({ kind: 'open', entity: opened });
         }}
-        collapsed={prefs.layout.detailCollapsed}
+        collapsed={fechadoAMao || (opened === null && overlay === null)}
         onToggleCollapsed={() => {
-          update((atual) => withLayout(atual, { detailCollapsed: !atual.layout.detailCollapsed }));
+          setFechadoAMao((estava) => !estava);
         }}
         {...(camada === null ? {} : { overlay: camada })}
       />

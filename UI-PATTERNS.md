@@ -368,13 +368,19 @@ que não cabia mais nada.
 O `+N` tem espaço RESERVADO sempre que ainda sobra traço: sem isso o último a caber
 empurraria o `+N` para fora, e a linha mentiria por omissão.
 
-⚠️ **A raridade é distinguida pela LETRA, não pela cor.** `I`, `R`, `Ú` em contorno de
+⚠️ **A raridade é distinguida pela LETRA, não pela cor.** `I`, `R`, `U` em contorno de
 latão; comum não desenha nada. O PF2e usa laranja/azul/roxo, mas o sistema tem seis cores
 com trabalho definido. A cor sai de `--cor-raridade`, num lugar só, se o padrão do PF2e for
 adotado depois.
 
 Teto de personalizadas: **duas**. E o padrão de toda fonte é **nenhuma coluna ligada** —
 só o nome e os dados fixos que ela tiver. Coluna é escolha, não herança.
+
+O estado ABERTO/FECHADO do painel de detalhe é **derivado, nunca gravado**: ele está aberto
+quando há o que mostrar (entrada escolhida ou camada aberta) e o usuário não o fechou.
+Gravar isso fazia a página abrir com o painel escancarado e vazio — a escolha sobrevivia ao
+recarregamento e a seleção não. O trilho de fontes é diferente: ele sempre tem conteúdo, e
+ali "quero fechado" é preferência de verdade.
 
 A largura da lateral tem teto de 640px **e nunca mais que metade da janela**: medido numa
 janela de 900px com 640 guardados, sobravam 70px para a lista inteira.
