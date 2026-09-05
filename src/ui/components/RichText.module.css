@@ -32,9 +32,13 @@
    *
    * `all-small-caps` desenha as maiúsculas na altura do x, então o mesmo tamanho em pixels
    * lê como menor que o texto ao redor — era exatamente o que acontecia com os dois em
-   * 13px. Subindo para 15px, o rótulo volta a pesar como cabeçalho.
+   * 13px.
+   *
+   * 18px e não 16 ou 17: a escala do sistema é 11·12·13·15·18·22·26, e criar um degrau
+   * fora dela por um caso só espalha valor de tipo pelo projeto. Com versalete, 18px lê
+   * como uns 15 — que é a faixa pedida.
    */
-  font-size: var(--text-lg);
+  font-size: var(--text-xl);
   font-weight: 500;
   font-variant-caps: all-small-caps;
   letter-spacing: 0.04em;

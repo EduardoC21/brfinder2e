@@ -1,42 +1,120 @@
 /*
- * A lista de resultados.
+ * A lista de resultados, como GRADE.
+ *
+ * Era `flex` por linha, e cada linha resolvia o próprio espaço: a coluna "categoria" da
+ * linha 1 não caía sob a da linha 2, e não havia onde pendurar um cabeçalho. Agora as
+ * trilhas são declaradas uma vez (pelo componente, que sabe quais colunas existem) e
+ * valem para o cabeçalho e para todas as linhas.
  *
  * Altura de linha CONSTANTE (--row-height, 34px), como manda o artboard 2b: é o que faz o
  * olho varrer uma coluna em vez de reler o texto, e o que vai permitir virtualizar a lista
- * quando forem 6.283 talentos.
+ * quando forem 6.284 talentos.
  */
+.tabela {
+  display: grid;
+  min-width: 0;
+}
+
+/*
+ * O corpo herda as MESMAS trilhas do cabeçalho — quem as passa é o componente, porque só
+ * ele sabe quais colunas estão ligadas. Sem repetir aqui, as duas grades poderiam divergir.
+ */
+.corpo {
+  display: grid;
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+/* `display: contents` faz as CÉLULAS entrarem na grade do avô, não a linha. */
 .row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  width: 100%;
-  height: var(--row-height);
-  border: 0;
-  border-bottom: 1px solid var(--color-hairline);
-  padding: 0 var(--space-4);
-  background: transparent;
-  color: var(--color-text);
-  text-align: left;
+  display: contents;
   cursor: pointer;
 }
 
-.row:hover {
+.celula {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+  height: var(--row-height);
+  padding: 0 var(--space-2);
+  border-bottom: 1px solid var(--color-hairline);
+  background: transparent;
+}
+
+/* Folga nas pontas da linha, sem quebrar o alinhamento das trilhas do meio. */
+.celula:first-child {
+  padding-left: var(--space-4);
+}
+
+.celula:last-child {
+  padding-right: var(--space-4);
+}
+
+/*
+ * O fundo é de cada CÉLULA, e não da linha: com `display: contents` a linha não desenha
+ * caixa nenhuma. `:hover` na linha pinta todas as células dela de uma vez.
+ */
+.row:hover .celula {
   background: var(--color-hover);
 }
 
 /* Selecionada é ESTADO: bordô. Sem outline — a linha inteira já é o indicador. */
-.row[aria-selected='true'] {
+.ativa .celula {
   background: var(--color-state);
 }
 
-.row[aria-selected='true'] .name,
-.row[aria-selected='true'] .chip {
+.ativa .name,
+.ativa .nivel,
+.ativa .sim {
   color: #f6edea;
+}
+
+.ativa .chip {
+  background: rgb(0 0 0 / 25%);
+  color: #f0dfe2;
+}
+
+/* ── Cabeçalho ─────────────────────────────────────────────────────────── */
+
+.cabecalho {
+  display: contents;
+}
+
+.titulo {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  height: 26px;
+  padding: 0 var(--space-2);
+  border-bottom: 1px solid var(--color-hairline);
+  background: var(--color-bg);
+  color: var(--color-text-muted);
+  font: 400 var(--text-xs) / 1 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.titulo:first-child {
+  padding-left: var(--space-4);
+}
+
+.titulo:last-child {
+  padding-right: var(--space-4);
+}
+
+/* ── Nome, e o que cola nele ───────────────────────────────────────────── */
+
+.nomeCelula {
+  gap: var(--space-2);
 }
 
 /* Nome de entrada é Spectral — o papel de "nome" na tipografia do sistema. */
 .name {
-  flex: 1;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -44,16 +122,85 @@
   font: 400 var(--text-lg) / 1 var(--font-display);
 }
 
+/*
+ * A calha do nível: largura fixa e dígitos de mesma largura, para os nomes alinharem
+ * entre si em vez de dançarem conforme o número tenha uma ou duas casas.
+ */
+.nivel {
+  justify-content: flex-end;
+  color: var(--color-data);
+  font: 400 var(--text-sm) / 1 var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+ * A etiqueta de raridade: contorno de latão, miolo oco, letra em latão.
+ *
+ * Contorno e não preenchimento porque ela NÃO é rara nas fontes que vêm — medido no
+ * pf2e-8.5.0, 53,6% das magias e 49,2% dos equipamentos são não-comuns. Latão maciço em
+ * metade das linhas competiria com o nome.
+ *
+ * A cor vem de uma variável POR RARIDADE, todas em latão hoje. Adotar o padrão do PF2e
+ * (laranja, azul, roxo) depois é trocar três linhas, num lugar só.
+ */
+.raridade {
+  --cor-raridade: var(--color-data);
+
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--cor-raridade);
+  color: var(--cor-raridade);
+  font: 500 var(--text-xs) / 1 var(--font-mono);
+  cursor: help;
+}
+
+.ativa .raridade {
+  --cor-raridade: #f2c070;
+}
+
+/* ── Traços ────────────────────────────────────────────────────────────── */
+
+/*
+ * Sem rolagem e sem `overflow` por linha, de propósito.
+ *
+ * Um trilho rolável aqui significaria um contêiner de rolagem e um `ResizeObserver` por
+ * linha — vezes 766 hoje e 6.284 quando chegarem os talentos. O corte é feito no DADO,
+ * por orçamento de caracteres (`core/browse/columns.ts`), e o resto vira `+N`.
+ */
+.tracos {
+  gap: var(--space-1);
+  white-space: nowrap;
+}
+
+.resto {
+  cursor: help;
+}
+
+/* ── Células comuns ────────────────────────────────────────────────────── */
+
+/*
+ * TODO valor sai em caixinha. Antes uns saíam em caixa e outros em texto cru, e a coluna
+ * não parecia coluna — a caixa é o que dá à célula uma borda visível na grade.
+ */
 .chip {
   flex: none;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
   padding: 3px var(--space-2);
   background: var(--color-panel);
   color: var(--color-text-muted);
-  font: 400 var(--text-xs) / 1 var(--font-mono);
+  font: 400 var(--text-xs) / 1.3 var(--font-mono);
+  white-space: nowrap;
 }
 
-.row[aria-selected='true'] .chip {
-  background: rgb(0 0 0 / 25%);
+/* Booleano é SÍMBOLO: "sim" em toda linha gasta espaço para repetir o óbvio. */
+.sim {
+  color: var(--color-data);
+  font: 500 var(--text-md) / 1 var(--font-body);
 }
 
 /* Aposentada é ESTADO — bordô, mesma linguagem da seleção e do foco. */
@@ -65,31 +212,6 @@
   font: 500 var(--text-xs) / 1 var(--font-mono);
 }
 
-/*
- * Coluna de texto simples: valores mais longos que um rótulo (categoria, livro).
- *
- * `min-width: 0` com reticências porque a linha tem altura fixa — sem isso um título de
- * livro longo empurraria as colunas seguintes para fora da linha em vez de ser cortado.
- */
-.text {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--color-text-muted);
-  font: 400 var(--text-sm) / 1.4 var(--font-body);
-}
-
-.row[aria-selected='true'] .text {
-  color: #f0dfe2;
-}
-
-/*
- * `margin-left: auto` na PRIMEIRA coluna alinhada à direita empurra ela e todas as
- * seguintes para o fim da linha. Aplicar em todas faria cada uma abrir seu próprio vão, e
- * as colunas da direita ficariam espalhadas em vez de agrupadas.
- */
-.end:first-of-type,
-.name + .end {
-  margin-left: auto;
+.end {
+  justify-content: flex-end;
 }

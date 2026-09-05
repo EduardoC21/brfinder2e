@@ -20,16 +20,23 @@
   border-bottom: 1px solid var(--color-hairline);
 }
 
+/*
+ * Os botões ficam COLADOS no canto, não espalhados.
+ *
+ * Com `space-between` e três filhos, o ⟲ sobrava no meio da linha, longe do título e longe
+ * do ×. Quem manda no espaço é o título (`flex: 1`), e os dois botões viajam juntos.
+ */
 .titleRow {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
+  gap: var(--space-1);
 }
 
 .title {
+  flex: 1;
   margin: 0;
   min-width: 0;
+  margin-right: var(--space-2);
   font: 400 var(--text-lg) / 1.2 var(--font-display);
   color: var(--color-text);
 }

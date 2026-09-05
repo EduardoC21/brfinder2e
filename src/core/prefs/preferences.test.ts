@@ -82,6 +82,7 @@ describe('withSource', () => {
   it('fonte nunca configurada devolve o vazio, não indefinido', () => {
     expect(sourcePreferences(DEFAULT_PREFERENCES, 'spells')).toEqual({
       columns: null,
+      hiddenSpecials: [],
       filters: {},
     });
   });
@@ -90,6 +91,18 @@ describe('withSource', () => {
    * `null` e `[]` precisam ser DIFERENTES. Iguais, desmarcar a última coluna caía no
    * padrão da fonte e a ressuscitava — não havia como desligar `setor` nem `grupo`.
    */
+  /*
+   * Guardamos o que está DESLIGADO. Assim a ausência de preferência já significa "todas
+   * ligadas", e uma especial nova numa fonte futura nasce visível sem migrar nada.
+   */
+  it('as especiais vêm ligadas: guardamos só o que foi desligado', () => {
+    expect(readPreferences({ sources: { a: {} } }).sources['a']?.hiddenSpecials).toEqual([]);
+    expect(
+      readPreferences({ sources: { a: { hiddenSpecials: ['traits', 7] } } }).sources['a']
+        ?.hiddenSpecials,
+    ).toEqual(['traits']);
+  });
+
   it('nunca configurado é null; escolher nenhuma coluna é lista vazia', () => {
     expect(readPreferences({ sources: { a: { filters: {} } } }).sources['a']?.columns).toBeNull();
     expect(readPreferences({ sources: { a: { columns: [] } } }).sources['a']?.columns).toEqual([]);

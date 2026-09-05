@@ -92,6 +92,27 @@ export type DetailFieldSpec =
   | { readonly kind: 'cost' }
   | { readonly kind: 'source' };
 
+/**
+ * As colunas ESPECIAIS de uma fonte, quando ela tem o dado.
+ *
+ * Separadas de `columns` porque não disputam o mesmo espaço: elas pertencem ao nome —
+ * nível antes, raridade colada, traços logo depois — e por isso ficam FORA do teto de
+ * colunas personalizadas. Vêm ligadas por padrão, e podem ser desligadas.
+ *
+ * `null` significa "esta fonte não tem esse dado", e aí a opção nem aparece no seletor.
+ * Condição não tem nível, raridade nem traço; ação tem raridade e traço, mas não nível.
+ */
+export interface SpecialColumns {
+  /** Campo numérico do nível. Vira uma calha antes do nome. */
+  readonly level: string | null;
+  /** Campo da raridade. Só o não-comum desenha. */
+  readonly rarity: string | null;
+  /** Campo de lista com os traços. */
+  readonly traits: string | null;
+}
+
+export const NO_SPECIAL_COLUMNS: SpecialColumns = { level: null, rarity: null, traits: null };
+
 export interface SourceSpec {
   /** Identificador estável. É a chave do texto em `i18n` e da rota depois. */
   readonly id: string;
@@ -112,6 +133,8 @@ export interface SourceSpec {
   readonly columns: readonly ColumnSpec[];
   /** Ids visíveis quando o usuário nunca mexeu. */
   readonly defaultColumns: readonly string[];
+  /** Nível, raridade e traços — fora do teto, ligadas por padrão. */
+  readonly special: SpecialColumns;
   readonly filters: readonly FilterSpec[];
   /** Campos que a busca indexa, em ordem de peso — o primeiro pesa mais. */
   readonly searchFields: readonly string[];
@@ -137,6 +160,8 @@ export const SOURCES: readonly SourceSpec[] = [
       { kind: 'text', id: 'source', field: 'source.title' },
     ],
     defaultColumns: ['group'],
+    // Condição não tem nível, raridade nem traço: o dado simplesmente não existe.
+    special: NO_SPECIAL_COLUMNS,
     filters: [
       { kind: 'options', id: 'group', field: 'group' },
       { kind: 'boolean', id: 'valued', field: 'valued' },
@@ -166,10 +191,15 @@ export const SOURCES: readonly SourceSpec[] = [
       { kind: 'cost', id: 'cost' },
       { kind: 'chip', id: 'sector', field: 'sector', align: 'end' },
       { kind: 'text', id: 'category', field: 'category' },
-      { kind: 'text', id: 'rarity', field: 'rarity' },
       { kind: 'text', id: 'source', field: 'source.title' },
     ],
     defaultColumns: ['sector'],
+    /*
+     * Ação não tem nível — isso é de talento e de magia. Raridade e traço tem, e os dois
+     * saem da coluna comum: `traits` deixa de ser oferecido como `chip` porque agora é
+     * especial, com orçamento de caracteres.
+     */
+    special: { level: null, rarity: 'rarity', traits: 'traits' },
     filters: [
       { kind: 'cost', id: 'cost' },
       { kind: 'options', id: 'sector', field: 'sector' },
@@ -204,6 +234,7 @@ export const SOURCES: readonly SourceSpec[] = [
     mode: 'list',
     columns: [],
     defaultColumns: [],
+    special: NO_SPECIAL_COLUMNS,
     filters: [],
     searchFields: [],
     detail: [],
@@ -214,6 +245,7 @@ export const SOURCES: readonly SourceSpec[] = [
     mode: 'list',
     columns: [],
     defaultColumns: [],
+    special: NO_SPECIAL_COLUMNS,
     filters: [],
     searchFields: [],
     detail: [],
@@ -224,6 +256,7 @@ export const SOURCES: readonly SourceSpec[] = [
     mode: 'list',
     columns: [],
     defaultColumns: [],
+    special: NO_SPECIAL_COLUMNS,
     filters: [],
     searchFields: [],
     detail: [],
@@ -234,6 +267,7 @@ export const SOURCES: readonly SourceSpec[] = [
     mode: 'list',
     columns: [],
     defaultColumns: [],
+    special: NO_SPECIAL_COLUMNS,
     filters: [],
     searchFields: [],
     detail: [],
@@ -244,6 +278,7 @@ export const SOURCES: readonly SourceSpec[] = [
     mode: 'list',
     columns: [],
     defaultColumns: [],
+    special: NO_SPECIAL_COLUMNS,
     filters: [],
     searchFields: [],
     detail: [],
@@ -254,6 +289,7 @@ export const SOURCES: readonly SourceSpec[] = [
     mode: 'list',
     columns: [],
     defaultColumns: [],
+    special: NO_SPECIAL_COLUMNS,
     filters: [],
     searchFields: [],
     detail: [],
@@ -264,6 +300,7 @@ export const SOURCES: readonly SourceSpec[] = [
     mode: 'cards',
     columns: [],
     defaultColumns: [],
+    special: NO_SPECIAL_COLUMNS,
     filters: [],
     searchFields: [],
     detail: [],
@@ -274,6 +311,7 @@ export const SOURCES: readonly SourceSpec[] = [
     mode: 'list',
     columns: [],
     defaultColumns: [],
+    special: NO_SPECIAL_COLUMNS,
     filters: [],
     searchFields: [],
     detail: [],
@@ -284,6 +322,7 @@ export const SOURCES: readonly SourceSpec[] = [
     mode: 'list',
     columns: [],
     defaultColumns: [],
+    special: NO_SPECIAL_COLUMNS,
     filters: [],
     searchFields: [],
     detail: [],
@@ -294,6 +333,7 @@ export const SOURCES: readonly SourceSpec[] = [
     mode: 'list',
     columns: [],
     defaultColumns: [],
+    special: NO_SPECIAL_COLUMNS,
     filters: [],
     searchFields: [],
     detail: [],

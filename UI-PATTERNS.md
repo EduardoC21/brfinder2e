@@ -315,21 +315,59 @@ sem teto o nome seria espremido até a primeira letra.
 A ordem é editada com **setas**, não arrastando: são no máximo quatro itens, e setas
 funcionam com teclado sem mecanismo extra.
 
+### A linha da lista é uma GRADE
+
+Era `flex` por linha, com `margin-left: auto` empurrando o que ia à direita. Aquilo desenha
+uma linha e nada mais: cada linha resolvia o próprio espaço, então a coluna "categoria" da
+linha 1 não caía sob a da linha 2, e **não havia onde pendurar um cabeçalho**.
+
+Agora `grid-template-columns` é declarado uma vez, pelo componente (que é quem sabe quais
+colunas estão ligadas), e vale para o cabeçalho e para todas as linhas. A linha em si usa
+`display: contents`: ela não desenha caixa nenhuma, e as CÉLULAS dela participam da grade
+do avô — é a única forma de células de linhas diferentes caírem na mesma trilha.
+
+O fundo de seleção e o `hover` passam a ser de cada célula, já que a linha não tem caixa.
+
+### As três colunas especiais
+
+Elas pertencem ao NOME, e por isso ficam fora do teto de personalizadas:
+
+```
+ 12  Godbreaker  ⌷R⌷  ⌷concentrate⌷ ⌷manipulate⌷ ⌷+2⌷
+ ^   ^           ^     ^
+calha nome   raridade  traços
+```
+
+| coluna   | trilha                   | por quê                                                                                              |
+| -------- | ------------------------ | ---------------------------------------------------------------------------------------------------- |
+| nível    | `3ch`, dígitos tabulares | largura fixa faz os nomes alinharem entre si                                                         |
+| raridade | **nenhuma**              | é etiqueta dentro da célula do nome; trilha própria abriria vão em toda linha comum, que é a maioria |
+| traços   | `auto`                   | limitado pelo orçamento de caracteres, não pela tela                                                 |
+
+`SpecialColumns` no descritor diz quais a fonte TEM (`null` = não tem esse dado), e a
+preferência guarda quais foram **desligadas** — assim a ausência já significa "todas
+ligadas", e uma especial nova nasce visível sem migrar nada do gravado.
+
+⚠️ **Traços não rolam por linha.** Um trilho rolável seria um contêiner de rolagem e um
+`ResizeObserver` por linha, vezes 766 hoje e 6.284 nos talentos. O corte é por CARACTERE
+(`core/browse/columns.ts`, orçamento de 26), feito no dado: determinístico, sem medir nada,
+e o resto vira `+N`.
+
+⚠️ **A raridade é distinguida pela LETRA, não pela cor.** `I`, `R`, `Ú` em contorno de
+latão; comum não desenha nada. O PF2e usa laranja/azul/roxo, mas o sistema tem seis cores
+com trabalho definido. A cor sai de `--cor-raridade`, num lugar só, se o padrão do PF2e for
+adotado depois.
+
+Teto de personalizadas: **duas**.
+
 ## 8. Pendências abertas
 
 Feedback da conferência manual da Etapa 8, feita em 04/09/2026. Este bloco **encolhe**:
 item feito sai daqui e o que virou regra sobe para as seções acima.
 
-### Defeitos confirmados (medidos)
+### Defeitos confirmados
 
-Nove foram corrigidos na Etapa 8g. Sobraram dois, e eles são **um trabalho só** com as
-colunas especiais — o cabeçalho só alinha se a linha virar grade, que é exatamente o que
-Nível/Raridade/Traços vão exigir:
-
-1. **As colunas personalizadas não têm cabeçalho** e ficam amontoadas à direita, sem
-   alinhamento entre linhas.
-2. **Umas colunas saem em caixinha, outras em texto cru.** Todas deviam ter o mesmo
-   tratamento, com inicial maiúscula e alinhadas na coluna.
+Todos os onze foram corrigidos: nove na Etapa 8g, os dois de coluna na 8h.
 
 ### Decisões tomadas na conferência
 
@@ -350,9 +388,8 @@ Nível/Raridade/Traços vão exigir:
 ### Em desenho, aguardando decisão
 
 - **Recolher as barras laterais**, as duas, com botão de abrir e fechar.
-- **Nível, Raridade e Traços como colunas especiais** — desenho decidido, falta construir.
-- **Símbolo no lugar da palavra** para booleanos.
-- **Linha de títulos da tabela**, com ordenação (possivelmente hierárquica).
+- **Ordenação pelo cabeçalho** (possivelmente hierárquica). A linha de títulos já existe e
+  é grade irmã das linhas, então a ordenação tem onde morar.
 - **Texto justificado** no corpo da descrição.
 - **Marcar os blocos de rótulo na máscara**, invisível ao usuário, para a tradução da
   Etapa 15 não embaralhar `Effect`/`Trigger` com o texto ao redor.

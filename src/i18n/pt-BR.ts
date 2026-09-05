@@ -47,8 +47,25 @@ export const ptBR = {
     combineAny: 'Qualquer um (OU)',
     combineAll: 'Todos (E)',
     columns: 'Colunas',
-    columnsHint: (max: number) => `Até ${String(max)} colunas ao lado do nome.`,
+    columnName: 'nome',
+    columnLevel: 'nv',
+    columnTraits: 'traços',
+    moreTraits: (n: number) => (n === 1 ? 'mais 1 traço' : `mais ${String(n)} traços`),
+    /** Os nomes de raridade, para o `title` da etiqueta de uma letra. */
+    rarity: {
+      uncommon: 'incomum',
+      rare: 'rara',
+      unique: 'única',
+    } as Record<string, string>,
+    columnsHint: (max: number) =>
+      `Até ${String(max)} colunas à direita, além das que acompanham o nome.`,
+    columnsAlways: 'sempre ao lado do nome',
     columnsShown: 'mostrando',
+    specialLabel: {
+      level: 'nível',
+      rarity: 'raridade',
+      traits: 'traços',
+    } as Record<string, string>,
     columnsHidden: 'disponíveis',
     columnsReset: 'Voltar ao padrão',
     columnUp: 'Mover para a esquerda',

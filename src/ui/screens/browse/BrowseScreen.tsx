@@ -85,7 +85,12 @@ function SourcePane({
 }) {
   const [term, setTerm] = useState('');
   const { prefs, update, ready } = usePreferences();
-  const salvas = sourcePreferences(prefs, source.id);
+  /*
+   * Memoizado porque o resultado alimenta as dependências do `useMemo` da lista.
+   * Sem isso o compilador do React não consegue provar que `filters` é estável e desiste
+   * de otimizar o componente inteiro — inclusive a filtragem das 766 linhas.
+   */
+  const salvas = useMemo(() => sourcePreferences(prefs, source.id), [prefs, source.id]);
 
   /*
    * O filtro vive na PREFERÊNCIA, não num `useState` local.
@@ -94,7 +99,7 @@ function SourcePane({
    * que era o comportamento certo enquanto ele não persistia. Agora ele volta: guardar por
    * fonte é o que faz "voltar em Ações" reencontrar o recorte de ontem sem refazer.
    */
-  const filters = salvas.filters as FilterState;
+  const filters = salvas.filters;
   const setFilters = (next: FilterState): void => {
     update((atual) => withSource(atual, source.id, { filters: next }));
   };
@@ -174,6 +179,19 @@ function SourcePane({
     .map((id) => source.columns.find((column) => column.id === id))
     .filter((column) => column !== undefined);
 
+  /*
+   * As especiais ligadas: as que a fonte TEM, menos as que o usuário desligou.
+   *
+   * Guardamos o que está desligado, e não o que está ligado — assim a ausência de
+   * preferência já significa "todas ligadas", e uma especial nova nasce visível.
+   */
+  const escondidas = ready ? salvas.hiddenSpecials : [];
+  const especiaisAtivas = {
+    level: escondidas.includes('level') ? null : source.special.level,
+    rarity: escondidas.includes('rarity') ? null : source.special.rarity,
+    traits: escondidas.includes('traits') ? null : source.special.traits,
+  };
+
   /**
    * O teclado vive no campo de busca, não na lista.
    *
@@ -230,13 +248,25 @@ function SourcePane({
       <ColumnPicker
         available={source.columns}
         selected={idsVisiveis}
-        noPadrao={salvas.columns === null}
+        noPadrao={salvas.columns === null && salvas.hiddenSpecials.length === 0}
+        special={source.special}
+        hiddenSpecials={escondidas}
+        onToggleSpecial={(id) => {
+          update((atual) => {
+            const atuais = sourcePreferences(atual, source.id).hiddenSpecials;
+            return withSource(atual, source.id, {
+              hiddenSpecials: atuais.includes(id)
+                ? atuais.filter((entry) => entry !== id)
+                : [...atuais, id],
+            });
+          });
+        }}
         onChange={(columns) => {
           update((atual) => withSource(atual, source.id, { columns }));
         }}
         onReset={() => {
           // `null` devolve a fonte ao padrão dela; `[]` seria "nenhuma coluna".
-          update((atual) => withSource(atual, source.id, { columns: null }));
+          update((atual) => withSource(atual, source.id, { columns: null, hiddenSpecials: [] }));
         }}
         onClose={() => {
           setOverlay(null);
@@ -311,6 +341,7 @@ function SourcePane({
             <ResultList
               entities={results}
               columns={colunasVisiveis}
+              specials={especiaisAtivas}
               activeIndex={activeIndex}
               onActivate={(index) => {
                 setActiveIndex(index);

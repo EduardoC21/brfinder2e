@@ -1,4 +1,4 @@
-import type { ColumnSpec } from '@core/browse/index';
+import type { ColumnSpec, SpecialColumns } from '@core/browse/index';
 import { moveColumn } from '@core/prefs/index';
 import { strings } from '@i18n/index';
 import { cx } from '@ui/cx';
@@ -10,13 +10,18 @@ import proprio from './ColumnPicker.module.css';
 const t = strings.browse;
 
 /**
- * Quantas colunas cabem ao lado do nome.
+ * Quantas colunas cabem ao lado do nome, além das especiais.
  *
  * A linha tem altura FIXA (34px) e não quebra — é o que faz o olho varrer a lista. Sem
- * teto, marcar sete colunas espremeria o nome até sobrar a primeira letra. Quatro é o que
- * cabe com folga em 670px de área de lista, que é a largura com a lateral aberta.
+ * teto, marcar sete colunas espremeria o nome até sobrar a primeira letra.
+ *
+ * Caiu de quatro para DUAS porque nível, raridade e traços passaram a ocupar o meio da
+ * linha. Elas não contam neste teto: não disputam o espaço da direita.
  */
-const MAXIMO = 4;
+const MAXIMO = 2;
+
+/** As especiais, na ordem em que aparecem na linha. */
+const ESPECIAIS = ['level', 'rarity', 'traits'] as const;
 
 interface ColumnPickerProps {
   /** Todas as colunas que a fonte oferece, na ordem canônica. */
@@ -25,6 +30,11 @@ interface ColumnPickerProps {
   readonly selected: readonly string[];
   /** Verdadeiro quando o que está na tela é o padrão da fonte, e não escolha do usuário. */
   readonly noPadrao: boolean;
+  /** Quais especiais esta fonte tem dado para oferecer. */
+  readonly special: SpecialColumns;
+  /** Ids das especiais que o usuário desligou. */
+  readonly hiddenSpecials: readonly string[];
+  readonly onToggleSpecial: (id: string) => void;
   readonly onChange: (columns: readonly string[]) => void;
   readonly onReset: () => void;
   readonly onClose: () => void;
@@ -45,6 +55,9 @@ export function ColumnPicker({
   available,
   selected,
   noPadrao,
+  special,
+  hiddenSpecials,
+  onToggleSpecial,
   onChange,
   onReset,
   onClose,
@@ -92,6 +105,37 @@ export function ColumnPicker({
       </header>
 
       <div className={styles['options']}>
+        {/*
+          As especiais primeiro, e num grupo próprio.
+
+          Elas pertencem ao nome — nível antes, raridade colada, traços logo depois — e por
+          isso não disputam o espaço da direita nem contam no teto. Vêm ligadas onde a
+          fonte tem o dado, e podem ser desligadas.
+        */}
+        {ESPECIAIS.some((id) => special[id] !== null) && (
+          <p className={proprio['group']}>{t.columnsAlways}</p>
+        )}
+        {ESPECIAIS.filter((id) => special[id] !== null).map((id) => {
+          const ligada = !hiddenSpecials.includes(id);
+          return (
+            <button
+              key={id}
+              type="button"
+              role="checkbox"
+              aria-checked={ligada}
+              className={cx(styles['option'], ligada && styles['optionOn'])}
+              onClick={() => {
+                onToggleSpecial(id);
+              }}
+            >
+              <span className={styles['mark']} aria-hidden="true">
+                {ligada ? '✓' : ''}
+              </span>
+              <span className={styles['label']}>{t.specialLabel[id]}</span>
+            </button>
+          );
+        })}
+
         {/*
           Os escolhidos primeiro, na ordem em que aparecem na lista, com as setas.
           Separar as duas listas é o que torna a ORDEM visível: misturados, não haveria

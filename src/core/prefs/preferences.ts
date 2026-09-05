@@ -14,13 +14,17 @@
  * padrão, que é sempre recuperável; uma exceção aqui derrubaria a tela inteira na abertura.
  */
 
+import type { FilterSelection } from '../browse/query';
 import { isRecord } from '../json';
 
-/** Um valor selecionado de filtro, na forma serializada. Espelha `FilterSelection`. */
-interface StoredSelection {
-  readonly values: readonly string[];
-  readonly combine?: 'any' | 'all';
-}
+/*
+ * A seleção de filtro é O MESMO tipo de `core/browse`, e não uma cópia.
+ *
+ * Havia aqui um `FilterSelection` idêntico, declarado "porque é a forma serializada". Duas
+ * declarações estruturalmente iguais obrigam quem consome a fazer uma coerção — e a
+ * coerção escondia a origem do valor a ponto de o compilador do React desistir de
+ * memoizar a lista de resultados.
+ */
 
 export interface SourcePreferences {
   /**
@@ -34,8 +38,16 @@ export interface SourcePreferences {
    * `setor` em Ações nem `grupo` em Condições.
    */
   readonly columns: readonly string[] | null;
+  /**
+   * As colunas ESPECIAIS que o usuário desligou — `level`, `rarity`, `traits`.
+   *
+   * Guardamos o que está DESLIGADO, e não o que está ligado, porque elas vêm ligadas por
+   * padrão. Assim a ausência de preferência já significa "todas ligadas", e uma especial
+   * nova numa fonte futura nasce visível sem precisar migrar nada do que está gravado.
+   */
+  readonly hiddenSpecials: readonly string[];
   /** O último filtro aplicado, por id de tópico. */
-  readonly filters: Readonly<Record<string, StoredSelection>>;
+  readonly filters: Readonly<Record<string, FilterSelection>>;
 }
 
 export interface LayoutPreferences {
@@ -50,7 +62,11 @@ export interface Preferences {
   readonly layout: LayoutPreferences;
 }
 
-export const EMPTY_SOURCE_PREFERENCES: SourcePreferences = { columns: null, filters: {} };
+export const EMPTY_SOURCE_PREFERENCES: SourcePreferences = {
+  columns: null,
+  hiddenSpecials: [],
+  filters: {},
+};
 
 export const DEFAULT_PREFERENCES: Preferences = {
   sources: {},
@@ -70,7 +86,7 @@ function positive(value: unknown): number | null {
   return typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : null;
 }
 
-function readSelection(value: unknown): StoredSelection | null {
+function readSelection(value: unknown): FilterSelection | null {
   if (!isRecord(value)) return null;
   const values = textList(value['values']);
   if (values.length === 0) return null;
@@ -81,7 +97,7 @@ function readSelection(value: unknown): StoredSelection | null {
 function readSource(value: unknown): SourcePreferences {
   if (!isRecord(value)) return EMPTY_SOURCE_PREFERENCES;
 
-  const filters: Record<string, StoredSelection> = {};
+  const filters: Record<string, FilterSelection> = {};
   const raw = value['filters'];
   if (isRecord(raw)) {
     for (const [topic, selection] of Object.entries(raw)) {
@@ -92,7 +108,7 @@ function readSource(value: unknown): SourcePreferences {
 
   // Chave ausente é "nunca configurei"; array presente, mesmo vazio, é escolha.
   const columns = Array.isArray(value['columns']) ? textList(value['columns']) : null;
-  return { columns, filters };
+  return { columns, hiddenSpecials: textList(value['hiddenSpecials']), filters };
 }
 
 /** Decodifica o que está gravado. Nunca lança; o ilegível vira o padrão. */
