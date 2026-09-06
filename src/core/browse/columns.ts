@@ -141,3 +141,74 @@ export function rarityLetter(rarity: string): string | null {
 export function isMarkedRarity(rarity: string): rarity is Exclude<Rarity, 'common'> {
   return rarityLetter(rarity) !== null;
 }
+
+/* ── Largura de uma coluna extra ──────────────────────────────────────────── */
+
+/**
+ * Caixinha de coluna: IBM Plex Mono a 11px. Medido na tela, 6,60px por caractere — o mesmo
+ * `TRAIT_CHAR_PX`, porque é a mesma fonte no mesmo tamanho.
+ */
+export const CELL_CHAR_PX = 6.6;
+
+/** Recheio da caixinha: 7px de cada lado. Medido. */
+export const CHIP_PAD_PX = 14;
+
+/**
+ * Cabeçalho: a mesma mono de 11px, mas com `letter-spacing: 0.08em`, o que dá 7,48px por
+ * caractere. Medido: "Valorada", com 8 letras, ocupa 59,8px.
+ */
+export const HEADER_CHAR_PX = 7.48;
+
+/** Recheio da célula, somando os dois lados. */
+export const CELL_PAD_PX = 14;
+
+/** O que uma coluna de símbolo ocupa: três losangos de 7px com 3px de vão. */
+export const SYMBOL_PX = 27;
+
+/**
+ * A largura de uma coluna, a partir do que ela vai DESENHAR.
+ *
+ * Não é a largura do maior valor, e sim a do PERCENTIL — 90% por padrão. A diferença
+ * importa: em livros, `Paizo Blog: Foolish Housekeeping and Other Articles` tem 52
+ * caracteres contra uma mediana de 12, e dimensionar pelo maior deixaria a coluna inteira
+ * vazia por causa de uma entrada. Os 10% que não couberem terminam em reticências, que é
+ * exatamente o que reticências existem para dizer.
+ *
+ * O cabeçalho é PISO: uma coluna mais estreita que o próprio título não se identifica.
+ *
+ * ⚠️ Recebe o texto JÁ DESENHADO, e não o dado cru. O livro chega mascarado (`Highhelm`, e
+ * não `Pathfinder Lost Omens Highhelm`) e o resto capitalizado — medir o cru daria uma
+ * coluna larga demais para o que aparece nela.
+ *
+ * Contagem por balde, e não ordenação: são 6.284 valores por coluna, e o comprimento de um
+ * nome cabe num byte. Ordenar seria O(n log n) para uma pergunta que é O(n).
+ */
+export function columnWidth(
+  drawn: readonly string[],
+  headerLength: number,
+  percentil = 0.9,
+): number {
+  const piso = headerLength * HEADER_CHAR_PX + CELL_PAD_PX;
+  if (drawn.length === 0) return Math.ceil(piso);
+
+  const MAX = 256;
+  const baldes = new Uint32Array(MAX);
+  for (const texto of drawn) {
+    const balde = Math.min(texto.length, MAX - 1);
+    baldes[balde] = (baldes[balde] ?? 0) + 1;
+  }
+
+  const alvo = Math.ceil(drawn.length * percentil);
+  let acumulado = 0;
+  let comprimento = 0;
+  for (let i = 0; i < MAX; i++) {
+    acumulado += baldes[i] ?? 0;
+    if (acumulado >= alvo) {
+      comprimento = i;
+      break;
+    }
+  }
+
+  const conteudo = comprimento * CELL_CHAR_PX + CHIP_PAD_PX + CELL_PAD_PX;
+  return Math.ceil(Math.max(conteudo, piso));
+}

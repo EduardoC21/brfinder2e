@@ -183,13 +183,20 @@
  * O que o distingue de um título morto é o cursor e o realce sob o mouse — e a seta, que
  * só aparece na coluna que está mandando na ordem.
  */
+/*
+ * ⚠️ NADA de `font: inherit` aqui.
+ *
+ * Foi o que eu escrevi primeiro, e está errado: `inherit` puxa do elemento PAI — a grade —
+ * e não do `.titulo`, que está na MESMA caixa. O resultado foi um "Nível" em minúscula e
+ * com a fonte do corpo, ao lado de "SETOR" e "LIVRO" em versalete mono.
+ *
+ * O certo é não declarar: `.titulo` já põe fonte, cor, espaçamento e caixa alta neste
+ * mesmo elemento, e estilo de autor vence o estilo do navegador para `<button>` sem
+ * precisar de ajuda.
+ */
 .ordenavel {
   gap: var(--space-1);
   border: 0;
-  color: inherit;
-  font: inherit;
-  letter-spacing: inherit;
-  text-transform: inherit;
   cursor: pointer;
 }
 
@@ -202,12 +209,28 @@
   outline-offset: -1px;
 }
 
+/*
+ * A seta reflete o ESTADO, e não a ação.
+ *
+ * Para baixo é crescente — de 1 para o maior, de A para Z —, que é a leitura de quem olha:
+ * a lista desce e os valores sobem. Eu tinha invertido.
+ */
 /* Largura reservada mesmo vazia, para o rótulo não pular quando a seta aparece. */
 .seta {
   width: 8px;
   color: var(--color-data);
   font-size: 8px;
   line-height: 1;
+}
+
+/*
+ * O espaço das linhas que não foram desenhadas.
+ *
+ * Atravessa todas as colunas porque a grade é uma só: um elemento que ocupasse uma trilha
+ * empurraria as células da linha seguinte para as trilhas erradas.
+ */
+.espacador {
+  grid-column: 1 / -1;
 }
 
 /* Símbolo centrado: não há começo nem fim de leitura numa marca. */

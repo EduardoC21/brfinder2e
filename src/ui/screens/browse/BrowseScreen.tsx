@@ -404,6 +404,7 @@ function SourcePane({
           ) : (
             <ResultList
               entities={results}
+              allEntities={entities}
               columns={colunasVisiveis}
               specials={especiaisAtivas}
               activeIndex={activeIndex}

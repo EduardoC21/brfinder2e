@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useRef } from 'react';
+import { forwardRef, useEffect, useMemo, useRef } from 'react';
 
 import {
   fieldList,
@@ -6,6 +6,10 @@ import {
   fitTraits,
   rarityLetter,
   traitSpace,
+  columnWidth,
+  frequencyToken,
+  CELL_PAD_PX,
+  SYMBOL_PX,
   type BrowseEntity,
   type ColumnSpec,
   type Sort,
@@ -19,8 +23,9 @@ import { RarityMark } from '@ui/components/RarityMark';
 import { cx } from '@ui/cx';
 import { capitalizar, fieldText } from '@ui/text';
 import { useTrackWidth } from '@ui/hooks/useTrackWidth';
+import { useWindowedRows } from '@ui/hooks/useWindowedRows';
 
-import { columnLabel } from './filterLabels';
+import { columnLabel, frequencyLabel } from './filterLabels';
 import styles from './ResultList.module.css';
 
 /** Quais dados fixos estão ligados nesta fonte, depois da escolha do usuário. */
@@ -40,6 +45,13 @@ interface ResultListProps {
   readonly onOpen: (index: number) => void;
   readonly sort: Sort;
   readonly onSort: (sort: Sort) => void;
+  /**
+   * TODAS as entradas da fonte, e não só as filtradas.
+   *
+   * A largura das colunas sai daqui. Medindo o resultado filtrado, elas mudariam de
+   * tamanho a cada clique num filtro — e uma tabela cujas colunas dançam é ilegível.
+   */
+  readonly allEntities: readonly BrowseEntity[];
 }
 
 /**
@@ -71,8 +83,10 @@ export function ResultList({
   onOpen,
   sort,
   onSort,
+  allEntities,
 }: ResultListProps) {
   const container = useRef<HTMLDivElement>(null);
+  const grade = useRef<HTMLDivElement>(null);
   const trilhaDoNome = useRef<HTMLButtonElement>(null);
 
   /*
@@ -105,6 +119,28 @@ export function ResultList({
    * Raridade e traços NÃO têm trilha: são informação do item, não coluna. Colados ao nome
    * eles acompanham nomes curtos em vez de flutuarem a meia tela de distância.
    */
+  /*
+   * A largura de cada coluna extra, medida uma vez sobre a base inteira da fonte.
+   *
+   * `auto` era o que havia antes, e não sobrevive ao janelamento: uma trilha `auto` se
+   * dimensiona pelo conteúdo PRESENTE, e com só 40 linhas no DOM as colunas mudariam de
+   * largura a cada rolada.
+   *
+   * Mede o texto DESENHADO — livro já mascarado, resto já capitalizado —, porque é isso
+   * que ocupa espaço na tela.
+   */
+  const larguras = useMemo(
+    () =>
+      columns.map((column) => {
+        if (column.kind === 'cost' || column.kind === 'boolean') {
+          return Math.max(SYMBOL_PX + CELL_PAD_PX, columnLabel(column).length * 7.48 + CELL_PAD_PX);
+        }
+        const desenhados = allEntities.map((entity) => textoDaColuna(column, entity));
+        return columnWidth(desenhados, columnLabel(column).length);
+      }),
+    [columns, allEntities],
+  );
+
   const trilhas = [
     /*
      * A trilha guarda o RECHEIO, e não só os dígitos. Com `3ch` puros a célula ficava com
@@ -113,20 +149,23 @@ export function ResultList({
      */
     specials.level !== null ? 'calc(5ch + var(--space-4) + var(--space-2))' : null,
     'minmax(0, 1fr)',
-    ...columns.map(() => 'auto'),
+    ...larguras.map((px) => `${String(px)}px`),
   ]
     .filter((trilha) => trilha !== null)
     .join(' ');
 
+  const janela = useWindowedRows(grade, entities.length, ALTURA_DA_LINHA);
+  const visiveis = entities.slice(janela.start, janela.end);
+
   return (
-    <div className={styles['tabela']} style={{ gridTemplateColumns: trilhas }}>
+    <div ref={grade} className={styles['tabela']} style={{ gridTemplateColumns: trilhas }}>
       {specials.level !== null && (
         <Ordenavel
           coluna="level"
           rotulo={strings.browse.columnLevel}
           sort={sort}
           onSort={onSort}
-          className={styles['nivel']}
+          className={styles['end']}
         />
       )}
       <Ordenavel
@@ -149,19 +188,34 @@ export function ResultList({
         aria-label={strings.browse.sourcesLabel}
         tabIndex={-1}
       >
-        {entities.map((entity, index) => (
-          <Linha
-            key={entity.key}
-            entity={entity}
-            index={index}
-            columns={columns}
-            specials={specials}
-            larguraDoNome={larguraDoNome}
-            ativa={index === activeIndex}
-            onActivate={onActivate}
-            onOpen={onOpen}
-          />
-        ))}
+        {/*
+          Os espaçadores atravessam TODAS as colunas e carregam a altura do que não foi
+          desenhado. É o que mantém a barra de rolagem do tamanho certo sem 6.284 linhas
+          no DOM.
+        */}
+        {janela.before > 0 && (
+          <div className={styles['espacador']} style={{ height: `${String(janela.before)}px` }} />
+        )}
+        {visiveis.map((entity, offset) => {
+          // O índice REAL, e não o da fatia: é ele que o teclado e a seleção usam.
+          const index = janela.start + offset;
+          return (
+            <Linha
+              key={entity.key}
+              entity={entity}
+              index={index}
+              columns={columns}
+              specials={specials}
+              larguraDoNome={larguraDoNome}
+              ativa={index === activeIndex}
+              onActivate={onActivate}
+              onOpen={onOpen}
+            />
+          );
+        })}
+        {janela.after > 0 && (
+          <div className={styles['espacador']} style={{ height: `${String(janela.after)}px` }} />
+        )}
       </div>
     </div>
   );
@@ -349,11 +403,39 @@ const Ordenavel = forwardRef<
     >
       {capitalizar(rotulo)}
       <span className={styles['seta']} aria-hidden="true">
-        {ativa ? (sort.direction === 'asc' ? '▲' : '▼') : ''}
+        {ativa ? (sort.direction === 'asc' ? '▼' : '▲') : ''}
       </span>
     </button>
   );
 });
+
+/**
+ * A altura de uma linha, em px. Espelha `--row-height` do CSS.
+ *
+ * Duplicada aqui de propósito, e é a única duplicata do sistema de design em JS: o
+ * janelamento precisa do número ANTES de existir DOM para medir. Se um dia mudar no CSS,
+ * muda aqui — e o teste de janela pega, porque a conta é a mesma.
+ */
+const ALTURA_DA_LINHA = 34;
+
+/**
+ * O texto que uma coluna desenha para uma entrada. Vazio quando ela não desenha nada.
+ *
+ * Existe para a medição de largura: ela precisa saber o que VAI aparecer, e não o que está
+ * no dado. `frequency` é o caso que prova — o dado é `{max, per}` e o desenho é "1× por dia".
+ */
+function textoDaColuna(spec: ColumnSpec, entity: BrowseEntity): string {
+  switch (spec.kind) {
+    case 'chip':
+    case 'text':
+      return fieldText(spec.field, fieldValue(entity, spec.field));
+    case 'frequency':
+      return frequencyLabel(frequencyToken(entity, spec.field));
+    case 'boolean':
+    case 'cost':
+      return '';
+  }
+}
 
 function alinhamento(spec: ColumnSpec): string | undefined {
   if (spec.align === 'end') return styles['end'];

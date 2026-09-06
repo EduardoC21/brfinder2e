@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { fitTraits, isMarkedRarity, rarityLetter, traitSpace } from './columns';
+import { columnWidth, fitTraits, isMarkedRarity, rarityLetter, traitSpace } from './columns';
 
 /* Largura de um traço: comprimento × 6,6 + 20 de recheio. `fire` custa 46px. */
 
@@ -101,5 +101,41 @@ describe('rarityLetter', () => {
   it('isMarkedRarity concorda com rarityLetter', () => {
     expect(isMarkedRarity('rare')).toBe(true);
     expect(isMarkedRarity('common')).toBe(false);
+  });
+});
+
+describe('columnWidth', () => {
+  const muitos = (n: number, tamanho: number): string[] =>
+    Array.from({ length: n }, () => 'x'.repeat(tamanho));
+
+  it('o cabeçalho é piso: coluna não fica mais estreita que o próprio título', () => {
+    // "Valorada" tem 8 letras: 8 × 7,48 + 14 = 73,84.
+    expect(columnWidth(['a'], 8)).toBe(74);
+  });
+
+  /*
+   * O caso que motivou o percentil: um valor gigante entre muitos curtos. `Paizo Blog:
+   * Foolish Housekeeping and Other Articles` tem 52 caracteres contra uma mediana de 12,
+   * e dimensionar pelo maior deixaria a coluna vazia por causa de uma entrada.
+   */
+  it('um valor gigante não estica a coluna inteira', () => {
+    const valores = [...muitos(99, 10), 'x'.repeat(52)];
+    const pelo90 = columnWidth(valores, 0);
+    const peloMaior = 52 * 6.6 + 14 + 14;
+    expect(pelo90).toBeLessThan(peloMaior / 2);
+  });
+
+  it('quando quase tudo é grande, a coluna acompanha', () => {
+    expect(columnWidth(muitos(100, 30), 0)).toBeGreaterThan(columnWidth(muitos(100, 10), 0));
+  });
+
+  it('o percentil corta onde foi pedido', () => {
+    // 80 valores de 5 e 20 de 40: o percentil 90 cai na faixa grande, o 50 não.
+    const mistos = [...muitos(80, 5), ...muitos(20, 40)];
+    expect(columnWidth(mistos, 0, 0.5)).toBeLessThan(columnWidth(mistos, 0, 0.9));
+  });
+
+  it('sem valor nenhum, sobra o cabeçalho', () => {
+    expect(columnWidth([], 5)).toBe(Math.ceil(5 * 7.48 + 14));
   });
 });
