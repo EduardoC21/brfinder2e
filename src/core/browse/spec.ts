@@ -181,7 +181,7 @@ export const SOURCES: readonly SourceSpec[] = [
     entityType: 'condition',
     mode: 'list',
     columns: [
-      { kind: 'chip', id: 'group', field: 'group', align: 'end' },
+      { kind: 'chip', id: 'group', field: 'group' },
       { kind: 'boolean', id: 'valued', field: 'valued' },
       { kind: 'text', id: 'source', field: 'source.title' },
     ],

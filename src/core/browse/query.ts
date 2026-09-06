@@ -291,3 +291,40 @@ export function byName(a: BrowseEntity, b: BrowseEntity): number {
 export function sortByName(entities: readonly BrowseEntity[]): BrowseEntity[] {
   return [...entities].sort(byName);
 }
+
+/** Por que coluna a lista está ordenada, e em que sentido. */
+export type SortColumn = 'name' | 'level';
+export type SortDirection = 'asc' | 'desc';
+export interface Sort {
+  readonly column: SortColumn;
+  readonly direction: SortDirection;
+}
+
+/** A ordem em que a lista abre: alfabética pelo nome. */
+export const DEFAULT_SORT: Sort = { column: 'name', direction: 'asc' };
+
+/**
+ * Ordena por nome ou por nível.
+ *
+ * Nível é comparado como NÚMERO, e desempatado pelo NOME. Sem o desempate, os 891
+ * talentos de nível 1 sairiam na ordem em que o filtro os deixou — que muda a cada
+ * clique, e uma lista que se reembaralha sozinha é pior que uma desordenada.
+ *
+ * Escrito à mão, e não com biblioteca de tabela: são duas comparações, e uma biblioteca
+ * traria junto um modelo de DOM próprio que brigaria com a grade compartilhada da lista.
+ */
+export function sortEntities(entities: readonly BrowseEntity[], sort: Sort): BrowseEntity[] {
+  const sinal = sort.direction === 'asc' ? 1 : -1;
+  if (sort.column === 'name') return [...entities].sort((a, b) => sinal * byName(a, b));
+
+  return [...entities].sort((a, b) => {
+    const na = Number(fieldValue(a, 'level'));
+    const nb = Number(fieldValue(b, 'level'));
+    // Entrada sem nível válido vai para o fim NOS DOIS SENTIDOS: ela não participa da
+    // pergunta "do menor para o maior", e pô-la no topo do decrescente seria mentira.
+    const va = Number.isFinite(na);
+    const vb = Number.isFinite(nb);
+    if (!va || !vb) return va === vb ? byName(a, b) : va ? -1 : 1;
+    return na === nb ? byName(a, b) : sinal * (na - nb);
+  });
+}

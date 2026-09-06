@@ -6,7 +6,9 @@ import {
   createSearchIndex,
   firstReadySource,
   fieldValue,
-  sortByName,
+  sortEntities,
+  DEFAULT_SORT,
+  type Sort,
   type BrowseEntity,
   type FilterState,
   type SourceSpec,
@@ -175,9 +177,30 @@ function SourcePane({
     [entities, source.searchFields],
   );
 
+  /*
+   * A ordem é estado da TELA, e não preferência gravada.
+   *
+   * Ordenar é um gesto de leitura do momento — "quero ver os de nível alto agora" —, e não
+   * uma configuração. Guardá-la faria a lista abrir amanhã numa ordem que a pessoa não
+   * lembra ter pedido. Volta ao padrão ao trocar de fonte, pelo mesmo motivo.
+   */
+  const [sort, setSort] = useState<Sort>(DEFAULT_SORT);
+  /*
+   * Trocar de fonte volta à ordem padrão — ajustado DURANTE o render, e não num efeito.
+   *
+   * É o idioma do React para "acertar estado quando uma prop muda": o efeito rodaria
+   * DEPOIS da tela já ter sido pintada com a ordem antiga, e a lista piscaria na ordem
+   * errada antes de se corrigir. Aqui o React descarta este render e refaz, sem pintar.
+   */
+  const [fonteDaOrdem, setFonteDaOrdem] = useState(source.id);
+  if (fonteDaOrdem !== source.id) {
+    setFonteDaOrdem(source.id);
+    setSort(DEFAULT_SORT);
+  }
+
   const results = useMemo(() => {
     const filtered = applyFilters(entities, source.filters, filters);
-    if (deferredTerm.trim() === '') return sortByName(filtered);
+    if (deferredTerm.trim() === '') return sortEntities(filtered, sort);
 
     // Com termo, a ordem é a da RELEVÂNCIA, não a alfabética — e o filtro só recorta.
     const allowed = new Set(filtered.map((entity) => entity.key));
@@ -187,7 +210,7 @@ function SourcePane({
       .filter((key) => allowed.has(key))
       .map((key) => byKey.get(key))
       .filter((entity): entity is BrowseEntity => entity !== undefined);
-  }, [entities, source.filters, filters, deferredTerm, index]);
+  }, [entities, source.filters, filters, deferredTerm, index, sort]);
 
   const opened = results.find((entity) => entity.key === openedKey) ?? null;
   /**
@@ -384,6 +407,8 @@ function SourcePane({
               columns={colunasVisiveis}
               specials={especiaisAtivas}
               activeIndex={activeIndex}
+              sort={sort}
+              onSort={setSort}
               onActivate={(index) => {
                 setActiveIndex(index);
                 const chosen = results[index];

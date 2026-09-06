@@ -176,6 +176,45 @@
  * A calha do nível: largura fixa e dígitos de mesma largura, para os nomes alinharem
  * entre si em vez de dançarem conforme o número tenha uma ou duas casas.
  */
+/*
+ * O cabeçalho que ordena.
+ *
+ * Herda a tipografia de `.titulo` e some como botão: sem borda, sem fundo, cor do rótulo.
+ * O que o distingue de um título morto é o cursor e o realce sob o mouse — e a seta, que
+ * só aparece na coluna que está mandando na ordem.
+ */
+.ordenavel {
+  gap: var(--space-1);
+  border: 0;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+}
+
+.ordenavel:hover {
+  color: var(--color-text);
+}
+
+.ordenavel:focus-visible {
+  outline: 1px solid var(--color-data);
+  outline-offset: -1px;
+}
+
+/* Largura reservada mesmo vazia, para o rótulo não pular quando a seta aparece. */
+.seta {
+  width: 8px;
+  color: var(--color-data);
+  font-size: 8px;
+  line-height: 1;
+}
+
+/* Símbolo centrado: não há começo nem fim de leitura numa marca. */
+.centro {
+  justify-content: center;
+}
+
 .nivel {
   justify-content: flex-end;
   color: var(--color-data);

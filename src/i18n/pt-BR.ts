@@ -52,6 +52,14 @@ export const ptBR = {
     expandDetail: 'Mostrar o painel',
     columns: 'Colunas',
     columnName: 'nome',
+    columnLevel: 'nível',
+    /** O que o clique no cabeçalho vai fazer, dito antes de acontecer. */
+    sort: {
+      asc: (coluna: string) => `Ordenar por ${coluna}, do menor para o maior`,
+      desc: (coluna: string) => `Ordenar por ${coluna}, do maior para o menor`,
+      ascName: (coluna: string) => `Ordenar por ${coluna}, de A a Z`,
+      descName: (coluna: string) => `Ordenar por ${coluna}, de Z a A`,
+    },
     moreTraits: (n: number) => (n === 1 ? 'mais 1 traço' : `mais ${String(n)} traços`),
     /** Os nomes de raridade, para o `title` da etiqueta de uma letra. */
     rarity: {

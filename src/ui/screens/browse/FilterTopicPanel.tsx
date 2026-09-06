@@ -207,7 +207,7 @@ export function FilterTopicPanel({
                   ) : spec.kind === 'rarity' ? (
                     <RarityOption value={opcao.value} />
                   ) : (
-                    valueLabel(spec, opcao.value)
+                    <span className={styles['labelText']}>{valueLabel(spec, opcao.value)}</span>
                   )}
                 </span>
                 <span className={styles['count']}>{opcao.count}</span>

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { forwardRef, useEffect, useRef } from 'react';
 
 import {
   fieldList,
@@ -8,6 +8,9 @@ import {
   traitSpace,
   type BrowseEntity,
   type ColumnSpec,
+  type Sort,
+  type SortColumn,
+  type SortDirection,
 } from '@core/browse/index';
 import { strings } from '@i18n/index';
 import { ActionCost } from '@ui/components/ActionCost';
@@ -35,6 +38,8 @@ interface ResultListProps {
   readonly activeIndex: number;
   readonly onActivate: (index: number) => void;
   readonly onOpen: (index: number) => void;
+  readonly sort: Sort;
+  readonly onSort: (sort: Sort) => void;
 }
 
 /**
@@ -64,9 +69,11 @@ export function ResultList({
   activeIndex,
   onActivate,
   onOpen,
+  sort,
+  onSort,
 }: ResultListProps) {
   const container = useRef<HTMLDivElement>(null);
-  const trilhaDoNome = useRef<HTMLSpanElement>(null);
+  const trilhaDoNome = useRef<HTMLButtonElement>(null);
 
   /*
    * UMA medida para a lista inteira: a largura da trilha do nome.
@@ -104,7 +111,7 @@ export function ResultList({
      * 23,4px enquanto o recheio comia 21 — sobravam 2,4px, e o número escapava por cima
      * da borda esquerda da lista. Medido na tela, não deduzido.
      */
-    specials.level !== null ? 'calc(3ch + var(--space-4) + var(--space-2))' : null,
+    specials.level !== null ? 'calc(5ch + var(--space-4) + var(--space-2))' : null,
     'minmax(0, 1fr)',
     ...columns.map(() => 'auto'),
   ]
@@ -113,10 +120,22 @@ export function ResultList({
 
   return (
     <div className={styles['tabela']} style={{ gridTemplateColumns: trilhas }}>
-      {specials.level !== null && <span className={cx(styles['titulo'], styles['nivel'])} />}
-      <span ref={trilhaDoNome} className={styles['titulo']}>
-        {strings.browse.columnName}
-      </span>
+      {specials.level !== null && (
+        <Ordenavel
+          coluna="level"
+          rotulo={strings.browse.columnLevel}
+          sort={sort}
+          onSort={onSort}
+          className={styles['nivel']}
+        />
+      )}
+      <Ordenavel
+        ref={trilhaDoNome}
+        coluna="name"
+        rotulo={strings.browse.columnName}
+        sort={sort}
+        onSort={onSort}
+      />
       {columns.map((column) => (
         <span key={column.id} className={cx(styles['titulo'], alinhamento(column))}>
           {columnLabel(column)}
@@ -270,8 +289,76 @@ function rarityTitle(rarity: string): string {
   return strings.browse.rarity[rarity] ?? rarity;
 }
 
+/**
+ * O alinhamento sai da ESPÉCIE, e não de cada descritor.
+ *
+ * É a convenção de qualquer tabela de dados, e ela existe por um motivo de leitura:
+ *
+ *   texto    à esquerda  — o olho volta sempre ao mesmo x para começar a ler
+ *   número   à direita   — as casas decimais se alinham, e 8 fica sob o 8 de 18
+ *   símbolo  centrado    — não há começo nem fim de leitura, só uma marca
+ *
+ * Antes cada coluna declarava `align: 'end'` e o resto ficava à esquerda por omissão, o
+ * que dava texto grudado na borda direita e símbolo perdido no canto. `align` continua
+ * existindo como exceção explícita, e hoje ninguém a usa.
+ */
+/**
+ * Um cabeçalho que ORDENA ao ser clicado.
+ *
+ * Botão de verdade, e não um `<span>` com `onClick`: só o botão responde a Enter e a Espaço
+ * sem que a gente escreva nada, e só ele entra na navegação por Tab. O `aria-sort` vai no
+ * elemento porque é o que um leitor de tela anuncia — sem ele, a pessoa clica e não recebe
+ * confirmação de nada.
+ *
+ * O ciclo tem DOIS estados, e não três: crescente e decrescente. Um terceiro estado
+ * "nenhuma ordem" devolveria a lista à ordem em que o filtro a deixou, que não é ordem
+ * nenhuma — a lista sempre esteve ordenada por nome, e continuar assim é o repouso.
+ */
+const Ordenavel = forwardRef<
+  HTMLButtonElement,
+  {
+    readonly coluna: SortColumn;
+    readonly rotulo: string;
+    readonly sort: Sort;
+    readonly onSort: (sort: Sort) => void;
+    readonly className?: string | undefined;
+  }
+>(function Ordenavel({ coluna, rotulo, sort, onSort, className }, ref) {
+  const ativa = sort.column === coluna;
+  const proxima: SortDirection = ativa && sort.direction === 'asc' ? 'desc' : 'asc';
+  const s = strings.browse.sort;
+  const dica =
+    coluna === 'name'
+      ? proxima === 'asc'
+        ? s.ascName(rotulo)
+        : s.descName(rotulo)
+      : proxima === 'asc'
+        ? s.asc(rotulo)
+        : s.desc(rotulo);
+
+  return (
+    <button
+      ref={ref}
+      type="button"
+      className={cx(styles['titulo'], styles['ordenavel'], className)}
+      aria-sort={ativa ? (sort.direction === 'asc' ? 'ascending' : 'descending') : 'none'}
+      title={dica}
+      onClick={() => {
+        onSort({ column: coluna, direction: proxima });
+      }}
+    >
+      {capitalizar(rotulo)}
+      <span className={styles['seta']} aria-hidden="true">
+        {ativa ? (sort.direction === 'asc' ? '▲' : '▼') : ''}
+      </span>
+    </button>
+  );
+});
+
 function alinhamento(spec: ColumnSpec): string | undefined {
-  return spec.align === 'end' ? styles['end'] : undefined;
+  if (spec.align === 'end') return styles['end'];
+  if (spec.kind === 'cost' || spec.kind === 'boolean') return styles['centro'];
+  return undefined;
 }
 
 /**
