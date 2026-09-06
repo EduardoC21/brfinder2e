@@ -11,6 +11,7 @@ import {
   type FilterState,
 } from '@core/browse/index';
 import { strings } from '@i18n/index';
+import { capitalizar, isNumberedAdventure } from '@ui/text';
 import { ActionCost } from '@ui/components/ActionCost';
 import { RarityMark } from '@ui/components/RarityMark';
 import { SearchInput } from '@ui/components/SearchInput';
@@ -54,7 +55,33 @@ export function FilterTopicPanel({
 }: FilterTopicPanelProps) {
   const [busca, setBusca] = useState('');
 
-  const opcoes = useMemo(() => optionsFor(entities, spec), [entities, spec]);
+  /*
+   * A ordem segue o que é DESENHADO, e não o valor cru.
+   *
+   * O `core` devolve as opções ordenadas pelo valor, e para quase todo tópico as duas
+   * coisas coincidem. Não para livro: `Pathfinder Lost Omens Highhelm` é desenhado como
+   * `Highhelm`, e ordenar pelo cru punha os 95 títulos que começam com "Pathfinder" na
+   * ordem do que vem DEPOIS de um prefixo que ninguém lê.
+   *
+   * Só `options` e `list` são reordenados. `rarity`, `frequency` e `cost` têm ordem de
+   * domínio — comum→única, curto→longo, ◆→— — e alfabetá-las seria perdê-la.
+   */
+  const brutas = useMemo(() => optionsFor(entities, spec), [entities, spec]);
+  const opcoes = useMemo(() => {
+    if (spec.kind !== 'options' && spec.kind !== 'list') return brutas;
+    return [...brutas].sort((a, b) => {
+      if (a.value === '') return 1;
+      if (b.value === '') return -1;
+      const ra = valueLabel(spec, a.value);
+      const rb = valueLabel(spec, b.value);
+      // As aventuras numeradas por último: `#` vence qualquer letra no alfabeto, e elas
+      // são 48 dos 127 livros — ordenadas junto, ocupam o topo inteiro da lista.
+      const na = isNumberedAdventure(ra) ? 1 : 0;
+      const nb = isNumberedAdventure(rb) ? 1 : 0;
+      if (na !== nb) return na - nb;
+      return ra.localeCompare(rb, undefined, { numeric: true });
+    });
+  }, [brutas, spec]);
   /*
    * Memoizado porque entra nas dependências do `useMemo` abaixo: `?? []` cria um array
    * novo a cada render quando o tópico não tem nada marcado, e isso refaria a filtragem
@@ -203,11 +230,11 @@ export function FilterTopicPanel({
  */
 function RarityOption({ value }: { readonly value: string }) {
   const letra = rarityLetter(value);
-  const nome = strings.browse.rarity[value] ?? value;
+  const nome = capitalizar(strings.browse.rarity[value] ?? value);
   return (
     <>
-      {letra === null ? null : <RarityMark letter={letra} label={nome} />}
       {nome}
+      {letra === null ? null : <RarityMark letter={letra} label={nome} />}
     </>
   );
 }

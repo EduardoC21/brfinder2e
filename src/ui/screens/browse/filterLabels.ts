@@ -1,5 +1,6 @@
 import { parseDurationCode, type ColumnSpec, type FilterSpec } from '@core/browse/index';
 import { strings } from '@i18n/index';
+import { BOOK_FIELD, bookLabel, capitalizar } from '@ui/text';
 
 const t = strings.browse;
 
@@ -25,11 +26,12 @@ export function topicLabel(spec: FilterSpec): string {
 /** O rótulo de um valor. Booleano e "sem valor" precisam de tradução; o resto é o dado. */
 export function valueLabel(spec: FilterSpec, value: string): string {
   if (value === '') return t.noValue;
-  if (spec.kind === 'boolean') return value === 'true' ? t.yes : t.no;
+  if (spec.kind === 'boolean') return capitalizar(value === 'true' ? t.yes : t.no);
   if (spec.kind === 'cost') return costLabel(value);
-  if (spec.kind === 'rarity') return t.rarity[value] ?? value;
+  if (spec.kind === 'rarity') return capitalizar(t.rarity[value] ?? value);
   if (spec.kind === 'frequency') return frequencyLabel(value);
-  return value;
+  if (spec.field === BOOK_FIELD) return bookLabel(value);
+  return capitalizar(value);
 }
 
 /**

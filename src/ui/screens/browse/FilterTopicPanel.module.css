@@ -161,7 +161,15 @@
   color: #e8a0ad;
 }
 
+/*
+ * Flex, e não texto solto: a etiqueta de raridade é `display: grid`, ou seja NÍVEL DE
+ * BLOCO, e num contêiner de texto ela quebrava a linha e ficava por cima da palavra em vez
+ * de ao lado. Em linha, o `gap` cuida do respiro e o `min-width: 0` mantém as reticências.
+ */
 .label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;

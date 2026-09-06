@@ -14,6 +14,7 @@ import { ActionCost } from '@ui/components/ActionCost';
 import { Frequency } from '@ui/components/Frequency';
 import { RarityMark } from '@ui/components/RarityMark';
 import { cx } from '@ui/cx';
+import { capitalizar, fieldText } from '@ui/text';
 import { useTrackWidth } from '@ui/hooks/useTrackWidth';
 
 import { columnLabel } from './filterLabels';
@@ -227,9 +228,13 @@ function Linha({
 
         {traços !== null && (traços.shown.length > 0 || traços.hidden > 0) && (
           <span className={styles['tracos']}>
+            {/*
+              Capitalizar NÃO mexe na conta de `fitTraits`: ela mede caracteres, e trocar a
+              caixa da primeira letra não muda quantos são.
+            */}
             {traços.shown.map((trait) => (
               <span key={trait} className={styles['chip']}>
-                {trait}
+                {capitalizar(trait)}
               </span>
             ))}
             {traços.hidden > 0 && (
@@ -242,6 +247,7 @@ function Linha({
                 className={cx(styles['chip'], styles['resto'])}
                 title={fieldList(entity, specials.traits ?? '')
                   .slice(traços.shown.length)
+                  .map(capitalizar)
                   .join(', ')}
               >
                 +{traços.hidden}
@@ -282,13 +288,13 @@ function Column({ spec, entity }: { readonly spec: ColumnSpec; readonly entity: 
     case 'chip': {
       const value = fieldValue(entity, spec.field);
       if (value === '') return null;
-      return <span className={styles['chip']}>{capitalizar(value)}</span>;
+      return <span className={styles['chip']}>{fieldText(spec.field, value)}</span>;
     }
 
     case 'text': {
       const value = fieldValue(entity, spec.field);
       if (value === '') return null;
-      return <span className={styles['chip']}>{capitalizar(value)}</span>;
+      return <span className={styles['chip']}>{fieldText(spec.field, value)}</span>;
     }
 
     /*
@@ -320,9 +326,4 @@ function Column({ spec, entity }: { readonly spec: ColumnSpec; readonly entity: 
       return <ActionCost kind={kind} count={Number.isFinite(count) ? count : null} />;
     }
   }
-}
-
-/** `offensive` vira `Offensive`. O dado vem em minúscula; a coluna é uma etiqueta. */
-function capitalizar(value: string): string {
-  return value.charAt(0).toUpperCase() + value.slice(1);
 }

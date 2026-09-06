@@ -17,6 +17,7 @@ import { RarityMark } from '@ui/components/RarityMark';
 import { RichText } from '@ui/components/RichText';
 import { CollapseToggle } from '@ui/components/CollapseToggle';
 import { cx } from '@ui/cx';
+import { bookLabel, capitalizar, fieldText } from '@ui/text';
 
 import styles from './DetailPanel.module.css';
 
@@ -211,7 +212,7 @@ function Field({
     case 'text': {
       const value = fieldValue(entity, spec.field);
       if (value === '') return null;
-      return <Row label={label(spec.field)}>{value}</Row>;
+      return <Row label={label(spec.field)}>{fieldText(spec.field, value)}</Row>;
     }
 
     /*
@@ -240,7 +241,7 @@ function Field({
           <span className={styles['chips']}>
             {list.map((item) => (
               <span key={item} className={cx(styles['chip'], 'chamfer-sm')}>
-                {item}
+                {capitalizar(item)}
               </span>
             ))}
           </span>
@@ -262,8 +263,13 @@ function Field({
       if (title === '') return null;
       const legado = fieldValue(entity, 'source.remaster') === 'false';
       return (
-        <Row label={label('source.title')}>
-          {title}
+        <Row label={label('source.title')} title={title}>
+          {/*
+            O nome DESCASCADO, igual à lista e ao filtro. "Pathfinder" é redundante num app
+            que só tem Pathfinder, e "Lost Omens" é linha de produto, não nome do livro.
+            O título inteiro fica no `title` da linha, para quem precisar citar a fonte.
+          */}
+          {bookLabel(title)}
           {legado && (
             <span className={cx(styles['legacy'], 'chamfer-sm')} title={b.legacyHint}>
               {b.legacy}
@@ -282,11 +288,22 @@ function Field({
   }
 }
 
-function Row({ label, children }: { readonly label: string; readonly children: React.ReactNode }) {
+function Row({
+  label,
+  title,
+  children,
+}: {
+  readonly label: string;
+  /** O valor por extenso, para quando o desenhado for encurtado. Só o livro usa hoje. */
+  readonly title?: string;
+  readonly children: React.ReactNode;
+}) {
   return (
     <>
       <dt className={styles['label']}>{label}</dt>
-      <dd className={styles['value']}>{children}</dd>
+      <dd className={styles['value']} {...(title === undefined ? {} : { title })}>
+        {children}
+      </dd>
     </>
   );
 }
