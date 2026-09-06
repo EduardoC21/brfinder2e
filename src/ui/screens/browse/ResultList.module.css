@@ -38,6 +38,17 @@
   gap: var(--space-1);
   min-width: 0;
   height: var(--row-height);
+  /*
+   * A linha NUNCA quebra, e isso não é estética: a altura fixa de 34px é a premissa da
+   * conta que decide quais linhas desenhar. Uma célula que quebra em duas desalinha a
+   * janela inteira dali para baixo.
+   *
+   * Apareceu com a coluna de frequência, que desenha texto solto em vez de caixinha:
+   * "1× a cada 10 minutos" quebrava em duas linhas numa coluna estreita.
+   */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   padding: 0 var(--space-2);
   border-bottom: 1px solid var(--color-hairline);
   background: transparent;

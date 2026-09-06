@@ -151,6 +151,16 @@ describe('columnWidth', () => {
     expect(columnWidth(comoOsLivros, 0)).toBeGreaterThanOrEqual(Math.ceil(24 * 6.6 + 28));
   });
 
+  /*
+   * A coluna esparsa. Medido na frequência dos talentos: 5.659 dos 6.284 são vazios, e com
+   * eles na conta Q1 e Q3 iam a zero — a coluna caía no piso do cabeçalho e truncava as 625
+   * frequências que existem.
+   */
+  it('célula vazia não entra na conta: ela não desenha nada', () => {
+    const esparsa = [...muitos(900, 0), ...muitos(100, 20)];
+    expect(columnWidth(esparsa, 0)).toBe(columnWidth(muitos(100, 20), 0));
+  });
+
   it('sem valor nenhum, sobra o cabeçalho', () => {
     expect(columnWidth([], 5)).toBe(Math.ceil(5 * 7.48 + 14));
   });

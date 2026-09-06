@@ -210,18 +210,29 @@ export const SYMBOL_PX = 27;
  */
 export function columnWidth(drawn: readonly string[], headerLength: number): number {
   const piso = headerLength * HEADER_CHAR_PX + CELL_PAD_PX;
-  if (drawn.length === 0) return Math.ceil(piso);
+
+  /*
+   * ⚠️ O VAZIO NÃO CONTA.
+   *
+   * Uma célula vazia não desenha nada e não ocupa largura — pô-la na distribuição é medir
+   * ausências. E numa coluna esparsa ela domina: 5.659 dos 6.284 talentos não têm
+   * frequência, ou seja 90% da população, o que levava Q1 e Q3 a ZERO e a cerca junto. A
+   * coluna caía no piso do cabeçalho, 89px, e truncava TODAS as 625 frequências que
+   * existem. Ignorando os vazios ela vai a 160px e mostra as 625 inteiras.
+   */
+  const valores = drawn.filter((texto) => texto !== '');
+  if (valores.length === 0) return Math.ceil(piso);
 
   const MAX = 256;
   const baldes = new Uint32Array(MAX);
-  for (const texto of drawn) {
+  for (const texto of valores) {
     const balde = Math.min(texto.length, MAX - 1);
     baldes[balde] = (baldes[balde] ?? 0) + 1;
   }
 
   /* O comprimento na posição `p` da lista ordenada, sem ordenar. */
   const quantil = (p: number): number => {
-    const alvo = Math.max(1, Math.ceil(drawn.length * p));
+    const alvo = Math.max(1, Math.ceil(valores.length * p));
     let acumulado = 0;
     for (let i = 0; i < MAX; i++) {
       acumulado += baldes[i] ?? 0;

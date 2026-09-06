@@ -15,10 +15,21 @@ const t = strings.browse;
  * A linha tem altura FIXA (34px) e não quebra — é o que faz o olho varrer a lista. Sem
  * teto, marcar sete colunas espremeria o nome até sobrar a primeira letra.
  *
- * Caiu de quatro para DUAS porque nível, raridade e traços passaram a ocupar o meio da
- * linha. Elas não contam neste teto: não disputam o espaço da direita.
+ * Foi quatro, caiu para duas quando nível, raridade e traços passaram a ocupar o meio da
+ * linha, e voltou para TRÊS quando a largura das colunas passou a ser medida pela cerca de
+ * Tukey em vez de crescer com o conteúdo. Elas não contam neste teto: não disputam o espaço
+ * da direita.
+ *
+ * O três é medido, não chutado. Em talentos as colunas ficaram em Livro 193, Setor 114,
+ * Frequência 89, Nível 1 67 e Custo 52 — as três mais largas somam 396px, contra 307 das
+ * duas. A terceira custa 89px, e numa janela de 1.400 com a barra de fontes aberta e o
+ * detalhe na largura padrão o nome ainda fica com 356px.
+ *
+ * O caso apertado — janela no mínimo de 1.100 com o detalhe arrastado ao máximo — já era
+ * apertado com duas (15px para o nome), e quem o resolve não é este teto: é o
+ * `minmax(0, Npx)` das trilhas, que faz as colunas encolherem em vez de a grade estourar.
  */
-const MAXIMO = 2;
+const MAXIMO = 3;
 
 /** As especiais, na ordem em que aparecem na linha. */
 const ESPECIAIS = ['level', 'rarity', 'traits'] as const;

@@ -148,8 +148,29 @@ export function ResultList({
      * da borda esquerda da lista. Medido na tela, não deduzido.
      */
     specials.level !== null ? 'calc(5ch + var(--space-4) + var(--space-2))' : null,
-    'minmax(0, 1fr)',
-    ...larguras.map((px) => `${String(px)}px`),
+    /*
+     * PISO no nome, e não `minmax(0, 1fr)`.
+     *
+     * Uma trilha `fr` recebe o que sobra DEPOIS que as trilhas com teto crescem até ele —
+     * ou seja, as colunas têm prioridade sobre o nome, que é o inverso do certo. Medido:
+     * numa lista de 280px o nome ia a ZERO enquanto as três colunas ficavam com 73px cada.
+     *
+     * Com o piso, o nome é servido primeiro e as colunas dividem o resto. 140px são umas
+     * dezoito letras em Spectral — o suficiente para a entrada continuar identificável.
+     */
+    'minmax(140px, 1fr)',
+    /*
+     * `minmax(0, Npx)` e não `Npx` seco: a largura é um TETO, não uma exigência.
+     *
+     * Com px fixo, a grade estoura para fora quando a soma não cabe — medido, numa janela
+     * de 1.100 (o mínimo do app) com a barra de fontes aberta e a de detalhe arrastada ao
+     * máximo, três colunas passavam 74px do que havia. Como teto, elas encolhem antes
+     * disso e o conteúdo termina em reticências, que é degradar em vez de quebrar.
+     *
+     * Não custa nada no caso normal: trilha com teto cresce até ele ANTES de a sobra ser
+     * distribuída para o `1fr` do nome.
+     */
+    ...larguras.map((px) => `minmax(0, ${String(px)}px)`),
   ]
     .filter((trilha) => trilha !== null)
     .join(' ');
@@ -429,8 +450,17 @@ function textoDaColuna(spec: ColumnSpec, entity: BrowseEntity): string {
     case 'chip':
     case 'text':
       return fieldText(spec.field, fieldValue(entity, spec.field));
-    case 'frequency':
-      return frequencyLabel(frequencyToken(entity, spec.field));
+    case 'frequency': {
+      /*
+       * Token vazio devolve vazio, e não a frase que `frequencyLabel` escreveria para ele.
+       *
+       * Sem isto a medição MENTE: `frequencyLabel('')` produz "1× ???" — texto, onde a
+       * célula não desenha nada —, e os 5.659 talentos sem frequência entravam na conta
+       * como se ocupassem espaço.
+       */
+      const token = frequencyToken(entity, spec.field);
+      return token === '' ? '' : frequencyLabel(token);
+    }
     case 'boolean':
     case 'cost':
       return '';
