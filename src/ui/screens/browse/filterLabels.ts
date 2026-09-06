@@ -1,4 +1,4 @@
-import type { ColumnSpec, FilterSpec } from '@core/browse/index';
+import { parseDurationCode, type ColumnSpec, type FilterSpec } from '@core/browse/index';
 import { strings } from '@i18n/index';
 
 const t = strings.browse;
@@ -27,7 +27,28 @@ export function valueLabel(spec: FilterSpec, value: string): string {
   if (value === '') return t.noValue;
   if (spec.kind === 'boolean') return value === 'true' ? t.yes : t.no;
   if (spec.kind === 'cost') return costLabel(value);
+  if (spec.kind === 'rarity') return t.rarity[value] ?? value;
+  if (spec.kind === 'frequency') return frequencyLabel(value);
   return value;
+}
+
+/**
+ * `1:day` → "1× por dia".
+ *
+ * Escreve a mesma frase que o componente `Frequency` desenha, a partir do TOKEN em vez da
+ * entrada. As duas leituras têm de bater — quem filtra por "1× por dia" espera ver
+ * exatamente isso escrito na coluna.
+ */
+export function frequencyLabel(token: string): string {
+  const [max, per] = token.split(':');
+  const f = t.frequency;
+  const duracao = parseDurationCode(per ?? '');
+  const unidade = duracao === null ? undefined : f.units[duracao.unit];
+  const quantas = f.times(Number(max ?? 1));
+  if (duracao === null || unidade === undefined) {
+    return `${quantas} ${f.unknown(per ?? '')}`;
+  }
+  return `${quantas} ${f.every(duracao.count, unidade)}`;
 }
 
 function costLabel(token: string): string {

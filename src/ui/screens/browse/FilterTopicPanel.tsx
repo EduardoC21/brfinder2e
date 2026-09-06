@@ -4,6 +4,7 @@ import {
   combineOf,
   foldTerm,
   optionsFor,
+  rarityLetter,
   type BrowseEntity,
   type Combine,
   type FilterSpec,
@@ -11,6 +12,7 @@ import {
 } from '@core/browse/index';
 import { strings } from '@i18n/index';
 import { ActionCost } from '@ui/components/ActionCost';
+import { RarityMark } from '@ui/components/RarityMark';
 import { SearchInput } from '@ui/components/SearchInput';
 import { cx } from '@ui/cx';
 
@@ -175,6 +177,8 @@ export function FilterTopicPanel({
                 <span className={styles['label']}>
                   {spec.kind === 'cost' ? (
                     <CostOption token={opcao.value} />
+                  ) : spec.kind === 'rarity' ? (
+                    <RarityOption value={opcao.value} />
                   ) : (
                     valueLabel(spec, opcao.value)
                   )}
@@ -186,6 +190,25 @@ export function FilterTopicPanel({
         )}
       </div>
     </section>
+  );
+}
+
+/**
+ * A opção de raridade: a etiqueta E a palavra.
+ *
+ * A etiqueta é a mesma da lista, pelo mesmo componente — é o que faz a pessoa reconhecer
+ * na lista o que marcou no filtro. `common` não desenha etiqueta nenhuma, igual à lista,
+ * e por isso a palavra vem junto: sem ela, a opção mais numerosa da base seria um espaço
+ * em branco clicável.
+ */
+function RarityOption({ value }: { readonly value: string }) {
+  const letra = rarityLetter(value);
+  const nome = strings.browse.rarity[value] ?? value;
+  return (
+    <>
+      {letra === null ? null : <RarityMark letter={letra} label={nome} />}
+      {nome}
+    </>
   );
 }
 

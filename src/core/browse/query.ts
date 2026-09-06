@@ -6,7 +6,10 @@
  * exclui. Juntá-los faria a ordenação depender de haver termo digitado.
  */
 
+import { isRecord } from '../json';
 import { readPath } from '../normalization/paths';
+import { RARITY_ORDER, type Rarity } from './columns';
+import { parseDurationCode } from './duration';
 import type { Combine, FilterSpec } from './spec';
 
 /**
@@ -78,27 +81,86 @@ export function costToken(entity: BrowseEntity): string {
   return count === '' ? 'action' : count;
 }
 
+/**
+ * A frequência como UM token: `1:day`, `3:day`. Vazio quando não há.
+ *
+ * Dois campos viram um pelo mesmo motivo do custo: a pessoa quer "as de uma vez por dia",
+ * não "as de máximo um com período dia".
+ */
+export function frequencyToken(entity: BrowseEntity, field: string): string {
+  const base = entity.base;
+  if (!isRecord(base)) return '';
+  const value = base[field];
+  if (!isRecord(value)) return '';
+  const max = Number(value['max']);
+  const per = typeof value['per'] === 'string' ? value['per'] : '';
+  if (per === '') return '';
+  return `${String(Number.isFinite(max) ? max : 1)}:${per}`;
+}
+
+/**
+ * Quanto dura cada unidade, da mais curta para a mais longa.
+ *
+ * `turn` antes de `round` porque o turno é parte da rodada. Ordenar frequência pelo
+ * alfabeto poria "por dia" antes de "por rodada", que é o contrário do que a pessoa lê.
+ */
+const DURACAO: Readonly<Record<string, number>> = {
+  turn: 0,
+  round: 1,
+  second: 2,
+  minute: 3,
+  hour: 4,
+  day: 5,
+  week: 6,
+  month: 7,
+  year: 8,
+};
+
+function pesoDaFrequencia(token: string): number {
+  const [max, per] = token.split(':');
+  const duracao = parseDurationCode(per ?? '');
+  // Código desconhecido vai para o fim, e não para o meio fingindo que foi entendido.
+  const unidade = duracao === null ? 99 : (DURACAO[duracao.unit] ?? 99);
+  const conta = duracao === null ? 0 : duracao.count;
+  return unidade * 10_000 + conta * 100 + Number(max ?? 1);
+}
+
 /** Os valores distintos de um campo, com quantas entradas têm cada um. */
 export interface FilterOption {
   readonly value: string;
   readonly count: number;
 }
 
-function ordenar(counts: Map<string, number>): readonly FilterOption[] {
-  return [...counts]
-    .map(([value, count]) => ({ value, count }))
-    .sort((a, b) => {
-      // "sem valor" por último; o resto em ordem alfabética, não por contagem — a lista
-      // precisa ficar no mesmo lugar entre uma busca e outra.
+function ordenar(counts: Map<string, number>, spec: FilterSpec): readonly FilterOption[] {
+  const lista = [...counts].map(([value, count]) => ({ value, count }));
+
+  /* Domínio fechado: a ordem é a do JOGO, e vem escrita em `RARITY_ORDER`. */
+  if (spec.kind === 'rarity') {
+    return lista.sort(
+      (a, b) => RARITY_ORDER.indexOf(a.value as Rarity) - RARITY_ORDER.indexOf(b.value as Rarity),
+    );
+  }
+
+  if (spec.kind === 'frequency') {
+    return lista.sort((a, b) => {
       if (a.value === '') return 1;
       if (b.value === '') return -1;
-      /*
-       * `numeric: true` porque número como texto ordena errado: o filtro de nível dos
-       * talentos sairia 0, 1, 10, 11, …, 2, 20, 3. De quebra arruma os livros, que têm
-       * número no nome (`Pathfinder #146` antes de `#174`).
-       */
-      return a.value.localeCompare(b.value, undefined, { numeric: true });
+      return pesoDaFrequencia(a.value) - pesoDaFrequencia(b.value);
     });
+  }
+
+  return lista.sort((a, b) => {
+    // "sem valor" por último; o resto em ordem alfabética, não por contagem — a lista
+    // precisa ficar no mesmo lugar entre uma busca e outra.
+    if (a.value === '') return 1;
+    if (b.value === '') return -1;
+    /*
+     * `numeric: true` porque número como texto ordena errado: o filtro de nível dos
+     * talentos sairia 0, 1, 10, 11, …, 2, 20, 3. De quebra arruma os livros, que têm
+     * número no nome (`Pathfinder #146` antes de `#174`).
+     */
+    return a.value.localeCompare(b.value, undefined, { numeric: true });
+  });
 }
 
 /**
@@ -113,6 +175,14 @@ export function optionsFor(
 ): readonly FilterOption[] {
   const counts = new Map<string, number>();
 
+  /*
+   * A raridade nasce com as quatro em zero. Sem isto, "única" sumiria da lista enquanto
+   * não houvesse nenhuma na base — e a ausência da opção não diz "não há", diz nada.
+   */
+  if (spec.kind === 'rarity') {
+    for (const rarity of RARITY_ORDER) counts.set(rarity, 0);
+  }
+
   for (const entity of entities) {
     if (spec.kind === 'list') {
       // Uma entrada com três traços conta em três opções. A soma passa do total, e está
@@ -122,11 +192,18 @@ export function optionsFor(
       }
       continue;
     }
-    const value = spec.kind === 'cost' ? costToken(entity) : fieldValue(entity, spec.field);
+    const value = valorDoTopico(entity, spec);
     counts.set(value, (counts.get(value) ?? 0) + 1);
   }
 
-  return ordenar(counts);
+  return ordenar(counts, spec);
+}
+
+/** O valor que um tópico lê de uma entrada. Uma definição só, usada na conta e no casamento. */
+function valorDoTopico(entity: BrowseEntity, spec: FilterSpec): string {
+  if (spec.kind === 'cost') return costToken(entity);
+  if (spec.kind === 'frequency') return frequencyToken(entity, spec.field);
+  return fieldValue(entity, spec.field);
 }
 
 /** O modo em vigor: o que o usuário escolheu, ou o padrão do descritor. */
@@ -151,8 +228,7 @@ function matches(entity: BrowseEntity, spec: FilterSpec, selection: FilterSelect
       : values.some((value) => have.includes(value));
   }
 
-  const value = spec.kind === 'cost' ? costToken(entity) : fieldValue(entity, spec.field);
-  return values.includes(value);
+  return values.includes(valorDoTopico(entity, spec));
 }
 
 /**

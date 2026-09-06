@@ -98,7 +98,12 @@ export function ResultList({
    * eles acompanham nomes curtos em vez de flutuarem a meia tela de distância.
    */
   const trilhas = [
-    specials.level !== null ? '3ch' : null,
+    /*
+     * A trilha guarda o RECHEIO, e não só os dígitos. Com `3ch` puros a célula ficava com
+     * 23,4px enquanto o recheio comia 21 — sobravam 2,4px, e o número escapava por cima
+     * da borda esquerda da lista. Medido na tela, não deduzido.
+     */
+    specials.level !== null ? 'calc(3ch + var(--space-4) + var(--space-2))' : null,
     'minmax(0, 1fr)',
     ...columns.map(() => 'auto'),
   ]

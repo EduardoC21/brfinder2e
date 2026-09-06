@@ -55,6 +55,7 @@ export const ptBR = {
     moreTraits: (n: number) => (n === 1 ? 'mais 1 traço' : `mais ${String(n)} traços`),
     /** Os nomes de raridade, para o `title` da etiqueta de uma letra. */
     rarity: {
+      common: 'comum',
       uncommon: 'incomum',
       rare: 'rara',
       unique: 'única',

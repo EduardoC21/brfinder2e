@@ -85,7 +85,18 @@ export type FilterSpec =
       readonly combine: Combine;
     }
   /** O custo em ações, desenhado com os glifos: ◆ ◆◆ ◆◆◆ ◇ ↩ —. */
-  | { readonly kind: 'cost'; readonly id: string };
+  | { readonly kind: 'cost'; readonly id: string }
+  /**
+   * A raridade. Espécie própria por três motivos que `options` não atende: o domínio é
+   * fechado e ordenado pelo JOGO (comum → única, e não alfabético), os valores têm
+   * tradução fixa, e as quatro aparecem mesmo com zero resultados.
+   */
+  | { readonly kind: 'rarity'; readonly id: string; readonly field: string }
+  /**
+   * A frequência de uso. As opções são pares `max:per` (`1:day`), ordenados pela DURAÇÃO e
+   * não pelo alfabeto — "por rodada" antes de "por dia" é a ordem em que a pessoa pensa.
+   */
+  | { readonly kind: 'frequency'; readonly id: string; readonly field: string };
 
 /**
  * Os campos do cabeçalho do detalhe.
@@ -208,10 +219,14 @@ export const SOURCES: readonly SourceSpec[] = [
      * A coluna de traços com orçamento de 26 caracteres continua sendo a Etapa 10: ela
      * precisa de uma espécie própria que corte a lista, e não de mais um `chip`.
      */
+    /*
+     * A ordem das colunas ESPELHA a dos filtros depois de `traços`. As duas listas falam
+     * das mesmas coisas, e ordens diferentes obrigavam a reaprender onde cada uma está.
+     */
     columns: [
       { kind: 'cost', id: 'cost' },
-      { kind: 'chip', id: 'sector', field: 'sector', align: 'end' },
-      { kind: 'text', id: 'category', field: 'category' },
+      { kind: 'frequency', id: 'frequency', field: 'frequency' },
+      { kind: 'chip', id: 'sector', field: 'sector' },
       { kind: 'text', id: 'source', field: 'source.title' },
     ],
     defaultColumns: [],
@@ -222,7 +237,7 @@ export const SOURCES: readonly SourceSpec[] = [
      */
     special: { level: null, rarity: 'rarity', traits: 'traits' },
     filters: [
-      { kind: 'options', id: 'rarity', field: 'rarity' },
+      { kind: 'rarity', id: 'rarity', field: 'rarity' },
       /*
        * Traços só aparecem agora porque só agora existe a espécie `list`. Antes um filtro
        * `options` sobre `traits` enxergava as 766 ações como "sem valor" — `fieldValue`
@@ -234,7 +249,7 @@ export const SOURCES: readonly SourceSpec[] = [
        */
       { kind: 'list', id: 'traits', field: 'traits', combine: 'any' },
       { kind: 'cost', id: 'cost' },
-      { kind: 'options', id: 'category', field: 'category' },
+      { kind: 'frequency', id: 'frequency', field: 'frequency' },
       { kind: 'options', id: 'sector', field: 'sector' },
       { kind: 'options', id: 'source', field: 'source.title' },
     ],
@@ -249,7 +264,6 @@ export const SOURCES: readonly SourceSpec[] = [
       { kind: 'chips', field: 'traits' },
       { kind: 'cost' },
       { kind: 'text', field: 'sector' },
-      { kind: 'text', field: 'category' },
       { kind: 'source' },
     ],
   },
@@ -257,11 +271,12 @@ export const SOURCES: readonly SourceSpec[] = [
     id: 'feats',
     entityType: 'feat',
     mode: 'list',
+    /* Mesma ordem dos filtros depois de `traços` — ver a nota em `actions`. */
     columns: [
       { kind: 'cost', id: 'cost' },
-      { kind: 'chip', id: 'sector', field: 'sector', align: 'end' },
       { kind: 'frequency', id: 'frequency', field: 'frequency' },
       { kind: 'boolean', id: 'onlyLevel1', field: 'onlyLevel1' },
+      { kind: 'chip', id: 'sector', field: 'sector' },
       { kind: 'text', id: 'source', field: 'source.title' },
     ],
     defaultColumns: [],
@@ -269,9 +284,11 @@ export const SOURCES: readonly SourceSpec[] = [
     special: { level: 'level', rarity: 'rarity', traits: 'traits' },
     filters: [
       { kind: 'options', id: 'level', field: 'level' },
-      { kind: 'options', id: 'rarity', field: 'rarity' },
+      { kind: 'rarity', id: 'rarity', field: 'rarity' },
       { kind: 'list', id: 'traits', field: 'traits', combine: 'any' },
       { kind: 'cost', id: 'cost' },
+      { kind: 'frequency', id: 'frequency', field: 'frequency' },
+      { kind: 'boolean', id: 'onlyLevel1', field: 'onlyLevel1' },
       { kind: 'options', id: 'sector', field: 'sector' },
       { kind: 'options', id: 'source', field: 'source.title' },
     ],
@@ -280,7 +297,8 @@ export const SOURCES: readonly SourceSpec[] = [
      * Ordem do autor. Fora daqui ficam `prerequisites`, `maxTakable`, `onlyLevel1` e
      * `frequency`: os quatro já vêm escritos na descrição logo abaixo, e repeti-los no
      * cabeçalho gastaria linha para dizer duas vezes a mesma coisa. `frequency` e
-     * `onlyLevel1` seguem disponíveis como COLUNA, onde não há descrição para consultar.
+     * `onlyLevel1` seguem disponíveis como COLUNA e como FILTRO, onde não há descrição
+     * para consultar.
      *
      * Raridade não é campo: vira etiqueta ao lado do nome, como em ações.
      */

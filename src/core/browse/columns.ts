@@ -102,6 +102,16 @@ export function traitSpace(larguraDaTrilha: number, name: string, temRaridade: b
 export type Rarity = 'common' | 'uncommon' | 'rare' | 'unique';
 
 /**
+ * As quatro raridades, da menor para a maior.
+ *
+ * Domínio FECHADO, e por isso escrito: raridade não é campo aberto como traço ou livro, em
+ * que uma versão nova do sistema pode inventar valor. São quatro, o jogo as ordena, e o
+ * filtro mostra as quatro mesmo com zero resultados — saber que NÃO há nada único ali é
+ * informação, e uma lista que encolhe conforme o filtro obriga a reaprender onde clicar.
+ */
+export const RARITY_ORDER: readonly Rarity[] = ['common', 'uncommon', 'rare', 'unique'];
+
+/**
  * A letra que representa a raridade, ou `null` para comum.
  *
  * Comum não desenha nada: medido no `pf2e-8.5.0`, 87% dos talentos são comuns, e uma
