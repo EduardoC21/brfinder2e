@@ -114,25 +114,41 @@ describe('columnWidth', () => {
   });
 
   /*
-   * O caso que motivou o percentil: um valor gigante entre muitos curtos. `Paizo Blog:
-   * Foolish Housekeeping and Other Articles` tem 52 caracteres contra uma mediana de 12,
-   * e dimensionar pelo maior deixaria a coluna vazia por causa de uma entrada.
+   * O caso que motivou tudo: um valor gigante entre muitos curtos. `Paizo Blog: Foolish
+   * Housekeeping and Other Articles` tem 51 caracteres contra uma mediana de 15, e
+   * dimensionar pelo maior deixaria a coluna vazia por causa de oito linhas.
    */
   it('um valor gigante não estica a coluna inteira', () => {
-    const valores = [...muitos(99, 10), 'x'.repeat(52)];
-    const pelo90 = columnWidth(valores, 0);
-    const peloMaior = 52 * 6.6 + 14 + 14;
-    expect(pelo90).toBeLessThan(peloMaior / 2);
+    const valores = [...muitos(99, 10), 'x'.repeat(51)];
+    const peloMaior = 51 * 6.6 + 14 + 14;
+    expect(columnWidth(valores, 0)).toBeLessThan(peloMaior / 2);
+  });
+
+  /*
+   * ⚠️ O teste que impede a coluna vazia pelo OUTRO lado.
+   *
+   * A cerca de Tukey pode ultrapassar o maior valor que existe. Medido na coluna `grupo`
+   * das condições: o maior valor tem 9 caracteres e a cerca manda 36, o que daria 266px
+   * para um dado que nunca passa de 87.
+   */
+  it('a cerca nunca ultrapassa o maior valor real', () => {
+    // Metade em 0 e metade em 9: Q1 = 0, Q3 = 9, cerca = 9 + 27 = 36, e o maior é 9.
+    const grupos = [...muitos(50, 0), ...muitos(50, 9)];
+    expect(columnWidth(grupos, 0)).toBe(Math.ceil(9 * 6.6 + 28));
   });
 
   it('quando quase tudo é grande, a coluna acompanha', () => {
     expect(columnWidth(muitos(100, 30), 0)).toBeGreaterThan(columnWidth(muitos(100, 10), 0));
   });
 
-  it('o percentil corta onde foi pedido', () => {
-    // 80 valores de 5 e 20 de 40: o percentil 90 cai na faixa grande, o 50 não.
-    const mistos = [...muitos(80, 5), ...muitos(20, 40)];
-    expect(columnWidth(mistos, 0, 0.5)).toBeLessThan(columnWidth(mistos, 0, 0.9));
+  /*
+   * O que k = 3 compra contra k = 1,5, no formato do dado real: um miolo estreito com uma
+   * cauda logo depois. Com 1,5 a cerca cairia em 16 + 1,5 × 3 = 20,5 e cortaria o grupo de
+   * 24 — que no dado real é o `Tian Xia Character Guide`, 295 linhas.
+   */
+  it('acomoda o que é só um pouco maior que o miolo', () => {
+    const comoOsLivros = [...muitos(1300, 13), ...muitos(1650, 16), ...muitos(300, 24)];
+    expect(columnWidth(comoOsLivros, 0)).toBeGreaterThanOrEqual(Math.ceil(24 * 6.6 + 28));
   });
 
   it('sem valor nenhum, sobra o cabeçalho', () => {

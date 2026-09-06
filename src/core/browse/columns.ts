@@ -162,32 +162,53 @@ export const HEADER_CHAR_PX = 7.48;
 /** Recheio da célula, somando os dois lados. */
 export const CELL_PAD_PX = 14;
 
+/**
+ * O multiplicador da cerca de Tukey. 3 é o "atípico extremo"; o 1,5 de praxe é agressivo
+ * demais para dados em espeto, e o porquê está em `columnWidth`.
+ */
+export const TUKEY_K = 3;
+
 /** O que uma coluna de símbolo ocupa: três losangos de 7px com 3px de vão. */
 export const SYMBOL_PX = 27;
 
 /**
- * A largura de uma coluna, a partir do que ela vai DESENHAR.
+ * A largura de uma coluna MODULAR, a partir do que ela vai DESENHAR.
  *
- * Não é a largura do maior valor, e sim a do PERCENTIL — 90% por padrão. A diferença
- * importa: em livros, `Paizo Blog: Foolish Housekeeping and Other Articles` tem 52
- * caracteres contra uma mediana de 12, e dimensionar pelo maior deixaria a coluna inteira
- * vazia por causa de uma entrada. Os 10% que não couberem terminam em reticências, que é
- * exatamente o que reticências existem para dizer.
- *
- * O cabeçalho é PISO: uma coluna mais estreita que o próprio título não se identifica.
+ * Só as modulares passam por aqui. O nome fica com o que sobrar (`1fr`), o nível tem
+ * trilha fixa, e raridade e traços nem trilha têm — moram na célula do nome.
  *
  * ⚠️ Recebe o texto JÁ DESENHADO, e não o dado cru. O livro chega mascarado (`Highhelm`, e
  * não `Pathfinder Lost Omens Highhelm`) e o resto capitalizado — medir o cru daria uma
  * coluna larga demais para o que aparece nela.
  *
- * Contagem por balde, e não ordenação: são 6.284 valores por coluna, e o comprimento de um
- * nome cabe num byte. Ordenar seria O(n log n) para uma pergunta que é O(n).
+ * ── O corte: a CERCA DE TUKEY, com k = 3 ──────────────────────────────────────
+ *
+ * Q1 e Q3 são os valores que deixam 25% e 75% abaixo de si; a distância entre eles, o IQR,
+ * é a largura do miolo dos dados. A cerca é `Q3 + k × IQR`, e é a régua de boxplot desde
+ * os anos 70: deixa a coluna crescer um pouco além do miolo e corta só o que dispara.
+ *
+ * `k = 3` — o "atípico extremo" — e NÃO o 1,5 de praxe. Medido nos 6.284 talentos, sobre os
+ * nomes de livro mascarados: Q1 = 13, Q3 = 16, IQR = 3. A distribuição não é um sino, é um
+ * espeto: 77% dos livros têm entre 11 e 16 caracteres. Com o miolo tão estreito, a cerca de
+ * 1,5 cai em 20,5 e passa a chamar de atípico o que é só um pouco maior — jogaria fora o
+ * `Tian Xia Character Guide`, que são 295 linhas. Com k = 3 ela cai em 25, cobre 95,6% e
+ * corta 279 linhas.
+ *
+ * O 25 não é sorte: é onde o custo por cobertura desaba. Até 16 caracteres cada 7px compra
+ * 26 pontos de cobertura; de 17 a 23, menos de 4; em 24 e 25, 5,3 e 4,8; de 26 em diante,
+ * décimos. O joelho da curva e a cerca de Tukey caem no mesmo lugar.
+ *
+ * ⚠️ O `min` com o maior valor real NÃO é zelo: a cerca pode ultrapassar o que existe.
+ * Medido — na coluna `grupo` das condições, o maior valor tem 9 caracteres e a cerca manda
+ * 36, o que daria 266px para um dado que nunca passa de 87. Seria criar o vazio gigante
+ * pelo outro lado.
+ *
+ * O cabeçalho é PISO: uma coluna mais estreita que o próprio título não se identifica.
+ *
+ * Quartis por contagem de baldes, e não por ordenação: são 6.284 valores por coluna e o
+ * comprimento de um nome cabe num byte — ordenar seria O(n log n) para O(n).
  */
-export function columnWidth(
-  drawn: readonly string[],
-  headerLength: number,
-  percentil = 0.9,
-): number {
+export function columnWidth(drawn: readonly string[], headerLength: number): number {
   const piso = headerLength * HEADER_CHAR_PX + CELL_PAD_PX;
   if (drawn.length === 0) return Math.ceil(piso);
 
@@ -198,16 +219,29 @@ export function columnWidth(
     baldes[balde] = (baldes[balde] ?? 0) + 1;
   }
 
-  const alvo = Math.ceil(drawn.length * percentil);
-  let acumulado = 0;
-  let comprimento = 0;
-  for (let i = 0; i < MAX; i++) {
-    acumulado += baldes[i] ?? 0;
-    if (acumulado >= alvo) {
-      comprimento = i;
+  /* O comprimento na posição `p` da lista ordenada, sem ordenar. */
+  const quantil = (p: number): number => {
+    const alvo = Math.max(1, Math.ceil(drawn.length * p));
+    let acumulado = 0;
+    for (let i = 0; i < MAX; i++) {
+      acumulado += baldes[i] ?? 0;
+      if (acumulado >= alvo) return i;
+    }
+    return MAX - 1;
+  };
+
+  let maior = 0;
+  for (let i = MAX - 1; i >= 0; i--) {
+    if ((baldes[i] ?? 0) > 0) {
+      maior = i;
       break;
     }
   }
+
+  const q1 = quantil(0.25);
+  const q3 = quantil(0.75);
+  const cerca = q3 + TUKEY_K * (q3 - q1);
+  const comprimento = Math.min(maior, cerca);
 
   const conteudo = comprimento * CELL_CHAR_PX + CHIP_PAD_PX + CELL_PAD_PX;
   return Math.ceil(Math.max(conteudo, piso));
