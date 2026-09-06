@@ -40,6 +40,16 @@ export type ColumnSpec =
   | ({ readonly kind: 'chip'; readonly field: string } & ColumnBase)
   /** O custo em ações, com os glifos — o mesmo componente do detalhe e do filtro. */
   | ({ readonly kind: 'cost' } & ColumnBase)
+  /**
+   * Sim/não. Desenha ✓ quando verdadeiro e NADA quando falso.
+   *
+   * Espécie própria, e não um `text` que farejasse a string "true": farejando, qualquer
+   * campo de texto que por acaso valesse "true" viraria um check. A espécie declara a
+   * intenção no descritor, e espelha o `boolean` que o detalhe já tinha.
+   */
+  | ({ readonly kind: 'boolean'; readonly field: string } & ColumnBase)
+  /** A frequência de uso, pelo mesmo desenhista do detalhe: "1× por dia". */
+  | ({ readonly kind: 'frequency'; readonly field: string } & ColumnBase)
   /** Texto simples, sem moldura de chip. Para valores mais longos que um rótulo. */
   | ({ readonly kind: 'text'; readonly field: string } & ColumnBase);
 
@@ -212,9 +222,7 @@ export const SOURCES: readonly SourceSpec[] = [
      */
     special: { level: null, rarity: 'rarity', traits: 'traits' },
     filters: [
-      { kind: 'cost', id: 'cost' },
-      { kind: 'options', id: 'sector', field: 'sector' },
-      { kind: 'options', id: 'category', field: 'category' },
+      { kind: 'options', id: 'rarity', field: 'rarity' },
       /*
        * Traços só aparecem agora porque só agora existe a espécie `list`. Antes um filtro
        * `options` sobre `traits` enxergava as 766 ações como "sem valor" — `fieldValue`
@@ -225,7 +233,9 @@ export const SOURCES: readonly SourceSpec[] = [
        * (medido nas 766 ações do pf2e-8.5.0).
        */
       { kind: 'list', id: 'traits', field: 'traits', combine: 'any' },
-      { kind: 'options', id: 'rarity', field: 'rarity' },
+      { kind: 'cost', id: 'cost' },
+      { kind: 'options', id: 'category', field: 'category' },
+      { kind: 'options', id: 'sector', field: 'sector' },
       { kind: 'options', id: 'source', field: 'source.title' },
     ],
     searchFields: ['name'],
@@ -238,7 +248,6 @@ export const SOURCES: readonly SourceSpec[] = [
     detail: [
       { kind: 'chips', field: 'traits' },
       { kind: 'cost' },
-      { kind: 'frequency', field: 'frequency' },
       { kind: 'text', field: 'sector' },
       { kind: 'text', field: 'category' },
       { kind: 'source' },
@@ -246,14 +255,42 @@ export const SOURCES: readonly SourceSpec[] = [
   },
   {
     id: 'feats',
-    entityType: null,
+    entityType: 'feat',
     mode: 'list',
-    columns: [],
+    columns: [
+      { kind: 'cost', id: 'cost' },
+      { kind: 'chip', id: 'sector', field: 'sector', align: 'end' },
+      { kind: 'frequency', id: 'frequency', field: 'frequency' },
+      { kind: 'boolean', id: 'onlyLevel1', field: 'onlyLevel1' },
+      { kind: 'text', id: 'source', field: 'source.title' },
+    ],
     defaultColumns: [],
-    special: NO_SPECIAL_COLUMNS,
-    filters: [],
-    searchFields: [],
-    detail: [],
+    /* A primeira fonte com NÍVEL: a calha existe desde a Etapa 8 sem dado que a usasse. */
+    special: { level: 'level', rarity: 'rarity', traits: 'traits' },
+    filters: [
+      { kind: 'options', id: 'level', field: 'level' },
+      { kind: 'options', id: 'rarity', field: 'rarity' },
+      { kind: 'list', id: 'traits', field: 'traits', combine: 'any' },
+      { kind: 'cost', id: 'cost' },
+      { kind: 'options', id: 'sector', field: 'sector' },
+      { kind: 'options', id: 'source', field: 'source.title' },
+    ],
+    searchFields: ['name'],
+    /*
+     * Ordem do autor. Fora daqui ficam `prerequisites`, `maxTakable`, `onlyLevel1` e
+     * `frequency`: os quatro já vêm escritos na descrição logo abaixo, e repeti-los no
+     * cabeçalho gastaria linha para dizer duas vezes a mesma coisa. `frequency` e
+     * `onlyLevel1` seguem disponíveis como COLUNA, onde não há descrição para consultar.
+     *
+     * Raridade não é campo: vira etiqueta ao lado do nome, como em ações.
+     */
+    detail: [
+      { kind: 'text', field: 'level' },
+      { kind: 'chips', field: 'traits' },
+      { kind: 'cost' },
+      { kind: 'text', field: 'sector' },
+      { kind: 'source' },
+    ],
   },
   {
     id: 'spells',

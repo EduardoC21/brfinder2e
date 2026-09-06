@@ -11,6 +11,7 @@ import {
 } from '@core/browse/index';
 import { strings } from '@i18n/index';
 import { ActionCost } from '@ui/components/ActionCost';
+import { Frequency } from '@ui/components/Frequency';
 import { RarityMark } from '@ui/components/RarityMark';
 import { cx } from '@ui/cx';
 import { useTrackWidth } from '@ui/hooks/useTrackWidth';
@@ -282,18 +283,30 @@ function Column({ spec, entity }: { readonly spec: ColumnSpec; readonly entity: 
     case 'text': {
       const value = fieldValue(entity, spec.field);
       if (value === '') return null;
-      // Booleano vira SÍMBOLO: "true" numa coluna não diz nada, e "sim/não" em toda linha
-      // gasta espaço para repetir o que a ausência já conta.
-      if (value === 'true') {
-        return (
-          <span className={styles['sim']} title={strings.browse.yes}>
-            ✓
-          </span>
-        );
-      }
-      if (value === 'false') return null;
       return <span className={styles['chip']}>{capitalizar(value)}</span>;
     }
+
+    /*
+     * Sim vira SÍMBOLO; não desenha nada.
+     *
+     * "true" numa coluna não diz nada, e "sim/não" em toda linha gasta espaço para repetir
+     * o que a ausência já conta — mesma regra do detalhe. Espera-se que a maioria seja
+     * falsa: `onlyLevel1` é verdadeiro em 64 dos 6.284 talentos.
+     *
+     * Espécie própria, e não um faro dentro do `text`: farejando a string "true", qualquer
+     * campo de texto que por acaso valesse isso viraria um check.
+     */
+    case 'boolean': {
+      if (fieldValue(entity, spec.field) !== 'true') return null;
+      return (
+        <span className={styles['sim']} title={strings.browse.yes}>
+          ✓
+        </span>
+      );
+    }
+
+    case 'frequency':
+      return <Frequency entity={entity} field={spec.field} />;
 
     case 'cost': {
       const kind = fieldValue(entity, 'costKind');

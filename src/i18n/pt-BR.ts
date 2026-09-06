@@ -127,6 +127,10 @@ export const ptBR = {
       empty: 'Escolha uma entrada na lista.',
     },
     fieldLabel: {
+      level: 'nível',
+      onlyLevel1: 'nível 1',
+      prerequisites: 'pré-requisitos',
+      maxTakable: 'repetições',
       group: 'grupo',
       valued: 'valorada',
       sector: 'setor',

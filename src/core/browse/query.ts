@@ -92,7 +92,12 @@ function ordenar(counts: Map<string, number>): readonly FilterOption[] {
       // precisa ficar no mesmo lugar entre uma busca e outra.
       if (a.value === '') return 1;
       if (b.value === '') return -1;
-      return a.value.localeCompare(b.value);
+      /*
+       * `numeric: true` porque número como texto ordena errado: o filtro de nível dos
+       * talentos sairia 0, 1, 10, 11, …, 2, 20, 3. De quebra arruma os livros, que têm
+       * número no nome (`Pathfinder #146` antes de `#174`).
+       */
+      return a.value.localeCompare(b.value, undefined, { numeric: true });
     });
 }
 

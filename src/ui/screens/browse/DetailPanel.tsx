@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 
 import {
   fieldValue,
-  parseDurationCode,
   rarityLetter,
   type BrowseEntity,
   type DetailFieldSpec,
@@ -13,6 +12,7 @@ import { readDesc } from '@core/store/index';
 import { strings } from '@i18n/index';
 import { createIndexedDbStore } from '@platform/store-indexeddb';
 import { ActionCost } from '@ui/components/ActionCost';
+import { Frequency } from '@ui/components/Frequency';
 import { RarityMark } from '@ui/components/RarityMark';
 import { RichText } from '@ui/components/RichText';
 import { CollapseToggle } from '@ui/components/CollapseToggle';
@@ -273,26 +273,11 @@ function Field({
       );
     }
 
-    /*
-     * O `per` mistura palavra (`day`) com ISO-8601 (`PT1H`), e o cru aparecia na tela
-     * como "1 × PT1H". `core/` decodifica a estrutura, o i18n escreve a palavra.
-     */
+    /* O desenho mora em `Frequency`, porque a lista também o usa. */
     case 'frequency': {
-      const value = readRecord(entity, spec.field);
-      if (value === null) return null;
-      const max = Number(value['max']);
-      const per = typeof value['per'] === 'string' ? value['per'] : '';
-      const duracao = parseDurationCode(per);
-      const f = b.frequency;
-      const unidade = duracao === null ? undefined : f.units[duracao.unit];
-      return (
-        <Row label={label(spec.field)}>
-          {f.times(Number.isFinite(max) ? max : 1)}{' '}
-          {duracao === null || unidade === undefined
-            ? f.unknown(per)
-            : f.every(duracao.count, unidade)}
-        </Row>
-      );
+      const desenho = Frequency({ entity, field: spec.field });
+      if (desenho === null) return null;
+      return <Row label={label(spec.field)}>{desenho}</Row>;
     }
   }
 }
@@ -313,13 +298,6 @@ function readList(entity: BrowseEntity, field: string): string[] {
   return Array.isArray(value)
     ? value.filter((item): item is string => typeof item === 'string')
     : [];
-}
-
-function readRecord(entity: BrowseEntity, field: string): Record<string, unknown> | null {
-  const base = entity.base;
-  if (!isRecord(base)) return null;
-  const value = base[field];
-  return isRecord(value) ? value : null;
 }
 
 /** As descrições moram em `desc/<tipo>`, à parte, por serem pesadas (briefing 5.2). */
