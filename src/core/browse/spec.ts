@@ -182,7 +182,7 @@ export const SOURCES: readonly SourceSpec[] = [
     mode: 'list',
     columns: [
       { kind: 'chip', id: 'group', field: 'group', align: 'end' },
-      { kind: 'text', id: 'valued', field: 'valued' },
+      { kind: 'boolean', id: 'valued', field: 'valued' },
       { kind: 'text', id: 'source', field: 'source.title' },
     ],
     defaultColumns: [],

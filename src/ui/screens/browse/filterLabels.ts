@@ -18,9 +18,13 @@ const t = strings.browse;
  * componente quebra o recarregamento a quente do Vite, que só sabe atualizar em vivo um
  * arquivo cujos exports são todos componentes.
  */
+/*
+ * O NOME do tópico também começa com maiúscula, para seguir o mesmo padrão do valor e do
+ * botão `Colunas`, que sempre foi assim.
+ */
 export function topicLabel(spec: FilterSpec): string {
-  if (spec.kind === 'cost') return t.cost.label;
-  return t.fieldLabel[spec.field] ?? spec.field;
+  if (spec.kind === 'cost') return capitalizar(t.cost.label);
+  return capitalizar(t.fieldLabel[spec.field] ?? spec.field);
 }
 
 /** O rótulo de um valor. Booleano e "sem valor" precisam de tradução; o resto é o dado. */
@@ -72,6 +76,11 @@ function costLabel(token: string): string {
 
 /** O rótulo de uma coluna. Mesma tabela dos filtros: `custo` é `custo` nos dois lugares. */
 export function columnLabel(spec: ColumnSpec): string {
-  if (spec.kind === 'cost') return t.cost.label;
-  return t.fieldLabel[spec.field] ?? spec.field;
+  if (spec.kind === 'cost') return capitalizar(t.cost.label);
+  return capitalizar(t.fieldLabel[spec.field] ?? spec.field);
+}
+
+/** O rótulo de uma coluna especial: nível, raridade, traços. Mesmo padrão do resto. */
+export function specialColumnLabel(id: string): string {
+  return capitalizar(t.specialLabel[id] ?? id);
 }

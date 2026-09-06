@@ -127,7 +127,29 @@ describe('optionsFor', () => {
   });
 
   it('o custo aparece como token único', () => {
-    expect(optionsFor(acoes, custo).map((o) => o.value)).toEqual(['1', '2', 'passive', 'reaction']);
+    expect(optionsFor(acoes, custo).map((o) => o.value)).toEqual(['1', '2', 'reaction', 'passive']);
+  });
+
+  /*
+   * A ORDEM é a do jogo, e não a do alfabeto. Este teste guardava o contrário até agora:
+   * alfabeticamente `passive` vem antes de `reaction`, e o traço aparecia no meio da lista
+   * em vez de fechá-la. Só ficou visível em talentos, onde passiva são 3.977 de 6.284.
+   */
+  it('o custo segue ◆ ◆◆ ◆◆◆ ◇ ↩ —, e não o alfabeto', () => {
+    const todos = [
+      entity('c1', { costKind: 'passive', costCount: null }),
+      entity('c2', { costKind: 'reaction', costCount: null }),
+      entity('c3', { costKind: 'free', costCount: null }),
+      entity('c4', { costKind: 'action', costCount: 3 }),
+      entity('c5', { costKind: 'action', costCount: 1 }),
+    ];
+    expect(optionsFor(todos, custo).map((o) => o.value)).toEqual([
+      '1',
+      '3',
+      'free',
+      'reaction',
+      'passive',
+    ]);
   });
 });
 

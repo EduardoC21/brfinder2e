@@ -3,7 +3,7 @@ import { moveColumn } from '@core/prefs/index';
 import { strings } from '@i18n/index';
 import { cx } from '@ui/cx';
 
-import { columnLabel } from './filterLabels';
+import { columnLabel, specialColumnLabel } from './filterLabels';
 import styles from './FilterTopicPanel.module.css';
 import proprio from './ColumnPicker.module.css';
 
@@ -131,7 +131,7 @@ export function ColumnPicker({
               <span className={styles['mark']} aria-hidden="true">
                 {ligada ? '✓' : ''}
               </span>
-              <span className={styles['label']}>{t.specialLabel[id]}</span>
+              <span className={styles['label']}>{specialColumnLabel(id)}</span>
             </button>
           );
         })}

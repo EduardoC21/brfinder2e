@@ -82,6 +82,16 @@ export function costToken(entity: BrowseEntity): string {
 }
 
 /**
+ * Os custos, na ordem do JOGO: ◆ ◆◆ ◆◆◆ ◇ ↩ —.
+ *
+ * Domínio fechado, como a raridade, e por isso escrito. Pelo alfabeto — que era o que
+ * valia até aqui, desde que o filtro existe — `passive` vinha antes de `reaction`, e o
+ * traço aparecia no meio da lista em vez de fechá-la. Não foi regressão de agora: era
+ * assim desde sempre, e só ficou visível em talentos, onde passiva são 3.977 de 6.284.
+ */
+const COST_ORDER: readonly string[] = ['1', '2', '3', 'free', 'reaction', 'passive'];
+
+/**
  * A frequência como UM token: `1:day`, `3:day`. Vazio quando não há.
  *
  * Dois campos viram um pelo mesmo motivo do custo: a pessoa quer "as de uma vez por dia",
@@ -133,6 +143,15 @@ export interface FilterOption {
 
 function ordenar(counts: Map<string, number>, spec: FilterSpec): readonly FilterOption[] {
   const lista = [...counts].map(([value, count]) => ({ value, count }));
+
+  if (spec.kind === 'cost') {
+    return lista.sort((a, b) => {
+      // Um custo que a receita ainda não conheça vai para o fim, e não para o meio.
+      const ia = COST_ORDER.indexOf(a.value);
+      const ib = COST_ORDER.indexOf(b.value);
+      return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+    });
+  }
 
   /* Domínio fechado: a ordem é a do JOGO, e vem escrita em `RARITY_ORDER`. */
   if (spec.kind === 'rarity') {
