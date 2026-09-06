@@ -121,6 +121,29 @@ export function nullable<T>(inner: Decoder<T>): Decoder<T | null> {
 }
 
 /**
+ * Chave que pode simplesmente NÃO ESTAR ali dentro, e não só valer nulo.
+ *
+ * `nullable` trata `null`; esta trata ausência TAMBÉM. A diferença importa porque o padrão
+ * do projeto é falhar alto quando a forma surpreende — uma chave que some sem aviso é
+ * defeito, e afrouxar o `nullable` esconderia isso em todo lugar.
+ *
+ * Use só onde a ausência é NORMAL dentro do objeto. Medido no caso que a motivou:
+ * `system.area.details` das magias existe em 20 das 453 que têm área, e traz a prosa que
+ * descreve a área com precisão — "20-foot burst adjacent to a flat surface".
+ */
+export function optional<T>(inner: Decoder<T>): Decoder<T | null> {
+  return {
+    label: `${inner.label} ou ausente`,
+    decode: (value, path) =>
+      value === null || value === undefined ? null : inner.decode(value, path),
+    cover: (value, path, coverage) => {
+      if (value === null || value === undefined) coverage.subtree.add(path);
+      else inner.cover(value, path, coverage);
+    },
+  };
+}
+
+/**
  * Objeto com chaves declaradas.
  *
  * Cobre SÓ as chaves declaradas: chave nova dentro do objeto continua aparecendo no

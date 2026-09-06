@@ -1,6 +1,17 @@
 import { describe, expect, it } from 'vitest';
 
-import { DecodeError, bool, int, listOf, nullable, oneOf, shape, text, textList } from './decoders';
+import {
+  DecodeError,
+  bool,
+  int,
+  listOf,
+  nullable,
+  oneOf,
+  optional,
+  shape,
+  text,
+  textList,
+} from './decoders';
 import { emptyCoverage } from './paths';
 
 describe('decodificadores de folha', () => {
@@ -92,5 +103,25 @@ describe('oneOf', () => {
     const coverage = emptyCoverage();
     choices.cover({ filter: ['x'] }, 'system.choices', coverage);
     expect(coverage.subtree.has('system.choices.filter')).toBe(true);
+  });
+});
+
+describe('optional', () => {
+  /*
+   * A diferença com `nullable` é a chave AUSENTE, e ela importa: o padrão do projeto é
+   * falhar alto quando a forma surpreende, e afrouxar o `nullable` esconderia isso em todo
+   * lugar. Nasceu de `system.area.details`, que existe em 20 das 453 magias com área.
+   */
+  it('aceita ausente e nulo, e devolve nulo nos dois', () => {
+    expect(optional(text).decode(undefined, 'x')).toBeNull();
+    expect(optional(text).decode(null, 'x')).toBeNull();
+  });
+
+  it('quando o valor está lá, decodifica normalmente', () => {
+    expect(optional(text).decode('20-foot burst', 'x')).toBe('20-foot burst');
+  });
+
+  it('nullable continua recusando a chave ausente', () => {
+    expect(() => nullable(text).decode(undefined, 'x')).toThrow();
   });
 });
