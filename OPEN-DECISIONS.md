@@ -136,7 +136,9 @@ Ficam exatamente na fronteira.
 Archives of Nethys na hora de conferir. Como passam pelo glossário de qualquer jeito,
 inverter depois é trocar uma coluna.
 
-**Decidir quando:** ao desenhar o chip de traço (Etapa 10).
+**DECIDIDO na abertura da Etapa 10, com o autor: inglês**, como já estava. O chip foi
+desenhado na Etapa 8 e a decisão ficou pendente enquanto o dado já rodava em inglês por
+omissão — agora é escolha.
 
 ---
 

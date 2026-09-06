@@ -28,7 +28,12 @@ casca com barra de topo, e a sincronização pelo botão da engrenagem: baixa, n
 ao recarregar a janela. E `source/` (Etapa 1), motor de receita (Etapa 2) e a receita de
 `condition` (Etapa 3).
 
-Próxima: **Etapa 9**, a receita de `feat` — os 6.284 talentos.
+Antes: **Etapa 9** — receita de `feat` e a tela de talentos: 6.284 normalizados de um pack
+entre os sete que o tipo mistura, lista com nível, ordenação pelo cabeçalho, largura de
+coluna pela cerca de Tukey, e a lista desenhando só o que aparece (42.905 nós no DOM
+viraram 416).
+
+Próxima: **Etapa 10**, a receita de `spell` — as 1.994 magias.
 
 ## Requisitos
 

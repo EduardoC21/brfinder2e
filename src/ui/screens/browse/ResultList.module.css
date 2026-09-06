@@ -66,9 +66,12 @@
 /*
  * O fundo é de cada CÉLULA, e não da linha: com `display: contents` a linha não desenha
  * caixa nenhuma. `:hover` na linha pinta todas as células dela de uma vez.
+ *
+ * `background-color`, e não o atalho `background`: o realce de sobreposição abaixo mora na
+ * `background-image`, e o atalho a apagaria.
  */
 .row:hover .celula {
-  background: var(--color-hover);
+  background-color: var(--color-hover);
 }
 
 /*
@@ -77,9 +80,26 @@
  * E com o canto cortado, igual ao item selecionado no trilho de fontes. Eram diferentes
  * sem motivo: as duas já usavam o mesmo bordô, e só o item do trilho tinha o chanfro.
  * O corte vai na PRIMEIRA célula, que é quem tem a borda esquerda da faixa.
+ *
+ * ⚠️ `.row.ativa` e não só `.ativa`: `.row:hover .celula` tem DUAS classes mais uma
+ * pseudo-classe, e vencia `.ativa .celula`, que tem duas. Por isso a linha selecionada
+ * perdia o bordô só de o cursor passar por cima dela — a seleção sumia enquanto a pessoa
+ * olhava para o que tinha acabado de escolher.
  */
-.ativa .celula {
-  background: var(--color-state);
+.row.ativa .celula {
+  background-color: var(--color-state);
+}
+
+/*
+ * Selecionada E sob o cursor: o bordô continua, com a MESMA camada de 5% de branco que
+ * realça qualquer outra linha.
+ *
+ * Camada e não cor: `--color-hover` é uma sobreposição translúcida, e desenhá-la como
+ * `background-image` por cima da `background-color` faz o realce valer sobre qualquer
+ * superfície, sem inventar um segundo bordô que teria de ser mantido em sincronia.
+ */
+.row.ativa:hover .celula {
+  background-image: linear-gradient(var(--color-hover), var(--color-hover));
 }
 
 /*

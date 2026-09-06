@@ -475,16 +475,27 @@ Todos os onze foram corrigidos: nove na Etapa 8g, os dois de coluna na 8h.
 
 - **Ordenação pelo cabeçalho** (possivelmente hierárquica). A linha de títulos já existe e
   é grade irmã das linhas, então a ordenação tem onde morar.
-- **Texto justificado** no corpo da descrição.
-- **Marcar os blocos de rótulo na máscara**, invisível ao usuário, para a tradução da
-  Etapa 15 não embaralhar `Effect`/`Trigger` com o texto ao redor.
-- **Abrir pop-out a partir de uma referência em latão.** Depende do índice: 3.477
-  referências apontam por NOME e só 311 por id (briefing 7.8).
-- **Lista de packs a ignorar**, para o aviso não repetir para sempre. Fica para depois de
-  toda a importação e normalização.
+  _(Nada aberto no momento. As pendências abaixo foram decididas na abertura da Etapa 10.)_
 
-### Registrado como próximo, e não é dívida do feedback
+### Decidido, e por quê
 
-- Coluna de traços com orçamento de caracteres — Etapa 10.
-- Virtualizar a lista, quando forem os 6.284 talentos.
-- O botão de tradução segue desabilitado até a Etapa 15.
+- **Texto justificado: NÃO.** Decisão do autor. A descrição segue alinhada à esquerda.
+- **Traços em inglês.** Decisão do autor, fechando `OPEN-DECISIONS §4`: são chave de busca
+  e é o que casa com o Archives of Nethys na hora de conferir.
+- **Marcar os blocos de rótulo na máscara: depois.** Fica para quando soubermos quais
+  rótulos as OUTRAS fontes omitem — marcar só o que conhecemos hoje daria uma máscara que
+  teria de ser refeita a cada receita nova.
+- **Pop-out a partir de referência em latão: depois.** Não é falta de índice, é falta de
+  BASE: com três das doze fontes normalizadas, a maioria das referências apontaria para
+  nada. Volta quando houver o que ligar.
+- **Lista de packs a ignorar: não vai existir.** O aviso pode continuar como está, porque
+  no fim quase tudo vai ser importado — traço de classe e afins precisam existir para
+  serem referenciados pelas outras fontes.
+
+### Entregue desde que esta lista foi escrita
+
+- Coluna de traços com orçamento de caracteres — Etapa 8 (`fitTraits`).
+- Virtualizar a lista — Etapa 9g: 42.905 nós no DOM viraram 416, e o refiltro dos 6.284
+  talentos caiu de 266ms para 26ms.
+- Ordenação por nome e por nível pelo cabeçalho — Etapa 9f.
+- O botão de tradução segue desabilitado até a etapa da tradução.
