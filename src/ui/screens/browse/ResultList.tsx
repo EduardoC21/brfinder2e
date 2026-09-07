@@ -18,6 +18,7 @@ import {
 } from '@core/browse/index';
 import { strings } from '@i18n/index';
 import { ActionCost } from '@ui/components/ActionCost';
+import { CastCost } from '@ui/components/CastCost';
 import { Frequency } from '@ui/components/Frequency';
 import { RarityMark } from '@ui/components/RarityMark';
 import { cx } from '@ui/cx';
@@ -26,6 +27,7 @@ import { useTrackWidth } from '@ui/hooks/useTrackWidth';
 import { useWindowedRows } from '@ui/hooks/useWindowedRows';
 
 import { columnLabel, frequencyLabel } from './filterLabels';
+import { areaText, defenseText, durationText, spellCast } from './spellFields';
 import styles from './ResultList.module.css';
 
 /** Quais dados fixos estão ligados nesta fonte, depois da escolha do usuário. */
@@ -461,15 +463,34 @@ function textoDaColuna(spec: ColumnSpec, entity: BrowseEntity): string {
       const token = frequencyToken(entity, spec.field);
       return token === '' ? '' : frequencyLabel(token);
     }
+    case 'chips':
+      return fieldList(entity, spec.field).map(capitalizar).join(' ');
+    case 'area':
+      return areaText(entity, spec.field);
+    case 'defense':
+      return defenseText(entity, spec.field);
+    case 'duration':
+      return durationText(entity, spec.field);
+    /*
+     * Vazio para quem desenha GLIFO e não texto: a medição conta caracteres, e um losango
+     * não tem nenhum. A largura dessas colunas cai no piso do cabeçalho, que é o certo —
+     * `Custo` tem cinco letras e cabe qualquer combinação de losangos.
+     *
+     * `cast` entra aqui apesar de às vezes desenhar prosa: só 283 das 1.994 levam tempo, e
+     * medir por elas alargaria a coluna para as 1.711 que são um glifo só.
+     */
     case 'boolean':
     case 'cost':
+    case 'cast':
       return '';
   }
 }
 
 function alinhamento(spec: ColumnSpec): string | undefined {
   if (spec.align === 'end') return styles['end'];
-  if (spec.kind === 'cost' || spec.kind === 'boolean') return styles['centro'];
+  if (spec.kind === 'cost' || spec.kind === 'boolean' || spec.kind === 'cast') {
+    return styles['centro'];
+  }
   return undefined;
 }
 
@@ -517,6 +538,39 @@ function Column({ spec, entity }: { readonly spec: ColumnSpec; readonly entity: 
 
     case 'frequency':
       return <Frequency entity={entity} field={spec.field} />;
+
+    case 'chips': {
+      const lista = fieldList(entity, spec.field);
+      if (lista.length === 0) return null;
+      return (
+        <>
+          {lista.map((item) => (
+            <span key={item} className={styles['chip']}>
+              {capitalizar(item)}
+            </span>
+          ))}
+        </>
+      );
+    }
+
+    case 'cast': {
+      const cast = spellCast(entity, spec.field);
+      if (cast === null) return null;
+      return <CastCost cast={cast} />;
+    }
+
+    case 'area':
+    case 'defense':
+    case 'duration': {
+      const valor =
+        spec.kind === 'area'
+          ? areaText(entity, spec.field)
+          : spec.kind === 'defense'
+            ? defenseText(entity, spec.field)
+            : durationText(entity, spec.field);
+      if (valor === '') return null;
+      return <span className={styles['chip']}>{capitalizar(valor)}</span>;
+    }
 
     case 'cost': {
       const kind = fieldValue(entity, 'costKind');

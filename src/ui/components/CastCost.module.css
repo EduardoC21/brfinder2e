@@ -1,0 +1,23 @@
+/*
+ * O custo de conjurar, quando não é só um glifo.
+ *
+ * Prosa em MONO como os traços, e não na fonte do corpo: ela divide célula e coluna com
+ * losangos, e uma serifa proporcional ao lado de glifos geométricos desalinha a coluna.
+ */
+.prosa {
+  color: var(--color-data);
+  font: 400 var(--text-xs) / 1 var(--font-mono);
+  white-space: nowrap;
+}
+
+.faixa {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+/* O "a" da faixa é conectivo, não dado: fica em bruma para os extremos saltarem. */
+.ate {
+  color: var(--color-text-muted);
+  font: 400 var(--text-xs) / 1 var(--font-body);
+}

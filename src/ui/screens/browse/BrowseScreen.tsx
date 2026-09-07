@@ -200,7 +200,8 @@ function SourcePane({
 
   const results = useMemo(() => {
     const filtered = applyFilters(entities, source.filters, filters);
-    if (deferredTerm.trim() === '') return sortEntities(filtered, sort);
+    if (deferredTerm.trim() === '')
+      return sortEntities(filtered, sort, source.special.level ?? 'level');
 
     // Com termo, a ordem é a da RELEVÂNCIA, não a alfabética — e o filtro só recorta.
     const allowed = new Set(filtered.map((entity) => entity.key));
@@ -210,7 +211,7 @@ function SourcePane({
       .filter((key) => allowed.has(key))
       .map((key) => byKey.get(key))
       .filter((entity): entity is BrowseEntity => entity !== undefined);
-  }, [entities, source.filters, filters, deferredTerm, index, sort]);
+  }, [entities, source.filters, filters, source.special.level, deferredTerm, index, sort]);
 
   const opened = results.find((entity) => entity.key === openedKey) ?? null;
   /**

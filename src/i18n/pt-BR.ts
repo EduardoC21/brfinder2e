@@ -114,6 +114,42 @@ export const ptBR = {
       /** Código que não reconhecemos aparece cru, para o defeito ficar visível. */
       unknown: (code: string) => `por ${code}`,
     },
+    /** O custo de CONJURAR uma magia. Ver `components/CastCost`. */
+    cast: {
+      /** O conectivo da faixa: `◆ a ◆◆◆`. */
+      to: 'a',
+      /** A opção do filtro que junta as 283 que levam mais de um turno. */
+      overATurn: 'leva mais de um turno',
+    },
+    /** A defesa contra a magia: salvamento ou valor passivo, nunca os dois. */
+    defense: {
+      save: {
+        fortitude: 'Fortitude',
+        reflex: 'Reflexos',
+        will: 'Vontade',
+      } as Record<string, string>,
+      /** `Vontade` + `básico`, como no livro. */
+      basic: 'básico',
+      passive: {
+        ac: 'CA',
+        'fortitude-dc': 'CD de Fortitude',
+        'reflex-dc': 'CD de Reflexos',
+      } as Record<string, string>,
+    },
+    /** A duração do efeito. Sem ela, a magia é instantânea. */
+    duration: {
+      sustained: 'sustentada',
+      /** `sustentada` + `, 1 minuto` quando a fonte diz as duas coisas. */
+      sustainedFor: (quanto: string) => `sustentada, ${quanto}`,
+    },
+    /** As três linhas do ritual, e o que cada número quer dizer. */
+    ritual: {
+      primary: (teste: string) => `teste primário ${teste}`,
+      casters: (quantos: number) =>
+        quantos === 1 ? '1 conjurador secundário' : `${String(quantos)} conjuradores secundários`,
+      /** Nulo não é zero: a fonte não diz quantos. */
+      castersUnknown: 'conjuradores secundários não especificados',
+    },
     /** Conteúdo anterior ao Remaster. Só o legado é marcado; o resto não ganha nada. */
     legacy: 'legado',
     legacyHint: 'Publicado antes do Remaster: pode ter sido substituído por regra nova.',
@@ -150,6 +186,22 @@ export const ptBR = {
       costKind: 'custo',
       category: 'categoria',
       rarity: 'raridade',
+      rank: 'posto',
+      cast: 'execução',
+      traditions: 'tradições',
+      range: 'distância',
+      target: 'alvos',
+      area: 'área',
+      duration: 'duração',
+      sustained: 'sustentada',
+      save: 'defesa',
+      materialCost: 'custo',
+      requirements: 'requisitos',
+      counteraction: 'contra-ação',
+      ritual: 'ritual',
+      /* Os filtros leem caminho aninhado; o rótulo tem de existir para o caminho, não para a folha. */
+      'area.type': 'área',
+      'save.statistic': 'defesa',
       'source.title': 'livro',
     } as Record<string, string>,
   },

@@ -12,6 +12,7 @@ import { readDesc } from '@core/store/index';
 import { strings } from '@i18n/index';
 import { createIndexedDbStore } from '@platform/store-indexeddb';
 import { ActionCost } from '@ui/components/ActionCost';
+import { CastCost } from '@ui/components/CastCost';
 import { Frequency } from '@ui/components/Frequency';
 import { RarityMark } from '@ui/components/RarityMark';
 import { RichText } from '@ui/components/RichText';
@@ -19,6 +20,14 @@ import { CollapseToggle } from '@ui/components/CollapseToggle';
 import { cx } from '@ui/cx';
 import { bookLabel, capitalizar, fieldText } from '@ui/text';
 
+import {
+  areaText,
+  castIsGlyphOnly,
+  defenseText,
+  durationText,
+  ritualLines,
+  spellCast,
+} from './spellFields';
 import styles from './DetailPanel.module.css';
 
 const store = createIndexedDbStore();
@@ -63,6 +72,10 @@ export function DetailPanel({
 
   const letraDaRaridade = rarityLetter(fieldValue(entity, 'rarity'));
 
+  /* O custo entra na linha do nome; ver o comentario abaixo. */
+
+  const castDoNome = spellCast(entity, 'cast');
+
   return (
     <section className={styles['panel']} aria-label={fieldValue(entity, 'name')}>
       {/*
@@ -83,6 +96,14 @@ export function DetailPanel({
         */}
         <div className={styles['nameRow']}>
           <h2 className={styles['name']}>{fieldValue(entity, 'name')}</h2>
+          {/*
+            O GLIFO DO CUSTO ao lado do nome, como no livro e no AoN.
+            É a outra metade da regra que faz a linha de "Execução" sumir quando o custo é
+            só um glifo: sem isto aqui, a informação não apareceria em lugar nenhum do
+            detalhe. Só desenha o caso glifo — faixa e duração continuam merecendo a linha,
+            porque não cabem ao lado de um nome.
+          */}
+          {castDoNome !== null && castIsGlyphOnly(castDoNome) && <CastCost cast={castDoNome} />}
           {letraDaRaridade !== null && (
             <RarityMark
               letter={letraDaRaridade}
@@ -277,6 +298,40 @@ function Field({
           )}
         </Row>
       );
+    }
+
+    /*
+     * O custo de conjurar NÃO desenha quando é só um glifo — ele já está ao lado do nome.
+     * Regra do livro, confirmada no AoN: a linha de "Execução" só existe quando a magia
+     * leva mais de um turno, ou quando o custo é uma faixa.
+     */
+    case 'cast': {
+      const cast = spellCast(entity, spec.field);
+      if (cast === null || castIsGlyphOnly(cast)) return null;
+      return (
+        <Row label={label(spec.field)}>
+          <CastCost cast={cast} />
+        </Row>
+      );
+    }
+
+    case 'area':
+    case 'defense':
+    case 'duration': {
+      const valor =
+        spec.kind === 'area'
+          ? areaText(entity, spec.field)
+          : spec.kind === 'defense'
+            ? defenseText(entity, spec.field)
+            : durationText(entity, spec.field);
+      if (valor === '') return null;
+      return <Row label={label(spec.field)}>{capitalizar(valor)}</Row>;
+    }
+
+    case 'ritual': {
+      const linhas = ritualLines(entity, spec.field);
+      if (linhas.length === 0) return null;
+      return <Row label={label(spec.field)}>{linhas.join(' · ')}</Row>;
     }
 
     /* O desenho mora em `Frequency`, porque a lista também o usa. */

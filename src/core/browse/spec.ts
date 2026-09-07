@@ -50,6 +50,24 @@ export type ColumnSpec =
   | ({ readonly kind: 'boolean'; readonly field: string } & ColumnBase)
   /** A frequência de uso, pelo mesmo desenhista do detalhe: "1× por dia". */
   | ({ readonly kind: 'frequency'; readonly field: string } & ColumnBase)
+  /** Uma LISTA de valores curtos, cada um em sua caixinha. Tradições, por exemplo. */
+  | ({ readonly kind: 'chips'; readonly field: string } & ColumnBase)
+  /**
+   * O custo de CONJURAR, que não é o custo em ações das outras fontes: pode ser uma faixa
+   * (`◆ a ◆◆◆`) ou um tempo (`10 minutos`). Ver `normalization/cast.ts`.
+   */
+  | ({ readonly kind: 'cast'; readonly field: string } & ColumnBase)
+  /** A área: `Explosão 6 m`. Lê `{type, value, details}`. */
+  | ({ readonly kind: 'area'; readonly field: string } & ColumnBase)
+  /**
+   * A defesa contra a magia — salvamento OU valor passivo, na mesma linha.
+   *
+   * Uma espécie só para os dois porque o livro e o AoN os tratam como uma coisa: "Defesa
+   * Vontade básico", "Defesa CA". São alternativas, nunca aparecem juntos.
+   */
+  | ({ readonly kind: 'defense'; readonly field: string } & ColumnBase)
+  /** A duração do efeito, com "sustentada" junto quando for o caso. */
+  | ({ readonly kind: 'duration'; readonly field: string } & ColumnBase)
   /** Texto simples, sem moldura de chip. Para valores mais longos que um rótulo. */
   | ({ readonly kind: 'text'; readonly field: string } & ColumnBase);
 
@@ -96,7 +114,12 @@ export type FilterSpec =
    * A frequência de uso. As opções são pares `max:per` (`1:day`), ordenados pela DURAÇÃO e
    * não pelo alfabeto — "por rodada" antes de "por dia" é a ordem em que a pessoa pensa.
    */
-  | { readonly kind: 'frequency'; readonly id: string; readonly field: string };
+  | { readonly kind: 'frequency'; readonly id: string; readonly field: string }
+  /**
+   * O custo de CONJURAR. Domínio fechado e ordenado: ◆, ◆◆, ◆◆◆, as faixas, ◇, ↩, e por
+   * fim `time` — uma opção só para as 283 que levam mais de um turno, e não dezessete.
+   */
+  | { readonly kind: 'cast'; readonly id: string; readonly field: string };
 
 /**
  * Os campos do cabeçalho do detalhe.
@@ -107,6 +130,20 @@ export type FilterSpec =
  */
 export type DetailFieldSpec =
   | { readonly kind: 'text'; readonly field: string }
+  /**
+   * O custo de conjurar, e ele NÃO desenha quando é só um glifo.
+   *
+   * É a regra do livro, confirmada no AoN: o glifo mora ao lado do nome, e a linha de
+   * "Execução" só existe quando a magia leva mais de um turno — ou quando o custo é uma
+   * faixa, que o glifo sozinho não sabe dizer. Repetir `◆◆` numa linha própria gastaria
+   * altura para dizer o que já está desenhado acima.
+   */
+  | { readonly kind: 'cast'; readonly field: string }
+  | { readonly kind: 'area'; readonly field: string }
+  | { readonly kind: 'defense'; readonly field: string }
+  | { readonly kind: 'duration'; readonly field: string }
+  /** Quem mais precisa ajudar no ritual, e com que teste. */
+  | { readonly kind: 'ritual'; readonly field: string }
   | { readonly kind: 'boolean'; readonly field: string }
   | { readonly kind: 'chips'; readonly field: string }
   | { readonly kind: 'frequency'; readonly field: string }
@@ -312,14 +349,70 @@ export const SOURCES: readonly SourceSpec[] = [
   },
   {
     id: 'spells',
-    entityType: null,
+    entityType: 'spell',
     mode: 'list',
-    columns: [],
+    /* Mesma ordem dos filtros depois de `traços` — ver a nota em `actions`. */
+    columns: [
+      { kind: 'cast', id: 'cast', field: 'cast' },
+      { kind: 'chips', id: 'traditions', field: 'traditions' },
+      { kind: 'text', id: 'range', field: 'range' },
+      { kind: 'area', id: 'area', field: 'area' },
+      { kind: 'defense', id: 'save', field: 'save' },
+      { kind: 'duration', id: 'duration', field: 'duration' },
+      { kind: 'boolean', id: 'counteraction', field: 'counteraction' },
+      { kind: 'chip', id: 'sector', field: 'sector' },
+      { kind: 'text', id: 'source', field: 'source.title' },
+    ],
     defaultColumns: [],
-    special: NO_SPECIAL_COLUMNS,
-    filters: [],
-    searchFields: [],
-    detail: [],
+    /*
+     * O POSTO ocupa a calha do nível. Magia não tem nível — o Remaster renomeou para
+     * "rank" —, mas na tela ele faz o mesmo trabalho: um número curto antes do nome, que
+     * ordena e que o olho usa para varrer.
+     */
+    special: { level: 'rank', rarity: 'rarity', traits: 'traits' },
+    filters: [
+      { kind: 'options', id: 'rank', field: 'rank' },
+      { kind: 'rarity', id: 'rarity', field: 'rarity' },
+      { kind: 'list', id: 'traits', field: 'traits', combine: 'any' },
+      { kind: 'cast', id: 'cast', field: 'cast' },
+      { kind: 'list', id: 'traditions', field: 'traditions', combine: 'any' },
+      { kind: 'options', id: 'area', field: 'area.type' },
+      { kind: 'options', id: 'save', field: 'save.statistic' },
+      { kind: 'boolean', id: 'counteraction', field: 'counteraction' },
+      { kind: 'options', id: 'sector', field: 'sector' },
+      { kind: 'options', id: 'source', field: 'source.title' },
+    ],
+    searchFields: ['name'],
+    /*
+     * A ORDEM é a do livro, confirmada no AoN:
+     *
+     *   traços → tradição → EXECUÇÃO (tempo, custo, requisitos)
+     *          → DISTÂNCIA, ÁREA E ALVOS → DEFESA E DURAÇÃO → (descrição) → elevada
+     *
+     * `cast` só desenha quando NÃO é um glifo simples: o glifo já mora ao lado do nome, e o
+     * livro só abre a linha de Execução quando a magia leva mais de um turno.
+     *
+     * `heightening` não é campo: 1.134 das 1.994 descrições já trazem o "Heightened"
+     * escrito, contra 610 com o dado estruturado — o texto cobre mais.
+     *
+     * Os dois últimos são sempre setor e livro.
+     */
+    detail: [
+      { kind: 'chips', field: 'traits' },
+      { kind: 'chips', field: 'traditions' },
+      { kind: 'cast', field: 'cast' },
+      { kind: 'text', field: 'materialCost' },
+      { kind: 'text', field: 'requirements' },
+      { kind: 'text', field: 'range' },
+      { kind: 'area', field: 'area' },
+      { kind: 'text', field: 'target' },
+      { kind: 'defense', field: 'save' },
+      { kind: 'duration', field: 'duration' },
+      { kind: 'ritual', field: 'ritual' },
+      { kind: 'boolean', field: 'counteraction' },
+      { kind: 'text', field: 'sector' },
+      { kind: 'source' },
+    ],
   },
   {
     id: 'equipment',

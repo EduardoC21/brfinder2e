@@ -135,6 +135,58 @@ function pesoDaFrequencia(token: string): number {
   return unidade * 10_000 + conta * 100 + Number(max ?? 1);
 }
 
+/**
+ * O custo de conjurar como UM token, para o filtro.
+ *
+ * As 283 magias que levam mais de um turno viram UMA opção, `time`, e não dezessete. A
+ * pergunta que a pessoa faz é "quais levam tempo", e não "quais levam exatamente 4 horas" —
+ * dezessete opções de duração empurrariam as seis que importam para fora da tela.
+ *
+ * Faixa vira `1-3`, `1-2`, `2-3`. A faixa mista (`2 to 2 rounds`, 7 magias) cai em `time`,
+ * porque é o extremo longo que decide se cabe no turno.
+ */
+export function castToken(entity: BrowseEntity, field: string): string {
+  const base = entity.base;
+  if (!isRecord(base)) return '';
+  const cast = base[field];
+  if (!isRecord(cast)) return '';
+  const de = isRecord(cast['from']) ? cast['from'] : null;
+  const ate = isRecord(cast['to']) ? cast['to'] : null;
+  if (de === null) return '';
+
+  const especie = (ponto: Record<string, unknown>): string => {
+    const kind = typeof ponto['kind'] === 'string' ? ponto['kind'] : '';
+    if (kind !== 'action') return kind;
+    const count = ponto['count'];
+    return typeof count === 'number' ? String(count) : '';
+  };
+
+  const inicio = especie(de);
+  if (ate === null) return inicio;
+  const fim = especie(ate);
+  // Faixa que termina em duração é `time`: o extremo longo é o que decide.
+  if (fim === 'time' || inicio === 'time') return 'time';
+  return `${inicio}-${fim}`;
+}
+
+/**
+ * A ordem dos custos de magia: ◆ ◆◆ ◆◆◆, as faixas, ◇, ↩, e por fim o que leva tempo.
+ *
+ * Domínio fechado, pelo mesmo motivo de `COST_ORDER`: alfabeticamente `free` viria antes de
+ * `reaction` e `time` no meio, e nada disso é a ordem em que se lê um custo.
+ */
+const CAST_ORDER: readonly string[] = [
+  '1',
+  '2',
+  '3',
+  '1-2',
+  '1-3',
+  '2-3',
+  'free',
+  'reaction',
+  'time',
+];
+
 /** Os valores distintos de um campo, com quantas entradas têm cada um. */
 export interface FilterOption {
   readonly value: string;
@@ -143,6 +195,14 @@ export interface FilterOption {
 
 function ordenar(counts: Map<string, number>, spec: FilterSpec): readonly FilterOption[] {
   const lista = [...counts].map(([value, count]) => ({ value, count }));
+
+  if (spec.kind === 'cast') {
+    return lista.sort((a, b) => {
+      const ia = CAST_ORDER.indexOf(a.value);
+      const ib = CAST_ORDER.indexOf(b.value);
+      return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+    });
+  }
 
   if (spec.kind === 'cost') {
     return lista.sort((a, b) => {
@@ -221,6 +281,7 @@ export function optionsFor(
 /** O valor que um tópico lê de uma entrada. Uma definição só, usada na conta e no casamento. */
 function valorDoTopico(entity: BrowseEntity, spec: FilterSpec): string {
   if (spec.kind === 'cost') return costToken(entity);
+  if (spec.kind === 'cast') return castToken(entity, spec.field);
   if (spec.kind === 'frequency') return frequencyToken(entity, spec.field);
   return fieldValue(entity, spec.field);
 }
@@ -313,13 +374,25 @@ export const DEFAULT_SORT: Sort = { column: 'name', direction: 'asc' };
  * Escrito à mão, e não com biblioteca de tabela: são duas comparações, e uma biblioteca
  * traria junto um modelo de DOM próprio que brigaria com a grade compartilhada da lista.
  */
-export function sortEntities(entities: readonly BrowseEntity[], sort: Sort): BrowseEntity[] {
+/**
+ * Ordena por nome ou pela calha numérica.
+ *
+ * ⚠️ `levelField` é PARÂMETRO, e não a string `'level'` fixa no código. Era fixa, e era
+ * dívida: magia não tem `level`, tem `rank` — o Remaster renomeou "spell level" para
+ * "spell rank" para não confundir com o nível do personagem. Com a string fixa, ordenar
+ * magias por posto comparava `undefined` com `undefined` e não ordenava nada.
+ */
+export function sortEntities(
+  entities: readonly BrowseEntity[],
+  sort: Sort,
+  levelField: string,
+): BrowseEntity[] {
   const sinal = sort.direction === 'asc' ? 1 : -1;
   if (sort.column === 'name') return [...entities].sort((a, b) => sinal * byName(a, b));
 
   return [...entities].sort((a, b) => {
-    const na = Number(fieldValue(a, 'level'));
-    const nb = Number(fieldValue(b, 'level'));
+    const na = Number(fieldValue(a, levelField));
+    const nb = Number(fieldValue(b, levelField));
     // Entrada sem nível válido vai para o fim NOS DOIS SENTIDOS: ela não participa da
     // pergunta "do menor para o maior", e pô-la no topo do decrescente seria mentira.
     const va = Number.isFinite(na);
