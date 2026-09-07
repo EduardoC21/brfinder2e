@@ -7,8 +7,10 @@
  */
 
 import { isRecord } from '../json';
+import { parseCastTime, type CastPoint } from '../normalization/cast';
 import { readPath } from '../normalization/paths';
 import { RARITY_ORDER, type Rarity } from './columns';
+import { distanceFeet } from './distance';
 import { parseDurationCode } from './duration';
 import type { Combine, FilterSpec } from './spec';
 
@@ -136,56 +138,180 @@ function pesoDaFrequencia(token: string): number {
 }
 
 /**
- * O custo de conjurar como UM token, para o filtro.
+ * O custo de conjurar como UM token, para o filtro: o TEXTO CRU, em caixa baixa.
  *
- * As 283 magias que levam mais de um turno viram UMA opção, `time`, e não dezessete. A
- * pergunta que a pessoa faz é "quais levam tempo", e não "quais levam exatamente 4 horas" —
- * dezessete opções de duração empurrariam as seis que importam para fora da tela.
+ * Havia um agrupamento aqui — as 283 que levam mais de um turno viravam uma opção só,
+ * `time` —, e ele custava mais do que economizava: "leva tempo" não responde se dá para
+ * conjurar entre dois combates, e `2 to 2 rounds` caía nesse balaio junto com `1 day`,
+ * que é quatro ordens de grandeza mais longo.
  *
- * Faixa vira `1-3`, `1-2`, `2-3`. A faixa mista (`2 to 2 rounds`, 7 magias) cai em `time`,
- * porque é o extremo longo que decide se cabe no turno.
+ * São 27 formatos no dado e 26 opções aqui: `Reaction` com R maiúsculo existe em uma
+ * magia, e a caixa baixa a junta com as outras 95. Nenhuma tabela escrita à mão — o
+ * token É o dado, e um formato novo numa versão futura aparece sozinho.
  */
 export function castToken(entity: BrowseEntity, field: string): string {
   const base = entity.base;
   if (!isRecord(base)) return '';
   const cast = base[field];
   if (!isRecord(cast)) return '';
-  const de = isRecord(cast['from']) ? cast['from'] : null;
-  const ate = isRecord(cast['to']) ? cast['to'] : null;
-  if (de === null) return '';
+  const raw = cast['raw'];
+  return typeof raw === 'string' ? raw.trim().toLowerCase() : '';
+}
 
-  const especie = (ponto: Record<string, unknown>): string => {
-    const kind = typeof ponto['kind'] === 'string' ? ponto['kind'] : '';
-    if (kind !== 'action') return kind;
-    const count = ponto['count'];
-    return typeof count === 'number' ? String(count) : '';
-  };
+/** Quanto dura cada unidade, em segundos. Rodada e turno valem 6s, como no jogo. */
+const SEGUNDOS: Readonly<Record<string, number>> = {
+  second: 1,
+  turn: 6,
+  round: 6,
+  minute: 60,
+  hour: 3600,
+  day: 86_400,
+  week: 604_800,
+  month: 2_592_000,
+  year: 31_536_000,
+};
 
-  const inicio = especie(de);
-  if (ate === null) return inicio;
-  const fim = especie(ate);
-  // Faixa que termina em duração é `time`: o extremo longo é o que decide.
-  if (fim === 'time' || inicio === 'time') return 'time';
-  return `${inicio}-${fim}`;
+function segundosDoPonto(ponto: CastPoint): number {
+  if (ponto.time === null) return 0;
+  return ponto.time.count * (SEGUNDOS[ponto.time.unit] ?? 0);
 }
 
 /**
- * A ordem dos custos de magia: ◆ ◆◆ ◆◆◆, as faixas, ◇, ↩, e por fim o que leva tempo.
+ * A ordem dos custos de magia: ◆ ◆◆ ◆◆◆, as faixas, ◇, ↩, e o que leva tempo.
  *
- * Domínio fechado, pelo mesmo motivo de `COST_ORDER`: alfabeticamente `free` viria antes de
- * `reaction` e `time` no meio, e nada disso é a ordem em que se lê um custo.
+ * Não é uma tabela de tokens escritos à mão — com 26 opções ela seria uma segunda cópia do
+ * dado, que envelheceria calada. É uma CONTA sobre o custo já decodificado, e o que leva
+ * tempo se ordena pela duração de verdade: `2 rodadas` (12s) antes de `1 dia` (86.400s).
+ *
+ * A faixa mista `2 to 2 rounds` cai no grupo do tempo pelo extremo LONGO, que é o que
+ * decide se ela cabe num turno — e lá dentro fica em primeiro, porque 12s é o menor.
  */
-const CAST_ORDER: readonly string[] = [
-  '1',
-  '2',
-  '3',
-  '1-2',
-  '1-3',
-  '2-3',
-  'free',
-  'reaction',
-  'time',
+export function castRank(token: string): number {
+  const cast = parseCastTime(token);
+  if (cast.from.kind === 'unknown') return 1_000_000;
+
+  const tempo = Math.max(segundosDoPonto(cast.from), segundosDoPonto(cast.to ?? cast.from));
+  if (tempo > 0) return 1000 + tempo;
+
+  if (cast.to !== null) {
+    // Faixa de ações: 1-2, 1-3, 2-3, sempre depois das contagens simples.
+    return 10 + (cast.from.count ?? 0) * 3 + (cast.to.count ?? 0);
+  }
+  if (cast.from.kind === 'action') return cast.from.count ?? 0;
+  if (cast.from.kind === 'free') return 30;
+  if (cast.from.kind === 'reaction') return 40;
+  return 1_000_000;
+}
+
+/**
+ * A defesa contra a magia como UM token: o salvamento, ou o valor passivo.
+ *
+ * Os dois num tópico só porque são ALTERNATIVAS, e não campos diferentes — o livro e o
+ * AoN escrevem "Defesa Vontade básico" e "Defesa CA" na mesma linha. Filtrando só por
+ * `save.statistic`, como estava, as 11 magias de defesa passiva não tinham como ser
+ * achadas: `CA` não era opção de lugar nenhum.
+ *
+ * Uma delas tem os dois (salvamento de Fortitude E CA). O salvamento vence, porque é o que
+ * a tela mostra.
+ */
+export function defenseToken(entity: BrowseEntity, field: string, passiveField: string): string {
+  const save = fieldValue(entity, `${field}.statistic`);
+  if (save !== '') return save;
+  return fieldValue(entity, passiveField);
+}
+
+/** Salvamentos primeiro, na ordem da ficha; depois as defesas passivas. */
+const DEFENSE_ORDER: readonly string[] = [
+  'fortitude',
+  'reflex',
+  'will',
+  'ac',
+  'fortitude-dc',
+  'reflex-dc',
 ];
+
+/** O prefixo que marca um LIMITE numérico dentro dos valores marcados de um tópico. */
+const MIN = 'min:';
+const MAX = 'max:';
+
+export interface Bounds {
+  readonly min: number | null;
+  readonly max: number | null;
+}
+
+/**
+ * Os limites numéricos guardados na seleção do tópico.
+ *
+ * Moram no MESMO `values: string[]` das opções marcadas, como `min:30` e `max:60`, em vez
+ * de um campo novo em `FilterSelection`. Assim eles atravessam sem mudança o que já existe:
+ * a gravação da preferência, o botão que remove um filtro aplicado, a contagem no crachá do
+ * tópico e o "limpar tudo". Um campo à parte obrigaria a mexer nos quatro.
+ */
+export function readBounds(values: readonly string[]): Bounds {
+  let min: number | null = null;
+  let max: number | null = null;
+  for (const value of values) {
+    if (value.startsWith(MIN)) {
+      const n = Number(value.slice(MIN.length));
+      if (Number.isFinite(n)) min = n;
+    } else if (value.startsWith(MAX)) {
+      const n = Number(value.slice(MAX.length));
+      if (Number.isFinite(n)) max = n;
+    }
+  }
+  return { min, max };
+}
+
+/** Os valores que NÃO são limite — as opções marcadas de verdade. */
+export function plainValues(values: readonly string[]): readonly string[] {
+  return values.filter((value) => !value.startsWith(MIN) && !value.startsWith(MAX));
+}
+
+/** Escreve (ou apaga, com `null`) um dos limites, preservando o resto da seleção. */
+export function writeBound(
+  values: readonly string[],
+  which: 'min' | 'max',
+  value: number | null,
+): readonly string[] {
+  const prefixo = which === 'min' ? MIN : MAX;
+  const resto = values.filter((entry) => !entry.startsWith(prefixo));
+  return value === null ? resto : [...resto, `${prefixo}${String(value)}`];
+}
+
+/**
+ * O número que um tópico numérico lê de uma entrada. `null` quando não há número nenhum.
+ *
+ * A área guarda número (`{type, value}`); a distância guarda PROSA (`30 feet`, `1 mile`,
+ * `touch`), e por isso passa por `distanceFeet`. Quem devolve `null` fica de fora quando
+ * há limite marcado: não dá para afirmar que `planetary` passa de 30 pés.
+ */
+export function numberOf(entity: BrowseEntity, spec: FilterSpec): number | null {
+  if (spec.kind !== 'number' && spec.kind !== 'area') return null;
+  const campo = spec.kind === 'area' ? `${spec.field}.value` : spec.field;
+  const valor = readPath(entity.base, campo).value;
+  if (typeof valor === 'number') return Number.isFinite(valor) ? valor : null;
+  if (typeof valor === 'string') return distanceFeet(valor);
+  return null;
+}
+
+/** Os extremos do dado. Os dois SEMPRE existem — quem não tem devolve `null` inteiro. */
+export interface Extent {
+  readonly min: number;
+  readonly max: number;
+}
+
+/** O menor e o maior valor que existem no dado, para a dica do painel. */
+export function numericExtent(entities: readonly BrowseEntity[], spec: FilterSpec): Extent | null {
+  let min: number | null = null;
+  let max: number | null = null;
+  for (const entity of entities) {
+    const n = numberOf(entity, spec);
+    if (n === null) continue;
+    if (min === null || n < min) min = n;
+    if (max === null || n > max) max = n;
+  }
+  return min === null || max === null ? null : { min, max };
+}
 
 /** Os valores distintos de um campo, com quantas entradas têm cada um. */
 export interface FilterOption {
@@ -198,8 +324,21 @@ function ordenar(counts: Map<string, number>, spec: FilterSpec): readonly Filter
 
   if (spec.kind === 'cast') {
     return lista.sort((a, b) => {
-      const ia = CAST_ORDER.indexOf(a.value);
-      const ib = CAST_ORDER.indexOf(b.value);
+      if (a.value === '') return 1;
+      if (b.value === '') return -1;
+      const diferenca = castRank(a.value) - castRank(b.value);
+      // `1 week` e `7 days` duram o mesmo; empate desfeito pelo texto, para a ordem ser
+      // sempre a mesma entre uma abertura e outra do painel.
+      return diferenca === 0 ? a.value.localeCompare(b.value) : diferenca;
+    });
+  }
+
+  if (spec.kind === 'defense') {
+    return lista.sort((a, b) => {
+      if (a.value === '') return 1;
+      if (b.value === '') return -1;
+      const ia = DEFENSE_ORDER.indexOf(a.value);
+      const ib = DEFENSE_ORDER.indexOf(b.value);
       return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
     });
   }
@@ -252,6 +391,9 @@ export function optionsFor(
   entities: readonly BrowseEntity[],
   spec: FilterSpec,
 ): readonly FilterOption[] {
+  // Tópico só de faixa não tem opção nenhuma: o que ele oferece são dois campos.
+  if (spec.kind === 'number') return [];
+
   const counts = new Map<string, number>();
 
   /*
@@ -283,6 +425,9 @@ function valorDoTopico(entity: BrowseEntity, spec: FilterSpec): string {
   if (spec.kind === 'cost') return costToken(entity);
   if (spec.kind === 'cast') return castToken(entity, spec.field);
   if (spec.kind === 'frequency') return frequencyToken(entity, spec.field);
+  if (spec.kind === 'defense') return defenseToken(entity, spec.field, spec.passiveField);
+  // A área tem DUAS perguntas no mesmo tópico; a das opções é o tipo.
+  if (spec.kind === 'area') return fieldValue(entity, `${spec.field}.type`);
   return fieldValue(entity, spec.field);
 }
 
@@ -294,6 +439,28 @@ export function combineOf(spec: FilterSpec, state: FilterState): Combine {
 /** Uma entrada casa com o tópico? */
 function matches(entity: BrowseEntity, spec: FilterSpec, selection: FilterSelection): boolean {
   const { values } = selection;
+
+  if (spec.kind === 'number' || spec.kind === 'area') {
+    /*
+     * A área combina TIPO e TAMANHO no mesmo tópico, e os dois se somam (E): marcar
+     * "explosão" e "até 20" pede as explosões de até 20 pés. São a mesma pergunta feita em
+     * duas metades — separá-las em dois botões na barra faria a pessoa procurar "área" e
+     * achar dois, sem saber qual abre o quê.
+     */
+    if (spec.kind === 'area') {
+      const tipos = plainValues(values);
+      if (tipos.length > 0 && !tipos.includes(fieldValue(entity, `${spec.field}.type`))) {
+        return false;
+      }
+    }
+    const { min, max } = readBounds(values);
+    if (min === null && max === null) return true;
+    const numero = numberOf(entity, spec);
+    if (numero === null) return false;
+    if (min !== null && numero < min) return false;
+    if (max !== null && numero > max) return false;
+    return true;
+  }
 
   if (spec.kind === 'list') {
     const have = fieldList(entity, spec.field);

@@ -95,16 +95,3 @@ export function ritualLines(entity: BrowseEntity, field: string): readonly strin
   if (checks !== '') linhas.push(checks);
   return linhas;
 }
-
-/**
- * Verdadeiro quando o custo é SÓ um glifo, e portanto já está desenhado ao lado do nome.
- *
- * É a regra do livro, confirmada no AoN: a linha de "Execução" só existe quando a magia
- * leva mais de um turno, ou quando o custo é uma faixa que o glifo sozinho não diz.
- *
- * Mora aqui e não em `CastCost` porque aquele arquivo exporta um COMPONENTE, e um módulo
- * que exporta componente e função quebra o recarregamento a quente do Vite.
- */
-export function castIsGlyphOnly(cast: SpellCast): boolean {
-  return cast.to === null && cast.from.kind !== 'time' && cast.from.kind !== 'unknown';
-}

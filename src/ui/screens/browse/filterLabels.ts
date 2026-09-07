@@ -29,7 +29,16 @@ export function topicLabel(spec: FilterSpec): string {
 
 /** O rótulo de um valor. Booleano e "sem valor" precisam de tradução; o resto é o dado. */
 export function valueLabel(spec: FilterSpec, value: string): string {
+  /*
+   * Os limites de faixa moram na MESMA lista dos valores marcados (`min:30`), e por isso
+   * passam por aqui: é este rótulo que o chip da barra desenha.
+   */
+  if (spec.kind === 'number' || spec.kind === 'area') {
+    if (value.startsWith('min:')) return boundLabel(spec.unit, 'min', Number(value.slice(4)));
+    if (value.startsWith('max:')) return boundLabel(spec.unit, 'max', Number(value.slice(4)));
+  }
   if (value === '') return t.noValue;
+  if (spec.kind === 'defense') return defenseLabel(value);
   if (spec.kind === 'boolean') return capitalizar(value === 'true' ? t.yes : t.no);
   if (spec.kind === 'cost') return costLabel(value);
   if (spec.kind === 'rarity') return capitalizar(t.rarity[value] ?? value);
@@ -57,6 +66,12 @@ export function frequencyLabel(token: string): string {
   return `${quantas} ${f.every(duracao.count, unidade)}`;
 }
 
+/** `will` → `Vontade`; `ac` → `CA`. As duas metades da defesa, na mesma tabela. */
+export function defenseLabel(value: string): string {
+  const d = t.defense;
+  return capitalizar(d.save[value] ?? d.passive[value] ?? value);
+}
+
 function costLabel(token: string): string {
   switch (token) {
     case '1':
@@ -80,7 +95,32 @@ export function columnLabel(spec: ColumnSpec): string {
   return capitalizar(t.fieldLabel[spec.field] ?? spec.field);
 }
 
-/** O rótulo de uma coluna especial: nível, raridade, traços. Mesmo padrão do resto. */
-export function specialColumnLabel(id: string): string {
+/**
+ * O rótulo de uma coluna especial: nível, raridade, traços.
+ *
+ * O CAMPO manda quando a fonte tem um: magia guarda `rank`, e a calha dela se chama
+ * "Ranque", não "Nível". Sem isto, o cabeçalho dizia uma palavra e o filtro do mesmo dado
+ * dizia outra.
+ */
+export function specialColumnLabel(id: string, field?: string | null): string {
+  if (field != null && t.fieldLabel[field] !== undefined) return capitalizar(t.fieldLabel[field]);
   return capitalizar(t.specialLabel[id] ?? id);
+}
+
+/**
+ * O rótulo de um LIMITE de faixa: `≥ 30 pés`.
+ *
+ * Mora aqui e não em `valueLabel` porque quem o desenha são dois — o chip do filtro
+ * aplicado e o campo do painel —, e uma segunda cópia divergiria na primeira unidade nova.
+ */
+export function boundLabel(unit: string, which: 'min' | 'max', value: number): string {
+  const n = t.number;
+  const unidade = n.units[unit] ?? unit;
+  const quanto = formatNumber(value);
+  return which === 'min' ? n.atLeast(quanto, unidade) : n.atMost(quanto, unidade);
+}
+
+/** `5280` → `5.280`. Separador de milhar em pt-BR, que é o que a pessoa lê. */
+export function formatNumber(value: number): string {
+  return value.toLocaleString('pt-BR');
 }

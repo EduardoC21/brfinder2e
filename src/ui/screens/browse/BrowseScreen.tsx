@@ -258,14 +258,24 @@ function SourcePane({
   };
 
   /**
-   * O teclado vive no campo de busca, não na lista.
+   * O teclado da lista, ouvido na ÁREA INTEIRA — busca, barra de filtros e lista.
    *
-   * O briefing (Anexo A) pede: "o usuário digita, desce com as setas, abre com Enter, sem
-   * tocar no mouse". Se o foco pulasse para a lista na primeira seta, continuar digitando
-   * exigiria voltar — então o foco fica no campo e a lista é comandada por `aria-activedescendant`.
+   * O briefing (Anexo A) pede "digita, desce com as setas, abre com Enter, sem tocar no
+   * mouse", e por isso o foco continua no campo: se ele pulasse para a lista na primeira
+   * seta, continuar digitando exigiria voltar. A lista segue comandada por
+   * `aria-activedescendant`.
+   *
+   * O que mudou é ONDE o teclado é ouvido. Estava só no `<input>`, e bastava clicar no
+   * corpo da lista — que é `tabIndex={-1}` e portanto RECEBE foco ao ser clicado — para as
+   * setas pararem de andar de linha em linha e voltarem a só rolar a caixa. Ouvindo na
+   * área inteira, o evento chega aqui por borbulhamento venha de onde vier.
+   *
+   * Botão é exceção: o cabeçalho ordenável e os tópicos de filtro respondem a Enter por
+   * conta própria, e sequestrá-lo abriria uma entrada em vez de acionar o botão.
    */
-  const onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>): void => {
+  const onKeyDown = (event: React.KeyboardEvent<HTMLDivElement>): void => {
     if (results.length === 0) return;
+    if (event.target instanceof HTMLElement && event.target.closest('button') !== null) return;
 
     if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
       event.preventDefault();
@@ -354,7 +364,16 @@ function SourcePane({
 
   return (
     <>
-      <div className={styles['main']}>
+      {/*
+        `tabIndex={-1}` na área inteira, e é o que faz as setas funcionarem depois de um
+        clique em espaço vazio.
+
+        Sem ele, clicar fora de uma linha ou de um botão manda o foco para o `<body>` — e
+        dali o `keydown` não passa por este `<div>` nunca. Com ele, o navegador procura o
+        ancestral focável mais próximo do que foi clicado e para aqui. `-1` e não `0`: a
+        área não entra na ordem do Tab, que já tem a busca, os filtros e os cabeçalhos.
+      */}
+      <div className={styles['main']} tabIndex={-1} onKeyDown={onKeyDown}>
         <div className={styles['searchRow']}>
           {/*
           Era um <input type="search"> cru aqui, escrito à parte só por causa dos atributos
@@ -375,7 +394,6 @@ function SourcePane({
               setTerm(next);
               setActiveIndex(-1);
             }}
-            onKeyDown={onKeyDown}
           />
           <span className={styles['count']}>{t.counting(results.length, entities.length)}</span>
         </div>

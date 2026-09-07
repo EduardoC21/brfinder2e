@@ -116,10 +116,45 @@ export type FilterSpec =
    */
   | { readonly kind: 'frequency'; readonly id: string; readonly field: string }
   /**
-   * O custo de CONJURAR. Domínio fechado e ordenado: ◆, ◆◆, ◆◆◆, as faixas, ◇, ↩, e por
-   * fim `time` — uma opção só para as 283 que levam mais de um turno, e não dezessete.
+   * O custo de CONJURAR. Uma opção por FORMATO do dado — as 26 que existem —, ordenadas
+   * pela conta em `castRank`: ◆, ◆◆, ◆◆◆, as faixas, ◇, ↩, e o que leva tempo, do mais
+   * curto para o mais longo.
    */
-  | { readonly kind: 'cast'; readonly id: string; readonly field: string };
+  | { readonly kind: 'cast'; readonly id: string; readonly field: string }
+  /**
+   * A DEFESA contra a magia: salvamento e valor passivo no mesmo tópico.
+   *
+   * Dois campos, uma pergunta — o livro escreve "Defesa Vontade básico" e "Defesa CA" na
+   * mesma linha, e são alternativas. Com um `options` sobre `save.statistic`, que era o
+   * que havia, as 11 de defesa passiva não tinham como ser achadas: `CA` não era opção.
+   */
+  | {
+      readonly kind: 'defense';
+      readonly id: string;
+      readonly field: string;
+      readonly passiveField: string;
+    }
+  /**
+   * Uma FAIXA numérica preenchível: "de 30 a 60 pés". Sem opções — dois campos.
+   *
+   * Existe porque alcance tem 57 valores distintos e área tem 72: como lista de opções,
+   * qualquer um dos dois é mais longo que a tela, e a pergunta que se faz não é "quais têm
+   * exatamente 120 pés", é "quais chegam a pelo menos 60".
+   *
+   * O campo pode guardar PROSA (`30 feet`, `1 mile`, `touch`) — ver `distanceFeet`.
+   */
+  | { readonly kind: 'number'; readonly id: string; readonly field: string; readonly unit: Unit }
+  /**
+   * A ÁREA: o TIPO (opções) e o TAMANHO (faixa) no mesmo tópico, somados.
+   *
+   * Juntos e não em dois botões porque são a mesma pergunta partida ao meio — "explosão de
+   * até 20 pés". Dois tópicos chamados "área" na barra obrigariam a abrir os dois para
+   * descobrir qual é qual.
+   */
+  | { readonly kind: 'area'; readonly id: string; readonly field: string; readonly unit: Unit };
+
+/** A unidade de uma faixa numérica. Só a que o jogo usa para distância, por enquanto. */
+export type Unit = 'feet';
 
 /**
  * Os campos do cabeçalho do detalhe.
@@ -131,12 +166,13 @@ export type FilterSpec =
 export type DetailFieldSpec =
   | { readonly kind: 'text'; readonly field: string }
   /**
-   * O custo de conjurar, e ele NÃO desenha quando é só um glifo.
+   * O custo de conjurar. SEMPRE desenha, inclusive quando é só um glifo.
    *
-   * É a regra do livro, confirmada no AoN: o glifo mora ao lado do nome, e a linha de
-   * "Execução" só existe quando a magia leva mais de um turno — ou quando o custo é uma
-   * faixa, que o glifo sozinho não sabe dizer. Repetir `◆◆` numa linha própria gastaria
-   * altura para dizer o que já está desenhado acima.
+   * Tentei a regra do livro aqui — o glifo ao lado do nome, e a linha de "Execução" só
+   * quando o custo passa de um turno — e ela não sobreviveu ao uso: ao lado do nome o
+   * glifo fica sem rótulo, e quem varre o cabeçalho procurando "Execução" não acha em 1.711
+   * das 1.994. Ao lado do nome fica só a raridade, que identifica a entrada; o custo é
+   * campo, e campo mora no `<dl>`.
    */
   | { readonly kind: 'cast'; readonly field: string }
   | { readonly kind: 'area'; readonly field: string }
@@ -359,7 +395,6 @@ export const SOURCES: readonly SourceSpec[] = [
       { kind: 'area', id: 'area', field: 'area' },
       { kind: 'defense', id: 'save', field: 'save' },
       { kind: 'duration', id: 'duration', field: 'duration' },
-      { kind: 'boolean', id: 'counteraction', field: 'counteraction' },
       { kind: 'chip', id: 'sector', field: 'sector' },
       { kind: 'text', id: 'source', field: 'source.title' },
     ],
@@ -376,9 +411,9 @@ export const SOURCES: readonly SourceSpec[] = [
       { kind: 'list', id: 'traits', field: 'traits', combine: 'any' },
       { kind: 'cast', id: 'cast', field: 'cast' },
       { kind: 'list', id: 'traditions', field: 'traditions', combine: 'any' },
-      { kind: 'options', id: 'area', field: 'area.type' },
-      { kind: 'options', id: 'save', field: 'save.statistic' },
-      { kind: 'boolean', id: 'counteraction', field: 'counteraction' },
+      { kind: 'number', id: 'range', field: 'range', unit: 'feet' },
+      { kind: 'area', id: 'area', field: 'area', unit: 'feet' },
+      { kind: 'defense', id: 'save', field: 'save', passiveField: 'passiveDefense' },
       { kind: 'options', id: 'sector', field: 'sector' },
       { kind: 'options', id: 'source', field: 'source.title' },
     ],
@@ -389,8 +424,12 @@ export const SOURCES: readonly SourceSpec[] = [
      *   traços → tradição → EXECUÇÃO (tempo, custo, requisitos)
      *          → DISTÂNCIA, ÁREA E ALVOS → DEFESA E DURAÇÃO → (descrição) → elevada
      *
-     * `cast` só desenha quando NÃO é um glifo simples: o glifo já mora ao lado do nome, e o
-     * livro só abre a linha de Execução quando a magia leva mais de um turno.
+     * `cast` desenha SEMPRE. A regra do livro — glifo no nome, linha de Execução só quando
+     * passa de um turno — deixava 1.711 das 1.994 sem a linha que se procura.
+     *
+     * `counteraction` saiu dos três lugares (coluna, filtro e detalhe): é o "pode ser usada
+     * para anular outra magia", e sem a regra escrita ao lado ninguém sabe o que a marca
+     * quer dizer. O campo continua normalizado, esperando ter onde ser explicado.
      *
      * `heightening` não é campo: 1.134 das 1.994 descrições já trazem o "Heightened"
      * escrito, contra 610 com o dado estruturado — o texto cobre mais.
@@ -409,7 +448,6 @@ export const SOURCES: readonly SourceSpec[] = [
       { kind: 'defense', field: 'save' },
       { kind: 'duration', field: 'duration' },
       { kind: 'ritual', field: 'ritual' },
-      { kind: 'boolean', field: 'counteraction' },
       { kind: 'text', field: 'sector' },
       { kind: 'source' },
     ],

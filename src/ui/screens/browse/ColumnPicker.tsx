@@ -142,7 +142,7 @@ export function ColumnPicker({
               <span className={styles['mark']} aria-hidden="true">
                 {ligada ? '✓' : ''}
               </span>
-              <span className={styles['label']}>{specialColumnLabel(id)}</span>
+              <span className={styles['label']}>{specialColumnLabel(id, special[id])}</span>
             </button>
           );
         })}

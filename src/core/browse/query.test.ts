@@ -2,11 +2,17 @@ import { describe, expect, it } from 'vitest';
 
 import {
   applyFilters,
+  castRank,
+  castToken,
   costToken,
+  defenseToken,
   fieldList,
   fieldValue,
+  numericExtent,
   optionsFor,
+  readBounds,
   sortByName,
+  writeBound,
   type BrowseEntity,
 } from './query';
 import type { FilterSpec } from './spec';
@@ -226,5 +232,171 @@ describe('sortByName', () => {
   it('ignora acento e caixa', () => {
     const acentuadas = [entity('x', { name: 'Ébrio' }), entity('y', { name: 'Eco' })];
     expect(sortByName(acentuadas).map((e) => fieldValue(e, 'name'))).toEqual(['Ébrio', 'Eco']);
+  });
+});
+
+/* ── Magias: o custo de conjurar, a defesa e as faixas numéricas ── */
+
+const magia = (key: string, cast: string, extra: Record<string, unknown> = {}): BrowseEntity =>
+  entity(key, { name: key, cast: { from: {}, to: null, raw: cast }, ...extra });
+
+describe('castToken', () => {
+  it('é o texto CRU, em caixa baixa — nada de agrupar', () => {
+    expect(castToken(magia('a', '2'), 'cast')).toBe('2');
+    expect(castToken(magia('b', '10 minutes'), 'cast')).toBe('10 minutes');
+    expect(castToken(magia('c', '1 to 3'), 'cast')).toBe('1 to 3');
+  });
+
+  /** `Reaction` com R maiúsculo existe em UMA magia, contra 95 em minúscula. */
+  it('junta a maiúscula solta da fonte com as outras', () => {
+    expect(castToken(magia('d', 'Reaction'), 'cast')).toBe('reaction');
+  });
+
+  it('sem o campo, token vazio', () => {
+    expect(castToken(entity('x', { name: 'x' }), 'cast')).toBe('');
+  });
+});
+
+describe('castRank', () => {
+  it('ações contadas primeiro, na ordem', () => {
+    expect(castRank('1')).toBeLessThan(castRank('2'));
+    expect(castRank('2')).toBeLessThan(castRank('3'));
+  });
+
+  it('as faixas de ações vêm DEPOIS das contagens simples', () => {
+    expect(castRank('3')).toBeLessThan(castRank('1 to 2'));
+    expect(castRank('1 to 2')).toBeLessThan(castRank('1 to 3'));
+    expect(castRank('1 to 3')).toBeLessThan(castRank('2 or 3'));
+  });
+
+  it('livre e reação fecham o grupo do turno', () => {
+    expect(castRank('2 or 3')).toBeLessThan(castRank('free'));
+    expect(castRank('free')).toBeLessThan(castRank('reaction'));
+  });
+
+  it('o que leva tempo vem por último, ordenado pela DURAÇÃO', () => {
+    expect(castRank('reaction')).toBeLessThan(castRank('2 to 2 rounds'));
+    expect(castRank('2 to 2 rounds')).toBeLessThan(castRank('1 minute'));
+    expect(castRank('1 minute')).toBeLessThan(castRank('10 minutes'));
+    expect(castRank('10 minutes')).toBeLessThan(castRank('1 hour'));
+    expect(castRank('8 hours')).toBeLessThan(castRank('1 day'));
+    expect(castRank('1 day')).toBeLessThan(castRank('1 week'));
+  });
+
+  /** `1 week` e `7 days` são a mesma duração: quem desempata é o texto, no `ordenar`. */
+  it('mede a duração de verdade, e não a unidade escrita', () => {
+    expect(castRank('7 days')).toBe(castRank('1 week'));
+  });
+});
+
+const comDefesa = (key: string, save: unknown, passiva: string): BrowseEntity =>
+  entity(key, { name: key, save, passiveDefense: passiva });
+
+describe('defenseToken', () => {
+  it('o salvamento quando há', () => {
+    expect(
+      defenseToken(
+        comDefesa('a', { statistic: 'will', basic: false }, ''),
+        'save',
+        'passiveDefense',
+      ),
+    ).toBe('will');
+  });
+
+  /** As 11 de defesa passiva não tinham como ser achadas: `CA` não era opção de lugar nenhum. */
+  it('a defesa PASSIVA quando não há salvamento', () => {
+    expect(defenseToken(comDefesa('b', null, 'ac'), 'save', 'passiveDefense')).toBe('ac');
+  });
+
+  it('o salvamento vence quando a magia tem os dois — é o que a tela mostra', () => {
+    expect(
+      defenseToken(
+        comDefesa('c', { statistic: 'fortitude', basic: true }, 'ac'),
+        'save',
+        'passiveDefense',
+      ),
+    ).toBe('fortitude');
+  });
+
+  it('sem nenhum dos dois, token vazio', () => {
+    expect(defenseToken(comDefesa('d', null, ''), 'save', 'passiveDefense')).toBe('');
+  });
+});
+
+describe('os limites numéricos', () => {
+  it('lê `min:` e `max:` de dentro dos valores marcados', () => {
+    expect(readBounds(['burst', 'min:10', 'max:60'])).toEqual({ min: 10, max: 60 });
+    expect(readBounds(['burst'])).toEqual({ min: null, max: null });
+  });
+
+  it('escrever um limite não mexe no outro nem nas opções marcadas', () => {
+    expect(writeBound(['burst', 'min:10'], 'max', 60)).toEqual(['burst', 'min:10', 'max:60']);
+    expect(writeBound(['burst', 'min:10'], 'min', null)).toEqual(['burst']);
+  });
+});
+
+const alcance = (key: string, range: string): BrowseEntity => entity(key, { name: key, range });
+
+const distancia: FilterSpec = { kind: 'number', id: 'range', field: 'range', unit: 'feet' };
+
+describe('o filtro de FAIXA numérica', () => {
+  const magias = [
+    alcance('toque', 'touch'),
+    alcance('curto', '30 feet'),
+    alcance('longo', '120 feet'),
+    alcance('milha', '1 mile'),
+    alcance('vago', 'planetary'),
+  ];
+
+  it('não oferece opção nenhuma: o que ele tem são dois campos', () => {
+    expect(optionsFor(magias, distancia)).toEqual([]);
+  });
+
+  it('recorta pelo piso e pelo teto, em pés', () => {
+    const recorte = applyFilters(magias, [distancia], {
+      range: { values: ['min:30', 'max:120'] },
+    });
+    expect(recorte.map((e) => e.key)).toEqual(['curto', 'longo']);
+  });
+
+  /** Não dá para afirmar que `planetary` passa de 30 pés — então ele fica de fora. */
+  it('quem não tem número sai quando há limite marcado', () => {
+    const recorte = applyFilters(magias, [distancia], { range: { values: ['min:0'] } });
+    expect(recorte.map((e) => e.key)).not.toContain('vago');
+    expect(recorte.map((e) => e.key)).toContain('toque');
+  });
+
+  it('a dica mostra o que EXISTE no dado', () => {
+    expect(numericExtent(magias, distancia)).toEqual({ min: 0, max: 5280 });
+  });
+});
+
+const comArea = (key: string, type: string | null, value: number | null): BrowseEntity =>
+  entity(key, { name: key, area: type === null ? null : { type, value, details: null } });
+
+const areaSpec: FilterSpec = { kind: 'area', id: 'area', field: 'area', unit: 'feet' };
+
+describe('o filtro de ÁREA, que junta tipo e tamanho', () => {
+  const magias = [
+    comArea('explosao10', 'burst', 10),
+    comArea('explosao30', 'burst', 30),
+    comArea('cone15', 'cone', 15),
+    comArea('sem', null, null),
+  ];
+
+  it('as opções são os TIPOS', () => {
+    expect(optionsFor(magias, areaSpec).map((o) => o.value)).toEqual(['burst', 'cone', '']);
+  });
+
+  it('tipo e tamanho se SOMAM: explosões de até 20', () => {
+    const recorte = applyFilters(magias, [areaSpec], {
+      area: { values: ['burst', 'max:20'] },
+    });
+    expect(recorte.map((e) => e.key)).toEqual(['explosao10']);
+  });
+
+  it('só o tipo, sem limite, não exige tamanho nenhum', () => {
+    const recorte = applyFilters(magias, [areaSpec], { area: { values: ['cone'] } });
+    expect(recorte.map((e) => e.key)).toEqual(['cone15']);
   });
 });

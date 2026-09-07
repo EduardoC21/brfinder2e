@@ -198,3 +198,58 @@
   color: var(--color-text-muted);
   font: 400 var(--text-sm) / 1.5 var(--font-body);
 }
+
+/*
+ * A faixa numérica: dois campos curtos na mesma linha, com a unidade no fim.
+ *
+ * `type=number` com largura de 7ch — cabe `5280000` sem esticar o painel, que é o maior
+ * alcance do dado (1.000 milhas). As setinhas nativas do Chrome ficam: elas são o jeito
+ * mais rápido de ajustar de 5 em 5 sem apagar e redigitar.
+ */
+.faixa {
+  margin-top: var(--space-3);
+}
+
+.campos {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.campo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.campoRotulo {
+  color: var(--color-text-muted);
+  font: 400 var(--text-xs) / 1 var(--font-body);
+}
+
+.entrada {
+  width: 8ch;
+  border: 1px solid var(--color-hairline);
+  padding: var(--space-1) var(--space-2);
+  background: var(--color-bg);
+  color: var(--color-data);
+  font: 400 var(--text-sm) / 1.4 var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.entrada:focus-visible {
+  outline: 1px solid var(--color-state);
+  outline-offset: 1px;
+}
+
+.unidade {
+  color: var(--color-text-muted);
+  font: 400 var(--text-xs) / 1 var(--font-mono);
+}
+
+/* O que EXISTE no dado. Sem isto, um teto de 60 pés parece recortar quase tudo. */
+.dica {
+  margin: var(--space-2) 0 0;
+  color: var(--color-text-muted);
+  font: 400 var(--text-xs) / 1.4 var(--font-body);
+}

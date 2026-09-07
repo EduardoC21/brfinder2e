@@ -117,6 +117,25 @@ Acrescentar uma espécie é: um caso na união + um caso no `switch`. O compilad
 segundo quando você faz o primeiro. **Nunca** desenhar coluna ou campo com `if` por nome
 de fonte.
 
+### O teclado é da ÁREA, não do campo de busca
+
+**Decidido:** o `keydown` das setas e do Enter é ouvido no `<div>` que embrulha busca,
+barra de filtros e lista — e não no `<input>`. O foco continua no campo (Anexo A: "digita,
+desce com as setas, abre com Enter"), e a lista segue comandada por `aria-activedescendant`.
+
+Por quê: ouvindo só no `<input>`, bastava clicar em espaço vazio da lista para as setas
+pararem de andar de linha em linha. O clique manda o foco para o `<body>` — ou para o corpo
+da lista, que é `tabIndex={-1}` —, e dali o evento não passa pelo campo nunca.
+
+Duas peças fazem isso funcionar:
+
+- `tabIndex={-1}` na área inteira. O navegador procura o **ancestral focável mais próximo**
+  do que foi clicado, e para ali. `-1` e não `0`: a área não entra na ordem do Tab, que já
+  tem a busca, os filtros e os cabeçalhos ordenáveis.
+- **Botão é exceção**, e o manipulador desiste quando o alvo está dentro de um. O cabeçalho
+  que ordena e os tópicos de filtro respondem a Enter por conta própria; sequestrá-lo
+  abriria uma entrada da lista em vez de acionar o botão.
+
 ---
 
 ## 4. O detalhe da entrada
@@ -269,12 +288,18 @@ absolute; inset: 0`), não uma troca. Desmontar o detalhe perderia o `scrollTop`
 
 ### As espécies de tópico
 
-| espécie   | lê                                             | par E/OU |
-| --------- | ---------------------------------------------- | -------- |
-| `options` | um campo de valor único                        | não      |
-| `boolean` | um campo de sim/não                            | não      |
-| `list`    | um campo que guarda ARRAY (traços)             | **sim**  |
-| `cost`    | `costKind` + `costCount` juntos, como um token | não      |
+| espécie     | lê                                               | par E/OU |
+| ----------- | ------------------------------------------------ | -------- |
+| `options`   | um campo de valor único                          | não      |
+| `boolean`   | um campo de sim/não                              | não      |
+| `list`      | um campo que guarda ARRAY (traços)               | **sim**  |
+| `cost`      | `costKind` + `costCount` juntos, como um token   | não      |
+| `rarity`    | domínio fechado e ordenado pelo jogo             | não      |
+| `frequency` | `{max, per}` como um token, ordenado por duração | não      |
+| `cast`      | o custo de conjurar da magia, pelo texto cru     | não      |
+| `defense`   | salvamento OU defesa passiva, num tópico só      | não      |
+| `number`    | uma FAIXA preenchível (mínimo e máximo)          | não      |
+| `area`      | tipo (opções) + tamanho (faixa), no mesmo tópico | não      |
 
 O par E/OU só aparece na espécie `list`, e o motivo é aritmético: num campo de valor único
 o "E" daria sempre lista vazia, e um controle que só produz resultado vazio é armadilha.
@@ -288,6 +313,41 @@ uma fileira dos próprios glifos — ela procura ◆◆, não a frase.
 `list` existe porque `fieldValue` devolve string vazia para array: um filtro `options`
 sobre `traits` enxergava as 766 ações como "sem valor". Era por isso que traços nunca
 tinham aparecido como filtro.
+
+`defense` junta dois campos porque eles são ALTERNATIVAS, e o livro os escreve na mesma
+linha ("Defesa Vontade básico", "Defesa CA"). Com um `options` sobre `save.statistic`, que
+foi a primeira versão, as **11** magias de defesa passiva não tinham como ser achadas: `CA`
+não era opção de lugar nenhum.
+
+### Faixa numérica: quando a lista de opções não serve
+
+**Decidido:** alcance e tamanho de área se filtram por **dois campos preenchíveis**
+(mínimo e máximo), e não por lista de opções nem por controle deslizante.
+
+Por quê, medido nas 1.994 magias do `pf2e-8.5.0`:
+
+- **Lista de opções não cabe.** Alcance tem **57** valores distintos e área tem **72** — em
+  qualquer um dos dois a lista é mais longa que a tela, e a pergunta que se faz não é
+  "quais têm exatamente 120 pés", é "quais chegam a pelo menos 60".
+- **Deslizante de duas alças não serve.** A distribuição é torta demais: o alcance vai de
+  **0 a 5.280.000 pés** (1.000 milhas), e quase tudo cabe nos primeiros 500. Numa pista
+  linear, 99% do dado ocuparia 0,01% do curso, e "exatamente 30" seria impossível de
+  acertar com o mouse.
+
+Consequências que o código respeita:
+
+- Os limites moram no **mesmo `values: string[]`** das opções marcadas, como `min:30` e
+  `max:60`. Assim eles atravessam sem mudança o que já existe: a gravação da preferência, o
+  `×` do chip na barra, a contagem no crachá do tópico e o "limpar tudo".
+- O valor só é **aplicado ao sair do campo ou no Enter**. A cada tecla, digitar `120`
+  filtraria por `1`, `12` e `120` — e como o filtro é gravado, seriam três escritas em
+  disco para uma decisão só.
+- Quem **não tem número** sai quando há limite marcado. Não dá para afirmar que `planetary`
+  passa de 30 pés — são 29 assim, mais 636 sem alcance nenhum, contra 1.329 lidos.
+- O painel escreve **o que existe no dado** ("no dado: 5 a 36.960 pés"). Sem isso, um teto
+  de 60 parece recortar quase tudo, e a pessoa não tem como saber que não.
+- `area` junta tipo e tamanho no MESMO tópico, somados (E): "explosão de até 20 pés". Dois
+  tópicos chamados "área" na barra obrigariam a abrir os dois para descobrir qual é qual.
 
 ---
 

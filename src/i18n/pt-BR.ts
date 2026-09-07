@@ -118,8 +118,23 @@ export const ptBR = {
     cast: {
       /** O conectivo da faixa: `◆ a ◆◆◆`. */
       to: 'a',
-      /** A opção do filtro que junta as 283 que levam mais de um turno. */
-      overATurn: 'leva mais de um turno',
+    },
+    /**
+     * A faixa numérica preenchível — alcance e tamanho da área.
+     *
+     * O sinal em vez da palavra no filtro aplicado (`≥ 30 pés`) porque ele cabe num chip
+     * de barra: "no mínimo 30 pés" ocupa três vezes mais para dizer o mesmo.
+     */
+    number: {
+      from: 'de',
+      to: 'até',
+      minLabel: 'valor mínimo',
+      maxLabel: 'valor máximo',
+      units: { feet: 'pés' } as Record<string, string>,
+      /** O que EXISTE no dado, dito embaixo dos campos: sem isso a faixa é um chute. */
+      extent: (min: string, max: string, unit: string) => `no dado: ${min} a ${max} ${unit}`,
+      atLeast: (n: string, unit: string) => `≥ ${n} ${unit}`,
+      atMost: (n: string, unit: string) => `≤ ${n} ${unit}`,
     },
     /** A defesa contra a magia: salvamento ou valor passivo, nunca os dois. */
     defense: {
@@ -186,7 +201,12 @@ export const ptBR = {
       costKind: 'custo',
       category: 'categoria',
       rarity: 'raridade',
-      rank: 'posto',
+      /*
+       * "Ranque", e não "posto": é como a comunidade brasileira lê `rank` do Remaster, e é
+       * o rótulo tanto da calha antes do nome quanto do filtro. Os dois liam textos
+       * diferentes — a calha usava o `nível` fixo de talentos, e o filtro dizia `posto`.
+       */
+      rank: 'ranque',
       cast: 'execução',
       traditions: 'tradições',
       range: 'distância',
@@ -197,11 +217,7 @@ export const ptBR = {
       save: 'defesa',
       materialCost: 'custo',
       requirements: 'requisitos',
-      counteraction: 'contra-ação',
       ritual: 'ritual',
-      /* Os filtros leem caminho aninhado; o rótulo tem de existir para o caminho, não para a folha. */
-      'area.type': 'área',
-      'save.statistic': 'defesa',
       'source.title': 'livro',
     } as Record<string, string>,
   },

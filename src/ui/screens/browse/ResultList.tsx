@@ -26,7 +26,7 @@ import { capitalizar, fieldText } from '@ui/text';
 import { useTrackWidth } from '@ui/hooks/useTrackWidth';
 import { useWindowedRows } from '@ui/hooks/useWindowedRows';
 
-import { columnLabel, frequencyLabel } from './filterLabels';
+import { columnLabel, frequencyLabel, specialColumnLabel } from './filterLabels';
 import { areaText, defenseText, durationText, spellCast } from './spellFields';
 import styles from './ResultList.module.css';
 
@@ -185,7 +185,12 @@ export function ResultList({
       {specials.level !== null && (
         <Ordenavel
           coluna="level"
-          rotulo={strings.browse.columnLevel}
+          /*
+           * O rótulo sai do CAMPO da fonte, e não da palavra "nível" fixa: magia guarda
+           * `rank`, e a calha dela se chama "Ranque". Era fixa, e o cabeçalho dizia uma
+           * coisa enquanto o filtro do mesmo dado dizia outra.
+           */
+          rotulo={specialColumnLabel('level', specials.level)}
           sort={sort}
           onSort={onSort}
           className={styles['end']}

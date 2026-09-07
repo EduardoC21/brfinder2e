@@ -7,6 +7,15 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 
 import {
+  castToken,
+  defenseToken,
+  distanceFeet,
+  numericExtent,
+  optionsFor,
+  type BrowseEntity,
+  type FilterSpec,
+} from '@core/browse/index';
+import {
   DEFAULT_CHANNEL,
   KNOWN_GOOD_TAG,
   languageFiles,
@@ -176,5 +185,109 @@ describe('o que as 1.994 confirmam', () => {
     const comAlcance = descricoes.filter((t) => /<strong>\s*Range/i.test(t));
     expect(comHeightened.length).toBeGreaterThan(1000);
     expect(comAlcance.length).toBeLessThan(20);
+  });
+});
+
+/**
+ * O que a TELA lê das 1.994 — os filtros, e não a receita.
+ *
+ * Vive no teste de contrato porque a pergunta é a mesma: o dado real ainda tem a forma que
+ * a tela supõe? Um formato novo de custo numa versão futura do Foundry aparece aqui como
+ * uma opção a mais, e não como uma opção calada.
+ */
+describe('o que os filtros veem nas 1.994', () => {
+  const linhas = (): readonly BrowseEntity[] =>
+    result.entities.map((entity) => ({
+      key: entity.identity.id,
+      uuid: entity.identity.uuid,
+      base: entity.base,
+    }));
+
+  const castSpec: FilterSpec = { kind: 'cast', id: 'cast', field: 'cast' };
+  const defesaSpec: FilterSpec = {
+    kind: 'defense',
+    id: 'save',
+    field: 'save',
+    passiveField: 'passiveDefense',
+  };
+  const distanciaSpec: FilterSpec = { kind: 'number', id: 'range', field: 'range', unit: 'feet' };
+  const areaSpec: FilterSpec = { kind: 'area', id: 'area', field: 'area', unit: 'feet' };
+
+  /*
+   * 26 e não 27: `Reaction` com R maiúsculo existe em uma magia, e a caixa baixa a junta
+   * com as outras 95. E não são 9 — o agrupamento em `time` foi desfeito de propósito.
+   */
+  it('a execução oferece uma opção por FORMATO, e elas somam 1.994', () => {
+    const opcoes = optionsFor(linhas(), castSpec);
+    expect(opcoes).toHaveLength(26);
+    expect(opcoes.reduce((soma, opcao) => soma + opcao.count, 0)).toBe(1994);
+    expect(opcoes.filter((opcao) => opcao.value === '')).toEqual([]);
+    // A ordem: as contagens de ação primeiro, o que leva mais tempo por último.
+    expect(opcoes[0]?.value).toBe('1');
+    expect(opcoes.at(-1)?.value).toBe('9 days');
+  });
+
+  it('a reação maiúscula da fonte não vira uma opção separada', () => {
+    const reacoes = linhas().filter((linha) => castToken(linha, 'cast') === 'reaction');
+    expect(reacoes).toHaveLength(96);
+  });
+
+  /* As 11 de defesa passiva não tinham como ser achadas: `CA` não era opção de lugar nenhum. */
+  it('a defesa junta salvamento e passiva num tópico só', () => {
+    const contagem = new Map<string, number>();
+    for (const linha of linhas()) {
+      const token = defenseToken(linha, 'save', 'passiveDefense');
+      contagem.set(token, (contagem.get(token) ?? 0) + 1);
+    }
+    expect(Object.fromEntries(contagem)).toEqual({
+      '': 1222,
+      fortitude: 266,
+      reflex: 208,
+      will: 288,
+      ac: 6,
+      'fortitude-dc': 3,
+      'reflex-dc': 1,
+    });
+  });
+
+  /*
+   * 1.329 de 1.994: 636 não têm alcance nenhum e 29 trazem prosa sem número (`planetary`,
+   * `varies`, `half your Speed`). Estes ficam de fora quando há limite marcado, e é o
+   * certo — não dá para afirmar que `planetary` passa de 30 pés.
+   */
+  it('a distância é lida em pés em 1.329, e ninguém é chutado', () => {
+    const lidas = linhas().filter((linha) => {
+      const texto = (linha.base as { readonly range: string }).range;
+      return distanceFeet(texto) !== null;
+    });
+    expect(lidas).toHaveLength(1329);
+    expect(numericExtent(linhas(), distanciaSpec)).toEqual({ min: 0, max: 5_280_000 });
+  });
+
+  it('a área oferece os sete tipos, e o tamanho vai de 5 a 36.960 pés', () => {
+    const tipos = optionsFor(linhas(), areaSpec);
+    expect(tipos.map((opcao) => opcao.value)).toEqual([
+      'burst',
+      'cone',
+      'cube',
+      'cylinder',
+      'emanation',
+      'line',
+      'square',
+      '',
+    ]);
+    expect(numericExtent(linhas(), areaSpec)).toEqual({ min: 5, max: 36_960 });
+  });
+
+  it('as opções de defesa saem na ordem da ficha, e não do alfabeto', () => {
+    expect(optionsFor(linhas(), defesaSpec).map((opcao) => opcao.value)).toEqual([
+      'fortitude',
+      'reflex',
+      'will',
+      'ac',
+      'fortitude-dc',
+      'reflex-dc',
+      '',
+    ]);
   });
 });
