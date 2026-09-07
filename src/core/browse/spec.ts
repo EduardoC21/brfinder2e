@@ -315,13 +315,20 @@ export const SOURCES: readonly SourceSpec[] = [
      * precisa de uma espécie própria que corte a lista, e não de mais um `chip`.
      */
     /*
-     * A ordem das colunas ESPELHA a dos filtros depois de `traços`. As duas listas falam
-     * das mesmas coisas, e ordens diferentes obrigavam a reaprender onde cada uma está.
+     * O TIPO abre as duas listas, e a ordem das colunas ESPELHA a dos filtros depois dele.
+     *
+     * Ele vem primeiro porque é o corte mais grosso que existe: separa magia de foco de
+     * ritual, talento de classe de talento de ancestralidade. Quem chega numa fonte de
+     * 6.284 entradas escolhe primeiro DE QUE ESPÉCIE, e só então afina. Estava no fim, ao
+     * lado do livro, como se fosse procedência.
+     *
+     * Espelhar o resto existe porque as duas listas falam das mesmas coisas, e ordens
+     * diferentes obrigavam a reaprender onde cada uma está.
      */
     columns: [
+      { kind: 'chip', id: 'sector', field: 'sector' },
       { kind: 'cost', id: 'cost' },
       { kind: 'frequency', id: 'frequency', field: 'frequency' },
-      { kind: 'chip', id: 'sector', field: 'sector' },
       { kind: 'text', id: 'source', field: 'source.title' },
     ],
     defaultColumns: [],
@@ -332,6 +339,7 @@ export const SOURCES: readonly SourceSpec[] = [
      */
     special: { level: null, rarity: 'rarity', traits: 'traits' },
     filters: [
+      { kind: 'options', id: 'sector', field: 'sector' },
       { kind: 'rarity', id: 'rarity', field: 'rarity' },
       /*
        * Traços só aparecem agora porque só agora existe a espécie `list`. Antes um filtro
@@ -345,7 +353,6 @@ export const SOURCES: readonly SourceSpec[] = [
       { kind: 'list', id: 'traits', field: 'traits', combine: 'any' },
       { kind: 'cost', id: 'cost' },
       { kind: 'frequency', id: 'frequency', field: 'frequency' },
-      { kind: 'options', id: 'sector', field: 'sector' },
       { kind: 'options', id: 'source', field: 'source.title' },
     ],
     searchFields: ['name'],
@@ -366,25 +373,25 @@ export const SOURCES: readonly SourceSpec[] = [
     id: 'feats',
     entityType: 'feat',
     mode: 'list',
-    /* Mesma ordem dos filtros depois de `traços` — ver a nota em `actions`. */
+    /* Tipo primeiro, resto espelhando os filtros — ver a nota em `actions`. */
     columns: [
+      { kind: 'chip', id: 'sector', field: 'sector' },
       { kind: 'cost', id: 'cost' },
       { kind: 'frequency', id: 'frequency', field: 'frequency' },
       { kind: 'boolean', id: 'onlyLevel1', field: 'onlyLevel1' },
-      { kind: 'chip', id: 'sector', field: 'sector' },
       { kind: 'text', id: 'source', field: 'source.title' },
     ],
     defaultColumns: [],
     /* A primeira fonte com NÍVEL: a calha existe desde a Etapa 8 sem dado que a usasse. */
     special: { level: 'level', rarity: 'rarity', traits: 'traits' },
     filters: [
+      { kind: 'options', id: 'sector', field: 'sector' },
       { kind: 'options', id: 'level', field: 'level' },
       { kind: 'rarity', id: 'rarity', field: 'rarity' },
       { kind: 'list', id: 'traits', field: 'traits', combine: 'any' },
       { kind: 'cost', id: 'cost' },
       { kind: 'frequency', id: 'frequency', field: 'frequency' },
       { kind: 'boolean', id: 'onlyLevel1', field: 'onlyLevel1' },
-      { kind: 'options', id: 'sector', field: 'sector' },
       { kind: 'options', id: 'source', field: 'source.title' },
     ],
     searchFields: ['name'],
@@ -409,15 +416,15 @@ export const SOURCES: readonly SourceSpec[] = [
     id: 'spells',
     entityType: 'spell',
     mode: 'list',
-    /* Mesma ordem dos filtros depois de `traços` — ver a nota em `actions`. */
+    /* Tipo primeiro, resto espelhando os filtros — ver a nota em `actions`. */
     columns: [
+      { kind: 'chip', id: 'sector', field: 'sector' },
       { kind: 'cast', id: 'cast', field: 'cast' },
       { kind: 'chips', id: 'traditions', field: 'traditions' },
       { kind: 'text', id: 'range', field: 'range' },
       { kind: 'area', id: 'area', field: 'area' },
       { kind: 'defense', id: 'save', ...DEFESA_DE_MAGIA },
       { kind: 'duration', id: 'duration', field: 'duration' },
-      { kind: 'chip', id: 'sector', field: 'sector' },
       { kind: 'text', id: 'source', field: 'source.title' },
     ],
     defaultColumns: [],
@@ -428,6 +435,7 @@ export const SOURCES: readonly SourceSpec[] = [
      */
     special: { level: 'rank', rarity: 'rarity', traits: 'traits' },
     filters: [
+      { kind: 'options', id: 'sector', field: 'sector' },
       { kind: 'options', id: 'rank', field: 'rank' },
       { kind: 'rarity', id: 'rarity', field: 'rarity' },
       { kind: 'list', id: 'traits', field: 'traits', combine: 'any' },
@@ -436,7 +444,6 @@ export const SOURCES: readonly SourceSpec[] = [
       { kind: 'number', id: 'range', field: 'range', unit: 'feet' },
       { kind: 'area', id: 'area', field: 'area', unit: 'feet' },
       { kind: 'defense', id: 'save', ...DEFESA_DE_MAGIA },
-      { kind: 'options', id: 'sector', field: 'sector' },
       { kind: 'options', id: 'source', field: 'source.title' },
     ],
     searchFields: ['name'],

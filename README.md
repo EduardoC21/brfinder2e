@@ -9,7 +9,9 @@ Não é um VTT: sem rolagem, combate, iniciativa, tokens, mapas ou bestiário.
 
 ## Estado
 
-**Etapa 8 concluída** — a tela de consulta e detalhe. Lista em grade única com nome, nível,
+**Etapa 10 concluída** — a receita de `spell` e a tela de magias.
+
+Antes: **Etapa 8** — a tela de consulta e detalhe. Lista em grade única com nome, nível,
 raridade e traços colados ao nome; quantos traços cabem é aritmética sobre uma largura
 medida uma vez, e o que não cabe vira `+N`. Filtros derivados do dado, com E/OU por tópico;
 colunas escolhidas e reordenadas pela pessoa; laterais recolhíveis; painel flutuante; e o

@@ -195,7 +195,13 @@ export const ptBR = {
       maxTakable: 'repetições',
       group: 'grupo',
       valued: 'valorada',
-      sector: 'setor',
+      /*
+       * "Tipo", e não "setor". `sector` continua sendo o nome do campo no código — é o que
+       * a receita lê da pasta do compêndio —, mas na tela ele responde "que espécie de
+       * coisa é esta": magia de foco, ritual, talento de classe. "Setor" era vocabulário
+       * nosso, de dentro da normalização, e não dizia nada a quem consulta.
+       */
+      sector: 'tipo',
       summary: 'resumo',
       overrides: 'anula',
       traits: 'traços',

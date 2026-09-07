@@ -540,6 +540,11 @@ parágrafo acima, contribui zero.
 
 #### O setor: pasta, com carimbo do pack como piso
 
+⚠️ `sector` é o nome no CÓDIGO, e continua sendo — é o que a receita lê da pasta do
+compêndio. Na TELA ele se chama **Tipo**, e é o primeiro filtro de toda fonte que o tenha:
+ele responde "que espécie de coisa é esta" (magia de foco, ritual, talento de classe), que
+é o corte mais grosso que existe. "Setor" era vocabulário de dentro da normalização.
+
 `fromSector()` resolve nesta ordem:
 
 ```
