@@ -19,9 +19,16 @@ export interface Janela {
  */
 const FOLGA = 12;
 
-/** O ancestral que rola. `null` quando nenhum rola — aí não há o que janelar. */
+/**
+ * Quem rola: o próprio elemento, ou o ancestral mais próximo que role.
+ *
+ * ⚠️ Começava no PAI, e isso valia enquanto o único uso era a lista de consulta — lá a
+ * grade não rola, quem rola é a caixa em volta. A paleta da busca global inverte: a caixa
+ * que rola É o elemento medido. Sem achá-lo, o cálculo caía no ramo "nada rola" e devolvia
+ * a lista inteira como janela — 9.087 linhas no DOM e 1,3 s de tela travada ao abrir.
+ */
 function roladorDe(no: HTMLElement | null): HTMLElement | null {
-  let atual = no?.parentElement ?? null;
+  let atual = no;
   while (atual !== null) {
     const overflow = getComputedStyle(atual).overflowY;
     if (overflow === 'auto' || overflow === 'scroll') return atual;
@@ -50,12 +57,30 @@ function roladorDe(no: HTMLElement | null): HTMLElement | null {
  * Acha o rolador sozinho, subindo do próprio elemento da grade. Recebê-lo por prop faria a
  * tela inteira saber quem rola só para contar isso à lista.
  */
+/**
+ * Quantas linhas a janela tem ANTES de alguém medir a tela.
+ *
+ * ⚠️ Não é `total`, e a diferença custava **1,1 segundo** de tela travada ao entrar em
+ * talentos. O estado inicial valia a lista inteira, e a lista só é montada QUANDO a base
+ * chega — ou seja, o primeiro render desenhava as 6.284 linhas, e só então o efeito de
+ * layout cortava para 47. Medido: 6.287 nós removidos num lote só.
+ *
+ * O efeito roda antes da PINTURA (`useLayoutEffect`), então esta janela provisória nunca
+ * chega aos olhos de ninguém: ela só precisa ser pequena. 60 cobre a tela mais folga em
+ * qualquer altura de janela razoável, e se a tela for maior o efeito corrige no mesmo
+ * quadro.
+ */
+const JANELA_INICIAL = 60;
+
 export function useWindowedRows(
   grade: React.RefObject<HTMLElement | null>,
   total: number,
   rowHeight: number,
 ): Janela {
-  const [janela, setJanela] = useState<Janela>({ start: 0, end: total, before: 0, after: 0 });
+  const [janela, setJanela] = useState<Janela>(() => {
+    const fim = Math.min(total, JANELA_INICIAL);
+    return { start: 0, end: fim, before: 0, after: Math.max(0, total - fim) * rowHeight };
+  });
 
   /*
    * UM efeito, e a função de recálculo definida DENTRO dele.

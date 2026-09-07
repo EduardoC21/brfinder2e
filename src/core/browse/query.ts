@@ -401,7 +401,7 @@ function ordenar(counts: Map<string, number>, spec: FilterSpec): readonly Filter
      * talentos sairia 0, 1, 10, 11, …, 2, 20, 3. De quebra arruma os livros, que têm
      * número no nome (`Pathfinder #146` antes de `#174`).
      */
-    return a.value.localeCompare(b.value, undefined, { numeric: true });
+    return COLLATOR_NUMERICO.compare(a.value, b.value);
   });
 }
 
@@ -543,15 +543,35 @@ export function applyFilters(
 }
 
 /**
+ * Os comparadores, criados UMA vez.
+ *
+ * ⚠️ `String.localeCompare(x, locale, options)` constrói um colator NOVO a cada chamada, e
+ * ordenar é O(n log n) chamadas. Medido no navegador, sobre os 6.284 talentos reais:
+ *
+ *   `localeCompare` com opções, por comparação   **234 ms**
+ *   um `Intl.Collator` reaproveitado               **5 ms**
+ *   `sort()` sem colação nenhuma                    1 ms
+ *
+ * Quarenta e sete vezes, e a semântica é idêntica — `Intl.Collator` é literalmente o que o
+ * `localeCompare` instancia por baixo. Não dá para trocar por `<`: sem colação, "Á" não
+ * fica junto de "A", e a tradução vai trazer acento.
+ */
+const COLLATOR_NOME = new Intl.Collator('en', { sensitivity: 'base' });
+
+/**
+ * Ordem alfabética por número DENTRO do texto: `Pathfinder #146` antes de `#174`, e nível
+ * 2 antes de nível 10.
+ */
+const COLLATOR_NUMERICO = new Intl.Collator(undefined, { numeric: true });
+
+/**
  * Ordem alfabética pelo nome, insensível a acento e caixa.
  *
- * `localeCompare` com `sensitivity: 'base'` trata "Á" e "a" como iguais — sem isso, uma
- * lista com nomes acentuados fica em ordem estranha quando a tradução chegar.
+ * `sensitivity: 'base'` trata "Á" e "a" como iguais — sem isso, uma lista com nomes
+ * acentuados fica em ordem estranha quando a tradução chegar.
  */
 export function byName(a: BrowseEntity, b: BrowseEntity): number {
-  return fieldValue(a, 'name').localeCompare(fieldValue(b, 'name'), 'en', {
-    sensitivity: 'base',
-  });
+  return COLLATOR_NOME.compare(fieldValue(a, 'name'), fieldValue(b, 'name'));
 }
 
 export function sortByName(entities: readonly BrowseEntity[]): BrowseEntity[] {

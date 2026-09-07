@@ -47,6 +47,9 @@ export const ptBR = {
       /** Menos de um segundo, medido: 794 ms para as 9.103 descrições. */
       building: 'Preparando a busca por descrição…',
       loading: 'Lendo a base…',
+      /** Campo vazio: a paleta não lista nada, e diz por quê. */
+      empty: 'Digite para procurar.',
+      total: (n: number) => `${String(n)} entradas em quatro fontes`,
       hint: (n: number) =>
         n === 1
           ? '1 resultado · ↑↓ para andar · Enter abre em painel'

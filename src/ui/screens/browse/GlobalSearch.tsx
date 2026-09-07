@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 
 import { fieldList, fieldValue, fitTraits, rarityLetter, traitSpace } from '@core/browse/index';
 import { strings } from '@i18n/index';
@@ -70,24 +70,44 @@ export function GlobalSearch({
   const [fonte, setFonte] = useState<string | null>(null);
   const [ativo, setAtivo] = useState(0);
 
+  /*
+   * O termo que a LISTA usa é adiado; o campo desenha a letra nova no mesmo quadro.
+   *
+   * Não é um temporizador: nada espera um tempo fixo, e o resultado nunca fica "atrasado"
+   * — o React só dá prioridade menor ao trabalho da lista, e se outra tecla chegar antes
+   * dele terminar, abandona o resultado velho. Um `debounce` de 150 ms daria a MESMA
+   * sensação de leveza cobrando 150 ms de todo mundo, inclusive de quem digitou devagar.
+   *
+   * É o mesmo recurso que a busca da tela de consulta usa desde a Etapa 5.
+   */
+  const termoAdiado = useDeferredValue(termo);
+
   const campo = useRef<HTMLInputElement>(null);
   const lista = useRef<HTMLDivElement>(null);
   const trilha = useRef<HTMLDivElement>(null);
   const larguraDaLinha = useTrackWidth(trilha);
 
   /* Fechar zera a busca de graça: o componente desmonta, e o termo vai junto. */
+  /*
+   * Campo vazio, lista vazia — e não as 9.087 entradas.
+   *
+   * Uma paleta que começa cheia gasta o trabalho de desenhar uma lista que ninguém pediu:
+   * quem aperta Ctrl+Q já sabe o que quer, e o que ele quer não está nas primeiras
+   * quarenta linhas do alfabeto. Aqui a tela vazia é a resposta certa, e o rodapé diz o
+   * que fazer.
+   */
   const resultados = useMemo(() => {
-    const escolhido = naDescricao ? indice.byText : indice.byName;
-    const doFiltro = (row: GlobalRow): boolean => fonte === null || row.source.id === fonte;
+    if (termoAdiado.trim() === '') return VAZIO_LINHAS;
 
-    if (termo.trim() === '') return indice.rows.filter(doFiltro);
+    const escolhido = naDescricao ? indice.byText : indice.byName;
     if (escolhido === null) return VAZIO_LINHAS;
 
+    const doFiltro = (row: GlobalRow): boolean => fonte === null || row.source.id === fonte;
     return escolhido
-      .search(termo)
+      .search(termoAdiado)
       .map((id) => indice.byId.get(id))
       .filter((row): row is GlobalRow => row !== undefined && doFiltro(row));
-  }, [termo, fonte, naDescricao, indice]);
+  }, [termoAdiado, fonte, naDescricao, indice]);
 
   /* O índice ativo nunca aponta para fora: filtrar encurta a lista sob os pés da seleção. */
   const selecionado = Math.min(ativo, Math.max(resultados.length - 1, 0));
@@ -223,7 +243,9 @@ export function GlobalSearch({
           {indice.buildingText ? (
             <p className={styles['aviso']}>{t.building}</p>
           ) : resultados.length === 0 ? (
-            <p className={styles['aviso']}>{loading ? t.loading : strings.browse.noResults}</p>
+            <p className={styles['aviso']}>
+              {loading ? t.loading : termo.trim() === '' ? t.empty : strings.browse.noResults}
+            </p>
           ) : (
             <>
               {janela.before > 0 && <div style={{ height: `${String(janela.before)}px` }} />}
@@ -250,7 +272,9 @@ export function GlobalSearch({
           )}
         </div>
 
-        <p className={styles['rodape']}>{t.hint(resultados.length)}</p>
+        <p className={styles['rodape']}>
+          {termo.trim() === '' ? t.total(indice.rows.length) : t.hint(resultados.length)}
+        </p>
       </div>
     </div>
   );

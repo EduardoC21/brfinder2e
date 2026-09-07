@@ -435,6 +435,64 @@ forma de perguntar "quais poderes causam sangramento", que era o exemplo do auto
 
 ---
 
+## 6d. Três defeitos de desempenho, e o que eles ensinam
+
+Medidos no navegador com `PerformanceObserver` de `longtask` e um `MutationObserver`
+contando nós. Entrar em talentos custava **1.396 ms de tela travada**; hoje custa **127**.
+
+### 1. A janela nascia valendo a lista inteira
+
+`useWindowedRows` começava com `end: total`. A lista só é montada QUANDO a base chega, ou
+seja: o primeiro render desenhava as **6.284 linhas** e o efeito de layout cortava para 47
+logo depois. Medido: **6.287 nós removidos** num lote só, ~1,1 s.
+
+O estado inicial passou a ser 60 linhas. O efeito roda antes da PINTURA
+(`useLayoutEffect`), então essa janela provisória nunca chega aos olhos de ninguém.
+
+**A lição:** virtualizar não adianta se o estado inicial do virtualizador for "tudo".
+
+### 2. `localeCompare` com opções constrói um colator por comparação
+
+Ordenar é O(n log n) comparações, e cada `a.localeCompare(b, 'en', {…})` instancia um
+`Intl.Collator` novo. Medido sobre os 6.284 talentos reais:
+
+|                                  |            |
+| -------------------------------- | ---------- |
+| `localeCompare` com opções       | **234 ms** |
+| um `Intl.Collator` reaproveitado | **5 ms**   |
+| `sort()` sem colação nenhuma     | 1 ms       |
+
+Quarenta e sete vezes, com semântica idêntica — `Intl.Collator` é o que o `localeCompare`
+instancia por baixo. Trocar por `<` não serve: sem colação, "Á" não fica junto de "A", e a
+tradução vai trazer acento.
+
+**A regra do projeto:** nenhum `localeCompare` com o segundo e o terceiro argumento dentro
+de um comparador. O colator vive em módulo, criado uma vez.
+
+### 3. O rolador era procurado a partir do PAI
+
+`roladorDe` começava em `no.parentElement`, o que valia enquanto o único uso era a lista de
+consulta — lá a grade não rola, quem rola é a caixa em volta. Na paleta da busca global é o
+contrário: a caixa que rola É o elemento medido. Sem achá-lo, o cálculo caía no ramo "nada
+rola" e devolvia a lista inteira: **9.087 linhas no DOM e 1,3 s** ao abrir a paleta.
+
+### O que NÃO foi preciso fazer
+
+Nada de carregar em pedaços, nada de `requestIdleCallback`, nada de trabalhador em outra
+linha de execução. As três correções são de uma linha cada, e depois delas sobra:
+
+|                            | antes           | depois                          |
+| -------------------------- | --------------- | ------------------------------- |
+| entrar em talentos         | 1.396 ms        | **127 ms**                      |
+| nós de DOM na troca        | 6.287 removidos | 63                              |
+| abrir a paleta             | 1.280 ms        | **164 ms** (uma vez por sessão) |
+| digitar 5 letras na paleta | 259 ms          | **nenhuma tarefa longa**        |
+
+Ler a base do IndexedDB são 14 ms para os 6.284 talentos, e montar o índice de nomes são
+20 ms — nenhum dos dois era o problema, e é por isso que vale medir antes de otimizar.
+
+---
+
 ## 7. Preferências do usuário
 
 Tudo que o usuário configura na tela **sobrevive** ao fechamento do app e às atualizações

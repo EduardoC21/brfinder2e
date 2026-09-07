@@ -36,6 +36,15 @@ interface FilterTopicPanelProps {
   readonly onClose: () => void;
 }
 
+/**
+ * Um colator só para todo o painel.
+ *
+ * `localeCompare` com opções instancia um colator por comparação — 234 ms para ordenar
+ * 6.284 nomes, contra 5 ms com este reaproveitado (medido no navegador). Aqui a lista mais
+ * longa é a de traços, com 300 e poucas opções, mas o motivo é o mesmo.
+ */
+const COLLATOR = new Intl.Collator(undefined, { numeric: true });
+
 /** Acima disto, a lista ganha um campo para procurar dentro dela. */
 const LIMITE_PARA_BUSCA = 12;
 
@@ -84,7 +93,7 @@ export function FilterTopicPanel({
       const na = isNumberedAdventure(ra) ? 1 : 0;
       const nb = isNumberedAdventure(rb) ? 1 : 0;
       if (na !== nb) return na - nb;
-      return ra.localeCompare(rb, undefined, { numeric: true });
+      return COLLATOR.compare(ra, rb);
     });
   }, [brutas, spec]);
   /*
