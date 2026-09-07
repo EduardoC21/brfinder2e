@@ -277,15 +277,25 @@ function SourcePane({
     if (results.length === 0) return;
     if (event.target instanceof HTMLElement && event.target.closest('button') !== null) return;
 
+    /*
+     * A seta MOSTRA; o Enter escolhe.
+     *
+     * Andar de linha em linha já troca o que está na lateral — sem isso era preciso apertar
+     * Enter a cada passo para ver onde se está, o que transforma percorrer dez magias em
+     * vinte teclas. A diferença que sobra para o Enter é a CAMADA: ele fecha o painel de
+     * filtro aberto por cima do detalhe, e a seta não. Fechá-lo a cada seta tiraria da tela
+     * justamente o filtro que a pessoa está montando.
+     *
+     * E a seta NÃO desfaz o recolher: quem fechou a lateral à mão continua com ela fechada.
+     */
     if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
       event.preventDefault();
       const step = event.key === 'ArrowDown' ? 1 : -1;
-      setActiveIndex((current) => {
-        const next = current + step;
-        if (next < 0) return results.length - 1;
-        if (next >= results.length) return 0;
-        return next;
-      });
+      const seguinte = activeIndex + step;
+      const proximo = seguinte < 0 ? results.length - 1 : seguinte >= results.length ? 0 : seguinte;
+      setActiveIndex(proximo);
+      const escolhida = results[proximo];
+      if (escolhida) setOpenedKey(escolhida.key);
       return;
     }
 

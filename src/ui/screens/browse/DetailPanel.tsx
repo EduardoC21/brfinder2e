@@ -306,7 +306,7 @@ function Field({
         spec.kind === 'area'
           ? areaText(entity, spec.field)
           : spec.kind === 'defense'
-            ? defenseText(entity, spec.field)
+            ? defenseText(entity, spec)
             : durationText(entity, spec.field);
       if (valor === '') return null;
       return <Row label={label(spec.field)}>{capitalizar(valor)}</Row>;

@@ -473,7 +473,7 @@ function textoDaColuna(spec: ColumnSpec, entity: BrowseEntity): string {
     case 'area':
       return areaText(entity, spec.field);
     case 'defense':
-      return defenseText(entity, spec.field);
+      return defenseText(entity, spec);
     case 'duration':
       return durationText(entity, spec.field);
     /*
@@ -571,7 +571,7 @@ function Column({ spec, entity }: { readonly spec: ColumnSpec; readonly entity: 
         spec.kind === 'area'
           ? areaText(entity, spec.field)
           : spec.kind === 'defense'
-            ? defenseText(entity, spec.field)
+            ? defenseText(entity, spec)
             : durationText(entity, spec.field);
       if (valor === '') return null;
       return <span className={styles['chip']}>{capitalizar(valor)}</span>;

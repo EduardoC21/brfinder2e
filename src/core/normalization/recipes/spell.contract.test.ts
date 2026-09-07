@@ -8,7 +8,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 
 import {
   castToken,
-  defenseToken,
+  defenseTokens,
   distanceFeet,
   numericExtent,
   optionsFor,
@@ -209,6 +209,8 @@ describe('o que os filtros veem nas 1.994', () => {
     id: 'save',
     field: 'save',
     passiveField: 'passiveDefense',
+    traitsField: 'traits',
+    attackTrait: 'attack',
   };
   const distanciaSpec: FilterSpec = { kind: 'number', id: 'range', field: 'range', unit: 'feet' };
   const areaSpec: FilterSpec = { kind: 'area', id: 'area', field: 'area', unit: 'feet' };
@@ -232,22 +234,72 @@ describe('o que os filtros veem nas 1.994', () => {
     expect(reacoes).toHaveLength(96);
   });
 
-  /* As 11 de defesa passiva não tinham como ser achadas: `CA` não era opção de lugar nenhum. */
-  it('a defesa junta salvamento e passiva num tópico só', () => {
+  /*
+   * A CA vem do TRAÇO em 82 magias, e o filtro achava 6 de 94 sem essa regra. As CDs
+   * passivas dobram no salvamento de mesmo nome: `fortitude` sai de 266 para 269.
+   */
+  it('a defesa junta CA, salvamento e CD passiva num tópico só', () => {
     const contagem = new Map<string, number>();
+    let sem = 0;
     for (const linha of linhas()) {
-      const token = defenseToken(linha, 'save', 'passiveDefense');
-      contagem.set(token, (contagem.get(token) ?? 0) + 1);
+      const tokens = defenseTokens(linha, {
+        field: 'save',
+        passiveField: 'passiveDefense',
+        traitsField: 'traits',
+        attackTrait: 'attack',
+      });
+      if (tokens.length === 0) sem += 1;
+      for (const token of tokens) contagem.set(token, (contagem.get(token) ?? 0) + 1);
     }
     expect(Object.fromEntries(contagem)).toEqual({
-      '': 1222,
-      fortitude: 266,
-      reflex: 208,
+      ac: 94,
+      fortitude: 269,
+      reflex: 209,
       will: 288,
-      ac: 6,
-      'fortitude-dc': 3,
-      'reflex-dc': 1,
     });
+    expect(sem).toBe(1140);
+    // Nenhuma CD passiva sobrevive à dobra: o filtro tem quatro opções, não sete.
+    expect(contagem.has('fortitude-dc')).toBe(false);
+  });
+
+  /* As três que o autor conferiu no Archives of Nethys, uma a uma. */
+  it('bate com o AoN nas três magias conferidas à mão', () => {
+    const defesaDe = (nome: string): readonly string[] => {
+      const linha = linhas().find((entrada) => (entrada.base as { name: string }).name === nome);
+      if (linha === undefined) throw new Error(`sumiu da fonte: ${nome}`);
+      return defenseTokens(linha, {
+        field: 'save',
+        passiveField: 'passiveDefense',
+        traitsField: 'traits',
+        attackTrait: 'attack',
+      });
+    };
+    // "Make a ranged spell attack roll against your target's AC" — e `defense` é nulo.
+    expect(defesaDe('Phase Bolt')).toEqual(['ac']);
+    // AoN: "Defense AC and basic Fortitude".
+    expect(defesaDe('Pulverizing Wake')).toEqual(['ac', 'fortitude']);
+    // AoN: "Defense Fortitude" — a fonte guarda `fortitude-dc`.
+    expect(defesaDe('Murderous Vine')).toEqual(['fortitude']);
+  });
+
+  /*
+   * O preço da regra, e ele está MEDIDO: quatro magias trazem o traço `attack` sem ataque
+   * nenhum e ganham um "CA" que o livro não dá. Duas delas têm `attack` como ÚNICO traço,
+   * o que denuncia o defeito na fonte. Se um dia o Foundry corrigir, este teste cai — e é
+   * exatamente assim que a gente fica sabendo.
+   */
+  it('as quatro entradas em que a FONTE erra o traço continuam sendo quatro', () => {
+    const semAtaqueNoTexto = result.entities.filter(
+      (entrada) =>
+        entrada.base.traits.includes('attack') && !/spell attack/i.test(entrada.desc.main),
+    );
+    expect(semAtaqueNoTexto.map((entrada) => entrada.base.name).sort()).toEqual([
+      'Incarnate Ancestry',
+      'Lucky Month',
+      'Pulverizing Wake',
+      'Shambling Horror',
+      'Unseen Heralds',
+    ]);
   });
 
   /*
@@ -281,12 +333,10 @@ describe('o que os filtros veem nas 1.994', () => {
 
   it('as opções de defesa saem na ordem da ficha, e não do alfabeto', () => {
     expect(optionsFor(linhas(), defesaSpec).map((opcao) => opcao.value)).toEqual([
+      'ac',
       'fortitude',
       'reflex',
       'will',
-      'ac',
-      'fortitude-dc',
-      'reflex-dc',
       '',
     ]);
   });

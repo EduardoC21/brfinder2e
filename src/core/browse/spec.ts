@@ -15,6 +15,24 @@
 
 export type Align = 'start' | 'end';
 
+/**
+ * De onde a DEFESA de uma magia é lida — quatro campos, porque a fonte a espalha em quatro.
+ *
+ * Espalhado nos três lugares que desenham defesa (coluna, filtro e detalhe) com `...`, para
+ * a definição ser UMA. Ver `defenseTokens` em `query.ts` para o modelo, e a nota no
+ * descritor de magias para as quatro entradas em que a fonte erra o traço.
+ */
+export interface DefenseFields {
+  /** O salvamento: `{statistic, basic}`. */
+  readonly field: string;
+  /** A defesa passiva contra a qual o ataque rola: `ac`, `fortitude-dc`, `reflex-dc`. */
+  readonly passiveField: string;
+  /** A lista de traços, onde mora o sinal de que a magia ATACA. */
+  readonly traitsField: string;
+  /** O traço que diz "esta magia rola ataque": `attack`. */
+  readonly attackTrait: string;
+}
+
 interface ColumnBase {
   /**
    * Identidade da coluna, e é o que fica gravado na preferência do usuário.
@@ -60,12 +78,10 @@ export type ColumnSpec =
   /** A área: `Explosão 6 m`. Lê `{type, value, details}`. */
   | ({ readonly kind: 'area'; readonly field: string } & ColumnBase)
   /**
-   * A defesa contra a magia — salvamento OU valor passivo, na mesma linha.
-   *
-   * Uma espécie só para os dois porque o livro e o AoN os tratam como uma coisa: "Defesa
-   * Vontade básico", "Defesa CA". São alternativas, nunca aparecem juntos.
+   * A defesa contra a magia, na linha do livro: "CA", "Vontade básico", "CA e Fortitude
+   * básico". Ver `defenseTokens` — são quatro campos, e uma magia pode ter DUAS defesas.
    */
-  | ({ readonly kind: 'defense'; readonly field: string } & ColumnBase)
+  | ({ readonly kind: 'defense' } & DefenseFields & ColumnBase)
   /** A duração do efeito, com "sustentada" junto quando for o caso. */
   | ({ readonly kind: 'duration'; readonly field: string } & ColumnBase)
   /** Texto simples, sem moldura de chip. Para valores mais longos que um rótulo. */
@@ -122,18 +138,13 @@ export type FilterSpec =
    */
   | { readonly kind: 'cast'; readonly id: string; readonly field: string }
   /**
-   * A DEFESA contra a magia: salvamento e valor passivo no mesmo tópico.
+   * A DEFESA contra a magia: salvamento, defesa passiva e ATAQUE no mesmo tópico.
    *
-   * Dois campos, uma pergunta — o livro escreve "Defesa Vontade básico" e "Defesa CA" na
-   * mesma linha, e são alternativas. Com um `options` sobre `save.statistic`, que era o
-   * que havia, as 11 de defesa passiva não tinham como ser achadas: `CA` não era opção.
+   * Uma pergunta só — "contra o que esta magia trabalha?" —, e o livro a escreve numa linha
+   * só. MULTIVALOR, como `list`: 6 magias atacam a CA e ainda pedem salvamento, e cada uma
+   * conta nas duas opções. Sem o par E/OU, que aqui não teria uso.
    */
-  | {
-      readonly kind: 'defense';
-      readonly id: string;
-      readonly field: string;
-      readonly passiveField: string;
-    }
+  | ({ readonly kind: 'defense'; readonly id: string } & DefenseFields)
   /**
    * Uma FAIXA numérica preenchível: "de 30 a 60 pés". Sem opções — dois campos.
    *
@@ -176,7 +187,7 @@ export type DetailFieldSpec =
    */
   | { readonly kind: 'cast'; readonly field: string }
   | { readonly kind: 'area'; readonly field: string }
-  | { readonly kind: 'defense'; readonly field: string }
+  | ({ readonly kind: 'defense' } & DefenseFields)
   | { readonly kind: 'duration'; readonly field: string }
   /** Quem mais precisa ajudar no ritual, e com que teste. */
   | { readonly kind: 'ritual'; readonly field: string }
@@ -248,6 +259,17 @@ export interface SourceSpec {
  * Os rótulos NÃO moram aqui — são texto de interface, e vivem em `i18n` (briefing 8.1).
  * Aqui fica só o que é estrutura.
  */
+/**
+ * De onde sai a defesa de uma magia. Uma definição, espalhada na coluna, no filtro e no
+ * detalhe — três cópias divergiriam no primeiro ajuste.
+ */
+const DEFESA_DE_MAGIA: DefenseFields = {
+  field: 'save',
+  passiveField: 'passiveDefense',
+  traitsField: 'traits',
+  attackTrait: 'attack',
+};
+
 export const SOURCES: readonly SourceSpec[] = [
   {
     id: 'conditions',
@@ -393,7 +415,7 @@ export const SOURCES: readonly SourceSpec[] = [
       { kind: 'chips', id: 'traditions', field: 'traditions' },
       { kind: 'text', id: 'range', field: 'range' },
       { kind: 'area', id: 'area', field: 'area' },
-      { kind: 'defense', id: 'save', field: 'save' },
+      { kind: 'defense', id: 'save', ...DEFESA_DE_MAGIA },
       { kind: 'duration', id: 'duration', field: 'duration' },
       { kind: 'chip', id: 'sector', field: 'sector' },
       { kind: 'text', id: 'source', field: 'source.title' },
@@ -413,7 +435,7 @@ export const SOURCES: readonly SourceSpec[] = [
       { kind: 'list', id: 'traditions', field: 'traditions', combine: 'any' },
       { kind: 'number', id: 'range', field: 'range', unit: 'feet' },
       { kind: 'area', id: 'area', field: 'area', unit: 'feet' },
-      { kind: 'defense', id: 'save', field: 'save', passiveField: 'passiveDefense' },
+      { kind: 'defense', id: 'save', ...DEFESA_DE_MAGIA },
       { kind: 'options', id: 'sector', field: 'sector' },
       { kind: 'options', id: 'source', field: 'source.title' },
     ],
@@ -445,7 +467,7 @@ export const SOURCES: readonly SourceSpec[] = [
       { kind: 'text', field: 'range' },
       { kind: 'area', field: 'area' },
       { kind: 'text', field: 'target' },
-      { kind: 'defense', field: 'save' },
+      { kind: 'defense', ...DEFESA_DE_MAGIA },
       { kind: 'duration', field: 'duration' },
       { kind: 'ritual', field: 'ritual' },
       { kind: 'text', field: 'sector' },

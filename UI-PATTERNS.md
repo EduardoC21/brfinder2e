@@ -117,6 +117,17 @@ Acrescentar uma espécie é: um caso na união + um caso no `switch`. O compilad
 segundo quando você faz o primeiro. **Nunca** desenhar coluna ou campo com `if` por nome
 de fonte.
 
+### A seta MOSTRA, o Enter escolhe
+
+**Decidido:** andar de linha em linha com as setas já troca o que está na lateral. O Enter
+continua existindo, e a diferença entre os dois é a CAMADA: o Enter fecha o painel de
+filtro aberto por cima do detalhe, e a seta não.
+
+Por quê: sem isso era preciso apertar Enter a cada passo para ver onde se está, o que
+transforma percorrer dez magias em vinte teclas. E fechar o painel de filtro a cada seta
+tiraria da tela justamente o filtro que a pessoa está montando. A seta também **não desfaz
+o recolher**: quem fechou a lateral à mão continua com ela fechada.
+
 ### O teclado é da ÁREA, não do campo de busca
 
 **Decidido:** o `keydown` das setas e do Enter é ouvido no `<div>` que embrulha busca,
@@ -297,7 +308,7 @@ absolute; inset: 0`), não uma troca. Desmontar o detalhe perderia o `scrollTop`
 | `rarity`    | domínio fechado e ordenado pelo jogo             | não      |
 | `frequency` | `{max, per}` como um token, ordenado por duração | não      |
 | `cast`      | o custo de conjurar da magia, pelo texto cru     | não      |
-| `defense`   | salvamento OU defesa passiva, num tópico só      | não      |
+| `defense`   | CA, salvamento e CD passiva — MULTIVALOR         | não      |
 | `number`    | uma FAIXA preenchível (mínimo e máximo)          | não      |
 | `area`      | tipo (opções) + tamanho (faixa), no mesmo tópico | não      |
 
@@ -314,10 +325,34 @@ uma fileira dos próprios glifos — ela procura ◆◆, não a frase.
 sobre `traits` enxergava as 766 ações como "sem valor". Era por isso que traços nunca
 tinham aparecido como filtro.
 
-`defense` junta dois campos porque eles são ALTERNATIVAS, e o livro os escreve na mesma
-linha ("Defesa Vontade básico", "Defesa CA"). Com um `options` sobre `save.statistic`, que
-foi a primeira versão, as **11** magias de defesa passiva não tinham como ser achadas: `CA`
-não era opção de lugar nenhum.
+### Defesa: quatro campos para uma linha do livro
+
+**Decidido:** a defesa de uma magia é uma LISTA, montada de quatro campos, e o filtro é
+multivalor como o de traços.
+
+O campo `defense` da fonte não basta, e isto foi medido nas 1.994 e conferido contra o
+Archives of Nethys entrada por entrada:
+
+1. Se há **defesa passiva** declarada, é contra ela que o ataque rola — e ela SUBSTITUI a
+   CA. `Murderous Vine` ataca a CD de Fortitude, e o AoN escreve "Defense Fortitude".
+2. Senão, o **traço `attack`** já diz CA. É assim que a fonte modela: `Phase Bolt` tem
+   `defense: null`, o traço `attack`, e o texto "spell attack roll against your target's
+   AC". São **82** magias em que a CA existe só no traço — sem esta regra o filtro achava
+   **6 de 94**.
+3. O **salvamento SOMA**, não substitui. `Pulverizing Wake` ataca e ainda pede Fortitude
+   básico; o AoN escreve "Defense AC and basic Fortitude". São 6 assim, e elas contam nas
+   duas opções do filtro.
+
+A **CD passiva dobra no salvamento de mesmo nome**: `fortitude-dc` é `fortitude`. São
+mecânicas diferentes — rolar contra a CD não é fazer o salvamento —, mas a mesma defesa, e
+o livro escreve as duas como "Defesa Fortitude". Separadas, o filtro tinha sete opções para
+quatro defesas.
+
+O preço, e ele está no teste de contrato: **quatro** entradas trazem o traço `attack` sem
+ataque nenhum e ganham um "CA" que o livro não dá — `Incarnate Ancestry` e `Lucky Month`
+(que têm `attack` como ÚNICO traço, o que denuncia o defeito), `Unseen Heralds` e
+`Shambling Horror`. É erro da FONTE, não nosso, e o teste cai sozinho quando o Foundry
+corrigir.
 
 ### Faixa numérica: quando a lista de opções não serve
 

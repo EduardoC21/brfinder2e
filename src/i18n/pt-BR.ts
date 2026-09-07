@@ -136,7 +136,7 @@ export const ptBR = {
       atLeast: (n: string, unit: string) => `≥ ${n} ${unit}`,
       atMost: (n: string, unit: string) => `≤ ${n} ${unit}`,
     },
-    /** A defesa contra a magia: salvamento ou valor passivo, nunca os dois. */
+    /** A defesa contra a magia: CA, salvamento, ou os dois. */
     defense: {
       save: {
         fortitude: 'Fortitude',
@@ -145,11 +145,13 @@ export const ptBR = {
       } as Record<string, string>,
       /** `Vontade` + `básico`, como no livro. */
       basic: 'básico',
-      passive: {
-        ac: 'CA',
-        'fortitude-dc': 'CD de Fortitude',
-        'reflex-dc': 'CD de Reflexos',
-      } as Record<string, string>,
+      /** `CA e Fortitude básico`: 6 magias atacam e ainda pedem salvamento. */
+      and: 'e',
+      /*
+       * Só a CA. As CDs passivas (`fortitude-dc`) dobram no salvamento de mesmo nome antes
+       * de chegar aqui — ver `CD_PASSIVA` em `core/browse/query.ts`.
+       */
+      passive: { ac: 'CA' } as Record<string, string>,
     },
     /** A duração do efeito. Sem ela, a magia é instantânea. */
     duration: {

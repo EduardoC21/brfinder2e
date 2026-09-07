@@ -5,7 +5,7 @@ import {
   castRank,
   castToken,
   costToken,
-  defenseToken,
+  defenseTokens,
   fieldList,
   fieldValue,
   numericExtent,
@@ -15,7 +15,7 @@ import {
   writeBound,
   type BrowseEntity,
 } from './query';
-import type { FilterSpec } from './spec';
+import type { DefenseFields, FilterSpec } from './spec';
 
 const entity = (key: string, base: unknown): BrowseEntity => ({ key, uuid: key, base });
 
@@ -289,37 +289,90 @@ describe('castRank', () => {
   });
 });
 
-const comDefesa = (key: string, save: unknown, passiva: string): BrowseEntity =>
-  entity(key, { name: key, save, passiveDefense: passiva });
+const DEFESA: DefenseFields = {
+  field: 'save',
+  passiveField: 'passiveDefense',
+  traitsField: 'traits',
+  attackTrait: 'attack',
+};
 
-describe('defenseToken', () => {
-  it('o salvamento quando há', () => {
+const comDefesa = (
+  key: string,
+  save: unknown,
+  passiva: string,
+  traits: readonly string[] = [],
+): BrowseEntity => entity(key, { name: key, save, passiveDefense: passiva, traits });
+
+describe('defenseTokens', () => {
+  it('o salvamento, quando é só ele', () => {
+    expect(defenseTokens(comDefesa('a', { statistic: 'will', basic: false }, ''), DEFESA)).toEqual([
+      'will',
+    ]);
+  });
+
+  /*
+   * A regra que faltava: em 82 magias a CA existe SÓ no traço. Phase Bolt tem
+   * `defense: null` e o texto diz "spell attack roll against your target's AC".
+   */
+  it('o traço `attack` sozinho já diz CA', () => {
+    expect(defenseTokens(comDefesa('b', null, '', ['attack', 'cantrip']), DEFESA)).toEqual(['ac']);
+  });
+
+  /** Pulverizing Wake, no AoN: "Defense AC and basic Fortitude". Ataca E pede salvamento. */
+  it('ataque e salvamento SOMAM, não se excluem', () => {
     expect(
-      defenseToken(
-        comDefesa('a', { statistic: 'will', basic: false }, ''),
-        'save',
-        'passiveDefense',
+      defenseTokens(
+        comDefesa('c', { statistic: 'fortitude', basic: true }, '', ['attack']),
+        DEFESA,
       ),
-    ).toBe('will');
+    ).toEqual(['ac', 'fortitude']);
   });
 
-  /** As 11 de defesa passiva não tinham como ser achadas: `CA` não era opção de lugar nenhum. */
-  it('a defesa PASSIVA quando não há salvamento', () => {
-    expect(defenseToken(comDefesa('b', null, 'ac'), 'save', 'passiveDefense')).toBe('ac');
+  /** Murderous Vine ataca a CD de Fortitude, e o AoN escreve "Defesa Fortitude". */
+  it('a CD passiva SUBSTITUI a CA, e dobra no salvamento de mesmo nome', () => {
+    expect(defenseTokens(comDefesa('d', null, 'fortitude-dc', ['attack']), DEFESA)).toEqual([
+      'fortitude',
+    ]);
+    expect(defenseTokens(comDefesa('e', null, 'reflex-dc', ['attack']), DEFESA)).toEqual([
+      'reflex',
+    ]);
   });
 
-  it('o salvamento vence quando a magia tem os dois — é o que a tela mostra', () => {
-    expect(
-      defenseToken(
-        comDefesa('c', { statistic: 'fortitude', basic: true }, 'ac'),
-        'save',
-        'passiveDefense',
-      ),
-    ).toBe('fortitude');
+  it('a CA declarada não vira duas vezes a mesma coisa', () => {
+    expect(defenseTokens(comDefesa('f', null, 'ac', ['attack']), DEFESA)).toEqual(['ac']);
   });
 
-  it('sem nenhum dos dois, token vazio', () => {
-    expect(defenseToken(comDefesa('d', null, ''), 'save', 'passiveDefense')).toBe('');
+  it('sem nada disso, lista vazia', () => {
+    expect(defenseTokens(comDefesa('g', null, '', ['concentrate']), DEFESA)).toEqual([]);
+  });
+});
+
+describe('o filtro de defesa', () => {
+  const spec: FilterSpec = { kind: 'defense', id: 'save', ...DEFESA };
+  const magias = [
+    comDefesa('ataque', null, '', ['attack']),
+    comDefesa('vontade', { statistic: 'will', basic: false }, '', []),
+    comDefesa('ambos', { statistic: 'fortitude', basic: true }, '', ['attack']),
+    comDefesa('nenhuma', null, '', []),
+  ];
+
+  it('conta a que tem duas defesas NAS DUAS opções', () => {
+    expect(optionsFor(magias, spec)).toEqual([
+      { value: 'ac', count: 2 },
+      { value: 'fortitude', count: 1 },
+      { value: 'will', count: 1 },
+      { value: '', count: 1 },
+    ]);
+  });
+
+  it('marcar CA acha a que só ataca e a que ataca e pede salvamento', () => {
+    const recorte = applyFilters(magias, [spec], { save: { values: ['ac'] } });
+    expect(recorte.map((e) => e.key)).toEqual(['ataque', 'ambos']);
+  });
+
+  it('"sem valor" acha quem não tem defesa nenhuma', () => {
+    const recorte = applyFilters(magias, [spec], { save: { values: [''] } });
+    expect(recorte.map((e) => e.key)).toEqual(['nenhuma']);
   });
 });
 

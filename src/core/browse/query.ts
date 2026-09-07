@@ -12,7 +12,7 @@ import { readPath } from '../normalization/paths';
 import { RARITY_ORDER, type Rarity } from './columns';
 import { distanceFeet } from './distance';
 import { parseDurationCode } from './duration';
-import type { Combine, FilterSpec } from './spec';
+import type { Combine, DefenseFields, FilterSpec } from './spec';
 
 /**
  * O que está selecionado, por TÓPICO.
@@ -204,31 +204,55 @@ export function castRank(token: string): number {
 }
 
 /**
- * A defesa contra a magia como UM token: o salvamento, ou o valor passivo.
+ * A CD passiva dobra no salvamento de mesmo nome.
  *
- * Os dois num tópico só porque são ALTERNATIVAS, e não campos diferentes — o livro e o
- * AoN escrevem "Defesa Vontade básico" e "Defesa CA" na mesma linha. Filtrando só por
- * `save.statistic`, como estava, as 11 magias de defesa passiva não tinham como ser
- * achadas: `CA` não era opção de lugar nenhum.
- *
- * Uma delas tem os dois (salvamento de Fortitude E CA). O salvamento vence, porque é o que
- * a tela mostra.
+ * `fortitude-dc` é "o ataque rola contra a CD de Fortitude", e `fortitude` é "faça um
+ * salvamento de Fortitude" — mecânicas diferentes, mas a MESMA defesa, e o livro escreve
+ * as duas como "Defesa Fortitude" (conferido no AoN em Murderous Vine, que a fonte guarda
+ * como `fortitude-dc`). Separá-las dava um filtro com quatro opções para três defesas.
  */
-export function defenseToken(entity: BrowseEntity, field: string, passiveField: string): string {
-  const save = fieldValue(entity, `${field}.statistic`);
-  if (save !== '') return save;
-  return fieldValue(entity, passiveField);
+const CD_PASSIVA: Readonly<Record<string, string>> = {
+  'fortitude-dc': 'fortitude',
+  'reflex-dc': 'reflex',
+  'will-dc': 'will',
+};
+
+/**
+ * Contra o que a magia trabalha. UMA lista, porque podem ser duas.
+ *
+ * ⚠️ O modelo não é o campo `defense` sozinho — ele não basta. Medido nas 1.994, e
+ * conferido contra o Archives of Nethys entrada por entrada:
+ *
+ *   1. Se há defesa PASSIVA declarada, é contra ela que o ataque rola: `ac`, ou a CD de um
+ *      salvamento. Ela SUBSTITUI a CA — Murderous Vine ataca a CD de Fortitude, e o AoN
+ *      escreve "Defesa Fortitude", não "CA".
+ *   2. Senão, o traço `attack` já diz CA. É assim que a fonte modela: Phase Bolt tem
+ *      `defense: null` e o traço `attack`, e o texto dele diz "spell attack roll against
+ *      your target's AC". São 82 magias em que a CA existe SÓ no traço — sem esta regra, o
+ *      filtro de defesa achava 6 de 94.
+ *   3. O salvamento SOMA, não substitui. Pulverizing Wake ataca e ainda pede Fortitude
+ *      básico, e o AoN escreve "Defense AC and basic Fortitude". São 6 assim.
+ *
+ * O preço: QUATRO magias trazem o traço `attack` sem ataque nenhum, e ganham um "CA" que o
+ * livro não dá — `Incarnate Ancestry` e `Lucky Month` (que têm `attack` como ÚNICO traço,
+ * o que denuncia o defeito), `Unseen Heralds` e `Shambling Horror`. É erro da fonte, não
+ * nosso, e some sozinho quando o Foundry o corrigir.
+ */
+export function defenseTokens(entity: BrowseEntity, fields: DefenseFields): readonly string[] {
+  const tokens: string[] = [];
+
+  const passiva = fieldValue(entity, fields.passiveField);
+  if (passiva !== '') tokens.push(CD_PASSIVA[passiva] ?? passiva);
+  else if (fieldList(entity, fields.traitsField).includes(fields.attackTrait)) tokens.push('ac');
+
+  const save = fieldValue(entity, `${fields.field}.statistic`);
+  if (save !== '' && !tokens.includes(save)) tokens.push(save);
+
+  return tokens;
 }
 
-/** Salvamentos primeiro, na ordem da ficha; depois as defesas passivas. */
-const DEFENSE_ORDER: readonly string[] = [
-  'fortitude',
-  'reflex',
-  'will',
-  'ac',
-  'fortitude-dc',
-  'reflex-dc',
-];
+/** A CA primeiro, como na linha do livro ("AC and basic Fortitude"); depois os salvamentos. */
+const DEFENSE_ORDER: readonly string[] = ['ac', 'fortitude', 'reflex', 'will'];
 
 /** O prefixo que marca um LIMITE numérico dentro dos valores marcados de um tópico. */
 const MIN = 'min:';
@@ -405,6 +429,14 @@ export function optionsFor(
   }
 
   for (const entity of entities) {
+    // Defesa é MULTIVALOR como os traços: 6 magias contam em duas opções, e está certo.
+    if (spec.kind === 'defense') {
+      for (const token of defenseTokens(entity, spec)) {
+        counts.set(token, (counts.get(token) ?? 0) + 1);
+      }
+      if (defenseTokens(entity, spec).length === 0) counts.set('', (counts.get('') ?? 0) + 1);
+      continue;
+    }
     if (spec.kind === 'list') {
       // Uma entrada com três traços conta em três opções. A soma passa do total, e está
       // certo: a contagem responde "quantas entradas têm este traço".
@@ -425,7 +457,6 @@ function valorDoTopico(entity: BrowseEntity, spec: FilterSpec): string {
   if (spec.kind === 'cost') return costToken(entity);
   if (spec.kind === 'cast') return castToken(entity, spec.field);
   if (spec.kind === 'frequency') return frequencyToken(entity, spec.field);
-  if (spec.kind === 'defense') return defenseToken(entity, spec.field, spec.passiveField);
   // A área tem DUAS perguntas no mesmo tópico; a das opções é o tipo.
   if (spec.kind === 'area') return fieldValue(entity, `${spec.field}.type`);
   return fieldValue(entity, spec.field);
@@ -439,6 +470,13 @@ export function combineOf(spec: FilterSpec, state: FilterState): Combine {
 /** Uma entrada casa com o tópico? */
 function matches(entity: BrowseEntity, spec: FilterSpec, selection: FilterSelection): boolean {
   const { values } = selection;
+
+  if (spec.kind === 'defense') {
+    const tokens = defenseTokens(entity, spec);
+    // Sem defesa nenhuma casa com a opção "sem valor", como em qualquer outro tópico.
+    if (tokens.length === 0) return values.includes('');
+    return values.some((value) => tokens.includes(value));
+  }
 
   if (spec.kind === 'number' || spec.kind === 'area') {
     /*

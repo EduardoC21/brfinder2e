@@ -1,5 +1,5 @@
 import { isRecord } from '@core/json';
-import type { BrowseEntity } from '@core/browse/index';
+import { defenseTokens, type BrowseEntity, type DefenseFields } from '@core/browse/index';
 import type { SpellCast } from '@core/normalization/index';
 import { strings } from '@i18n/index';
 
@@ -28,22 +28,27 @@ function texto(entity: BrowseEntity, field: string): string {
 }
 
 /**
- * A DEFESA: salvamento ou valor passivo, nunca os dois.
+ * A DEFESA, na linha que o livro escreve: "CA", "Vontade básico", "CA e Fortitude básico".
  *
- * Uma frase só porque o livro e o AoN as tratam como uma coisa — "Defesa Vontade básico",
- * "Defesa CA". São 762 com salvamento e 11 com passiva, e as 10 que têm passiva não têm
- * salvamento.
+ * Quem decide QUAIS são as defesas é `defenseTokens`, em `core/` — a mesma leitura que o
+ * filtro usa, para o que se lê na linha e o que se acha no filtro nunca discordarem. Aqui
+ * só se escolhe a palavra, e se cola o "básico" no salvamento a que ele pertence.
  */
-export function defenseText(entity: BrowseEntity, field: string): string {
-  const save = ler(entity, field);
-  if (save !== null) {
-    const stat = typeof save['statistic'] === 'string' ? save['statistic'] : '';
-    const nome = t.defense.save[stat] ?? stat;
-    return save['basic'] === true ? `${nome} ${t.defense.basic}` : nome;
-  }
-  const passiva = texto(entity, 'passiveDefense');
-  if (passiva === '') return '';
-  return t.defense.passive[passiva] ?? passiva;
+export function defenseText(entity: BrowseEntity, fields: DefenseFields): string {
+  const tokens = defenseTokens(entity, fields);
+  if (tokens.length === 0) return '';
+
+  const save = ler(entity, fields.field);
+  const stat = save === null || typeof save['statistic'] !== 'string' ? '' : save['statistic'];
+  const basico = save !== null && save['basic'] === true;
+
+  return tokens
+    .map((token) => {
+      const nome = t.defense.save[token] ?? t.defense.passive[token] ?? token;
+      // "básico" é do SALVAMENTO, e não da CA: "CA e Fortitude básico".
+      return token === stat && basico ? `${nome} ${t.defense.basic}` : nome;
+    })
+    .join(` ${t.defense.and} `);
 }
 
 /**
