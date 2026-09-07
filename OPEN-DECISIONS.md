@@ -180,3 +180,58 @@ Não podemos distribuir arte da Paizo nem de banco de imagem. Ou um fundo gerado
 código, ou o usuário aponta a própria imagem.
 
 **Decidir quando:** Etapa 4, junto com o sistema de design.
+
+---
+
+## 9. O Archives of Nethys como fonte: dá, mas não é a mesma coisa `novo`
+
+Levantado na Etapa 10f, quando o dado do Foundry errou o traço de quatro magias e deixou
+de declarar a CA em 82. O AoN transcreve o livro à mão e acerta os três casos que o autor
+conferiu — a pergunta virou se dá para puxar dali.
+
+**Dá, e é barato.** O site tem um Elasticsearch público em
+`https://elasticsearch.aonprd.com/aon/_search`, sem chave e sem autenticação, que é o mesmo
+que a busca do site usa. Medido em 2026-09-07:
+
+|                                             |                                                      |
+| ------------------------------------------- | ---------------------------------------------------- |
+| documentos no índice inteiro                | 45.547 (todas as categorias)                         |
+| magias                                      | 2.762 — legado E remaster, ligados por `remaster_id` |
+| lote de 1.000 magias com o texto completo   | 5,8 MB em ~3 s                                       |
+| lote de 1.000 só com os campos estruturados | 1,3 MB em ~3 s                                       |
+| todas as magias                             | ~16 MB em 3 requisições                              |
+| `robots.txt`                                | não existe (404) — nada proíbe, e nada autoriza      |
+
+E o dado é **melhor exatamente onde o nosso dói**: `saving_throw` vem como o livro escreve
+(`"AC and basic Fortitude (see text)"`, em Pulverizing Wake), `area` + `area_type` +
+`area_raw` vêm separados, `range` vem numérico ao lado do `range_raw`, e `spell_type`
+já diz Focus/Ritual/Spell — o setor, de graça.
+
+**O que impede de trocar a base por ele:**
+
+1. **Não é artefato versionado.** O Foundry publica um `.zip` de release, com tag, que a
+   gente fixa (`KNOWN_GOOD_TAG`), rebaixa quando quebra e testa contra. O AoN é um SERVIÇO
+   vivo: o índice se chama `aon-20260902-190924` e é reconstruído sem changelog, sem
+   promessa e sem cópia offline. Toda a política de versão do app supõe a primeira coisa.
+2. **É endpoint não documentado.** Pode fechar, virar autenticado ou passar a limitar taxa
+   sem aviso — e aí o app quebra sem ninguém ter mexido nele.
+3. **A estrutura é mais fina.** `saving_throw` é uma FRASE, não `{statistic, basic}`.
+   Ótimo para mostrar, pior para filtrar: voltaríamos a analisar prosa, que é o que a
+   receita existe para evitar.
+4. **O texto vem em marcação própria** (`<title>`, `<traits>`, `<trait label= url=>`,
+   `<row>`, `<column>`), uma segunda linguagem para o `core/markup/` além do HTML do
+   Foundry.
+5. **Não tem o grafo de `@UUID`.** As referências cruzadas do AoN são links
+   `/Spells.aspx?ID=1159`; o pop-out por referência que a gente quer construir se apoia nos
+   UUIDs do Foundry.
+6. **Traz legado e remaster juntos** — 2.762 contra as nossas 1.994.
+
+**Recomendação: não trocar, e não sincronizar dele em produção.** O caminho barato é usar o
+AoN como **folha de conferência**: um script de desenvolvimento que baixa uma vez, compara
+campo a campo com a nossa base e escreve um relatório de divergências. Era exatamente isso
+que teria apontado os quatro traços errados sem a gente adivinhar. Assim ele vira TESTE, e
+não dependência de execução — e nada do conteúdo entra no repositório, como já vale para o
+Foundry.
+
+**Decidir quando:** quando a divergência voltar a doer. Enquanto for uma linha de defesa em
+quatro magias, o custo de manter duas fontes é maior que o erro.

@@ -33,7 +33,12 @@ entre os sete que o tipo mistura, lista com nível, ordenação pelo cabeçalho,
 coluna pela cerca de Tukey, e a lista desenhando só o que aparece (42.905 nós no DOM
 viraram 416).
 
-Próxima: **Etapa 10**, a receita de `spell` — as 1.994 magias.
+Antes: **Etapa 10** — receita de `spell` e a tela de magias: 1.994 normalizadas, o custo de
+conjurar decodificado dos 27 formatos da fonte, filtros de faixa numérica para alcance e
+área, e a defesa montada de quatro campos (a CA de 82 magias existe só no traço `attack`).
+
+Próxima: **a conversa sobre setor** — magia em quatro espécies (Spells 1.277, Focus 545,
+Rituals 167, Impossible 5) numa listona só, e o que fazer com isso.
 
 ## Requisitos
 
