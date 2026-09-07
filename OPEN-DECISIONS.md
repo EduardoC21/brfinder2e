@@ -159,8 +159,17 @@ empacotamento na mesa, e só se o uso pedir.
 
 ## 6. Busca global: campo na barra, paleta de comandos, ou aba? `§9`
 
-**Recomendação do briefing:** campo na barra que abre a paleta, e o mesmo Ctrl+K de
-qualquer lugar. **Decidir quando:** Etapa 11.
+**DECIDIDO na Etapa 11, com o autor: paleta**, no modelo do Quick Insert do Foundry e da
+busca de guias do Opera. Nem campo fixo na barra (ocuparia altura permanente para uma coisa
+usada em rajadas) nem aba (busca não é lugar, é gesto).
+
+O atalho é **Ctrl+Q por ora**, e não o Ctrl+Espaço que o autor quer: enquanto o app roda
+numa aba do navegador, Ctrl+Espaço é do navegador. **Muda para Ctrl+Espaço no
+empacotamento (Etapa 15)**, onde a janela é nossa.
+
+Fica em aberto uma coisa só: **não há entrada visível** para a paleta — só o atalho. Um
+botão na barra de topo resolveria, e é uma linha; a dúvida é se ele merece o espaço.
+**Decidir quando:** o autor sentir falta.
 
 ---
 

@@ -39,8 +39,11 @@ Antes: **Etapa 10** — receita de `spell` e a tela de magias: 1.994 normalizada
 conjurar decodificado dos 27 formatos da fonte, filtros de faixa numérica para alcance e
 área, e a defesa montada de quatro campos (a CA de 82 magias existe só no traço `attack`).
 
-Próxima: **a conversa sobre setor** — magia em quatro espécies (Spells 1.277, Focus 545,
-Rituals 167, Impossible 5) numa listona só, e o que fazer com isso.
+Antes: **Etapa 11** — a busca global: Ctrl+Q abre uma paleta que atravessa as quatro
+fontes (9.087 entradas), com filtro por fonte, busca opcional dentro da descrição e
+abertura em painel flutuante.
+
+Próxima: **Etapa 12** — a receita de `equipment`, o maior buraco que sobrou (5.869 itens).
 
 ## Requisitos
 

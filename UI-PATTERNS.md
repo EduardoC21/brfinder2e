@@ -386,6 +386,55 @@ Consequências que o código respeita:
 
 ---
 
+## 6c. A busca global é uma PALETA
+
+**Decidido:** Ctrl+Q abre uma paleta por cima de tudo — campo em cima, resultados embaixo —
+que atravessa as fontes. Clicar num resultado abre o **painel flutuante** daquela entrada.
+
+Direção: **de cima para baixo**. O Quick Insert do Foundry cresce para cima porque está
+ancorado na barra do rodapé; esta flutua no alto, como a do Opera. E, mais importante, é a
+mesma direção da tela de consulta, onde o campo já fica acima da lista — duas buscas com
+direções opostas no mesmo app obrigariam a reaprender.
+
+A linha usa a **mesma gramática da lista**: calha do nível, nome, etiqueta de raridade,
+traços colados — e, na outra ponta, de que fonte aquilo veio. Essa última coluna é o que a
+paleta acrescenta, e ela é necessária: sem a fonte, dois nomes iguais de tipos diferentes
+seriam a mesma linha.
+
+### O que a arquitetura exigiu
+
+- **Os flutuantes subiram de camada.** Eles moravam no painel da fonte, que REMONTA ao
+  trocar de fonte — e a paleta abre coisa de qualquer fonte. Um flutuante de magia aberto
+  com talentos na tela morreria na próxima troca. Agora moram na tela, e cada painel
+  carrega o próprio `entityType` e os próprios campos, em vez de ler o descritor da fonte
+  em vigor (que passaria a desenhar campos de talento numa magia).
+- **A paleta desmonta ao fechar, mas o índice não.** São duas exigências opostas: o DOM tem
+  de nascer na abertura, senão o `useTrackWidth` mede um nó que não existe e o orçamento de
+  traços fica em zero; e o índice não pode nascer de novo, senão cada Ctrl+Q paga uma
+  leitura do IndexedDB. A divisão: estado visual dentro, índices na tela acima.
+- **O fundo é um ELEMENTO, não um ouvinte no documento.** Com ouvinte, o mesmo clique que
+  abre a paleta chega ao documento e a fecha no quadro seguinte.
+
+### A busca por descrição, e por que ela é opcional
+
+Um interruptor `nome`/`descrição` ao lado do campo. Medido sobre as 9.103 descrições reais
+do `pf2e-8.5.0` — **5,70 MiB de HTML, 835.459 palavras**:
+
+|                              |              |
+| ---------------------------- | ------------ |
+| montar o índice de descrição | **794 ms**   |
+| memória                      | **22,5 MiB** |
+| buscar, depois de montado    | 1 a 12 ms    |
+
+Rápido o bastante para não valer um trabalhador em outra linha de execução, e caro o
+bastante para não ser pago por quem só quer achar "Fireball" pelo nome. Por isso ele é
+montado **na primeira vez que alguém liga o modo**, e não na abertura.
+
+O ganho é real: "fire" acha **65** entradas pelo nome e **633** pela descrição. É a única
+forma de perguntar "quais poderes causam sangramento", que era o exemplo do autor.
+
+---
+
 ## 7. Preferências do usuário
 
 Tudo que o usuário configura na tela **sobrevive** ao fechamento do app e às atualizações

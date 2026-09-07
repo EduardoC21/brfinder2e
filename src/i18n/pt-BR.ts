@@ -31,6 +31,27 @@ export const ptBR = {
     noResults: 'Nada encontrado.',
     counting: (shown: number, total: number) =>
       shown === total ? `${String(total)} entradas` : `${String(shown)} de ${String(total)}`,
+    /**
+     * A busca global. O atalho é Ctrl+Q por ora: Ctrl+Espaço, que é o que queremos, é do
+     * navegador enquanto o app roda numa aba. Troca no empacotamento (Etapa 15).
+     */
+    palette: {
+      label: 'Busca global',
+      shortcut: 'Ctrl+Q',
+      placeholder: 'Procurar pelo nome…',
+      placeholderText: 'Procurar palavra na descrição…',
+      allSources: 'Tudo',
+      modeLabel: 'Onde procurar',
+      inName: 'nome',
+      inText: 'descrição',
+      /** Menos de um segundo, medido: 794 ms para as 9.103 descrições. */
+      building: 'Preparando a busca por descrição…',
+      loading: 'Lendo a base…',
+      hint: (n: number) =>
+        n === 1
+          ? '1 resultado · ↑↓ para andar · Enter abre em painel'
+          : `${String(n)} resultados · ↑↓ para andar · Enter abre em painel`,
+    },
     filters: 'Filtros',
     clearFilters: 'Limpar tudo',
     activeFilters: 'Filtros ativos',

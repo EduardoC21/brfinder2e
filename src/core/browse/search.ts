@@ -38,6 +38,51 @@ export interface SearchIndex {
   search(term: string): readonly string[];
 }
 
+/** Um documento pronto para indexar: a chave, o nome, e o resto do texto. */
+export interface TextDocument {
+  readonly key: string;
+  readonly name: string;
+  /** Vazio quando só o nome importa. */
+  readonly text: string;
+}
+
+/**
+ * O índice sobre TEXTO JÁ EXTRAÍDO, e não sobre campos de uma entidade.
+ *
+ * Existe porque a busca global atravessa tipos: uma condição e uma magia não têm os mesmos
+ * campos, e a descrição nem mora na entidade — ela vive na camada `desc/`. Quem chama
+ * resolve de onde tirou o texto; aqui só se indexa.
+ *
+ * O nome pesa 3 e o corpo pesa 1, como em `createSearchIndex`: quem digita "fireball"
+ * quer a magia Fireball antes das 40 que a CITAM.
+ */
+export function createTextIndex(documents: readonly TextDocument[]): SearchIndex {
+  const mini = new MiniSearch<TextDocument>({
+    idField: 'key',
+    fields: ['name', 'text'],
+    processTerm: (term) => {
+      const folded = foldTerm(term);
+      return folded.length > 0 ? folded : null;
+    },
+    tokenize,
+    searchOptions: {
+      prefix: true,
+      fuzzy: (term) => (term.length > 4 ? 0.2 : 0),
+      boost: { name: 3 },
+    },
+  });
+
+  mini.addAll([...documents]);
+
+  return {
+    search(term) {
+      const trimmed = term.trim();
+      if (trimmed.length === 0) return [];
+      return mini.search(trimmed).map((result) => result.id as string);
+    },
+  };
+}
+
 /**
  * Monta o índice.
  *

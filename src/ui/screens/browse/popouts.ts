@@ -1,4 +1,4 @@
-import type { BrowseEntity } from '@core/browse/index';
+import type { BrowseEntity, DetailFieldSpec } from '@core/browse/index';
 
 /**
  * Os painéis flutuantes abertos.
@@ -10,10 +10,23 @@ import type { BrowseEntity } from '@core/browse/index';
  * o estado inválido não tem como ser escrito.
  */
 
-export interface Popout {
+/**
+ * A entrada MAIS o que é preciso para desenhá-la.
+ *
+ * O painel carrega o próprio tipo e os próprios campos porque a busca global abre coisa de
+ * QUALQUER fonte: um flutuante de magia pode ficar aberto enquanto a tela mostra talentos.
+ * Lendo o descritor da fonte em vigor, ele passaria a desenhar campos de talento numa
+ * magia no instante em que a pessoa trocasse de fonte.
+ */
+export interface PopoutSubject {
+  readonly entity: BrowseEntity;
+  readonly entityType: string;
+  readonly fields: readonly DetailFieldSpec[];
+}
+
+export interface Popout extends PopoutSubject {
   /** Identidade do painel, não da entrada: a mesma entrada pode ter dois painéis. */
   readonly id: number;
-  readonly entity: BrowseEntity;
   readonly x: number;
   readonly y: number;
   readonly z: number;
@@ -26,7 +39,7 @@ export interface PopoutState {
 }
 
 export type PopoutAction =
-  | { readonly kind: 'open'; readonly entity: BrowseEntity }
+  | ({ readonly kind: 'open' } & PopoutSubject)
   | { readonly kind: 'close'; readonly id: number }
   | { readonly kind: 'focus'; readonly id: number }
   | { readonly kind: 'clear' };
@@ -58,6 +71,8 @@ export function popoutReducer(state: PopoutState, action: PopoutAction): PopoutS
           {
             id: state.next,
             entity: action.entity,
+            entityType: action.entityType,
+            fields: action.fields,
             x: ORIGEM.x + passo * CASCATA,
             y: ORIGEM.y + passo * CASCATA,
             z: state.next,

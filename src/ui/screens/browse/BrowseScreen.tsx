@@ -1,4 +1,4 @@
-import { useDeferredValue, useMemo, useReducer, useRef, useState } from 'react';
+import { useDeferredValue, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 
 import {
   SOURCES,
@@ -16,19 +16,23 @@ import {
 import { sourcePreferences, withLayout, withSource } from '@core/prefs/index';
 import { strings } from '@i18n/index';
 import { FloatingPanel } from '@ui/components/FloatingPanel';
+import type { LoadedSource } from '@ui/hooks/useAllBases';
 import { SearchInput } from '@ui/components/SearchInput';
+import { useAllBases } from '@ui/hooks/useAllBases';
 import { useBase } from '@ui/hooks/useBase';
+import { useGlobalIndex } from '@ui/hooks/useGlobalIndex';
 import { useNarrowScreen } from '@ui/hooks/useNarrowScreen';
 import { usePreferences } from '@ui/prefs/usePreferences';
 
 import { DetailPane } from './DetailPane';
 import { FilterBar } from './FilterBar';
+import { GlobalSearch } from './GlobalSearch';
 import { ColumnPicker } from './ColumnPicker';
 import { FilterTopicPanel } from './FilterTopicPanel';
 import { ResultList } from './ResultList';
 import { SourceRail } from './SourceRail';
 import { DetailPanel } from './DetailPanel';
-import { EMPTY_POPOUTS, popoutReducer } from './popouts';
+import { EMPTY_POPOUTS, popoutReducer, type PopoutSubject } from './popouts';
 import styles from './BrowseScreen.module.css';
 
 interface BrowseScreenProps {
@@ -64,6 +68,50 @@ export function BrowseScreen({ baseVersion }: BrowseScreenProps) {
     update((atual) => withLayout(atual, { railCollapsed: !trilhoRecolhido }));
   };
 
+  /*
+   * Os flutuantes e a paleta moram AQUI, e não no painel da fonte.
+   *
+   * O painel remonta ao trocar de fonte (é o que a `key` garante), e a busca global abre
+   * coisa de qualquer fonte: um flutuante de magia aberto enquanto a tela mostra talentos
+   * morreria no instante em que a pessoa trocasse de fonte. Aqui em cima, nada remonta.
+   */
+  const [popouts, despacharPopout] = useReducer(popoutReducer, EMPTY_POPOUTS);
+  const [paletaAberta, setPaletaAberta] = useState(false);
+  const [buscaNaDescricao, setBuscaNaDescricao] = useState(false);
+
+  /*
+   * As bases e os índices da paleta moram AQUI, e não dentro dela.
+   *
+   * A paleta é desmontada ao fechar — é o que garante que o campo nasça vazio e que a
+   * medição de largura veja um nó de verdade. Se os índices morassem lá, cada Ctrl+Q
+   * pagaria uma leitura do IndexedDB e, com a busca por descrição ligada, 794 ms de
+   * indexação. Aqui em cima eles sobrevivem entre uma abertura e outra.
+   */
+  const bases = useAllBases(paletaAberta, baseVersion);
+  const carregadas = useMemo(() => (bases.status === 'ready' ? bases.sources : VAZIAS), [bases]);
+  const indiceGlobal = useGlobalIndex(carregadas, buscaNaDescricao);
+
+  /*
+   * Ctrl+Q escutado na JANELA, e não num elemento: uma paleta global tem de abrir de onde
+   * quer que o foco esteja — inclusive de dentro do campo de busca da lista.
+   */
+  useEffect(() => {
+    const aoTeclar = (event: KeyboardEvent): void => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'q') {
+        event.preventDefault();
+        setPaletaAberta((estava) => !estava);
+      }
+    };
+    window.addEventListener('keydown', aoTeclar);
+    return () => {
+      window.removeEventListener('keydown', aoTeclar);
+    };
+  }, []);
+
+  const abrirFlutuante = (subject: PopoutSubject): void => {
+    despacharPopout({ kind: 'open', ...subject });
+  };
+
   return (
     <div className={styles['screen']}>
       <SourceRail
@@ -83,13 +131,51 @@ export function BrowseScreen({ baseVersion }: BrowseScreenProps) {
           source={source}
           entities={entities}
           loading={base.status === 'loading'}
+          onPopOut={abrirFlutuante}
         />
       )}
+
+      {paletaAberta && (
+        <GlobalSearch
+          index={indiceGlobal}
+          sources={carregadas}
+          loading={bases.status !== 'ready'}
+          inText={buscaNaDescricao}
+          onInText={setBuscaNaDescricao}
+          onClose={() => {
+            setPaletaAberta(false);
+          }}
+          onOpenEntry={abrirFlutuante}
+        />
+      )}
+
+      {popouts.items.map((item) => (
+        <FloatingPanel
+          key={item.id}
+          title={fieldValue(item.entity, 'name')}
+          initial={{ x: item.x, y: item.y }}
+          z={item.z}
+          onFocus={() => {
+            despacharPopout({ kind: 'focus', id: item.id });
+          }}
+          onClose={() => {
+            despacharPopout({ kind: 'close', id: item.id });
+          }}
+        >
+          {/*
+            Sem `onCollapse` e sem `onPopOut`: o flutuante não recolhe (ele fecha, pelo ×
+            da própria barra de título) e não se destaca de novo. Ausência de callback é o
+            que apaga cada botão — o painel não pergunta onde está.
+          */}
+          <DetailPanel entity={item.entity} entityType={item.entityType} fields={item.fields} />
+        </FloatingPanel>
+      ))}
     </div>
   );
 }
 
 const EMPTY: readonly BrowseEntity[] = [];
+const VAZIAS: readonly LoadedSource[] = [];
 
 /**
  * O painel de uma fonte: busca, filtros, lista e o detalhe provisório.
@@ -102,10 +188,12 @@ function SourcePane({
   source,
   entities,
   loading,
+  onPopOut,
 }: {
   readonly source: SourceSpec;
   readonly entities: readonly BrowseEntity[];
   readonly loading: boolean;
+  readonly onPopOut: (subject: PopoutSubject) => void;
 }) {
   const [term, setTerm] = useState('');
   const { prefs, update, ready } = usePreferences();
@@ -152,15 +240,6 @@ function SourcePane({
   };
   const [activeIndex, setActiveIndex] = useState(-1);
   const [openedKey, setOpenedKey] = useState<string | null>(null);
-  /*
-   * Os flutuantes são INDEPENDENTES da lateral, e não a moldura alternativa dela.
-   *
-   * Na primeira versão eram exclusivos, e o resultado era que destacar um poder desligava
-   * a lista: clicar noutra entrada trocava o conteúdo do flutuante em vez de alimentar a
-   * lateral. Agora o flutuante CONGELA a entrada dele, e a lateral segue viva — que é o
-   * que permite comparar dois poderes lado a lado.
-   */
-  const [popouts, despacharPopout] = useReducer(popoutReducer, EMPTY_POPOUTS);
   const input = useRef<HTMLInputElement>(null);
 
   /*
@@ -459,7 +538,13 @@ function SourcePane({
         entityType={source.entityType ?? ''}
         fields={source.detail}
         onPopOut={() => {
-          if (opened !== null) despacharPopout({ kind: 'open', entity: opened });
+          if (opened !== null) {
+            onPopOut({
+              entity: opened,
+              entityType: source.entityType ?? '',
+              fields: source.detail,
+            });
+          }
         }}
         collapsed={fechadoAMao || (opened === null && overlay === null)}
         onToggleCollapsed={() => {
@@ -467,32 +552,6 @@ function SourcePane({
         }}
         {...(camada === null ? {} : { overlay: camada })}
       />
-
-      {popouts.items.map((item) => (
-        <FloatingPanel
-          key={item.id}
-          title={fieldValue(item.entity, 'name')}
-          initial={{ x: item.x, y: item.y }}
-          z={item.z}
-          onFocus={() => {
-            despacharPopout({ kind: 'focus', id: item.id });
-          }}
-          onClose={() => {
-            despacharPopout({ kind: 'close', id: item.id });
-          }}
-        >
-          {/*
-            Sem `onCollapse` e sem `onPopOut`: o flutuante não recolhe (ele fecha, pelo ×
-            da própria barra de título) e não se destaca de novo. Ausência de callback é o
-            que apaga cada botão — o painel não pergunta onde está.
-          */}
-          <DetailPanel
-            entity={item.entity}
-            entityType={source.entityType ?? ''}
-            fields={source.detail}
-          />
-        </FloatingPanel>
-      ))}
     </>
   );
 }

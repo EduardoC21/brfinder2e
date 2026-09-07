@@ -8,7 +8,14 @@ function fake(key: string) {
 }
 
 function abrir(estado: PopoutState, key: string): PopoutState {
-  return popoutReducer(estado, { kind: 'open', entity: fake(key) });
+  // O painel carrega o próprio tipo e os próprios campos: ele pode vir da busca global,
+  // de uma fonte que não é a que está na tela.
+  return popoutReducer(estado, {
+    kind: 'open',
+    entity: fake(key),
+    entityType: 'condition',
+    fields: [],
+  });
 }
 
 describe('popoutReducer', () => {

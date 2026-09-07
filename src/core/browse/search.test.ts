@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { createSearchIndex, foldTerm, tokenize } from './search';
+import { createSearchIndex, createTextIndex, foldTerm, tokenize } from './search';
 import type { BrowseEntity } from './query';
 
 const entity = (key: string, name: string, summary = ''): BrowseEntity => ({
@@ -76,5 +76,34 @@ describe('createSearchIndex', () => {
 
   it('não tolera erro em termo curto — senão tudo casa com tudo', () => {
     expect(index.search('xyz')).toEqual([]);
+  });
+});
+
+describe('createTextIndex', () => {
+  const docs = [
+    { key: 'spells/fireball', name: 'Fireball', text: 'A roaring blast of fire detonates.' },
+    { key: 'feats/ignition', name: 'Ignition', text: 'You gain fire resistance 5.' },
+    { key: 'conditions/prone', name: 'Prone', text: 'You are lying on the ground.' },
+  ];
+
+  it('acha pelo nome e pelo corpo', () => {
+    const index = createTextIndex(docs);
+    expect(index.search('fireball')).toEqual(['spells/fireball']);
+    expect(index.search('ground')).toEqual(['conditions/prone']);
+  });
+
+  /* O nome pesa 3: quem digita "fire" quer a magia Fireball antes da que só CITA fogo. */
+  it('o nome pesa mais que o corpo', () => {
+    const index = createTextIndex(docs);
+    expect(index.search('fire')[0]).toBe('spells/fireball');
+  });
+
+  it('a chave devolvida é a que entrou, e ela pode atravessar tipos', () => {
+    const index = createTextIndex(docs);
+    expect(index.search('lying')).toEqual(['conditions/prone']);
+  });
+
+  it('termo vazio não devolve tudo', () => {
+    expect(createTextIndex(docs).search('   ')).toEqual([]);
   });
 });
