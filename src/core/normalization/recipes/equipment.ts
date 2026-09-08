@@ -220,6 +220,10 @@ export interface EquipmentBase {
   /**
    * Dureza e resistência, e elas são de ESCUDO. Medido: armadura, arma e equipamento
    * genérico trazem zero nos 3.623; só os 126 escudos têm valor de verdade.
+   *
+   * O Limiar de Quebra NÃO é campo, e não é dado que falte: vale sempre METADE dos pontos
+   * de vida, e a tela o desenha entre parênteses (`20 (10)`), como o livro. Os 126 têm PV
+   * par, então a metade é exata.
    */
   readonly hardness: number;
   readonly hitPoints: number;

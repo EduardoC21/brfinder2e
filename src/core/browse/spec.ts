@@ -208,6 +208,14 @@ export interface StatFormat {
   readonly signed?: boolean;
   readonly unit?: string;
   readonly hideZero?: boolean;
+  /**
+   * Mostra a METADE entre parênteses: `20 (10)`.
+   *
+   * É o Limiar de Quebra do escudo, que o livro sempre escreve assim — e ele não é um
+   * campo que falta na fonte, é uma CONTA: vale sempre metade dos pontos de vida.
+   * Conferido nos 126 escudos, e os 126 têm PV par, então a metade é exata.
+   */
+  readonly half?: boolean;
 }
 
 /** A unidade de uma faixa numérica: pés de distância, cobre de preço, e o Volume. */
@@ -731,7 +739,7 @@ export const SOURCES: readonly SourceSpec[] = [
       { kind: 'stat', field: 'strength', signed: true },
       { kind: 'bulk', field: 'bulk' },
       { kind: 'stat', field: 'hardness' },
-      { kind: 'stat', field: 'hitPoints' },
+      { kind: 'stat', field: 'hitPoints', half: true },
       { kind: 'text', field: 'hands' },
       { kind: 'stat', field: 'range', unit: 'ft.' },
       { kind: 'text', field: 'reload' },

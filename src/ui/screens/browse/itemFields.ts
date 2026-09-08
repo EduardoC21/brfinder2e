@@ -103,5 +103,8 @@ export function statText(entity: BrowseEntity, field: string, formato: StatForma
 
   const sinal = formato.signed === true && numero >= 0 ? '+' : '';
   const unidade = formato.unit === undefined ? '' : ` ${formato.unit}`;
-  return `${sinal}${numero.toLocaleString('pt-BR')}${unidade}`;
+  /* O Limiar de Quebra: metade dos PV, e é assim que o livro escreve — `20 (10)`. */
+  const metade =
+    formato.half === true ? ` (${Math.floor(numero / 2).toLocaleString('pt-BR')})` : '';
+  return `${sinal}${numero.toLocaleString('pt-BR')}${unidade}${metade}`;
 }
