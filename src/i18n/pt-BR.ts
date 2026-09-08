@@ -160,6 +160,27 @@ export const ptBR = {
       atLeast: (n: string, unit: string) => `≥ ${n} ${unit}`,
       atMost: (n: string, unit: string) => `≤ ${n} ${unit}`,
     },
+    /**
+     * O PREÇO, em moedas do jogo.
+     *
+     * `PL` para platina e `PP` para prata, e não o contrário: em português as duas
+     * começariam com "p" de "peças de p…", e a tradução brasileira do PF2e resolve assim.
+     * O dado é guardado em cobre; ver a receita de `equipment`.
+     */
+    price: {
+      pl: 'PL',
+      po: 'PO',
+      pp: 'PP',
+      pc: 'PC',
+      /** Preço zero: nem toda coisa do livro tem preço impresso. */
+      none: '—',
+    },
+    /** O VOLUME. `0` é insignificante e `0,1` é o "L" do livro. */
+    bulk: {
+      light: 'L',
+      negligible: '—',
+      label: 'volume',
+    },
     /** A defesa contra a magia: CA, salvamento, ou os dois. */
     defense: {
       save: {
@@ -250,6 +271,22 @@ export const ptBR = {
       materialCost: 'custo',
       requirements: 'requisitos',
       ritual: 'ritual',
+      /* Equipamento. `kind` é o Tipo — ver a receita, e a nota sobre a pasta. */
+      kind: 'tipo',
+      family: 'família',
+      price: 'preço',
+      bulk: 'volume',
+      usage: 'uso',
+      damage: 'dano',
+      reload: 'recarga',
+      acBonus: 'bônus de CA',
+      dexCap: 'limite de Des',
+      checkPenalty: 'penalidade em testes',
+      speedPenalty: 'penalidade de deslocamento',
+      strength: 'Força exigida',
+      hardness: 'dureza',
+      hitPoints: 'pontos de vida',
+      uses: 'cargas',
       'source.title': 'livro',
     } as Record<string, string>,
   },

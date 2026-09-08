@@ -57,8 +57,30 @@ export interface RecipePack {
 }
 
 export interface RecipeInput<TBase, TDesc> {
-  /** Valor de `type` no documento do Foundry. Documento de outro tipo é descartado. */
+  /**
+   * O tipo da ENTIDADE — a chave de `base/<type>` e a identidade da fonte na tela.
+   *
+   * Também é o `type` do documento do Foundry por padrão. Quando os dois divergem, ver
+   * `accepts`.
+   */
   readonly type: string;
+  /**
+   * Quais valores de `type` do Foundry alimentam esta receita. Ausente: só o `type` acima.
+   *
+   * ⚠️ Existe por causa de equipamento, e é a primeira vez que uma receita precisa disso.
+   * As quatro receitas anteriores casavam uma para um: o pack `spells-srd` só tem
+   * documentos `spell`. O pack `equipment` tem NOVE tipos — medido no `pf2e-8.5.0`:
+   *
+   *   equipment 2394 · consumable 1703 · weapon 1018 · ammo 216 · armor 211
+   *   treasure 153 · shield 126 * backpack 46 · kit 2
+   *
+   * E eles são a MESMA coisa para quem consulta: um item, com nível, preço, volume e
+   * traços. Nove receitas dariam nove fontes no trilho para uma pergunta só ("quanto custa
+   * uma espada longa?"), e a busca de uma fonte deixaria de achar as outras oito.
+   *
+   * O que os separa vira DADO, no campo `kind` — que é o Tipo da tela.
+   */
+  readonly accepts?: readonly string[];
   /** Os packs que alimentam esta receita. */
   readonly packs: readonly RecipePack[];
   readonly base: FieldMapFor<TBase>;
@@ -69,6 +91,8 @@ export interface RecipeInput<TBase, TDesc> {
 
 export interface Recipe<TBase = unknown, TDesc = unknown> {
   readonly type: string;
+  /** Sempre preenchido: vale `[type]` quando a receita não declara nada. */
+  readonly accepts: readonly string[];
   readonly packs: readonly RecipePack[];
   readonly base: FieldMapFor<TBase>;
   readonly desc: FieldMapFor<TDesc>;
@@ -99,6 +123,7 @@ export function recipe<TBase, TDesc = Record<string, never>>(
 ): Recipe<TBase, TDesc> {
   const built: Recipe<TBase, TDesc> = {
     type: input.type,
+    accepts: input.accepts ?? [input.type],
     packs: input.packs,
     base: input.base,
     desc: input.desc ?? ({} as FieldMapFor<TDesc>),

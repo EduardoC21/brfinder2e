@@ -8,6 +8,7 @@ export * from './paths';
 export * from './recipe';
 export * from './recipes/action';
 export * from './recipes/condition';
+export * from './recipes/equipment';
 export * from './recipes/feat';
 export * from './recipes/spell';
 export * from './report';

@@ -43,7 +43,12 @@ Antes: **Etapa 11** — a busca global: Ctrl+Q abre uma paleta que atravessa as 
 fontes (9.087 entradas), com filtro por fonte, busca opcional dentro da descrição e
 abertura em painel flutuante.
 
-Próxima: **Etapa 12** — a receita de `equipment`, o maior buraco que sobrou (5.869 itens).
+Antes: **Etapa 12** — receita de `equipment`: 5.869 itens de NOVE tipos do Foundry numa
+receita só, com preço em cobre, volume na escala do jogo e os números de arma, armadura e
+escudo.
+
+Próxima: **Etapa 13** — as sete fontes que faltam (Ancestralidade, Antecedente, Arquétipo,
+Classe, Companheiro, Familiar, Perícias).
 
 ## Requisitos
 

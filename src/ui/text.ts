@@ -5,6 +5,8 @@
  * mesmo valor do mesmo jeito. Duas cópias divergiriam no primeiro caso especial.
  */
 
+import { strings } from '@i18n/index';
+
 /** `offensive` vira `Offensive`. O dado vem em minúscula; a tela mostra etiqueta. */
 export function capitalizar(value: string): string {
   return value.charAt(0).toUpperCase() + value.slice(1);
@@ -74,4 +76,48 @@ export const BOOK_FIELD = 'source.title';
  */
 export function fieldText(field: string, value: string): string {
   return field === BOOK_FIELD ? bookLabel(value) : capitalizar(value);
+}
+
+/** Quanto vale cada moeda em cobre, da maior para a menor. Espelha `EM_COBRE` na receita. */
+const MOEDAS: readonly (readonly [keyof typeof MOEDA_ROTULO, number])[] = [
+  ['pl', 1000],
+  ['po', 100],
+  ['pp', 10],
+  ['pc', 1],
+];
+
+const MOEDA_ROTULO = strings.browse.price;
+
+/**
+ * `250` → `2 PO, 5 PP`.
+ *
+ * A receita guarda o preço em COBRE porque número ordena e faixa filtra; aqui ele volta a
+ * ser moeda, que é como se lê. Decompõe da maior para a menor e mostra só o que não é
+ * zero — `3000` é `30 PO`, e não `0 PL, 30 PO, 0 PP, 0 PC`.
+ */
+export function priceText(copper: number): string {
+  if (!Number.isFinite(copper) || copper <= 0) return '';
+  let resto = Math.round(copper);
+  const partes: string[] = [];
+  for (const [moeda, fator] of MOEDAS) {
+    const quantas = Math.floor(resto / fator);
+    if (quantas > 0) {
+      partes.push(`${quantas.toLocaleString('pt-BR')} ${MOEDA_ROTULO[moeda]}`);
+      resto -= quantas * fator;
+    }
+  }
+  return partes.join(', ');
+}
+
+/**
+ * `0` → nada, `0.1` → `L`, `2` → `2`.
+ *
+ * O "L" é do livro: um item leve tem Volume L, que não é 0,1 de nada — a fração existe só
+ * para o dado poder somar dez leves num Volume 1. Mostrar `0,1` seria mostrar a conta em
+ * vez do valor.
+ */
+export function bulkText(bulk: number): string {
+  if (!Number.isFinite(bulk) || bulk <= 0) return '';
+  if (bulk < 1) return strings.browse.bulk.light;
+  return bulk.toLocaleString('pt-BR');
 }

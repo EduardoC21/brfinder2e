@@ -84,6 +84,15 @@ export type ColumnSpec =
   | ({ readonly kind: 'defense' } & DefenseFields & ColumnBase)
   /** A duração do efeito, com "sustentada" junto quando for o caso. */
   | ({ readonly kind: 'duration'; readonly field: string } & ColumnBase)
+  /**
+   * Um PREÇO em peças de cobre, desenhado na moeda maior que couber: `1 po`, `5 pp`.
+   *
+   * Espécie própria e não `text` porque o dado é um número e o desenho é uma frase — e
+   * porque a largura da coluna se mede pela frase, não pelo número.
+   */
+  | ({ readonly kind: 'price'; readonly field: string } & ColumnBase)
+  /** O VOLUME na escala do jogo: `0` some, `0,1` vira `L`, o resto é o número. */
+  | ({ readonly kind: 'bulk'; readonly field: string } & ColumnBase)
   /** Texto simples, sem moldura de chip. Para valores mais longos que um rótulo. */
   | ({ readonly kind: 'text'; readonly field: string } & ColumnBase);
 
@@ -164,8 +173,8 @@ export type FilterSpec =
    */
   | { readonly kind: 'area'; readonly id: string; readonly field: string; readonly unit: Unit };
 
-/** A unidade de uma faixa numérica. Só a que o jogo usa para distância, por enquanto. */
-export type Unit = 'feet';
+/** A unidade de uma faixa numérica: pés de distância, cobre de preço, e o Volume. */
+export type Unit = 'feet' | 'copper' | 'bulk';
 
 /**
  * Os campos do cabeçalho do detalhe.
@@ -188,6 +197,10 @@ export type DetailFieldSpec =
   | { readonly kind: 'cast'; readonly field: string }
   | { readonly kind: 'area'; readonly field: string }
   | ({ readonly kind: 'defense' } & DefenseFields)
+  | { readonly kind: 'price'; readonly field: string }
+  | { readonly kind: 'bulk'; readonly field: string }
+  /** `1d8 cortante`. Ver `EquipmentDamage` na receita. */
+  | { readonly kind: 'damage'; readonly field: string }
   | { readonly kind: 'duration'; readonly field: string }
   /** Quem mais precisa ajudar no ritual, e com que teste. */
   | { readonly kind: 'ritual'; readonly field: string }
@@ -483,14 +496,68 @@ export const SOURCES: readonly SourceSpec[] = [
   },
   {
     id: 'equipment',
-    entityType: null,
+    entityType: 'equipment',
     mode: 'list',
-    columns: [],
+    /* Tipo primeiro, resto espelhando os filtros — ver a nota em `actions`. */
+    columns: [
+      { kind: 'chip', id: 'kind', field: 'kind' },
+      { kind: 'chip', id: 'category', field: 'category' },
+      { kind: 'chip', id: 'group', field: 'group' },
+      { kind: 'price', id: 'price', field: 'price' },
+      { kind: 'bulk', id: 'bulk', field: 'bulk' },
+      { kind: 'chip', id: 'usage', field: 'usage' },
+      { kind: 'chip', id: 'family', field: 'family' },
+      { kind: 'text', id: 'source', field: 'source.title' },
+    ],
     defaultColumns: [],
-    special: NO_SPECIAL_COLUMNS,
-    filters: [],
-    searchFields: [],
-    detail: [],
+    special: { level: 'level', rarity: 'rarity', traits: 'traits' },
+    /*
+     * O TIPO aqui é o `kind` — o `type` do próprio documento do Foundry —, e não a pasta.
+     * Medido: 5.706 dos 5.869 não têm pasta nenhuma. Ver a receita.
+     */
+    filters: [
+      { kind: 'options', id: 'kind', field: 'kind' },
+      { kind: 'options', id: 'level', field: 'level' },
+      { kind: 'rarity', id: 'rarity', field: 'rarity' },
+      { kind: 'list', id: 'traits', field: 'traits', combine: 'any' },
+      { kind: 'options', id: 'category', field: 'category' },
+      { kind: 'options', id: 'group', field: 'group' },
+      { kind: 'number', id: 'price', field: 'price', unit: 'copper' },
+      { kind: 'number', id: 'bulk', field: 'bulk', unit: 'bulk' },
+      { kind: 'options', id: 'usage', field: 'usage' },
+      { kind: 'options', id: 'family', field: 'family' },
+      { kind: 'options', id: 'source', field: 'source.title' },
+    ],
+    searchFields: ['name'],
+    /*
+     * A ordem é a da ficha de item do livro: o que ele É (traços), quanto custa, quanto
+     * pesa, como se usa — e só então os números de quem é arma, armadura ou escudo.
+     *
+     * Nível NÃO é campo: vira a calha antes do nome, como em talento e magia. Raridade
+     * também não: vira etiqueta.
+     */
+    detail: [
+      { kind: 'chips', field: 'traits' },
+      { kind: 'text', field: 'kind' },
+      { kind: 'text', field: 'category' },
+      { kind: 'text', field: 'group' },
+      { kind: 'price', field: 'price' },
+      { kind: 'bulk', field: 'bulk' },
+      { kind: 'text', field: 'usage' },
+      { kind: 'damage', field: 'damage' },
+      { kind: 'text', field: 'range' },
+      { kind: 'text', field: 'reload' },
+      { kind: 'text', field: 'acBonus' },
+      { kind: 'text', field: 'dexCap' },
+      { kind: 'text', field: 'checkPenalty' },
+      { kind: 'text', field: 'speedPenalty' },
+      { kind: 'text', field: 'strength' },
+      { kind: 'text', field: 'hardness' },
+      { kind: 'text', field: 'hitPoints' },
+      { kind: 'text', field: 'uses' },
+      { kind: 'text', field: 'family' },
+      { kind: 'source' },
+    ],
   },
   {
     id: 'ancestries',

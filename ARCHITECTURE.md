@@ -367,6 +367,21 @@ O leitor distingue **três** situações, e a diferença entre elas é decisão 
 | chave presente, sem tabela | presente, vazio                        | não dá para resolver; cair no padrão marcaria tudo como de aventura                                               |
 | chave presente, pasta órfã | presente, vazio                        | `Disengage` aponta para uma pasta que não existe no arquivo. Defeito do dado do pf2e, não ausência de organização |
 
+### Uma receita pode aceitar vários TIPOS
+
+`RecipeInput.accepts` diz quais valores de `type` do Foundry alimentam a receita; ausente,
+vale só o `type` dela. Existe desde a Etapa 12, e o motivo é equipamento: o pack
+`equipment-srd` tem **nove tipos** — `equipment` 2394, `consumable` 1703, `weapon` 1018,
+`ammo` 216, `armor` 211, `treasure` 153, `shield` 126, `backpack` 46, `kit` 2.
+
+Nove receitas dariam nove fontes no trilho para responder "quanto custa uma espada longa?",
+e a busca de uma fonte deixaria de achar as outras oito. O que separa os nove vira DADO, no
+campo `kind`, que é o **Tipo** da tela.
+
+⚠️ E equipamento é a primeira fonte em que **o Tipo não vem da pasta**: 5.706 dos 5.869 não
+têm pasta nenhuma. A pasta responde 3% da base e vira o campo `family` (as famílias de item
+mágico: `Aeon Stones`, `Spellhearts`, `Staves`…).
+
 ### Uma receita pode ler vários packs
 
 `recipe.packs` é uma lista e o motor lê TODOS. `action` lê dois — `actionspf2e` (574) e

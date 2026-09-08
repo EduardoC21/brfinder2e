@@ -112,7 +112,8 @@ export function run<TBase, TDesc>(
     };
 
     for (const document of source.documents) {
-      if (documentType(document) !== recipe.type) continue;
+      // `accepts`, e não `type`: equipamento é uma receita para nove tipos do Foundry.
+      if (!recipe.accepts.includes(documentType(document) ?? '')) continue;
       matching++;
 
       const paths = collectPaths(document);

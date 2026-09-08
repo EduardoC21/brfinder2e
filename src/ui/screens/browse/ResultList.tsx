@@ -27,6 +27,7 @@ import { useTrackWidth } from '@ui/hooks/useTrackWidth';
 import { useWindowedRows } from '@ui/hooks/useWindowedRows';
 
 import { columnLabel, frequencyLabel, specialColumnLabel } from './filterLabels';
+import { itemBulkText, itemPriceText } from './itemFields';
 import { areaText, defenseText, durationText, spellCast } from './spellFields';
 import styles from './ResultList.module.css';
 
@@ -470,6 +471,10 @@ function textoDaColuna(spec: ColumnSpec, entity: BrowseEntity): string {
     }
     case 'chips':
       return fieldList(entity, spec.field).map(capitalizar).join(' ');
+    case 'price':
+      return itemPriceText(entity, spec.field);
+    case 'bulk':
+      return itemBulkText(entity, spec.field);
     case 'area':
       return areaText(entity, spec.field);
     case 'defense':
@@ -493,6 +498,8 @@ function textoDaColuna(spec: ColumnSpec, entity: BrowseEntity): string {
 
 function alinhamento(spec: ColumnSpec): string | undefined {
   if (spec.align === 'end') return styles['end'];
+  // Número à direita, pela mesma regra que já vale para a calha do nível.
+  if (spec.kind === 'price' || spec.kind === 'bulk') return styles['end'];
   if (spec.kind === 'cost' || spec.kind === 'boolean' || spec.kind === 'cast') {
     return styles['centro'];
   }
@@ -562,6 +569,20 @@ function Column({ spec, entity }: { readonly spec: ColumnSpec; readonly entity: 
       const cast = spellCast(entity, spec.field);
       if (cast === null) return null;
       return <CastCost cast={cast} />;
+    }
+
+    /*
+     * Preço e volume são NÚMEROS, e por isso vão para a direita: as casas se alinham, e
+     * `30 PO` fica sob `1.500 PO` pelo mesmo lado. É a convenção de `alinhamento` abaixo.
+     */
+    case 'price':
+    case 'bulk': {
+      const valor =
+        spec.kind === 'price'
+          ? itemPriceText(entity, spec.field)
+          : itemBulkText(entity, spec.field);
+      if (valor === '') return null;
+      return <span className={styles['chip']}>{valor}</span>;
     }
 
     case 'area':

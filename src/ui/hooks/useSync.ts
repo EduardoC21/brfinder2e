@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useReducer, useRef } from 'react';
 
-import { actionRecipe, conditionRecipe, featRecipe, spellRecipe } from '@core/normalization/index';
+import {
+  actionRecipe,
+  conditionRecipe,
+  equipmentRecipe,
+  featRecipe,
+  spellRecipe,
+} from '@core/normalization/index';
 import type { Recipe } from '@core/normalization/index';
 import { KNOWN_GOOD_TAG } from '@core/source/index';
 import { persistSync } from '@core/sync/persist';
@@ -154,6 +160,7 @@ const RECIPES: readonly Recipe<never, never>[] = [
   actionRecipe as Recipe<never, never>,
   featRecipe as Recipe<never, never>,
   spellRecipe as Recipe<never, never>,
+  equipmentRecipe as Recipe<never, never>,
 ];
 
 const INITIAL: SyncState = { stored: null, run: { status: 'loading' }, update: NO_UPDATE };
