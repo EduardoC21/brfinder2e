@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import {
   applyFilters,
+  facetBase,
+  topicMatters,
   castRank,
   castToken,
   costToken,
@@ -451,5 +453,87 @@ describe('o filtro de ÁREA, que junta tipo e tamanho', () => {
   it('só o tipo, sem limite, não exige tamanho nenhum', () => {
     const recorte = applyFilters(magias, [areaSpec], { area: { values: ['cone'] } });
     expect(recorte.map((e) => e.key)).toEqual(['cone15']);
+  });
+});
+
+/*
+ * ⚠️ A CONTAGEM ENGANOSA, e o conserto dela.
+ *
+ * Com "arma" e "uma mão" marcados, a opção "marcial" mostrava o total de marciais da base,
+ * mas clicar nela devolvia só as marciais de uma mão. O número respondia uma pergunta que
+ * ninguém tinha feito.
+ */
+const itens: BrowseEntity[] = [
+  entity('i1', { name: 'Longsword', kind: 'weapon', category: 'martial', hands: '1' }),
+  entity('i2', { name: 'Greataxe', kind: 'weapon', category: 'martial', hands: '2' }),
+  entity('i3', { name: 'Club', kind: 'weapon', category: 'simple', hands: '1' }),
+  entity('i4', { name: 'Potion', kind: 'consumable', category: 'potion', hands: '1' }),
+];
+
+const tipo: FilterSpec = { kind: 'options', id: 'kind', field: 'kind' };
+const categoria: FilterSpec = { kind: 'options', id: 'category', field: 'category' };
+const maos: FilterSpec = { kind: 'options', id: 'hands', field: 'hands' };
+const todos = [tipo, categoria, maos];
+
+describe('facetBase — a base de UM tópico', () => {
+  it('aplica os outros tópicos, e não o próprio', () => {
+    const estado = { kind: { values: ['weapon'] }, hands: { values: ['1'] } };
+    const base = facetBase(itens, todos, estado, categoria);
+    // Arma E uma mão: sobram a espada marcial e a clava simples.
+    expect(base.map((item) => fieldValue(item, 'name'))).toEqual(['Longsword', 'Club']);
+    // E é sobre ESSAS duas que a contagem de "marcial" é feita: 1, e não 2.
+    expect(optionsFor(base, categoria)).toEqual([
+      { value: 'martial', count: 1 },
+      { value: 'simple', count: 1 },
+    ]);
+  });
+
+  /*
+   * O próprio tópico fica DE FORA para que a contagem responda "quantas sobram se ESTA for
+   * a marcada aqui". Mantendo a seleção, marcar uma segunda opção faria todos os números
+   * crescerem, e a lista deixaria de ser comparável consigo mesma.
+   */
+  it('o que já está marcado no tópico não estreita a própria contagem', () => {
+    const estado = { category: { values: ['martial'] } };
+    const base = facetBase(itens, todos, estado, categoria);
+    expect(base).toHaveLength(4);
+  });
+
+  /* No modo E dos traços, marcar mais RESTRINGE — e aí a seleção fica. */
+  it('no modo E, a seleção do próprio tópico continua valendo', () => {
+    const tracos: FilterSpec = { kind: 'list', id: 'traits', field: 'traits', combine: 'all' };
+    const comTracos: BrowseEntity[] = [
+      entity('x', { traits: ['concentrate', 'manipulate'] }),
+      entity('y', { traits: ['concentrate'] }),
+      entity('z', { traits: ['manipulate'] }),
+    ];
+    const estado = { traits: { values: ['concentrate'], combine: 'all' as const } };
+    const base = facetBase(comTracos, [tracos], estado, tracos);
+    expect(base).toHaveLength(2);
+    // "manipulate" mostra 1: é o que sobra ao SOMAR o traço, que é o que o modo E faz.
+    expect(optionsFor(base, tracos)).toContainEqual({ value: 'manipulate', count: 1 });
+  });
+});
+
+describe('topicMatters — o tópico ainda pode mudar alguma coisa?', () => {
+  it('não, quando todas respondem igual', () => {
+    const so = itens.filter((item) => fieldValue(item, 'kind') === 'consumable');
+    expect(topicMatters(so, categoria)).toBe(false);
+  });
+
+  it('sim, quando há mais de uma resposta', () => {
+    const armas = itens.filter((item) => fieldValue(item, 'kind') === 'weapon');
+    expect(topicMatters(armas, categoria)).toBe(true);
+  });
+
+  it('não, quando não há resposta nenhuma', () => {
+    expect(topicMatters(itens, { kind: 'options', id: 'x', field: 'inexistente' })).toBe(false);
+  });
+
+  /* Faixa numérica não tem opção: o que ela precisa é de pelo menos um número. */
+  it('a faixa depende de haver número no recorte', () => {
+    const faixa: FilterSpec = { kind: 'number', id: 'price', field: 'price', unit: 'copper' };
+    expect(topicMatters(itens, faixa)).toBe(false);
+    expect(topicMatters([entity('p', { price: 100 })], faixa)).toBe(true);
   });
 });

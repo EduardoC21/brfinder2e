@@ -78,12 +78,20 @@ export function fieldText(field: string, value: string): string {
   return field === BOOK_FIELD ? bookLabel(value) : capitalizar(value);
 }
 
-/** Quanto vale cada moeda em cobre, da maior para a menor. Espelha `EM_COBRE` na receita. */
-/** As quatro moedas, e só elas: `none` e `per` também moram na tabela, e não são moeda. */
-type Moeda = 'pl' | 'po' | 'pp' | 'pc';
+/**
+ * Quanto vale cada moeda em cobre, da maior para a menor — e a MAIOR É O OURO.
+ *
+ * ⚠️ A platina NÃO entra na decomposição, por decisão do autor. Ela existe no jogo e a
+ * fonte a usa (`pp`), mas o livro escreve os preços em peças de ouro até o fim da tabela:
+ * o Acid Flask superior custa **2.500 PO**, e não 250 PL. Com a platina na lista, todo item
+ * caro virava um número pequeno numa moeda que ninguém usa para comparar.
+ *
+ * A conversão continua exata: quem tem `pp: 1` na fonte (só `Platinum Pieces`) vale 1.000
+ * de cobre, e sai como 10 PO.
+ */
+type Moeda = 'po' | 'pp' | 'pc';
 
 const MOEDAS: readonly (readonly [Moeda, number])[] = [
-  ['pl', 1000],
   ['po', 100],
   ['pp', 10],
   ['pc', 1],

@@ -16,9 +16,9 @@ const base = (nome: string) => {
 };
 
 describe('receita de equipment', () => {
-  it('normaliza as seis amostras sem falha, com relatório limpo', () => {
+  it('normaliza as sete amostras sem falha, com relatório limpo', () => {
     expect(result.failures).toEqual([]);
-    expect(result.entities).toHaveLength(6);
+    expect(result.entities).toHaveLength(7);
     expect(result.report.unmapped, JSON.stringify(result.report.unmapped)).toEqual([]);
     expect(isClean(result.report)).toBe(true);
   });
@@ -34,6 +34,7 @@ describe('receita de equipment', () => {
       'backpack',
       'consumable',
       'shield',
+      'weapon',
       'weapon',
     ]);
     expect(result.type).toBe('equipment');
@@ -62,15 +63,38 @@ describe('o preço vira COBRE, e volta a ser moeda na tela', () => {
 
 describe('o dano tem duas formas na fonte e uma na saída', () => {
   it('a arma traz dados separados', () => {
-    expect(base('Longsword').damage).toEqual({ formula: '1d8', type: 'slashing' });
+    expect(base('Longsword').damage).toEqual({
+      formula: '1d8',
+      type: 'slashing',
+      persistent: null,
+    });
+    expect(base('Longsword').splash).toBe(0);
   });
 
   it('o consumível traz a fórmula pronta', () => {
-    expect(base('Tin Cobra').damage).toEqual({ formula: '3d6', type: 'poison' });
+    expect(base('Tin Cobra').damage).toEqual({
+      formula: '3d6',
+      type: 'poison',
+      persistent: null,
+    });
   });
 
   it('quem não causa dano traz nulo', () => {
     expect(base('Full Plate').damage).toBeNull();
+  });
+
+  /*
+   * ⚠️ A REGRESSÃO DA CONFERÊNCIA: os quatro graus do Acid Flask têm o MESMO `1` de dano
+   * direto, e `die` vem VAZIO. Montar `${dice}${die}` às cegas dava "1" para os quatro, e
+   * era isso que a tela mostrava. O que os separa é o persistente e o respingo.
+   */
+  it('a bomba tem dano fixo, persistente e respingo — e os três aparecem', () => {
+    expect(base('Acid Flask (Lesser)').damage).toEqual({
+      formula: '1',
+      type: 'acid',
+      persistent: { formula: '1d6', type: 'acid' },
+    });
+    expect(base('Acid Flask (Lesser)').splash).toBe(1);
   });
 });
 
@@ -94,22 +118,29 @@ describe('os números de armadura e escudo', () => {
     expect(e.dexCap).toBeNull();
   });
 
-  it('quem não é armadura nem escudo traz nulo, e não zero', () => {
+  /*
+   * ⚠️ ZERO É "NÃO INFORMADO". A fonte traz `hardness: 0` em tudo que não é escudo, e item
+   * nenhum tem dureza zero no jogo — o que ele tem é dureza não impressa, e aí vale a do
+   * material comparável, que é coisa de mestre. Mostrar "dureza 0" era afirmar o que o
+   * livro não afirma.
+   */
+  it('quem não é armadura nem escudo traz nulo, e zero também vira nulo', () => {
     expect(base('Longsword').acBonus).toBeNull();
-    expect(base('Longsword').hardness).toBe(0);
+    expect(base('Longsword').hardness).toBeNull();
+    expect(base('Longsword').hitPoints).toBeNull();
   });
 });
 
-describe('o Tipo vem do documento, e a família vem da pasta', () => {
-  /** 5.706 dos 5.869 não têm pasta: a pasta não serve de Tipo, e o `type` serve. */
-  it('a família fica vazia quando não há pasta', () => {
-    expect(base('Longsword').family).toBe('');
+describe('o Tipo vem do documento, e a pasta não entra', () => {
+  /**
+   * A pasta do compêndio virou o campo `family` e SAIU na conferência da Etapa 12: ela
+   * responde 3% da base e discorda dos traços, que dizem a mesma coisa nos 5.869. O Tipo é
+   * o `type` do documento, que responde 100%.
+   */
+  it('o Tipo é o `type` do documento, e a pasta é ignorada', () => {
     expect(base('Longsword').kind).toBe('weapon');
-  });
-
-  it('a família aparece nos 163 que têm pasta', () => {
-    expect(base('Magekiller Bullet').family).toBe('Magic Ammunition');
     expect(base('Magekiller Bullet').kind).toBe('ammo');
+    expect(result.report.unmapped).toEqual([]);
   });
 });
 
@@ -119,7 +150,6 @@ describe('o resto do cabeçalho', () => {
       name: 'Longsword',
       slug: 'longsword',
       kind: 'weapon',
-      family: '',
       level: 0,
       price: 100,
       pricePer: 1,
@@ -132,7 +162,8 @@ describe('o resto do cabeçalho', () => {
       hands: '1',
       carry: 'held',
       weaponType: 'melee',
-      damage: { formula: '1d8', type: 'slashing' },
+      damage: { formula: '1d8', type: 'slashing', persistent: null },
+      splash: 0,
       range: null,
       reload: '',
       acBonus: null,
@@ -140,8 +171,8 @@ describe('o resto do cabeçalho', () => {
       checkPenalty: null,
       speedPenalty: null,
       strength: null,
-      hardness: 0,
-      hitPoints: 0,
+      hardness: null,
+      hitPoints: null,
       uses: null,
       source: { license: 'ORC', remaster: true, title: 'Pathfinder Player Core' },
     });

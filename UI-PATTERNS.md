@@ -534,6 +534,50 @@ Consequências que o código respeita:
 
 ---
 
+## 6f. O filtro é CONTEXTUAL: opções, contagens e presença
+
+**Decidido:** um tópico de filtro só oferece o que existe no recorte em vigor, e o número
+ao lado de cada opção responde **"quantas sobram se eu marcar esta"**.
+
+Três coisas mudaram juntas, e todas nascem do mesmo defeito relatado na conferência da
+Etapa 12: os filtros ignoravam uns aos outros.
+
+**1. As opções saem do recorte, não da base inteira.** Com Tipo = Arma marcado, `Categoria`
+mostrava as quinze categorias de consumível junto com as quatro de arma. Agora mostra
+quatro.
+
+**2. A contagem conta o que a lista vai mostrar.** Com Arma e "uma mão" marcados, a opção
+"marcial" dizia **613** — todas as marciais da base — e clicar nela devolvia **430**, que
+são as marciais de uma mão. O número respondia uma pergunta que ninguém tinha feito.
+
+A base de um tópico é: o termo digitado, mais **todos os outros tópicos**, e não ele
+mesmo. Não ele mesmo porque a contagem tem de responder "quantas sobram se ESTA for a
+marcada aqui" — mantendo a própria seleção, marcar uma segunda opção faria todos os números
+crescerem, e a lista deixaria de ser comparável consigo mesma.
+
+A exceção é o **modo E** dos traços, onde marcar mais restringe: ali a seleção do próprio
+tópico fica, e o número já responde "quantas sobram se eu somar esta". Medido nas 766 ações:
+com `concentrate` marcado, `manipulate` vale 92 no modo OU e 20 no modo E — os dois certos,
+cada um para o seu modo.
+
+**3. Tópico que não pode mudar nada não aparece.** Com Tipo = Escudo, `Categoria` e `Grupo`
+vêm vazios nos 126 — um botão que só pode não fazer nada. Some. A regra é "há mais de uma
+resposta distinta no recorte?", e a conta sai no segundo valor distinto, então custa pouco
+mesmo nos 5.869.
+
+Dois nunca somem, por motivos diferentes:
+
+- **o Tipo**, porque é ele que comanda o recorte; medido dentro do próprio recorte ele
+  teria sempre um valor só, e desapareceria no primeiro clique;
+- **o que está marcado**, porque esconder um filtro em uso tira da tela a explicação de por
+  que a lista encolheu.
+
+**O que a busca digitada NÃO faz:** ela entra nas contagens, mas não decide quais tópicos
+aparecem. Se decidisse, a barra de filtros ganharia e perderia botões a cada letra, e o
+botão que a pessoa ia clicar sairia de baixo do cursor.
+
+---
+
 ## 7. Preferências do usuário
 
 Tudo que o usuário configura na tela **sobrevive** ao fechamento do app e às atualizações

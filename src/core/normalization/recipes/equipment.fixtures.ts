@@ -1,5 +1,5 @@
 /**
- * As seis amostras da Etapa 12, com a ESTRUTURA real do `pf2e-8.5.0`.
+ * As sete amostras da Etapa 12, com a ESTRUTURA real do `pf2e-8.5.0`.
  *
  * Escolhidas para cobrir os tipos que se comportam DIFERENTE, e cada uma paga por si:
  *
@@ -9,6 +9,7 @@
  *   Tin Cobra                consumível: dano em FÓRMULA, a segunda forma do campo
  *   Magekiller Bullet        munição: tem PASTA (família) e `price.per`
  *   Backpack                 mochila: sem preço em ouro, `usage` próprio, sem nível
+ *   Acid Flask (Lesser)      bomba: `die` VAZIO, dano persistente e respingo
  *
  * O texto da descrição está encurtado de propósito — é conteúdo da Paizo sob ORC/OGL, e o
  * decodificador `html` só precisa saber que é string.
@@ -211,6 +212,56 @@ export const backpack = {
   effects: [],
 };
 
+/**
+ * A bomba, e ela paga por três coisas que nenhuma das outras cobre:
+ *
+ *   `die: ''`      dano FIXO, não em dados: `1` de ácido, e não `1d`
+ *   `persistent`   `1d6` de ácido, que é o que separa os quatro graus do frasco
+ *   `splashDamage` `1`, que cresce com o grau (1 · 2 · 3 · 4)
+ *
+ * É a regressão relatada na conferência da Etapa 12: os quatro graus liam igual na tela
+ * porque só o dano direto era mostrado, e ele é o MESMO nos quatro.
+ */
+export const acidFlask = {
+  _id: 'M1k5QQc1qQLxzyCK',
+  name: 'Acid Flask (Lesser)',
+  img: 'systems/pf2e/icons/equipment/alchemical-items/alchemical-bombs/acid-flask.webp',
+  system: {
+    ...COMUM,
+    ammo: null,
+    baseItem: 'alchemical-bomb',
+    bonus: { value: 0 },
+    bonusDamage: { value: 0 },
+    bulk: { value: 0.1 },
+    category: 'martial',
+    damage: {
+      damageType: 'acid',
+      dice: 1,
+      die: '',
+      persistent: { faces: 6, number: 1, type: 'acid' },
+    },
+    description: { value: '<p>This flask […] deals 1 acid damage […]</p>' },
+    expend: 1,
+    grade: null,
+    group: 'bomb',
+    hardness: 0,
+    hp: { max: 0, value: 0 },
+    level: { value: 1 },
+    price: { value: { gp: 3 } },
+    publication: { license: 'ORC', remaster: true, title: 'Pathfinder GM Core' },
+    range: 20,
+    reload: { value: '-' },
+    runes: { potency: 0, property: [], striking: 0 },
+    slug: 'acid-flask-lesser',
+    splashDamage: { value: 1 },
+    traits: { rarity: 'common', value: ['acid', 'alchemical', 'bomb', 'consumable', 'splash'] },
+    usage: { canBeAmmo: false, value: 'held-in-one-hand' },
+  },
+  type: 'weapon',
+  _stats: ESTATISTICAS,
+  effects: [],
+};
+
 /** A raiz de pasta da munição, no formato que `parseFolderRoots` devolve. */
 export const folderRoots = new Map<string, string>([[PASTA_MUNICAO, 'Magic Ammunition']]);
 
@@ -221,4 +272,5 @@ export const todas = [
   tinCobra,
   magekillerBullet,
   backpack,
+  acidFlask,
 ];

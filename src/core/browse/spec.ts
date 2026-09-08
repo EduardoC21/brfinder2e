@@ -584,9 +584,13 @@ export const SOURCES: readonly SourceSpec[] = [
     entityType: 'equipment',
     mode: 'list',
     /*
-     * A fonte com MAIS colunas do projeto — vinte —, e é consequência do dado: nove
-     * espécies de item num catálogo só, cada uma com números que as outras não têm. Uma
-     * poção não tem grupo de arma; uma espada não tem limite de Destreza.
+     * A fonte com MAIS colunas do projeto, e é consequência do dado: nove espécies de item
+     * num catálogo só, cada uma com números que as outras não têm. Uma poção não tem grupo
+     * de arma; uma espada não tem limite de Destreza.
+     *
+     * Duas saíram depois de conferidas na tela: `family` (a pasta do compêndio), que
+     * DISCORDAVA dos traços em parte da base, e o `usage` cru, que respondia em 120
+     * grafias a mesma pergunta que `carry` responde em oito.
      *
      * Isso funciona porque coluna é ESCOLHA: o padrão é nenhuma, e quem procura armadura
      * liga as cinco de armadura. O modelo é a tabela do Archives of Nethys, que troca de
@@ -621,12 +625,6 @@ export const SOURCES: readonly SourceSpec[] = [
         field: 'carry',
         kinds: ['equipment', 'consumable', 'weapon', 'backpack'],
       },
-      {
-        kind: 'text',
-        id: 'usage',
-        field: 'usage',
-        kinds: ['equipment', 'consumable', 'weapon', 'backpack'],
-      },
       { kind: 'stat', id: 'acBonus', field: 'acBonus', kinds: ['armor', 'shield'] },
       { kind: 'stat', id: 'dexCap', field: 'dexCap', signed: true, kinds: ['armor'] },
       {
@@ -650,7 +648,6 @@ export const SOURCES: readonly SourceSpec[] = [
       { kind: 'stat', id: 'hardness', field: 'hardness', kinds: ['shield'] },
       { kind: 'stat', id: 'hitPoints', field: 'hitPoints', kinds: ['shield'] },
       { kind: 'stat', id: 'uses', field: 'uses', kinds: ['consumable', 'ammo'] },
-      { kind: 'chip', id: 'family', field: 'family' },
       { kind: 'text', id: 'source', field: 'source.title' },
     ],
     /* A visão geral mostra só o Tipo: é a única em que uma coluna pode estar vazia em 90%
@@ -664,11 +661,11 @@ export const SOURCES: readonly SourceSpec[] = [
       weapon: ['group', 'damage', 'hands'],
       armor: ['category', 'acBonus', 'dexCap'],
       shield: ['acBonus', 'hardness', 'hitPoints'],
-      consumable: ['category', 'usage'],
+      consumable: ['category', 'bulk'],
       ammo: ['uses'],
-      equipment: ['carry', 'usage'],
+      equipment: ['carry', 'bulk'],
       treasure: ['category'],
-      backpack: ['usage'],
+      backpack: ['carry', 'bulk'],
     },
     special: { level: 'level', rarity: 'rarity', traits: 'traits' },
     /*
@@ -709,7 +706,6 @@ export const SOURCES: readonly SourceSpec[] = [
         field: 'carry',
         kinds: ['equipment', 'consumable', 'weapon', 'backpack'],
       },
-      { kind: 'options', id: 'family', field: 'family' },
       { kind: 'options', id: 'source', field: 'source.title' },
     ],
     /*
@@ -763,7 +759,6 @@ export const SOURCES: readonly SourceSpec[] = [
       { kind: 'text', field: 'category' },
       { kind: 'text', field: 'group' },
       { kind: 'stat', field: 'uses' },
-      { kind: 'text', field: 'family' },
       /*
        * O TIPO é o PENÚLTIMO, antes do livro — a mesma posição que ele tem em ação,
        * talento e magia. Ele abre a lista de filtros e a de colunas porque ali é recorte;

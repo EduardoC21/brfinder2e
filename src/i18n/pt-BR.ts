@@ -167,8 +167,14 @@ export const ptBR = {
      * começariam com "p" de "peças de p…", e a tradução brasileira do PF2e resolve assim.
      * O dado é guardado em cobre; ver a receita de `equipment`.
      */
+    /**
+     * As moedas, e são TRÊS: a platina não entra.
+     *
+     * A conversão para em PO por decisão do autor — o livro escreve "2.500 po" para o Acid
+     * Flask superior, e não "250 pl". A platina existe na fonte como moeda de tesouro
+     * (`Platinum Pieces`), e ali ela é o item, não a unidade de leitura.
+     */
     price: {
-      pl: 'PL',
       po: 'PO',
       pp: 'PP',
       pc: 'PC',
@@ -176,6 +182,18 @@ export const ptBR = {
       none: '—',
       /** `1 PP (por 10)` — o AoN escreve `1 sp (price for 10)`. São 48 itens. */
       per: (quantas: number) => `(por ${String(quantas)})`,
+    },
+    /**
+     * O DANO, quando ele tem mais de uma parte.
+     *
+     * `1 Acid, 1d6 Acid persistente, 1 de respingo` — a mesma frase que a descrição do
+     * item escreve por extenso. Só o tipo de dano fica em inglês, como todo dado de jogo.
+     *
+     * Na COLUNA as palavras somem e sobra o sinal (`1 Acid +1d6`): ver `itemDamageShort`.
+     */
+    damage: {
+      persistent: 'persistente',
+      splash: 'de respingo',
     },
     /** O VOLUME. `0` é insignificante e `0,1` é o "L" do livro. */
     bulk: {
@@ -196,7 +214,8 @@ export const ptBR = {
       noDescription:
         'O pacote do Foundry não traz o texto que descreve a perícia — ele guarda só o ' +
         'atributo e as ações. A descrição está no Player Core.',
-      openAction: 'Abrir a ação em painel',
+      openAction: 'Abrir a ação aqui embaixo',
+      closeAction: 'Fechar a ação',
     },
     /** A defesa contra a magia: CA, salvamento, ou os dois. */
     defense: {
@@ -290,14 +309,17 @@ export const ptBR = {
       ritual: 'ritual',
       /* Equipamento. `kind` é o Tipo — ver a receita, e a nota sobre a pasta. */
       kind: 'tipo',
-      family: 'família',
       price: 'preço',
       bulk: 'volume',
       usage: 'uso',
       attribute: 'atributo-chave',
       untrained: 'ações',
-      /* A conta sobre `usage`, em oito respostas. Ver a receita de equipamento. */
-      carry: 'como se usa',
+      /*
+       * "Uso", e não "como se usa": é o rótulo do AoN, e é o mesmo campo do detalhe visto
+       * por outro ângulo — oito respostas em vez das 120 grafias cruas. Por isso o `usage`
+       * cru deixou de ser coluna: duas colunas com o mesmo rótulo e respostas diferentes.
+       */
+      carry: 'uso',
       hands: 'mãos',
       weaponType: 'tipo de arma',
       damage: 'dano',

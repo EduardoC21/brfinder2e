@@ -7,6 +7,7 @@ import {
   rarityLetter,
   traitSpace,
   columnWidth,
+  exactColumnWidth,
   frequencyToken,
   CELL_PAD_PX,
   SYMBOL_PX,
@@ -139,7 +140,13 @@ export function ResultList({
           return Math.max(SYMBOL_PX + CELL_PAD_PX, columnLabel(column).length * 7.48 + CELL_PAD_PX);
         }
         const desenhados = allEntities.map((entity) => textoDaColuna(column, entity));
-        return columnWidth(desenhados, columnLabel(column).length);
+        /*
+         * O dano não passa pela cerca: cortar `1 Acid +4d6` em `1 Acid +…` apaga o que
+         * separa os quatro graus de uma bomba. Ver `exactColumnWidth`.
+         */
+        return column.kind === 'damage'
+          ? exactColumnWidth(desenhados, columnLabel(column).length)
+          : columnWidth(desenhados, columnLabel(column).length);
       }),
     [columns, allEntities],
   );

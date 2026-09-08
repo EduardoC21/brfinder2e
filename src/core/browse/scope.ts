@@ -1,5 +1,11 @@
 import type { ColumnSpec, FilterSpec, SourceSpec } from './spec';
-import { plainValues, type FilterState } from './query';
+import {
+  applyFilters,
+  plainValues,
+  topicMatters,
+  type BrowseEntity,
+  type FilterState,
+} from './query';
 
 /**
  * O RECORTE: quais colunas e filtros fazem sentido para os Tipos marcados agora.
@@ -76,4 +82,48 @@ export function presetFor(
  */
 export function scopeKey(selecionados: readonly string[]): string {
   return selecionados.length === 1 ? (selecionados[0] ?? '') : '';
+}
+
+/**
+ * As entradas do recorte de TIPO — e só dele.
+ *
+ * É a base sobre a qual se pergunta "este filtro serve para o que está selecionado?".
+ * Recortada só pelo Tipo, e não por todos os filtros ativos: se um tópico sumisse porque a
+ * pessoa acabou de marcar nele a única opção que sobrou, ela perderia o caminho de volta.
+ */
+export function entitiesInScope(
+  source: SourceSpec,
+  entities: readonly BrowseEntity[],
+  filters: FilterState,
+): readonly BrowseEntity[] {
+  const id = source.typeFilter;
+  if (id === null) return entities;
+  const spec = source.filters.find((entry) => entry.id === id);
+  if (spec === undefined) return entities;
+  const values = plainValues(filters[id]?.values ?? []);
+  if (values.length === 0) return entities;
+  return applyFilters(entities, [spec], { [id]: { values } });
+}
+
+/**
+ * Os filtros que ainda têm o que oferecer. Ver `topicMatters` para a regra.
+ *
+ * Dois nunca somem, e por motivos diferentes:
+ *
+ *   o TIPO       porque ele é quem comanda o recorte; medido dentro do próprio recorte
+ *                ele teria sempre um valor só, e desapareceria no primeiro clique
+ *   o MARCADO    porque esconder um filtro que a pessoa está usando tira da tela a
+ *                explicação de por que a lista encolheu
+ */
+export function filtersThatMatter(
+  source: SourceSpec,
+  specs: readonly FilterSpec[],
+  entities: readonly BrowseEntity[],
+  filters: FilterState,
+): readonly FilterSpec[] {
+  return specs.filter((spec) => {
+    if (spec.id === source.typeFilter) return true;
+    if ((filters[spec.id]?.values.length ?? 0) > 0) return true;
+    return topicMatters(entities, spec);
+  });
 }

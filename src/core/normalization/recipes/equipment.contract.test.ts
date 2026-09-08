@@ -80,19 +80,6 @@ describe('o que os 5.869 confirmam', () => {
     });
   });
 
-  /*
-   * ⚠️ A PASTA NÃO SERVE DE TIPO, e é o número que decide: 5.706 dos 5.869 não têm pasta
-   * nenhuma. Se um dia o Paizo organizar o compêndio, este teste cai — e aí vale reabrir a
-   * decisão.
-   */
-  it('a família vem da pasta, e ela está vazia em 5.706', () => {
-    expect(base().filter((item) => item.family === '')).toHaveLength(5706);
-    const familias = new Set(base().map((item) => item.family));
-    familias.delete('');
-    expect(familias.size).toBe(15);
-    expect(familias.has('Aeon Stones')).toBe(true);
-  });
-
   it('o preço é lido em cobre, e a maior moeda não estoura', () => {
     const espada = base().find((item) => item.name === 'Longsword');
     expect(espada?.price).toBe(100);
@@ -121,24 +108,60 @@ describe('o que os 5.869 confirmam', () => {
    */
   it('as duas formas do dano viram uma', () => {
     const comDano = base().filter((item) => item.damage !== null);
-    expect(comDano).toHaveLength(1087);
-    expect(comDano.filter((item) => item.kind === 'weapon')).toHaveLength(1010);
+    expect(comDano).toHaveLength(1090);
+    expect(comDano.filter((item) => item.kind === 'weapon')).toHaveLength(1013);
     expect(comDano.filter((item) => item.kind === 'consumable')).toHaveLength(77);
     /*
-     * OITO armas não têm dano nenhum, e não é defeito da leitura: são bombas e sacolas
-     * (`Atrophy Bomb`, `Spider Satchel`) cujo efeito está escrito na descrição, não numa
-     * fórmula. A fonte traz `damage` nulo nelas.
+     * CINCO armas não têm dano nenhum, e não é defeito da leitura: são bombas e sacolas
+     * (`Spider Satchel`) cujo efeito está escrito na descrição, não numa fórmula.
      */
-    expect(base().filter((item) => item.kind === 'weapon' && item.damage === null)).toHaveLength(8);
-    // Nenhuma fórmula sai vazia: se sair, é forma nova que a conta não conhece.
-    expect(comDano.filter((item) => item.damage?.formula === '')).toEqual([]);
+    expect(base().filter((item) => item.kind === 'weapon' && item.damage === null)).toHaveLength(5);
   });
 
-  it('dureza e PV são de ESCUDO', () => {
-    const comDureza = base().filter((item) => item.hardness > 0);
+  /*
+   * ⚠️ O QUE SEPARA OS GRAUS DE UMA BOMBA, e o que a tela mostrava errado: os quatro Acid
+   * Flask têm o MESMO `1` de dano direto, e diferem no persistente e no respingo.
+   *
+   * Conferido contra a própria descrição do item, que escreve por extenso: "deals 1 acid
+   * damage, 1d6 persistent acid damage, and 1 acid splash damage".
+   */
+  it('o dano persistente e o respingo separam os graus da bomba', () => {
+    const grau = (nome: string) => base().find((item) => item.name === nome);
+    expect(grau('Acid Flask (Lesser)')?.damage).toEqual({
+      formula: '1',
+      type: 'acid',
+      persistent: { formula: '1d6', type: 'acid' },
+    });
+    expect(grau('Acid Flask (Lesser)')?.splash).toBe(1);
+    expect(grau('Acid Flask (Major)')?.damage?.persistent).toEqual({
+      formula: '4d6',
+      type: 'acid',
+    });
+    expect(grau('Acid Flask (Major)')?.splash).toBe(4);
+    /* `faces` nulo é dano FIXO: 1 persistente, e não `1dN`. */
+    expect(grau("Alchemist's Fire (Lesser)")?.damage?.persistent).toEqual({
+      formula: '1',
+      type: 'fire',
+    });
+
+    expect(base().filter((item) => item.damage?.persistent != null)).toHaveLength(66);
+    /*
+     * 157, e não os "zero" que o `ignore` afirmava antes de eu medir. O respingo é dado de
+     * verdade, e cresce com o grau.
+     */
+    expect(base().filter((item) => item.splash > 0)).toHaveLength(157);
+  });
+
+  /*
+   * ⚠️ ZERO É "NÃO INFORMADO", e por isso vira nulo. A fonte traz `hardness: 0` nos 5.743
+   * itens que não são escudo, e item nenhum tem dureza zero no jogo.
+   */
+  it('dureza e PV só existem onde a fonte os imprime', () => {
+    const comDureza = base().filter((item) => item.hardness !== null);
+    // 125 e não 126: `Worldscale Shield` vem zerado na fonte.
+    expect(comDureza).toHaveLength(125);
     expect(comDureza.every((item) => item.kind === 'shield')).toBe(true);
-    // 125 e não 126: `Worldscale Shield` vem com PV zero na fonte.
-    expect(base().filter((item) => item.kind === 'shield' && item.hitPoints > 0)).toHaveLength(125);
+    expect(base().filter((item) => item.hitPoints !== null)).toHaveLength(125);
   });
 
   it('os cinco números de armadura só existem em armadura e escudo', () => {

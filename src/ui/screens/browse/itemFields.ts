@@ -34,7 +34,15 @@ export function itemBulkText(entity: BrowseEntity, field: string): string {
 }
 
 /**
- * `1d8 Slashing`.
+ * O dano INTEIRO: o direto, o persistente e o respingo.
+ *
+ * `1 Acid, 1d6 Acid persistente, 1 de respingo` — a mesma frase que a descrição do item
+ * escreve por extenso.
+ *
+ * ⚠️ As três partes são necessárias, e a falta delas foi um defeito de verdade: os quatro
+ * graus do Acid Flask têm o MESMO `1` de dano direto, e só se distinguem pelo persistente
+ * (1d6 · 2d6 · 3d6 · 4d6) e pelo respingo (1 · 2 · 3 · 4). Mostrando só o direto, os quatro
+ * liam igual na lista e no detalhe.
  *
  * O TIPO do dano fica em inglês, como todo dado de jogo — é a mesma decisão dos traços
  * (OPEN-DECISIONS #4). Quem traduz é a Etapa 15, e traduz tudo de uma vez.
@@ -44,12 +52,23 @@ export function itemDamageText(entity: BrowseEntity, field: string): string {
 }
 
 /**
- * O mesmo dano, ABREVIADO: `1d6 B`.
+ * O mesmo dano, ABREVIADO para a coluna: `1d8 S`, `1 Acid +1d6`.
  *
- * É o que o Archives of Nethys põe na tabela de armas, e o motivo é largura: `Bludgeoning`
- * são doze caracteres numa coluna que existe para ser varrida de relance. A letra só vale
- * para os três danos FÍSICOS, que é onde a convenção existe — `fire` continua `Fire`,
- * porque `F` não quer dizer nada.
+ * Três economias, e cada uma tem motivo:
+ *
+ *   a LETRA nos danos físicos       `Bludgeoning` são doze caracteres numa coluna que
+ *                                   existe para ser varrida de relance. Só nos três
+ *                                   físicos, que é onde a convenção do livro existe:
+ *                                   `fire` continua `Fire`, porque `F` não diz nada.
+ *   o `+` no lugar da palavra       `persistente` são onze caracteres que se repetem em
+ *                                   toda linha que os tem; o sinal diz o mesmo.
+ *   o tipo repetido some            `1 Acid +1d6` — quando o persistente é do MESMO tipo,
+ *                                   repeti-lo é ruído. Quando difere (Blood Bomb corta e
+ *                                   faz sangramento), ele é a informação e fica.
+ *
+ * O RESPINGO fica de fora da coluna e só aparece no detalhe: ele acompanha o grau da bomba
+ * junto com o persistente, então não separa nada que o persistente já não separe — e
+ * medido, sem ele o maior valor da coluna cai de 26 para 16 caracteres.
  */
 export function itemDamageShort(entity: BrowseEntity, field: string): string {
   return damageOf(entity, field, true);
@@ -62,17 +81,58 @@ const FISICO: Readonly<Record<string, string>> = {
   slashing: 'S',
 };
 
+const D = strings.browse.damage;
+
+function tipoEscrito(tipo: string, curto: boolean): string {
+  if (tipo === '') return '';
+  return curto ? (FISICO[tipo] ?? capitalizar(tipo)) : capitalizar(tipo);
+}
+
+/** `1d8` + `slashing` → `1d8 S`. Sem tipo, só a fórmula. */
+function parte(formula: string, tipo: string, curto: boolean): string {
+  const escrito = tipoEscrito(tipo, curto);
+  return escrito === '' ? formula : `${formula} ${escrito}`;
+}
+
 function damageOf(entity: BrowseEntity, field: string, curto: boolean): string {
   const base = entity.base;
   if (!isRecord(base)) return '';
+
+  const partes: string[] = [];
   const dano = base[field];
-  if (!isRecord(dano)) return '';
-  const formula = typeof dano['formula'] === 'string' ? dano['formula'] : '';
-  if (formula === '') return '';
-  const tipo = typeof dano['type'] === 'string' ? dano['type'] : '';
-  if (tipo === '') return formula;
-  const escrito = curto ? (FISICO[tipo] ?? capitalizar(tipo)) : capitalizar(tipo);
-  return `${formula} ${escrito}`;
+
+  if (isRecord(dano)) {
+    const formula = typeof dano['formula'] === 'string' ? dano['formula'] : '';
+    const tipoDireto = typeof dano['type'] === 'string' ? dano['type'] : '';
+    if (formula !== '') partes.push(parte(formula, tipoDireto, curto));
+
+    const persistente = dano['persistent'];
+    if (isRecord(persistente)) {
+      const dele = typeof persistente['formula'] === 'string' ? persistente['formula'] : '';
+      const tipo = typeof persistente['type'] === 'string' ? persistente['type'] : '';
+      if (dele !== '') {
+        const mostrar = curto && tipo === tipoDireto ? '' : tipo;
+        partes.push(
+          curto
+            ? `+${parte(dele, mostrar, true)}`
+            : `${parte(dele, mostrar, false)} ${D.persistent}`,
+        );
+      }
+    }
+  }
+
+  /*
+   * O respingo é campo IRMÃO, e não parte de `damage` — ele mora noutro caminho do
+   * documento (ver a receita). A mesma leitura de irmão que `itemPriceText` faz com o lote.
+   *
+   * Só no detalhe: na coluna ele não separa nada que o persistente já não separe.
+   */
+  const respingo = Number(fieldValue(entity, 'splash'));
+  if (!curto && Number.isFinite(respingo) && respingo > 0) {
+    partes.push(`${String(respingo)} ${D.splash}`);
+  }
+
+  return curto ? partes.join(' ') : partes.join(', ');
 }
 
 /** O rótulo do volume, para quem precisa dele fora de um campo rotulado. */

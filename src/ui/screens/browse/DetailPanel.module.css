@@ -255,3 +255,50 @@
   border-color: transparent;
   color: #f6edea;
 }
+
+/*
+ * A ação ABERTA na sub-tela, em bordô.
+ *
+ * Mesma cor do `:hover`, e de propósito: passar o mouse é "seria esta", e ter aberto é
+ * "é esta". A diferença fica na borda clara, que só a aberta tem — sem ela, tirar o
+ * mouse de cima de uma caixinha apagava a única pista de qual estava sendo mostrada.
+ */
+.referenciaAberta {
+  background: var(--color-state);
+  border-color: #f6edea;
+  color: #f6edea;
+}
+
+/*
+ * O painel com SUB-TELA: cabeçalho, corpo e a entrada referida embaixo.
+ *
+ * Três linhas em vez de duas. O corpo passa a `auto` porque perícia não tem descrição — se
+ * ele continuasse `1fr`, metade da coluna ficaria reservada para um texto que não existe.
+ * O teto em `vh` é para a fonte que um dia tiver as duas coisas: a descrição rola no lugar
+ * dela em vez de espremer a ação contra o rodapé.
+ */
+.comSub {
+  grid-template-rows: auto auto minmax(0, 1fr);
+}
+
+.comSub .body {
+  max-height: 40vh;
+}
+
+/*
+ * A moldura da sub-tela. Só a linha de topo separa: um segundo fundo faria a coluna
+ * parecer dois painéis empilhados, e ela é UM painel com uma entrada aberta dentro.
+ */
+.sub {
+  min-height: 0;
+  border-top: 1px solid var(--color-hairline);
+}
+
+/* Embutido, o painel não pinta fundo próprio nem repete o respiro do topo da coluna. */
+.embutido {
+  background: transparent;
+}
+
+.embutido .head {
+  padding-top: var(--space-2);
+}

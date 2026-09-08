@@ -29,7 +29,13 @@ const t = strings.browse;
 
 interface FilterTopicPanelProps {
   readonly spec: FilterSpec;
-  /** As entidades ANTES do filtro — é delas que saem as opções e as contagens. */
+  /**
+   * A base deste tópico: as entradas com os OUTROS filtros já aplicados.
+   *
+   * Não são todas as entradas da fonte — e é o que faz a contagem responder "quantas
+   * sobram se eu marcar esta" em vez de "quantas existem no total". Quem monta é
+   * `facetBase`, em `core/browse/query.ts`, onde a regra está escrita.
+   */
   readonly entities: readonly BrowseEntity[];
   readonly state: FilterState;
   readonly onChange: (state: FilterState) => void;

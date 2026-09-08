@@ -257,3 +257,25 @@ export function columnWidth(drawn: readonly string[], headerLength: number): num
   const conteudo = comprimento * CELL_CHAR_PX + CHIP_PAD_PX + CELL_PAD_PX;
   return Math.ceil(Math.max(conteudo, piso));
 }
+
+/**
+ * A largura que cabe o MAIOR valor real, sem cerca nenhuma.
+ *
+ * Para colunas em que cortar o fim muda o SIGNIFICADO, e não só encurta a leitura. O caso
+ * é o dano: `1 Acid +4d6` cortado em `1 Acid +…` deixa os quatro graus do Acid Flask
+ * idênticos na lista, que é o defeito que a fórmula veio consertar.
+ *
+ * A cerca de Tukey existe para colunas de PROSA — nome de livro, uso —, onde o valor
+ * atípico é longo e raro e cortá-lo custa pouco. Aqui a distribuição não tem atípicos: tem
+ * duas populações (952 armas com `1d8 S`, 138 com dano composto), e a segunda não é ruído.
+ *
+ * Sem risco de coluna gigante, e isso é MEDIDO, não esperado: no `pf2e-8.5.0` o maior dano
+ * desenhado tem **16 caracteres** (`1d6 P +1d6 Bleed`), contra os 11 que a cerca permitia.
+ */
+export function exactColumnWidth(drawn: readonly string[], headerLength: number): number {
+  const piso = headerLength * HEADER_CHAR_PX + CELL_PAD_PX;
+  let maior = 0;
+  for (const texto of drawn) maior = Math.max(maior, texto.length);
+  const conteudo = maior * CELL_CHAR_PX + CHIP_PAD_PX + CELL_PAD_PX;
+  return Math.ceil(Math.max(conteudo, piso));
+}

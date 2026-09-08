@@ -429,27 +429,88 @@ export function optionsFor(
   }
 
   for (const entity of entities) {
-    // Defesa é MULTIVALOR como os traços: 6 magias contam em duas opções, e está certo.
-    if (spec.kind === 'defense') {
-      for (const token of defenseTokens(entity, spec)) {
-        counts.set(token, (counts.get(token) ?? 0) + 1);
-      }
-      if (defenseTokens(entity, spec).length === 0) counts.set('', (counts.get('') ?? 0) + 1);
-      continue;
+    // Uma entrada com três traços conta em três opções. A soma passa do total, e está
+    // certo: a contagem responde "quantas entradas têm este valor".
+    for (const value of topicValues(entity, spec)) {
+      counts.set(value, (counts.get(value) ?? 0) + 1);
     }
-    if (spec.kind === 'list') {
-      // Uma entrada com três traços conta em três opções. A soma passa do total, e está
-      // certo: a contagem responde "quantas entradas têm este traço".
-      for (const item of fieldList(entity, spec.field)) {
-        counts.set(item, (counts.get(item) ?? 0) + 1);
-      }
-      continue;
-    }
-    const value = valorDoTopico(entity, spec);
-    counts.set(value, (counts.get(value) ?? 0) + 1);
   }
 
   return ordenar(counts, spec);
+}
+
+/**
+ * Os valores que UMA entrada tem neste tópico. Quase sempre um; às vezes vários.
+ *
+ * Defesa e traços são MULTIVALOR — 6 magias atacam a CA e ainda pedem salvamento, e uma
+ * ação com três traços conta nos três. Uma definição só, usada pela contagem e por quem
+ * pergunta "este tópico ainda tem o que oferecer".
+ *
+ * Uma lista VAZIA de traços não devolve nada, e é de propósito: "sem traço" não é opção de
+ * filtro. Já a defesa devolve `''`, porque "não faz nada contra defesa" é resposta.
+ */
+export function topicValues(entity: BrowseEntity, spec: FilterSpec): readonly string[] {
+  if (spec.kind === 'defense') {
+    const tokens = defenseTokens(entity, spec);
+    return tokens.length === 0 ? VAZIO_UNICO : tokens;
+  }
+  if (spec.kind === 'list') return fieldList(entity, spec.field);
+  return [valorDoTopico(entity, spec)];
+}
+
+const VAZIO_UNICO: readonly string[] = [''];
+
+/**
+ * A base sobre a qual UM tópico calcula suas opções e contagens.
+ *
+ * ⚠️ É o conserto de um número enganoso: com "arma" e "uma mão" marcados, a opção "marcial"
+ * mostrava **613** — todas as marciais da base —, mas clicar nela dava as marciais DE UMA
+ * MÃO, que são bem menos. A contagem respondia uma pergunta que ninguém tinha feito.
+ *
+ * A regra: aplicam-se todos os OUTROS tópicos, e não este. Não este porque a contagem tem
+ * de responder "quantas sobram se ESTA for a opção marcada aqui" — mantendo a seleção do
+ * próprio tópico, marcar uma segunda opção faria todos os números crescerem, e a lista
+ * deixaria de ser comparável consigo mesma.
+ *
+ * A exceção é o modo E dos traços, onde marcar mais RESTRINGE: ali a seleção fica, e o
+ * número já responde "quantas sobram se eu somar esta". Medido nas 766 ações:
+ * `concentrate` marcado, `manipulate` mostra 92 no modo OU e 20 no modo E — e os dois
+ * números estão certos, cada um para o seu modo.
+ */
+export function facetBase(
+  entities: readonly BrowseEntity[],
+  specs: readonly FilterSpec[],
+  state: FilterState,
+  spec: FilterSpec,
+): readonly BrowseEntity[] {
+  const somaAoMarcar = spec.kind === 'list' && combineOf(spec, state) === 'all';
+  const outros = specs.filter((entry) => entry.id !== spec.id || somaAoMarcar);
+  return applyFilters(entities, outros, state);
+}
+
+/**
+ * Este tópico ainda pode MUDAR alguma coisa nesta base?
+ *
+ * "Não" quer dizer duas coisas, e as duas pedem o mesmo: ou todas as entradas respondem a
+ * mesma coisa (marcar não recorta nada), ou nenhuma responde (não há o que marcar). Um
+ * controle que só pode não fazer nada não deveria ocupar espaço na barra.
+ *
+ * Sai assim que vê o segundo valor distinto — o que faz a conta custar pouco mesmo nos
+ * 5.869 itens, porque a maioria dos tópicos acha os dois nas primeiras entradas.
+ */
+export function topicMatters(entities: readonly BrowseEntity[], spec: FilterSpec): boolean {
+  if (spec.kind === 'number') return numericExtent(entities, spec) !== null;
+
+  const vistos = new Set<string>();
+  for (const entity of entities) {
+    for (const value of topicValues(entity, spec)) {
+      vistos.add(value);
+      if (vistos.size > 1) return true;
+    }
+  }
+  // A área pergunta duas coisas: mesmo com um tipo só, a FAIXA ainda recorta.
+  if (spec.kind === 'area') return numericExtent(entities, spec) !== null;
+  return false;
 }
 
 /** O valor que um tópico lê de uma entrada. Uma definição só, usada na conta e no casamento. */

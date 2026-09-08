@@ -21,6 +21,7 @@ import { cx } from '@ui/cx';
 import { bookLabel, capitalizar, fieldText } from '@ui/text';
 
 import { itemBulkText, itemDamageText, itemPriceText, statText } from './itemFields';
+import type { PopoutSubject } from './popouts';
 import { areaText, defenseText, durationText, ritualLines, spellCast } from './spellFields';
 import styles from './DetailPanel.module.css';
 
@@ -42,12 +43,32 @@ export interface DetailPanelProps {
   /** Ausente quando já está flutuando: não se destaca o que já está destacado. */
   readonly onPopOut?: () => void;
   /**
-   * Abre a entrada referida por um `@UUID`. Ausente: as referências viram texto morto.
+   * Como resolver um `@UUID`. Ausente: as referências viram texto morto.
    *
    * É a primeira ponte entre fontes do aplicativo — a perícia aponta para a ação, e quem
    * sabe resolver o ponteiro é a tela, que tem todas as bases carregadas.
    */
-  readonly onOpenReference?: (uuid: string) => void;
+  readonly reference?: ReferenceBridge;
+  /**
+   * O painel está EMBUTIDO dentro de outro — a ação aberta debaixo da perícia.
+   *
+   * Só muda o desenho: embutido ele não recolhe nem tem borda própria de coluna. O
+   * conteúdo é o mesmo, com o mesmo botão de traduzir e o mesmo pop-out, porque é a mesma
+   * entrada vista do mesmo jeito.
+   */
+  readonly embedded?: boolean;
+}
+
+/**
+ * Como a tela resolve um `@UUID`, e o que fazer quando se quer destacá-lo.
+ *
+ * O painel não sabe onde as bases moram — ele recebe a função. Assim o mesmo componente
+ * serve a lateral e o flutuante: o flutuante de uma perícia também troca de ação por
+ * dentro, que foi o pedido.
+ */
+export interface ReferenceBridge {
+  readonly resolve: (uuid: string) => PopoutSubject | null;
+  readonly onPopOut?: (subject: PopoutSubject) => void;
 }
 
 /**
@@ -64,9 +85,28 @@ export function DetailPanel({
   fields,
   onCollapse,
   onPopOut,
-  onOpenReference,
+  reference,
+  embedded = false,
 }: DetailPanelProps) {
   const description = useDescription(entityType, entity.key);
+
+  /*
+   * A SUB-TELA: qual referência está aberta debaixo desta entrada.
+   *
+   * Estado DAQUI, e não da tela: assim um flutuante de perícia troca de ação por dentro
+   * sem mexer no que a lateral mostra, que foi exatamente o pedido — o pop-out pode ser da
+   * perícia (com a ação trocável dentro) ou da ação sozinha.
+   */
+  const [aberta, setAberta] = useState<string | null>(null);
+  /* Trocar de entrada fecha a sub-tela. Ajustado no render, não num efeito: o efeito
+     rodaria depois de a tela já ter sido pintada com a ação da entrada anterior. */
+  const [ecoada, setEcoada] = useState(entity.key);
+  if (ecoada !== entity.key) {
+    setEcoada(entity.key);
+    setAberta(null);
+  }
+  const alvo = reference === undefined || aberta === null ? null : reference.resolve(aberta);
+  const destacar = reference?.onPopOut;
   const nodes = useMemo(
     () => (description === null ? null : parseDescription(description)),
     [description],
@@ -75,7 +115,14 @@ export function DetailPanel({
   const letraDaRaridade = rarityLetter(fieldValue(entity, 'rarity'));
 
   return (
-    <section className={styles['panel']} aria-label={fieldValue(entity, 'name')}>
+    <section
+      className={cx(
+        styles['panel'],
+        embedded && styles['embutido'],
+        alvo !== null && styles['comSub'],
+      )}
+      aria-label={fieldValue(entity, 'name')}
+    >
       {/*
         Ações em CIMA, nome embaixo.
         Lado a lado, os botões espremiam o nome: "Persistent Damage" quebrava em duas
@@ -121,7 +168,16 @@ export function DetailPanel({
               key={index}
               spec={spec}
               entity={entity}
-              {...(onOpenReference === undefined ? {} : { onOpenReference })}
+              selected={aberta}
+              {...(reference === undefined
+                ? {}
+                : {
+                    onToggleReference: (uuid: string) => {
+                      // Clicar na que já está aberta fecha: é o mesmo gesto do tópico de
+                      // filtro, e é o caminho de volta para o detalhe da perícia sozinho.
+                      setAberta((atual) => (atual === uuid ? null : uuid));
+                    },
+                  })}
             />
           ))}
         </dl>
@@ -139,6 +195,32 @@ export function DetailPanel({
           </div>
         )}
       </div>
+
+      {/*
+        A SUB-TELA da ação escolhida — o mesmo painel, embutido.
+
+        Não é uma cópia reduzida: é o `DetailPanel` de novo, com a barra de tradução e o
+        pop-out próprios. Por isso a pessoa escolhe o que destacar — a perícia inteira (e
+        troca de ação lá dentro) ou só a ação. Ele não recebe `reference`, e é o que
+        impede o aninhamento infinito: uma ação dentro da ação dentro da ação.
+      */}
+      {alvo !== null && (
+        <div className={styles['sub']}>
+          <DetailPanel
+            entity={alvo.entity}
+            entityType={alvo.entityType}
+            fields={alvo.fields}
+            embedded
+            {...(destacar === undefined
+              ? {}
+              : {
+                  onPopOut: () => {
+                    destacar(alvo);
+                  },
+                })}
+          />
+        </div>
+      )}
     </section>
   );
 }
@@ -214,11 +296,14 @@ function Actions({
 function Field({
   spec,
   entity,
-  onOpenReference,
+  selected,
+  onToggleReference,
 }: {
   readonly spec: DetailFieldSpec;
   readonly entity: BrowseEntity;
-  readonly onOpenReference?: (uuid: string) => void;
+  /** O `@UUID` da referência aberta agora, para marcá-la. */
+  readonly selected?: string | null;
+  readonly onToggleReference?: (uuid: string) => void;
 }) {
   const label = (field: string): string => b.fieldLabel[field] ?? field;
 
@@ -324,16 +409,17 @@ function Field({
       const destreinadas = referencias(entity, spec.field);
       const treinadas = referencias(entity, spec.trained);
       if (destreinadas.length === 0 && treinadas.length === 0) return null;
+      const aberta = selected ?? null;
       return (
         <>
           {destreinadas.length > 0 && (
             <Row label={s.untrained}>
-              <Referencias acoes={destreinadas} onAbrir={onOpenReference} />
+              <Referencias acoes={destreinadas} aberta={aberta} onAbrir={onToggleReference} />
             </Row>
           )}
           {treinadas.length > 0 && (
             <Row label={s.trained}>
-              <Referencias acoes={treinadas} onAbrir={onOpenReference} />
+              <Referencias acoes={treinadas} aberta={aberta} onAbrir={onToggleReference} />
             </Row>
           )}
         </>
@@ -465,39 +551,54 @@ function referencias(entity: BrowseEntity, field: string): readonly Referencia[]
 }
 
 /**
- * As ações como BOTÕES, e não como texto.
+ * As ações como BOTÕES, e não como texto — e a escolhida em BORDÔ.
  *
- * Sem `onAbrir` elas viram texto simples em vez de sumirem: o flutuante não sabe abrir
- * outro flutuante, e a lista de ações continua sendo informação útil ali dentro.
+ * O bordô é a cor de ESTADO do sistema (ver UI-PATTERNS): ela nunca desenha dado de jogo,
+ * e "esta é a que estou vendo" é exatamente estado. Sem a marca, abrir a quinta ação de
+ * Athletics e rolar até ela deixava a pessoa sem saber qual das nove tinha clicado.
+ *
+ * Sem `onAbrir` elas viram texto simples em vez de sumirem: dentro da sub-tela não há para
+ * onde navegar, e a lista de ações continua sendo informação útil ali.
  */
 function Referencias({
   acoes,
+  aberta,
   onAbrir,
 }: {
   readonly acoes: readonly Referencia[];
+  readonly aberta: string | null;
   readonly onAbrir: ((uuid: string) => void) | undefined;
 }) {
   return (
     <span className={styles['referencias']}>
-      {acoes.map((acao) =>
-        onAbrir === undefined ? (
-          <span key={acao.uuid} className={styles['referencia']}>
-            {acao.name}
-          </span>
-        ) : (
+      {acoes.map((acao) => {
+        if (onAbrir === undefined) {
+          return (
+            <span key={acao.uuid} className={styles['referencia']}>
+              {acao.name}
+            </span>
+          );
+        }
+        const marcada = acao.uuid === aberta;
+        return (
           <button
             key={acao.uuid}
             type="button"
-            className={cx(styles['referencia'], styles['referenciaAtiva'])}
-            title={s.openAction}
+            aria-pressed={marcada}
+            className={cx(
+              styles['referencia'],
+              styles['referenciaAtiva'],
+              marcada && styles['referenciaAberta'],
+            )}
+            title={marcada ? s.closeAction : s.openAction}
             onClick={() => {
               onAbrir(acao.uuid);
             }}
           >
             {acao.name}
           </button>
-        ),
-      )}
+        );
+      })}
     </span>
   );
 }

@@ -8,7 +8,7 @@ import { usePointerDrag } from '@ui/hooks/usePointerDrag';
 import { useWindowWidth } from '@ui/hooks/useWindowWidth';
 import { usePreferences } from '@ui/prefs/usePreferences';
 
-import { DetailPanel } from './DetailPanel';
+import { DetailPanel, type ReferenceBridge } from './DetailPanel';
 import styles from './DetailPane.module.css';
 
 const t = strings.browse.detail;
@@ -39,8 +39,8 @@ interface DetailPaneProps {
   readonly entityType: string;
   readonly fields: readonly DetailFieldSpec[];
   readonly onPopOut: () => void;
-  /** Repassado ao painel: é ele que desenha as referências clicáveis. */
-  readonly onOpenReference?: (uuid: string) => void;
+  /** Repassada ao painel: é ele que desenha as referências e a sub-tela. */
+  readonly reference?: ReferenceBridge;
   /**
    * O painel de um tópico de filtro, quando há um aberto.
    *
@@ -72,7 +72,7 @@ export function DetailPane({
   overlay,
   collapsed,
   onToggleCollapsed,
-  onOpenReference,
+  reference,
 }: DetailPaneProps) {
   /*
    * A largura vem da preferência, não de um `useState` local: ela precisa sobreviver ao
@@ -171,7 +171,7 @@ export function DetailPane({
           fields={fields}
           onCollapse={onToggleCollapsed}
           onPopOut={onPopOut}
-          {...(onOpenReference === undefined ? {} : { onOpenReference })}
+          {...(reference === undefined ? {} : { reference })}
         />
       )}
 

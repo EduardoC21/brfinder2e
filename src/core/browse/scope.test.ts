@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
-import { columnsInScope, filtersInScope, presetFor, scopeKey, selectedTypes } from './scope';
+import {
+  columnsInScope,
+  entitiesInScope,
+  filtersInScope,
+  filtersThatMatter,
+  presetFor,
+  scopeKey,
+  selectedTypes,
+} from './scope';
+import type { BrowseEntity } from './query';
 import { findSource, type SourceSpec } from './spec';
 
 const equipamento = (): SourceSpec => {
@@ -37,13 +46,7 @@ describe('o recorte de colunas', () => {
    * vazia em 90% das linhas. Sem Tipo marcado, só o que se aplica a tudo.
    */
   it('sem Tipo marcado, só as universais', () => {
-    expect(ids(columnsInScope(equipamento(), []))).toEqual([
-      'kind',
-      'price',
-      'bulk',
-      'family',
-      'source',
-    ]);
+    expect(ids(columnsInScope(equipamento(), []))).toEqual(['kind', 'price', 'bulk', 'source']);
   });
 
   it('com um Tipo, as universais mais as dele', () => {
@@ -77,7 +80,6 @@ describe('o recorte de colunas', () => {
       'category',
       'price',
       'bulk',
-      'family',
       'source',
     ]);
   });
@@ -129,5 +131,73 @@ describe('scopeKey', () => {
     expect(scopeKey(['weapon'])).toBe('weapon');
     expect(scopeKey([])).toBe('');
     expect(scopeKey(['weapon', 'armor'])).toBe('');
+  });
+});
+
+/*
+ * O SEGUNDO corte dos filtros: `filtersInScope` responde "este filtro pertence a este
+ * Tipo?", e este responde "e ele ainda tem o que oferecer?".
+ */
+const item = (kind: string, extra: Record<string, unknown>): BrowseEntity => ({
+  key: `${kind}:${String(extra['name'])}`,
+  uuid: '',
+  base: { kind, traits: [], ...extra },
+});
+
+const catalogo: readonly BrowseEntity[] = [
+  item('weapon', { name: 'Longsword', category: 'martial', group: 'sword' }),
+  item('weapon', { name: 'Club', category: 'simple', group: 'club' }),
+  item('shield', { name: 'Steel Shield', category: '', group: '' }),
+  item('shield', { name: 'Buckler', category: '', group: '' }),
+];
+
+describe('o recorte de entradas pelo Tipo', () => {
+  it('sem Tipo marcado, são todas', () => {
+    expect(entitiesInScope(equipamento(), catalogo, {})).toHaveLength(4);
+  });
+
+  it('com Tipo marcado, só as daquele Tipo', () => {
+    const so = entitiesInScope(equipamento(), catalogo, { kind: { values: ['shield'] } });
+    expect(so).toHaveLength(2);
+  });
+});
+
+describe('os filtros que ainda têm o que oferecer', () => {
+  const idsDe = (tipos: readonly string[], filtros = {}) => {
+    const fonte = equipamento();
+    const noEscopo = filtersInScope(fonte, tipos);
+    const dentro = entitiesInScope(fonte, catalogo, filtros);
+    return ids(filtersThatMatter(fonte, noEscopo, dentro, filtros));
+  };
+
+  /*
+   * Escudo não tem categoria nem grupo — as duas colunas vêm vazias nos 126. Um botão de
+   * filtro que só pode não fazer nada não deveria ocupar espaço na barra.
+   */
+  it('some o filtro cujo Tipo responde sempre a mesma coisa', () => {
+    const escudo = idsDe(['shield'], { kind: { values: ['shield'] } });
+    expect(escudo).not.toContain('category');
+    expect(escudo).not.toContain('group');
+  });
+
+  it('fica o filtro que ainda separa as entradas', () => {
+    const arma = idsDe(['weapon'], { kind: { values: ['weapon'] } });
+    expect(arma).toContain('category');
+    expect(arma).toContain('group');
+  });
+
+  /* O Tipo nunca some: medido dentro do próprio recorte ele teria um valor só. */
+  it('o Tipo sobrevive ao próprio recorte', () => {
+    expect(idsDe(['shield'], { kind: { values: ['shield'] } })).toContain('kind');
+  });
+
+  /*
+   * Nem o que a pessoa está usando: sem ele na barra, some a explicação da lista curta.
+   * Aqui a amostra não tem armadura nenhuma, então `category` não teria o que oferecer —
+   * e fica assim mesmo, porque há uma categoria marcada.
+   */
+  it('o filtro marcado sobrevive mesmo sem nada a oferecer', () => {
+    const filtros = { kind: { values: ['armor'] }, category: { values: ['light'] } };
+    expect(idsDe(['armor'], filtros)).toContain('category');
   });
 });

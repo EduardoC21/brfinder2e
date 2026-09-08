@@ -13,11 +13,12 @@
  * longa?", e a busca de uma fonte deixaria de achar as outras oito. Por isso `accepts`
  * existe no motor, e o que separa os nove vira DADO, no campo `kind`.
  *
- * ⚠️ O SETOR NÃO VEM DA PASTA, e é a primeira receita assim. Medido: **5.706 dos 5.869 não
- * têm pasta nenhuma** — as 163 que têm são famílias de item mágico (`Aeon Stones` 35,
- * `Spellhearts` 25, `Staves` 22…). A pasta responde 3% da base, e "que espécie de coisa é
- * esta" é respondido pelo `type` do documento, que responde 100%. Então o Tipo da tela é o
- * `kind`, e a pasta vira `family`, um campo próprio.
+ * ⚠️ A PASTA NÃO ENTRA, e esta é a primeira receita que a descarta. Medido: **5.706 dos
+ * 5.869 não têm pasta nenhuma** — as 163 que têm são famílias de item mágico (`Aeon Stones`
+ * 35, `Spellhearts` 25, `Staves` 22…). Ela chegou a virar um campo `family`, e saiu: além
+ * de responder 3% da base, ela DISCORDA dos traços, que dizem a mesma coisa e são dado de
+ * verdade — um item na pasta `Staves` já traz o traço `staff`, e nem todo item com o traço
+ * está na pasta. Dois campos para a mesma pergunta, um deles errado em parte da base.
  *
  * ⚠️ METADE DOS CAMPOS DESTE TIPO É ESTADO DE INVENTÁRIO, não catálogo. `equipped`,
  * `quantity`, `containerId`, `hp.value`, `runes`, `grade`, `size`, `material` descrevem UM
@@ -41,7 +42,7 @@ import {
   textList,
 } from '../decoders';
 import { isRecord } from '../../json';
-import { from, fromDocument, fromSector } from '../field';
+import { from, fromDocument } from '../field';
 import { recipe } from '../recipe';
 
 /** Os nove tipos do Foundry que caem nesta receita. Ver `accepts` em `recipe.ts`. */
@@ -70,9 +71,31 @@ const EM_COBRE: Readonly<Record<string, number>> = { pp: 1000, gp: 100, sp: 10, 
  * Guardar as duas formas obrigaria toda tela a conhecer as duas.
  */
 export interface EquipmentDamage {
-  /** `1d8`, `3d6`. Montado a partir de `dice` e `die` quando a fonte os separa. */
+  /**
+   * `1d8`, `3d6` — ou `1` sozinho, sem dado.
+   *
+   * ⚠️ `die` VEM VAZIO em 35 itens, e `1d8` não é a única forma de escrever dano: Acid
+   * Flask causa **1** de ácido direto, um número fixo. Montar `${dice}${die}` às cegas dava
+   * a fórmula `1` para todos os quatro graus do frasco — que foi o defeito relatado.
+   */
   readonly formula: string;
   /** `slashing`, `piercing`, `poison`, `acid`… */
+  readonly type: string;
+  /**
+   * O dano PERSISTENTE, que 66 itens têm e que é o que separa os graus de uma bomba.
+   *
+   * Acid Flask: menor `1d6`, moderado `2d6`, maior `3d6`, superior `4d6` — todos com o
+   * mesmo `1` de dano direto. Sem este campo, os quatro liam igual na tela, que era
+   * exatamente a queixa. O tipo pode DIFERIR do direto (Blood Bomb corta e faz sangramento
+   * persistente), e por isso vem junto.
+   *
+   * `faces` nulo é dano fixo: Alchemist's Fire faz `1` persistente, não `1dN`.
+   */
+  readonly persistent: PersistentDamage | null;
+}
+
+export interface PersistentDamage {
+  readonly formula: string;
   readonly type: string;
 }
 
@@ -89,15 +112,6 @@ export interface EquipmentBase {
    * É o Tipo da tela — o corte mais grosso que existe aqui, e o único que cobre as 5.869.
    */
   readonly kind: string;
-
-  /**
-   * A família de item mágico, da pasta do compêndio. VAZIA em 5.706 dos 5.869.
-   *
-   * `Aeon Stones` 35, `Spellhearts` 25, `Staves` 22, `Spell Catalysts` 17, `Grimoires` 16…
-   * São 15 famílias em 163 itens. Não serve de Tipo — 97% ficaria "sem valor" —, mas
-   * responde "quais são as pedras eônicas", que o resto do dado não responde.
-   */
-  readonly family: string;
 
   /** 0 a 28. Zero em 740 — item mundano não tem nível, e zero é o jeito de dizer isso. */
   readonly level: number;
@@ -194,6 +208,16 @@ export interface EquipmentBase {
 
   readonly damage: EquipmentDamage | null;
 
+  /**
+   * O RESPINGO da bomba, em pontos fixos. Zero no que não respinga.
+   *
+   * ⚠️ Este campo estava em `ignore` com o motivo "vale ZERO nas 1.018", e o motivo era
+   * FALSO — eu havia olhado a forma do campo, não os valores. São **157 itens com respingo
+   * de verdade**, e ele cresce com o grau da bomba (Acid Flask: 1, 2, 3, 4), que é
+   * justamente o que fazia os quatro graus lerem igual na tela.
+   */
+  readonly splash: number;
+
   /** O alcance da arma, em pés. Nulo nas corpo a corpo e em tudo que não é arma. */
   readonly range: number | null;
 
@@ -218,15 +242,21 @@ export interface EquipmentBase {
   readonly strength: number | null;
 
   /**
-   * Dureza e resistência, e elas são de ESCUDO. Medido: armadura, arma e equipamento
-   * genérico trazem zero nos 3.623; só os 126 escudos têm valor de verdade.
+   * Dureza e resistência — NULAS quando a fonte não as informa.
    *
-   * O Limiar de Quebra NÃO é campo, e não é dado que falte: vale sempre METADE dos pontos
-   * de vida, e a tela o desenha entre parênteses (`20 (10)`), como o livro. Os 126 têm PV
-   * par, então a metade é exata.
+   * ⚠️ Zero não é um valor legítimo aqui, e tratá-lo como valor foi o defeito: a fonte traz
+   * `hardness: 0` e `hp.max: 0` nos **5.743 itens que não são escudo**, e a tela escrevia
+   * "dureza 0", que é mentira. Item nenhum tem dureza zero no jogo — o que ele tem é dureza
+   * NÃO IMPRESSA, e nesse caso o mestre usa a do material comparável. Omitir é a resposta
+   * certa; zero seria uma afirmação que o livro não faz.
+   *
+   * Medido: só 125 dos 126 escudos trazem valor (`Worldscale Shield` vem zerado na fonte).
+   *
+   * O Limiar de Quebra NÃO é campo: vale sempre METADE dos pontos de vida, e a tela o
+   * desenha entre parênteses (`20 (10)`), como o livro.
    */
-  readonly hardness: number;
-  readonly hitPoints: number;
+  readonly hardness: number | null;
+  readonly hitPoints: number | null;
 
   /**
    * Quantas cargas o item tem. Nulo no que não se gasta.
@@ -301,23 +331,65 @@ function toCarry(usage: string): string {
   return 'other';
 }
 
+/**
+ * `1` e `1d8` são as duas formas de escrever dano, e a fonte usa as duas.
+ *
+ * `die` vazio (ou nulo) significa dano FIXO: `dice: 1, die: ''` é "1 de dano", não "1d". E
+ * `dice: 0` com dado vazio é ausência de dano direto — a bomba só respinga.
+ */
+function diceFormula(dice: number, die: string): string {
+  if (die === '') return dice > 0 ? String(dice) : '';
+  return `${String(dice)}${die}`;
+}
+
+/** O persistente, na mesma gramática. `faces` nulo é dano fixo. */
+function toPersistent(cru: unknown): PersistentDamage | null {
+  if (!isRecord(cru)) return null;
+  const numero = cru['number'];
+  if (typeof numero !== 'number' || numero <= 0) return null;
+  const faces = cru['faces'];
+  const tipo = cru['type'];
+  return {
+    formula: typeof faces === 'number' ? `${String(numero)}d${String(faces)}` : String(numero),
+    type: typeof tipo === 'string' ? tipo : '',
+  };
+}
+
+/**
+ * O respingo, tolerante à sujeira da fonte.
+ *
+ * `raw` e não `int` por UM documento: `Juggling Club` traz `splashDamage.value: ""`, uma
+ * string vazia onde os outros 995 trazem número. Um decodificador estrito falharia a
+ * entrada inteira por causa de um campo que, ali, quer dizer "nenhum" — e derrubar um item
+ * do catálogo para punir a fonte por um erro de digitação seria trocar 1 defeito por 1
+ * ausência.
+ */
+function toSplash(cru: unknown): number {
+  return typeof cru === 'number' && Number.isFinite(cru) ? cru : 0;
+}
+
 /** Junta as duas formas da fonte numa só. Ver `EquipmentDamage`. */
 function toDamage(cru: unknown): EquipmentDamage | null {
   if (!isRecord(cru)) return null;
 
-  // Forma da ARMA: dados separados do tipo.
+  // Forma da ARMA: dados separados do tipo, e o persistente pendurado ao lado.
   const dice = cru['dice'];
-  const die = cru['die'];
-  if (typeof dice === 'number' && typeof die === 'string') {
+  if (typeof dice === 'number') {
+    const die = cru['die'];
     const tipo = cru['damageType'];
-    return { formula: `${String(dice)}${die}`, type: typeof tipo === 'string' ? tipo : '' };
+    const persistente = toPersistent(cru['persistent']);
+    const formula = diceFormula(dice, typeof die === 'string' ? die : '');
+    // Sem fórmula E sem persistente não há dano nenhum a mostrar; o respingo é campo à
+    // parte e sobrevive sozinho.
+    if (formula === '' && persistente === null) return null;
+    return { formula, type: typeof tipo === 'string' ? tipo : '', persistent: persistente };
   }
 
-  // Forma do CONSUMÍVEL: a fórmula já escrita.
+  // Forma do CONSUMÍVEL: a fórmula já escrita, e nenhum persistente nesta forma.
   const formula = cru['formula'];
   if (typeof formula === 'string') {
     const tipo = cru['type'];
-    return { formula, type: typeof tipo === 'string' ? tipo : '' };
+    return { formula, type: typeof tipo === 'string' ? tipo : '', persistent: null };
   }
 
   return null;
@@ -332,7 +404,6 @@ export const equipmentRecipe = recipe<EquipmentBase, EquipmentDesc>({
     name: from('name', text),
     slug: from('system.slug', text),
     kind: from('type', text),
-    family: fromSector(),
     // `kit` (2 documentos) não traz nível nenhum — daí o padrão.
     level: from('system.level.value', int).withDefault(0),
     /*
@@ -381,6 +452,12 @@ export const equipmentRecipe = recipe<EquipmentBase, EquipmentDesc>({
       return typeof alcance === 'number' ? 'ranged' : 'melee';
     }),
     damage: from('system.damage', raw).withDefault(null).map(toDamage),
+    /*
+     * O respingo é campo à PARTE, e não uma chave dentro de `damage`: ele mora noutro lugar
+     * do documento (`system.splashDamage`), e o motor exige um caminho por campo. Quem
+     * junta os dois numa frase é a tela — a mesma divisão de `price` e `pricePer`.
+     */
+    splash: from('system.splashDamage.value', raw).withDefault(0).map(toSplash),
     range: from('system.range', optional(nullable(int))).withDefault(null),
     reload: from('system.reload.value', optional(nullable(text)))
       .withDefault('')
@@ -390,12 +467,13 @@ export const equipmentRecipe = recipe<EquipmentBase, EquipmentDesc>({
     checkPenalty: from('system.checkPenalty', optional(nullable(int))).withDefault(null),
     speedPenalty: from('system.speedPenalty', optional(nullable(int))).withDefault(null),
     strength: from('system.strength', optional(nullable(int))).withDefault(null),
+    /* Zero é "não informado", e vira nulo aqui. Ver o campo. */
     hardness: from('system.hardness', optional(nullable(int)))
-      .withDefault(0)
-      .map((valor) => valor ?? 0),
+      .withDefault(null)
+      .map((valor) => (valor === null || valor === 0 ? null : valor)),
     hitPoints: from('system.hp.max', optional(nullable(int)))
-      .withDefault(0)
-      .map((valor) => valor ?? 0),
+      .withDefault(null)
+      .map((valor) => (valor === null || valor === 0 ? null : valor)),
     uses: from('system.uses.max', optional(nullable(int))).withDefault(null),
     source: from('system.publication', shape({ license: text, title: text, remaster: bool })),
   },
@@ -405,6 +483,10 @@ export const equipmentRecipe = recipe<EquipmentBase, EquipmentDesc>({
   },
 
   ignore: {
+    folder:
+      'a pasta do compêndio (163 itens em 15 famílias de item mágico). Virou o campo ' +
+      '`family` e SAIU: responde 3% da base e discorda dos traços, que dizem a mesma ' +
+      'coisa e valem para os 5.869.',
     img: 'ícone do item no Foundry; o zip não traz imagem',
     effects: 'active effects do VTT',
     'system._migration': 'controle interno de migração do Foundry',
@@ -422,9 +504,6 @@ export const equipmentRecipe = recipe<EquipmentBase, EquipmentDesc>({
     'system.bonus':
       'o bônus de potência DAQUELA cópia — vale 0 nas 1.018 do compêndio, porque quem ' +
       'grava potência numa arma é o personagem. Pertence à ficha, com as runas.',
-    'system.splashDamage':
-      'o dano de respingo da bomba. Vale ZERO nas 1.018 — o respingo real está escrito na ' +
-      'descrição, e este campo só se preenche quando a ficha aplica runas.',
     'system.bonusDamage': 'o dano extra DAQUELA cópia; vale 0 nas 992 do compêndio.',
     'system.expend': 'se a arma se gasta ao ser usada; nulo nas 1.018.',
     'system.usage.canBeAmmo':

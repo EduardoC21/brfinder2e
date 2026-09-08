@@ -4,7 +4,10 @@ import {
   SOURCES,
   applyFilters,
   columnsInScope,
+  entitiesInScope,
+  facetBase,
   filtersInScope,
+  filtersThatMatter,
   presetFor,
   scopeKey,
   selectedTypes,
@@ -36,7 +39,7 @@ import { ColumnPicker } from './ColumnPicker';
 import { FilterTopicPanel } from './FilterTopicPanel';
 import { ResultList } from './ResultList';
 import { SourceRail } from './SourceRail';
-import { DetailPanel } from './DetailPanel';
+import { DetailPanel, type ReferenceBridge } from './DetailPanel';
 import { EMPTY_POPOUTS, popoutReducer, type PopoutSubject } from './popouts';
 import styles from './BrowseScreen.module.css';
 
@@ -126,20 +129,27 @@ export function BrowseScreen({ baseVersion }: BrowseScreenProps) {
   };
 
   /**
-   * Abre a entrada apontada por um `@UUID`, venha ela de que fonte for.
+   * Resolve um `@UUID` na entrada dele, venha ela de que fonte for.
    *
    * É a primeira ponte entre fontes do aplicativo: a perícia guarda o UUID da ação, e quem
-   * sabe resolvê-lo é esta tela, que tem todas as bases. Referência que não resolve não faz
-   * nada — e não deveria acontecer: o teste de contrato prende as 50 da tabela de perícias.
+   * sabe resolvê-lo é esta tela, que tem todas as bases. Quem DESENHA é o painel — ele abre
+   * a ação numa sub-tela debaixo da perícia, e o destaque em flutuante fica por conta do
+   * botão de pop-out dessa sub-tela.
+   *
+   * Referência que não resolve devolve `null` e a caixinha não faz nada — não deveria
+   * acontecer: o teste de contrato prende as 50 da tabela de perícias.
    */
-  const abrirReferencia = (uuid: string): void => {
-    const alvo = indiceGlobal.byUuid.get(uuid);
-    if (alvo === undefined) return;
-    abrirFlutuante({
-      entity: alvo.entity,
-      entityType: alvo.source.entityType ?? '',
-      fields: alvo.source.detail,
-    });
+  const ponte: ReferenceBridge = {
+    resolve: (uuid) => {
+      const alvo = indiceGlobal.byUuid.get(uuid);
+      if (alvo === undefined) return null;
+      return {
+        entity: alvo.entity,
+        entityType: alvo.source.entityType ?? '',
+        fields: alvo.source.detail,
+      };
+    },
+    onPopOut: abrirFlutuante,
   };
 
   return (
@@ -162,7 +172,7 @@ export function BrowseScreen({ baseVersion }: BrowseScreenProps) {
           entities={entities}
           loading={base.status === 'loading'}
           onPopOut={abrirFlutuante}
-          onOpenReference={abrirReferencia}
+          reference={ponte}
         />
       )}
 
@@ -197,8 +207,17 @@ export function BrowseScreen({ baseVersion }: BrowseScreenProps) {
             Sem `onCollapse` e sem `onPopOut`: o flutuante não recolhe (ele fecha, pelo ×
             da própria barra de título) e não se destaca de novo. Ausência de callback é o
             que apaga cada botão — o painel não pergunta onde está.
+
+            COM `reference`, porém: um flutuante de perícia troca de ação por dentro, e
+            cada ação aberta ali tem o próprio pop-out. Foi o pedido — destacar a perícia
+            com a ação trocável dentro, ou destacar só a ação.
           */}
-          <DetailPanel entity={item.entity} entityType={item.entityType} fields={item.fields} />
+          <DetailPanel
+            entity={item.entity}
+            entityType={item.entityType}
+            fields={item.fields}
+            reference={ponte}
+          />
         </FloatingPanel>
       ))}
     </div>
@@ -220,13 +239,13 @@ function SourcePane({
   entities,
   loading,
   onPopOut,
-  onOpenReference,
+  reference,
 }: {
   readonly source: SourceSpec;
   readonly entities: readonly BrowseEntity[];
   readonly loading: boolean;
   readonly onPopOut: (subject: PopoutSubject) => void;
-  readonly onOpenReference: (uuid: string) => void;
+  readonly reference: ReferenceBridge;
 }) {
   const [term, setTerm] = useState('');
   const { prefs, update, ready } = usePreferences();
@@ -325,6 +344,23 @@ function SourcePane({
       .filter((entity): entity is BrowseEntity => entity !== undefined);
   }, [entities, source.filters, filters, source.special.level, deferredTerm, index, sort]);
 
+  /*
+   * As entradas que o TERMO deixa passar, sem nenhum filtro.
+   *
+   * É a base das contagens do painel de filtro: com "acid flask" digitado, a lista mostra
+   * 36 entradas, e a opção "Weapon" dizer 1.018 seria o mesmo número enganoso que os
+   * filtros davam entre si. Aqui a busca também entra na conta.
+   *
+   * ⚠️ Só nas CONTAGENS. Quais tópicos aparecem na barra continua sendo decidido sem o
+   * termo — senão a barra de filtros perderia e ganharia botões a cada letra digitada, e o
+   * botão que a pessoa ia clicar sairia de baixo do cursor.
+   */
+  const noTermo = useMemo(() => {
+    if (deferredTerm.trim() === '') return entities;
+    const passou = new Set(index.search(deferredTerm));
+    return entities.filter((entity) => passou.has(entity.key));
+  }, [entities, index, deferredTerm]);
+
   const opened = results.find((entity) => entity.key === openedKey) ?? null;
   /**
    * Escolher uma entrada FECHA o que estiver por cima da lateral.
@@ -358,8 +394,39 @@ function SourcePane({
   );
   const escopo = scopeKey(tiposMarcados);
 
+  /*
+   * O SEGUNDO corte dos filtros, e ele é sobre o DADO, não sobre o descritor.
+   *
+   * `filtersInScope` responde "este filtro pertence a este Tipo?"; este responde "e ele
+   * ainda tem o que oferecer?". São perguntas diferentes: `grupo` pertence a arma e a
+   * armadura, mas num Tipo onde toda entrada responde a mesma coisa ele vira um botão que
+   * só pode não fazer nada. Ver `topicMatters`.
+   */
+  const noTipo = useMemo(
+    () => entitiesInScope(source, entities, filters),
+    [source, entities, filters],
+  );
+  const filtrosUteis = useMemo(
+    () => filtersThatMatter(source, filtrosNoEscopo, noTipo, filters),
+    [source, filtrosNoEscopo, noTipo, filters],
+  );
+
   const openTopic = overlay?.kind === 'topic' ? overlay.id : null;
-  const topicoAberto = filtrosNoEscopo.find((spec) => spec.id === openTopic);
+  const topicoAberto = filtrosUteis.find((spec) => spec.id === openTopic);
+
+  /*
+   * A base do tópico ABERTO — os outros filtros já aplicados. É o que faz a contagem ao
+   * lado de cada opção responder "quantas sobram se eu marcar esta". Ver `facetBase`.
+   *
+   * Calculada só para o tópico aberto: são no máximo um por vez na lateral.
+   */
+  const baseDoTopico = useMemo(
+    () =>
+      topicoAberto === undefined
+        ? EMPTY
+        : facetBase(noTermo, source.filters, filters, topicoAberto),
+    [noTermo, source.filters, filters, topicoAberto],
+  );
 
   /*
    * As colunas visíveis: a escolha do usuário PARA ESTE RECORTE, ou o preset dele.
@@ -507,7 +574,7 @@ function SourcePane({
     ) : topicoAberto === undefined ? null : (
       <FilterTopicPanel
         spec={topicoAberto}
-        entities={entities}
+        entities={baseDoTopico}
         state={filters}
         onChange={(next) => {
           setFilters(next);
@@ -556,7 +623,7 @@ function SourcePane({
         </div>
 
         <FilterBar
-          specs={filtrosNoEscopo}
+          specs={filtrosUteis}
           state={filters}
           openTopic={openTopic}
           onOpenTopic={(id) => {
@@ -614,7 +681,7 @@ function SourcePane({
             });
           }
         }}
-        onOpenReference={onOpenReference}
+        reference={reference}
         collapsed={fechadoAMao || (opened === null && overlay === null)}
         onToggleCollapsed={() => {
           setFechadoAMao((estava) => !estava);
