@@ -277,6 +277,10 @@ export const ptBR = {
       price: 'preço',
       bulk: 'volume',
       usage: 'uso',
+      /* A conta sobre `usage`, em oito respostas. Ver a receita de equipamento. */
+      carry: 'como se usa',
+      hands: 'mãos',
+      weaponType: 'tipo de arma',
       damage: 'dano',
       reload: 'recarga',
       acBonus: 'bônus de CA',

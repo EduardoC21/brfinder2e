@@ -161,6 +161,54 @@ describe('o que os 5.869 confirmam', () => {
     });
   });
 
+  /*
+   * Os três campos que a fonte NÃO tem e o AoN mostra como coluna. Se as contagens mudarem,
+   * é porque a fonte inventou uma forma nova de usar — e aí a conta precisa saber dela.
+   */
+  it('as mãos saem das 120 formas de `usage`', () => {
+    const maos = new Map<string, number>();
+    for (const item of base()) maos.set(item.hands, (maos.get(item.hands) ?? 0) + 1);
+    expect(Object.fromEntries(maos)).toEqual({ '': 2464, '1': 2757, '2': 620, '1+': 28 });
+  });
+
+  it('as oito formas de carregar substituem as 120 do `usage`', () => {
+    const carry = new Map<string, number>();
+    for (const item of base()) carry.set(item.carry, (carry.get(item.carry) ?? 0) + 1);
+    /*
+     * `other` são 159, e não os 87 que declaram `usage: "other"`: as outras 72 são grafias
+     * que não começam por nenhum dos sete verbos conhecidos (`sewn-into-clothing`,
+     * `bonded`…). Se este número subir, é forma nova que merece um verbo próprio.
+     */
+    expect(carry.get('other')).toBe(159);
+    expect(carry.get('held')).toBe(3363);
+    expect(carry.get('worn')).toBe(892);
+    expect(new Set(carry.keys())).toEqual(
+      new Set([
+        '',
+        'held',
+        'worn',
+        'affixed',
+        'etched',
+        'tattooed',
+        'carried',
+        'implanted',
+        'other',
+      ]),
+    );
+  });
+
+  /*  tem o traço  e alcance NULO — o AoN o lista como Melee. */
+  /* `Club` tem o traço `thrown-10` e alcance NULO — o AoN o lista como Melee. */
+  it('corpo a corpo e à distância saem do alcance, e só valem para arma', () => {
+    expect(base().filter((item) => item.weaponType === 'ranged')).toHaveLength(350);
+    expect(base().filter((item) => item.weaponType === 'melee')).toHaveLength(668);
+    expect(base().find((item) => item.name === 'Club')?.weaponType).toBe('melee');
+    expect(base().find((item) => item.name === 'Longbow')?.weaponType).toBe('ranged');
+    expect(base().find((item) => item.name === 'Longbow')?.hands).toBe('1+');
+    // Nada fora de arma recebe tipo: uma poção também tem alcance nulo.
+    expect(base().every((item) => item.weaponType === '' || item.kind === 'weapon')).toBe(true);
+  });
+
   it('o nível vai de 0 a 28, e zero é item mundano', () => {
     const niveis = base().map((item) => item.level);
     expect(Math.min(...niveis)).toBe(0);

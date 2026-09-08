@@ -27,7 +27,7 @@ import { useTrackWidth } from '@ui/hooks/useTrackWidth';
 import { useWindowedRows } from '@ui/hooks/useWindowedRows';
 
 import { columnLabel, frequencyLabel, specialColumnLabel } from './filterLabels';
-import { itemBulkText, itemPriceText } from './itemFields';
+import { itemBulkText, itemDamageShort, itemPriceText } from './itemFields';
 import { areaText, defenseText, durationText, spellCast } from './spellFields';
 import styles from './ResultList.module.css';
 
@@ -475,6 +475,8 @@ function textoDaColuna(spec: ColumnSpec, entity: BrowseEntity): string {
       return itemPriceText(entity, spec.field);
     case 'bulk':
       return itemBulkText(entity, spec.field);
+    case 'damage':
+      return itemDamageShort(entity, spec.field);
     case 'area':
       return areaText(entity, spec.field);
     case 'defense':
@@ -581,6 +583,13 @@ function Column({ spec, entity }: { readonly spec: ColumnSpec; readonly entity: 
         spec.kind === 'price'
           ? itemPriceText(entity, spec.field)
           : itemBulkText(entity, spec.field);
+      if (valor === '') return null;
+      return <span className={styles['chip']}>{valor}</span>;
+    }
+
+    /* Abreviado na coluna e por extenso no detalhe, como no AoN. Ver `itemDamageShort`. */
+    case 'damage': {
+      const valor = itemDamageShort(entity, spec.field);
       if (valor === '') return null;
       return <span className={styles['chip']}>{valor}</span>;
     }

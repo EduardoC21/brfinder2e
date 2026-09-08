@@ -129,6 +129,9 @@ describe('o resto do cabeçalho', () => {
       category: 'martial',
       group: 'sword',
       usage: 'held-in-one-hand',
+      hands: '1',
+      carry: 'held',
+      weaponType: 'melee',
       damage: { formula: '1d8', type: 'slashing' },
       range: null,
       reload: '',
@@ -155,5 +158,29 @@ describe('o resto do cabeçalho', () => {
   it('as cargas são lidas de quem se gasta', () => {
     expect(base('Tin Cobra').uses).toBe(1);
     expect(base('Longsword').uses).toBeNull();
+  });
+});
+
+/*
+ * Os três campos que a fonte NÃO tem e o Archives of Nethys mostra como coluna. Ver os
+ * campos `hands`, `carry` e `weaponType` na receita.
+ */
+describe('o que o AoN mostra e o Foundry não guarda', () => {
+  it('as mãos saem das 120 formas de usar', () => {
+    expect(base('Longsword').hands).toBe('1');
+    expect(base('Backpack').hands).toBe('');
+  });
+
+  it('as oito formas de carregar substituem as 120', () => {
+    expect(base('Longsword').carry).toBe('held');
+    expect(base('Backpack').carry).toBe('worn');
+    expect(base('Magekiller Bullet').carry).toBe('');
+  });
+
+  /* A regra é o ALCANCE, e só vale para arma: uma poção também tem alcance nulo. */
+  it('corpo a corpo e à distância só existem em arma', () => {
+    expect(base('Longsword').weaponType).toBe('melee');
+    expect(base('Full Plate').weaponType).toBe('');
+    expect(base('Tin Cobra').weaponType).toBe('');
   });
 });

@@ -30,6 +30,29 @@ export function itemBulkText(entity: BrowseEntity, field: string): string {
  * (OPEN-DECISIONS #4). Quem traduz é a Etapa 15, e traduz tudo de uma vez.
  */
 export function itemDamageText(entity: BrowseEntity, field: string): string {
+  return damageOf(entity, field, false);
+}
+
+/**
+ * O mesmo dano, ABREVIADO: `1d6 B`.
+ *
+ * É o que o Archives of Nethys põe na tabela de armas, e o motivo é largura: `Bludgeoning`
+ * são doze caracteres numa coluna que existe para ser varrida de relance. A letra só vale
+ * para os três danos FÍSICOS, que é onde a convenção existe — `fire` continua `Fire`,
+ * porque `F` não quer dizer nada.
+ */
+export function itemDamageShort(entity: BrowseEntity, field: string): string {
+  return damageOf(entity, field, true);
+}
+
+/** As três letras que o livro usa. Fora daqui, a palavra. */
+const FISICO: Readonly<Record<string, string>> = {
+  bludgeoning: 'B',
+  piercing: 'P',
+  slashing: 'S',
+};
+
+function damageOf(entity: BrowseEntity, field: string, curto: boolean): string {
   const base = entity.base;
   if (!isRecord(base)) return '';
   const dano = base[field];
@@ -37,7 +60,9 @@ export function itemDamageText(entity: BrowseEntity, field: string): string {
   const formula = typeof dano['formula'] === 'string' ? dano['formula'] : '';
   if (formula === '') return '';
   const tipo = typeof dano['type'] === 'string' ? dano['type'] : '';
-  return tipo === '' ? formula : `${formula} ${capitalizar(tipo)}`;
+  if (tipo === '') return formula;
+  const escrito = curto ? (FISICO[tipo] ?? capitalizar(tipo)) : capitalizar(tipo);
+  return `${formula} ${escrito}`;
 }
 
 /** O rótulo do volume, para quem precisa dele fora de um campo rotulado. */

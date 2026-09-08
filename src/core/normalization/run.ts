@@ -239,6 +239,9 @@ function readField(
   options: RunOptions,
   context: PackContext,
 ): unknown {
+  // O derivado recebe o DOCUMENTO inteiro, e não um caminho. Ver `fromDocument`.
+  if (field.source === 'derived') return applyTransform(field, document);
+
   const found =
     field.source === 'document'
       ? readFromDocument(field, document, coverage)

@@ -9,9 +9,9 @@
  * como nome de método, atrapalha ferramenta e leitura.
  */
 
-import { text, type Decoder } from './decoders';
+import { raw, text, type Decoder } from './decoders';
 
-export type FieldSource = 'document' | 'language' | 'sector';
+export type FieldSource = 'document' | 'language' | 'sector' | 'derived';
 
 export interface Field<T> {
   readonly source: FieldSource;
@@ -110,6 +110,30 @@ export function fromSector(): Field<string> {
     isOptional: false,
     fallback: null,
     transform: null,
+  });
+}
+
+/**
+ * Um campo CALCULADO a partir do documento inteiro, e não de um caminho.
+ *
+ * ⚠️ Existe porque há resposta que nenhum campo sozinho dá. O caso que a exigiu: uma arma
+ * é "corpo a corpo" quando `system.range` é nulo — mas uma poção também tem `range` nulo, e
+ * chamá-la de corpo a corpo seria absurdo. A conta precisa de `type` E de `system.range`.
+ *
+ * NÃO marca cobertura de caminho nenhum, e é de propósito: quem calcula tem de ler campos
+ * que a receita já projeta ou já ignora. Assim um campo derivado nunca esconde do relatório
+ * um dado que ninguém olhou — que é a garantia da seção 5.1 do briefing.
+ *
+ * Use com parcimônia: `from()` diz de onde o dado vem só de olhar a declaração, e isto não.
+ */
+export function fromDocument<T>(compute: (document: unknown) => T): Field<T> {
+  return build<T>({
+    source: 'derived',
+    path: '(derivado)',
+    decoder: raw,
+    isOptional: false,
+    fallback: null,
+    transform: (value) => compute(value),
   });
 }
 

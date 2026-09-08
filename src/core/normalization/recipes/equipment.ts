@@ -41,7 +41,7 @@ import {
   textList,
 } from '../decoders';
 import { isRecord } from '../../json';
-import { from, fromSector } from '../field';
+import { from, fromDocument, fromSector } from '../field';
 import { recipe } from '../recipe';
 
 /** Os nove tipos do Foundry que caem nesta receita. Ver `accepts` em `recipe.ts`. */
@@ -160,6 +160,38 @@ export interface EquipmentBase {
    */
   readonly usage: string;
 
+  /**
+   * Quantas MÃOS o item ocupa: `1`, `2`, `1+`, ou vazio no que não se empunha.
+   *
+   * É a coluna `Hands` do AoN, e ela não existe na fonte — está escondida dentro das 120
+   * formas de `usage`. Medido: `held-in-one-hand` 2757, `held-in-two-hands` 620,
+   * `held-in-one-plus-hands` 28 (o arco longo, que o livro escreve como "1+").
+   */
+  readonly hands: string;
+
+  /**
+   * COMO o item é carregado, em oito respostas em vez de 120.
+   *
+   * `held` 3363, `worn` 892 (em 27 grafias diferentes: `worn`, `worncloak`, `wornmask`…),
+   * `affixed` 388, `etched` 176, `other` 159, `tattooed` 97, `carried` 58, `implanted` 28.
+   *
+   * O `usage` cru continua sendo o que a tela ESCREVE; isto é o que ela FILTRA. Vinte e
+   * sete opções de "vestido" numa lista de filtro não respondem "o que é vestido".
+   */
+  readonly carry: string;
+
+  /**
+   * `melee` ou `ranged`, e vazio no que não é arma. A coluna `Weapon Type` do AoN.
+   *
+   * A regra é o alcance: 350 das 1.018 armas trazem `system.range` numérico e são à
+   * distância; as outras 668 são corpo a corpo. O traço `thrown` NÃO conta — `Club` tem
+   * `thrown-10` e alcance nulo, e o AoN o lista como Melee, com o arremesso vindo do traço.
+   *
+   * ⚠️ Derivado do documento INTEIRO, e não de um caminho: uma poção também tem `range`
+   * nulo, e chamá-la de corpo a corpo seria absurdo. Precisa de `type` junto.
+   */
+  readonly weaponType: string;
+
   readonly damage: EquipmentDamage | null;
 
   /** O alcance da arma, em pés. Nulo nas corpo a corpo e em tudo que não é arma. */
@@ -229,6 +261,42 @@ function toCopper(coins: unknown): number {
   return total;
 }
 
+/** O `usage` cru do documento, ou vazio. As três contas abaixo partem dele. */
+function usageOf(documento: unknown): string {
+  if (!isRecord(documento)) return '';
+  const sistema = documento['system'];
+  if (!isRecord(sistema)) return '';
+  const usage = sistema['usage'];
+  if (!isRecord(usage)) return '';
+  const valor = usage['value'];
+  return typeof valor === 'string' ? valor : '';
+}
+
+/** `held-in-two-hands` → `2`. Ver o campo `hands`. */
+function toHands(usage: string): string {
+  if (usage.includes('one-plus-hands')) return '1+';
+  if (usage.includes('two-hands')) return '2';
+  if (usage.includes('one-hand')) return '1';
+  return '';
+}
+
+/**
+ * As oito formas de carregar. A ordem dos testes importa: `etched-onto-armor` também
+ * contém "armor", e `affixed-to-armor` também — o que os separa é o verbo, e ele vem
+ * primeiro na string.
+ */
+function toCarry(usage: string): string {
+  if (usage === '') return '';
+  if (usage.startsWith('held')) return 'held';
+  if (usage.startsWith('worn')) return 'worn';
+  if (usage.startsWith('affixed')) return 'affixed';
+  if (usage.startsWith('etched')) return 'etched';
+  if (usage.startsWith('tattooed')) return 'tattooed';
+  if (usage.startsWith('implanted')) return 'implanted';
+  if (usage.startsWith('carried')) return 'carried';
+  return 'other';
+}
+
 /** Junta as duas formas da fonte numa só. Ver `EquipmentDamage`. */
 function toDamage(cru: unknown): EquipmentDamage | null {
   if (!isRecord(cru)) return null;
@@ -290,6 +358,24 @@ export const equipmentRecipe = recipe<EquipmentBase, EquipmentDesc>({
     usage: from('system.usage.value', optional(nullable(text)))
       .withDefault('')
       .map((valor) => valor ?? ''),
+    /*
+     * Derivados, e não um segundo `from` sobre `system.usage.value`: o motor exige um
+     * caminho para um campo só, e com razão — dois campos lendo o mesmo lugar escondem
+     * qual deles é a projeção de verdade. Quem reivindica o caminho é `usage`; estes dois
+     * são contas sobre ele.
+     */
+    hands: fromDocument((documento) => toHands(usageOf(documento))),
+    carry: fromDocument((documento) => toCarry(usageOf(documento))),
+    /*
+     * O único campo que precisa do documento inteiro: `type` diz se é arma e
+     * `system.range` diz se ela alcança. Ver `fromDocument`.
+     */
+    weaponType: fromDocument((documento) => {
+      if (!isRecord(documento) || documento['type'] !== 'weapon') return '';
+      const sistema = documento['system'];
+      const alcance = isRecord(sistema) ? sistema['range'] : null;
+      return typeof alcance === 'number' ? 'ranged' : 'melee';
+    }),
     damage: from('system.damage', raw).withDefault(null).map(toDamage),
     range: from('system.range', optional(nullable(int))).withDefault(null),
     reload: from('system.reload.value', optional(nullable(text)))

@@ -93,6 +93,8 @@ export type ColumnSpec =
   | ({ readonly kind: 'price'; readonly field: string } & ColumnBase)
   /** O VOLUME na escala do jogo: `0` some, `0,1` vira `L`, o resto é o número. */
   | ({ readonly kind: 'bulk'; readonly field: string } & ColumnBase)
+  /** O dano: `1d6 B` na coluna, `1d6 Bludgeoning` no detalhe. */
+  | ({ readonly kind: 'damage'; readonly field: string } & ColumnBase)
   /** Texto simples, sem moldura de chip. Para valores mais longos que um rótulo. */
   | ({ readonly kind: 'text'; readonly field: string } & ColumnBase);
 
@@ -498,14 +500,38 @@ export const SOURCES: readonly SourceSpec[] = [
     id: 'equipment',
     entityType: 'equipment',
     mode: 'list',
-    /* Tipo primeiro, resto espelhando os filtros — ver a nota em `actions`. */
+    /*
+     * A fonte com MAIS colunas do projeto — vinte —, e é consequência do dado: nove
+     * espécies de item num catálogo só, cada uma com números que as outras não têm. Uma
+     * poção não tem grupo de arma; uma espada não tem limite de Destreza.
+     *
+     * Isso funciona porque coluna é ESCOLHA: o padrão é nenhuma, e quem procura armadura
+     * liga as cinco de armadura. O modelo é a tabela do Archives of Nethys, que troca de
+     * colunas conforme a categoria — a diferença é que aqui quem troca é a pessoa.
+     *
+     * Tipo primeiro, resto espelhando os filtros — ver a nota em `actions`.
+     */
     columns: [
       { kind: 'chip', id: 'kind', field: 'kind' },
       { kind: 'chip', id: 'category', field: 'category' },
       { kind: 'chip', id: 'group', field: 'group' },
+      { kind: 'chip', id: 'weaponType', field: 'weaponType' },
+      { kind: 'damage', id: 'damage', field: 'damage' },
+      { kind: 'chip', id: 'hands', field: 'hands' },
+      { kind: 'text', id: 'range', field: 'range' },
+      { kind: 'chip', id: 'reload', field: 'reload' },
       { kind: 'price', id: 'price', field: 'price' },
       { kind: 'bulk', id: 'bulk', field: 'bulk' },
-      { kind: 'chip', id: 'usage', field: 'usage' },
+      { kind: 'chip', id: 'carry', field: 'carry' },
+      { kind: 'text', id: 'usage', field: 'usage' },
+      { kind: 'text', id: 'acBonus', field: 'acBonus' },
+      { kind: 'text', id: 'dexCap', field: 'dexCap' },
+      { kind: 'text', id: 'checkPenalty', field: 'checkPenalty' },
+      { kind: 'text', id: 'speedPenalty', field: 'speedPenalty' },
+      { kind: 'text', id: 'strength', field: 'strength' },
+      { kind: 'text', id: 'hardness', field: 'hardness' },
+      { kind: 'text', id: 'hitPoints', field: 'hitPoints' },
+      { kind: 'text', id: 'uses', field: 'uses' },
       { kind: 'chip', id: 'family', field: 'family' },
       { kind: 'text', id: 'source', field: 'source.title' },
     ],
@@ -522,29 +548,41 @@ export const SOURCES: readonly SourceSpec[] = [
       { kind: 'list', id: 'traits', field: 'traits', combine: 'any' },
       { kind: 'options', id: 'category', field: 'category' },
       { kind: 'options', id: 'group', field: 'group' },
+      { kind: 'options', id: 'weaponType', field: 'weaponType' },
+      { kind: 'options', id: 'hands', field: 'hands' },
+      { kind: 'options', id: 'reload', field: 'reload' },
       { kind: 'number', id: 'price', field: 'price', unit: 'copper' },
       { kind: 'number', id: 'bulk', field: 'bulk', unit: 'bulk' },
-      { kind: 'options', id: 'usage', field: 'usage' },
+      { kind: 'number', id: 'range', field: 'range', unit: 'feet' },
+      /*
+       * `carry` e não `usage`: são as mesmas 5.161 respostas em OITO opções em vez de 120.
+       * Vinte e sete grafias de "vestido" numa lista de filtro não respondem "o que é
+       * vestido". O `usage` cru continua sendo o que a tela ESCREVE.
+       */
+      { kind: 'options', id: 'carry', field: 'carry' },
       { kind: 'options', id: 'family', field: 'family' },
       { kind: 'options', id: 'source', field: 'source.title' },
     ],
     searchFields: ['name'],
     /*
-     * A ordem é a da ficha de item do livro: o que ele É (traços), quanto custa, quanto
-     * pesa, como se usa — e só então os números de quem é arma, armadura ou escudo.
+     * A ordem é a do bloco de item do AoN, conferida nos prints do autor:
      *
-     * Nível NÃO é campo: vira a calha antes do nome, como em talento e magia. Raridade
-     * também não: vira etiqueta.
+     *   Battle Lute → Price 7 gp; Damage 1d4 B; Bulk 1 / Hands 1
+     *                 Type Melee; Category Simple; Group Club
+     *
+     * Depois vêm os números que só armadura e escudo têm, e por fim de onde o item veio.
+     * Nível e raridade NÃO são campos: viram a calha e a etiqueta ao lado do nome.
      */
     detail: [
       { kind: 'chips', field: 'traits' },
+      { kind: 'price', field: 'price' },
+      { kind: 'damage', field: 'damage' },
+      { kind: 'bulk', field: 'bulk' },
+      { kind: 'text', field: 'hands' },
+      { kind: 'text', field: 'weaponType' },
       { kind: 'text', field: 'kind' },
       { kind: 'text', field: 'category' },
       { kind: 'text', field: 'group' },
-      { kind: 'price', field: 'price' },
-      { kind: 'bulk', field: 'bulk' },
-      { kind: 'text', field: 'usage' },
-      { kind: 'damage', field: 'damage' },
       { kind: 'text', field: 'range' },
       { kind: 'text', field: 'reload' },
       { kind: 'text', field: 'acBonus' },
@@ -555,6 +593,7 @@ export const SOURCES: readonly SourceSpec[] = [
       { kind: 'text', field: 'hardness' },
       { kind: 'text', field: 'hitPoints' },
       { kind: 'text', field: 'uses' },
+      { kind: 'text', field: 'usage' },
       { kind: 'text', field: 'family' },
       { kind: 'source' },
     ],
