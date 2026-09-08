@@ -81,6 +81,19 @@ export interface RecipeInput<TBase, TDesc> {
    * O que os separa vira DADO, no campo `kind` — que é o Tipo da tela.
    */
   readonly accepts?: readonly string[];
+  /**
+   * Um documento vira VÁRIAS entidades. Ausente: uma para uma, como sempre foi.
+   *
+   * ⚠️ Existe por causa de perícia, e é a segunda vez que o motor cede a uma forma nova do
+   * dado — a primeira foi `accepts`, para equipamento. Perícia NÃO é documento no Foundry:
+   * as 17 vivem numa TABELA dentro de uma página de jornal. Sem isto, seria preciso um
+   * segundo motor para um caso só.
+   *
+   * O que sai daqui é tratado como documento comum dali em diante: passa pelo filtro de
+   * `accepts`, pelo mapa de campos, pela identidade e pelo relatório de cobertura. Por isso
+   * quem expande precisa devolver objetos com `_id` e `type` — é o contrato da identidade.
+   */
+  readonly expand?: ((document: unknown) => readonly unknown[]) | null | undefined;
   /** Os packs que alimentam esta receita. */
   readonly packs: readonly RecipePack[];
   readonly base: FieldMapFor<TBase>;
@@ -93,6 +106,7 @@ export interface Recipe<TBase = unknown, TDesc = unknown> {
   readonly type: string;
   /** Sempre preenchido: vale `[type]` quando a receita não declara nada. */
   readonly accepts: readonly string[];
+  readonly expand: ((document: unknown) => readonly unknown[]) | null;
   readonly packs: readonly RecipePack[];
   readonly base: FieldMapFor<TBase>;
   readonly desc: FieldMapFor<TDesc>;
@@ -124,6 +138,7 @@ export function recipe<TBase, TDesc = Record<string, never>>(
   const built: Recipe<TBase, TDesc> = {
     type: input.type,
     accepts: input.accepts ?? [input.type],
+    expand: input.expand ?? null,
     packs: input.packs,
     base: input.base,
     desc: input.desc ?? ({} as FieldMapFor<TDesc>),

@@ -112,20 +112,28 @@ export function run<TBase, TDesc>(
     };
 
     for (const document of source.documents) {
-      // `accepts`, e não `type`: equipamento é uma receita para nove tipos do Foundry.
-      if (!recipe.accepts.includes(documentType(document) ?? '')) continue;
-      matching++;
+      /*
+       * A EXPANSÃO vem antes do filtro: perícia nasce de uma tabela dentro de uma página de
+       * jornal, e é o expansor que produz os documentos com `type`. Ver `expand`.
+       */
+      const documentos = recipe.expand === null ? [document] : recipe.expand(document);
 
-      const paths = collectPaths(document);
-      for (const [path, example] of paths) {
-        if (!inventory.has(path)) inventory.set(path, example);
-        frequency.set(path, (frequency.get(path) ?? 0) + 1);
-      }
+      for (const documento of documentos) {
+        // `accepts`, e não `type`: equipamento é uma receita para nove tipos do Foundry.
+        if (!recipe.accepts.includes(documentType(documento) ?? '')) continue;
+        matching++;
 
-      try {
-        entities.push(normalizeOne(recipe, document, coverage, options, context));
-      } catch (error) {
-        failures.push(toFailure(document, error));
+        const paths = collectPaths(documento);
+        for (const [path, example] of paths) {
+          if (!inventory.has(path)) inventory.set(path, example);
+          frequency.set(path, (frequency.get(path) ?? 0) + 1);
+        }
+
+        try {
+          entities.push(normalizeOne(recipe, documento, coverage, options, context));
+        } catch (error) {
+          failures.push(toFailure(documento, error));
+        }
       }
     }
   }
