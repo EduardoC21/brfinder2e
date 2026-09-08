@@ -27,7 +27,7 @@ import { useTrackWidth } from '@ui/hooks/useTrackWidth';
 import { useWindowedRows } from '@ui/hooks/useWindowedRows';
 
 import { columnLabel, frequencyLabel, specialColumnLabel } from './filterLabels';
-import { itemBulkText, itemDamageShort, itemPriceText } from './itemFields';
+import { itemBulkText, itemDamageShort, itemPriceText, statText } from './itemFields';
 import { areaText, defenseText, durationText, spellCast } from './spellFields';
 import styles from './ResultList.module.css';
 
@@ -477,6 +477,8 @@ function textoDaColuna(spec: ColumnSpec, entity: BrowseEntity): string {
       return itemBulkText(entity, spec.field);
     case 'damage':
       return itemDamageShort(entity, spec.field);
+    case 'stat':
+      return statText(entity, spec.field, spec);
     case 'area':
       return areaText(entity, spec.field);
     case 'defense':
@@ -501,7 +503,7 @@ function textoDaColuna(spec: ColumnSpec, entity: BrowseEntity): string {
 function alinhamento(spec: ColumnSpec): string | undefined {
   if (spec.align === 'end') return styles['end'];
   // Número à direita, pela mesma regra que já vale para a calha do nível.
-  if (spec.kind === 'price' || spec.kind === 'bulk') return styles['end'];
+  if (spec.kind === 'price' || spec.kind === 'bulk' || spec.kind === 'stat') return styles['end'];
   if (spec.kind === 'cost' || spec.kind === 'boolean' || spec.kind === 'cast') {
     return styles['centro'];
   }
@@ -583,6 +585,13 @@ function Column({ spec, entity }: { readonly spec: ColumnSpec; readonly entity: 
         spec.kind === 'price'
           ? itemPriceText(entity, spec.field)
           : itemBulkText(entity, spec.field);
+      if (valor === '') return null;
+      return <span className={styles['chip']}>{valor}</span>;
+    }
+
+    /* Número da ficha, com o sinal e a unidade do livro. Ver `statText`. */
+    case 'stat': {
+      const valor = statText(entity, spec.field, spec);
       if (valor === '') return null;
       return <span className={styles['chip']}>{valor}</span>;
     }

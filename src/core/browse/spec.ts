@@ -102,6 +102,14 @@ export type ColumnSpec =
   | ({ readonly kind: 'bulk'; readonly field: string } & ColumnBase)
   /** O dano: `1d6 B` na coluna, `1d6 Bludgeoning` no detalhe. */
   | ({ readonly kind: 'damage'; readonly field: string } & ColumnBase)
+  /**
+   * Um número da ficha do item, escrito como o livro escreve.
+   *
+   * Espécie própria e não `text` porque número cru mente: o limite de Destreza é `+5` e não
+   * `5`, e a penalidade de deslocamento é `-5 ft.` e não `-5`. Conferido nas tabelas de
+   * armadura e escudo do Archives of Nethys.
+   */
+  | ({ readonly kind: 'stat'; readonly field: string } & StatFormat & ColumnBase)
   /** Texto simples, sem moldura de chip. Para valores mais longos que um rótulo. */
   | ({ readonly kind: 'text'; readonly field: string } & ColumnBase);
 
@@ -188,6 +196,20 @@ export type FilterSpec =
    */
   | ({ readonly kind: 'area'; readonly field: string; readonly unit: Unit } & FilterBase);
 
+/**
+ * Como um número da ficha se escreve.
+ *
+ * `signed` põe o `+` no positivo — um limite de Destreza `+5`, e não `5`. `unit` cola a
+ * unidade do livro. `hideZero` some com o zero, e vale para PENALIDADE: "sem penalidade" se
+ * diz não dizendo nada, e `-0 ft.` seria ruído em 117 das 211 armaduras. Um bônus zero, ao
+ * contrário, é informação: a armadura destreinada dá CA `0`, e o AoN escreve o zero.
+ */
+export interface StatFormat {
+  readonly signed?: boolean;
+  readonly unit?: string;
+  readonly hideZero?: boolean;
+}
+
 /** A unidade de uma faixa numérica: pés de distância, cobre de preço, e o Volume. */
 export type Unit = 'feet' | 'copper' | 'bulk';
 
@@ -214,6 +236,7 @@ export type DetailFieldSpec =
   | ({ readonly kind: 'defense' } & DefenseFields)
   | { readonly kind: 'price'; readonly field: string }
   | { readonly kind: 'bulk'; readonly field: string }
+  | ({ readonly kind: 'stat'; readonly field: string } & StatFormat)
   /** `1d8 cortante`. Ver `EquipmentDamage` na receita. */
   | { readonly kind: 'damage'; readonly field: string }
   | { readonly kind: 'duration'; readonly field: string }
@@ -564,7 +587,7 @@ export const SOURCES: readonly SourceSpec[] = [
         field: 'hands',
         kinds: ['equipment', 'consumable', 'weapon', 'backpack'],
       },
-      { kind: 'text', id: 'range', field: 'range', kinds: ['weapon'] },
+      { kind: 'stat', id: 'range', field: 'range', unit: 'ft.', kinds: ['weapon'] },
       { kind: 'chip', id: 'reload', field: 'reload', kinds: ['weapon'] },
       { kind: 'price', id: 'price', field: 'price' },
       { kind: 'bulk', id: 'bulk', field: 'bulk' },
@@ -580,14 +603,29 @@ export const SOURCES: readonly SourceSpec[] = [
         field: 'usage',
         kinds: ['equipment', 'consumable', 'weapon', 'backpack'],
       },
-      { kind: 'text', id: 'acBonus', field: 'acBonus', kinds: ['armor', 'shield'] },
-      { kind: 'text', id: 'dexCap', field: 'dexCap', kinds: ['armor'] },
-      { kind: 'text', id: 'checkPenalty', field: 'checkPenalty', kinds: ['armor'] },
-      { kind: 'text', id: 'speedPenalty', field: 'speedPenalty', kinds: ['armor', 'shield'] },
-      { kind: 'text', id: 'strength', field: 'strength', kinds: ['armor'] },
-      { kind: 'text', id: 'hardness', field: 'hardness', kinds: ['shield'] },
-      { kind: 'text', id: 'hitPoints', field: 'hitPoints', kinds: ['shield'] },
-      { kind: 'text', id: 'uses', field: 'uses', kinds: ['consumable', 'ammo'] },
+      { kind: 'stat', id: 'acBonus', field: 'acBonus', kinds: ['armor', 'shield'] },
+      { kind: 'stat', id: 'dexCap', field: 'dexCap', signed: true, kinds: ['armor'] },
+      {
+        kind: 'stat',
+        id: 'checkPenalty',
+        field: 'checkPenalty',
+        signed: true,
+        hideZero: true,
+        kinds: ['armor'],
+      },
+      {
+        kind: 'stat',
+        id: 'speedPenalty',
+        field: 'speedPenalty',
+        signed: true,
+        unit: 'ft.',
+        hideZero: true,
+        kinds: ['armor', 'shield'],
+      },
+      { kind: 'stat', id: 'strength', field: 'strength', kinds: ['armor'] },
+      { kind: 'stat', id: 'hardness', field: 'hardness', kinds: ['shield'] },
+      { kind: 'stat', id: 'hitPoints', field: 'hitPoints', kinds: ['shield'] },
+      { kind: 'stat', id: 'uses', field: 'uses', kinds: ['consumable', 'ammo'] },
       { kind: 'chip', id: 'family', field: 'family' },
       { kind: 'text', id: 'source', field: 'source.title' },
     ],
@@ -672,21 +710,27 @@ export const SOURCES: readonly SourceSpec[] = [
       { kind: 'bulk', field: 'bulk' },
       { kind: 'text', field: 'hands' },
       { kind: 'text', field: 'weaponType' },
-      { kind: 'text', field: 'kind' },
       { kind: 'text', field: 'category' },
       { kind: 'text', field: 'group' },
-      { kind: 'text', field: 'range' },
+      { kind: 'stat', field: 'range', unit: 'ft.' },
       { kind: 'text', field: 'reload' },
-      { kind: 'text', field: 'acBonus' },
-      { kind: 'text', field: 'dexCap' },
-      { kind: 'text', field: 'checkPenalty' },
-      { kind: 'text', field: 'speedPenalty' },
-      { kind: 'text', field: 'strength' },
-      { kind: 'text', field: 'hardness' },
-      { kind: 'text', field: 'hitPoints' },
-      { kind: 'text', field: 'uses' },
+      { kind: 'stat', field: 'acBonus' },
+      { kind: 'stat', field: 'dexCap', signed: true },
+      { kind: 'stat', field: 'checkPenalty', signed: true, hideZero: true },
+      { kind: 'stat', field: 'speedPenalty', signed: true, unit: 'ft.', hideZero: true },
+      { kind: 'stat', field: 'strength' },
+      { kind: 'stat', field: 'hardness' },
+      { kind: 'stat', field: 'hitPoints' },
+      { kind: 'stat', field: 'uses' },
       { kind: 'text', field: 'usage' },
       { kind: 'text', field: 'family' },
+      /*
+       * O TIPO é o PENÚLTIMO, antes do livro — a mesma posição que ele tem em ação,
+       * talento e magia. Ele abre a lista de filtros e a de colunas porque ali é recorte;
+       * aqui a ordem é a de LEITURA da entrada, e no fim do bloco é onde o livro põe "de
+       * que espécie isto é". Estava no meio, e era desalinhamento meu com o combinado.
+       */
+      { kind: 'text', field: 'kind' },
       { kind: 'source' },
     ],
   },

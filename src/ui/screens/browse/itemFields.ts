@@ -1,4 +1,4 @@
-import { fieldValue, type BrowseEntity } from '@core/browse/index';
+import { fieldValue, type BrowseEntity, type StatFormat } from '@core/browse/index';
 import { isRecord } from '@core/json';
 import { strings } from '@i18n/index';
 import { bulkText, capitalizar, priceText } from '@ui/text';
@@ -67,3 +67,31 @@ function damageOf(entity: BrowseEntity, field: string, curto: boolean): string {
 
 /** O rótulo do volume, para quem precisa dele fora de um campo rotulado. */
 export const BULK_LABEL = strings.browse.bulk.label;
+
+/**
+ * Um número da ficha do item, escrito como o livro escreve.
+ *
+ * Conferido nas tabelas de armadura e de escudo do Archives of Nethys:
+ *
+ *   CA               `0`, `1`, `2`          sem sinal — é valor, não modificador
+ *   limite de Des    `+5`, `+3`, `+0`       COM sinal — é um teto de bônus
+ *   testes           `-1`, `-2`, e vazio    com sinal, e o zero some
+ *   deslocamento     `-5 ft.`, e vazio      com sinal e unidade, e o zero some
+ *   Força            `0`, `1`, `4`          sem sinal
+ *   dureza e PV      `3`, `20`              sem sinal
+ *
+ * O zero some só na PENALIDADE, e é a diferença que importa: "sem penalidade" se diz não
+ * dizendo nada, enquanto uma CA zero é informação de verdade — a armadura destreinada dá
+ * exatamente isso, e o AoN escreve o zero.
+ */
+export function statText(entity: BrowseEntity, field: string, formato: StatFormat): string {
+  const cru = fieldValue(entity, field);
+  if (cru === '') return '';
+  const numero = Number(cru);
+  if (!Number.isFinite(numero)) return cru;
+  if (numero === 0 && formato.hideZero === true) return '';
+
+  const sinal = formato.signed === true && numero >= 0 ? '+' : '';
+  const unidade = formato.unit === undefined ? '' : ` ${formato.unit}`;
+  return `${sinal}${numero.toLocaleString('pt-BR')}${unidade}`;
+}

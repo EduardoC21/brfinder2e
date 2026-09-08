@@ -20,7 +20,7 @@ import { CollapseToggle } from '@ui/components/CollapseToggle';
 import { cx } from '@ui/cx';
 import { bookLabel, capitalizar, fieldText } from '@ui/text';
 
-import { itemBulkText, itemDamageText, itemPriceText } from './itemFields';
+import { itemBulkText, itemDamageText, itemPriceText, statText } from './itemFields';
 import { areaText, defenseText, durationText, ritualLines, spellCast } from './spellFields';
 import styles from './DetailPanel.module.css';
 
@@ -298,6 +298,12 @@ function Field({
           <CastCost cast={cast} />
         </Row>
       );
+    }
+
+    case 'stat': {
+      const valor = statText(entity, spec.field, spec);
+      if (valor === '') return null;
+      return <Row label={label(spec.field)}>{valor}</Row>;
     }
 
     case 'price':
