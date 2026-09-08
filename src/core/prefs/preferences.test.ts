@@ -87,6 +87,7 @@ describe('withSource', () => {
   it('fonte nunca configurada devolve o vazio, não indefinido', () => {
     expect(sourcePreferences(DEFAULT_PREFERENCES, 'spells')).toEqual({
       columns: null,
+      columnsByType: {},
       hiddenSpecials: [],
       filters: {},
     });

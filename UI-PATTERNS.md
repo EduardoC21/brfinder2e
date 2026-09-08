@@ -493,6 +493,47 @@ Ler a base do IndexedDB são 14 ms para os 6.284 talentos, e montar o índice de
 
 ---
 
+## 6e. O recorte por Tipo: coluna e filtro dependem do que está marcado
+
+**Decidido:** as colunas e os filtros oferecidos mudam conforme os Tipos marcados. A regra
+é **universal ∪ interseção dos marcados**:
+
+| Tipos marcados | o que aparece                              | preset                  |
+| -------------- | ------------------------------------------ | ----------------------- |
+| nenhum         | só o universal                             | a visão geral           |
+| **um**         | universal + os daquele Tipo                | **o dele liga sozinho** |
+| dois ou mais   | universal + só o que eles têm **em comum** | nenhum                  |
+
+O problema que isto resolve está em equipamento: nove espécies de item num catálogo só, e
+**vinte e duas colunas** oferecidas de uma vez. Não são vinte e duas escolhas — são nove
+conjuntos empilhados, e quem procura armadura não tem nada que ver com `recarga` nem com
+`dano`. Com um Tipo marcado sobram oito.
+
+O modelo é o Archives of Nethys, onde cada categoria tem sua própria tabela — a diferença é
+que lá as colunas são fixas por página e aqui quem escolhe é a pessoa.
+
+Por que a visão geral é a mais pobre: é a única em que uma coluna pode estar **vazia em 90%
+das linhas**. Com nada marcado a interseção seria "tudo" pela convenção matemática, e por
+isso o caso zero é escrito à parte.
+
+Consequências que o código respeita:
+
+- Cada coluna e cada filtro declaram `kinds` — a que Tipos pertencem. Ausente é universal.
+  E os `kinds` de equipamento foram **medidos**, não supostos: `acBonus` é
+  `['armor', 'shield']` porque são esses dois que o preenchem (185 de 211 e 126 de 126).
+- A fonte declara qual filtro é o Tipo (`typeFilter`). Em quase toda ela é o `sector`, da
+  pasta do compêndio; em equipamento é o `kind`, porque lá 5.706 dos 5.869 não têm pasta.
+- A preferência de colunas passa a ser **por fonte E por Tipo** (`columnsByType`). É o que
+  faz "armas com dano e mãos" e "armaduras com CA e limite de Destreza" conviverem sem uma
+  apagar a outra — e o que faz voltar à arma reencontrar as colunas de arma.
+- O preset só vale com UM Tipo marcado. Com dois, o preset de qual? A união daria colunas
+  que metade das linhas não preenche; a interseção daria quase nada.
+- **Nada virou seleção única.** Chegou a ser a proposta, e o número a derrubou: em talentos,
+  General tem 41 entradas e existe para ser lido ao lado de Skill e Class. O recorte entrega
+  o mesmo ganho sem tirar isso de ninguém.
+
+---
+
 ## 7. Preferências do usuário
 
 Tudo que o usuário configura na tela **sobrevive** ao fechamento do app e às atualizações

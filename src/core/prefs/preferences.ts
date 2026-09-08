@@ -39,6 +39,17 @@ export interface SourcePreferences {
    */
   readonly columns: readonly string[] | null;
   /**
+   * As colunas escolhidas para CADA Tipo, quando um só está marcado.
+   *
+   * `columns` acima é a visão geral (nenhum Tipo, ou vários); isto é o recorte. Chaveado
+   * pelo valor do Tipo — `weapon`, `armor`, `Spells`… —, e é o que faz "armas com dano e
+   * mãos" e "armaduras com CA e limite de Destreza" conviverem sem uma apagar a outra.
+   *
+   * Mesma regra do `columns`: `null` é "nunca configurei, use o preset do Tipo"; `[]` é
+   * "escolhi nenhuma".
+   */
+  readonly columnsByType: Readonly<Record<string, readonly string[] | null>>;
+  /**
    * As colunas ESPECIAIS que o usuário desligou — `level`, `rarity`, `traits`.
    *
    * Guardamos o que está DESLIGADO, e não o que está ligado, porque elas vêm ligadas por
@@ -73,6 +84,7 @@ export interface Preferences {
 
 export const EMPTY_SOURCE_PREFERENCES: SourcePreferences = {
   columns: null,
+  columnsByType: {},
   hiddenSpecials: [],
   filters: {},
 };
@@ -122,7 +134,22 @@ function readSource(value: unknown): SourcePreferences {
 
   // Chave ausente é "nunca configurei"; array presente, mesmo vazio, é escolha.
   const columns = Array.isArray(value['columns']) ? textList(value['columns']) : null;
-  return { columns, hiddenSpecials: textList(value['hiddenSpecials']), filters };
+
+  /* O mesmo, por Tipo. Chave que não guarda lista some, em vez de virar lista vazia. */
+  const columnsByType: Record<string, readonly string[] | null> = {};
+  const porTipo = value['columnsByType'];
+  if (isRecord(porTipo)) {
+    for (const [tipo, lista] of Object.entries(porTipo)) {
+      if (Array.isArray(lista)) columnsByType[tipo] = textList(lista);
+    }
+  }
+
+  return {
+    columns,
+    columnsByType,
+    hiddenSpecials: textList(value['hiddenSpecials']),
+    filters,
+  };
 }
 
 /** Decodifica o que está gravado. Nunca lança; o ilegível vira o padrão. */

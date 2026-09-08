@@ -3,6 +3,11 @@ import { useDeferredValue, useEffect, useMemo, useReducer, useRef, useState } fr
 import {
   SOURCES,
   applyFilters,
+  columnsInScope,
+  filtersInScope,
+  presetFor,
+  scopeKey,
+  selectedTypes,
   createSearchIndex,
   firstReadySource,
   fieldValue,
@@ -306,22 +311,58 @@ function SourcePane({
     setFechadoAMao(false);
   };
 
+  /*
+   * O RECORTE POR TIPO. Ver `core/browse/scope.ts` para a regra.
+   *
+   * Com um Tipo marcado, só as colunas e os filtros daquele Tipo aparecem, e o preset dele
+   * liga sozinho; com vários, só o que eles têm em comum; com nenhum, só o universal. É o
+   * que desfaz as vinte e duas colunas de equipamento — nove conjuntos empilhados que
+   * ninguém precisa ver juntos.
+   */
+  const tiposMarcados = useMemo(() => selectedTypes(source, filters), [source, filters]);
+  const colunasNoEscopo = useMemo(
+    () => columnsInScope(source, tiposMarcados),
+    [source, tiposMarcados],
+  );
+  const filtrosNoEscopo = useMemo(
+    () => filtersInScope(source, tiposMarcados),
+    [source, tiposMarcados],
+  );
+  const escopo = scopeKey(tiposMarcados);
+
   const openTopic = overlay?.kind === 'topic' ? overlay.id : null;
-  const topicoAberto = source.filters.find((spec) => spec.id === openTopic);
+  const topicoAberto = filtrosNoEscopo.find((spec) => spec.id === openTopic);
 
   /*
-   * As colunas visíveis: a escolha do usuário, ou o padrão da fonte enquanto ele não
-   * escolheu. `ready` importa aqui — antes da leitura terminar as preferências estão
-   * vazias, e usar o padrão nesse instante evitaria o piscar, mas gravaria o padrão por
-   * cima da escolha dele se ele mexesse rápido demais.
+   * As colunas visíveis: a escolha do usuário PARA ESTE RECORTE, ou o preset dele.
+   *
+   * `ready` importa aqui — antes da leitura terminar as preferências estão vazias, e usar
+   * o padrão nesse instante evitaria o piscar, mas gravaria o padrão por cima da escolha
+   * dele se ele mexesse rápido demais.
    *
    * `?? ` e não `.length > 0`: `[]` é uma escolha legítima ("nenhuma coluna"), e tratá-la
    * como ausência ressuscitava a coluna que o usuário acabara de desmarcar.
    */
-  const idsVisiveis = (ready ? salvas.columns : null) ?? source.defaultColumns;
+  const gravadas = escopo === '' ? salvas.columns : (salvas.columnsByType[escopo] ?? null);
+  const idsVisiveis =
+    (ready ? gravadas : null) ?? presetFor(source, tiposMarcados) ?? source.defaultColumns;
   const colunasVisiveis = idsVisiveis
-    .map((id) => source.columns.find((column) => column.id === id))
+    .map((id) => colunasNoEscopo.find((column) => column.id === id))
     .filter((column) => column !== undefined);
+
+  /** Grava a escolha de colunas no recorte em vigor, e não por cima do geral. */
+  const gravarColunas = (columns: readonly string[] | null): void => {
+    update((atual) =>
+      escopo === ''
+        ? withSource(atual, source.id, { columns })
+        : withSource(atual, source.id, {
+            columnsByType: {
+              ...sourcePreferences(atual, source.id).columnsByType,
+              [escopo]: columns,
+            },
+          }),
+    );
+  };
 
   /*
    * As especiais ligadas: as que a fonte TEM, menos as que o usuário desligou.
@@ -410,9 +451,9 @@ function SourcePane({
   const camada =
     overlay === null ? null : overlay.kind === 'columns' ? (
       <ColumnPicker
-        available={source.columns}
+        available={colunasNoEscopo}
         selected={idsVisiveis}
-        noPadrao={salvas.columns === null && salvas.hiddenSpecials.length === 0}
+        noPadrao={gravadas === null && salvas.hiddenSpecials.length === 0}
         special={source.special}
         hiddenSpecials={escondidas}
         onToggleSpecial={(id) => {
@@ -425,12 +466,11 @@ function SourcePane({
             });
           });
         }}
-        onChange={(columns) => {
-          update((atual) => withSource(atual, source.id, { columns }));
-        }}
+        onChange={gravarColunas}
         onReset={() => {
-          // `null` devolve a fonte ao padrão dela; `[]` seria "nenhuma coluna".
-          update((atual) => withSource(atual, source.id, { columns: null, hiddenSpecials: [] }));
+          // `null` devolve o recorte ao preset dele; `[]` seria "nenhuma coluna".
+          gravarColunas(null);
+          update((atual) => withSource(atual, source.id, { hiddenSpecials: [] }));
         }}
         onClose={() => {
           mostrarCamada(null);
@@ -488,7 +528,7 @@ function SourcePane({
         </div>
 
         <FilterBar
-          specs={source.filters}
+          specs={filtrosNoEscopo}
           state={filters}
           openTopic={openTopic}
           onOpenTopic={(id) => {

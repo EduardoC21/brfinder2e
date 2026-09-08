@@ -43,6 +43,13 @@ interface ColumnBase {
   readonly id: string;
   /** `end` empurra para a direita. O grupo da condição vive na borda direita. */
   readonly align?: Align;
+  /**
+   * A que Tipos esta coluna se aplica. Ausente: a TODOS.
+   *
+   * É o que impede as vinte e duas colunas de equipamento de aparecerem juntas. Ver
+   * `browse/scope.ts` para a regra — universal ∪ interseção dos Tipos marcados.
+   */
+  readonly kinds?: readonly string[];
 }
 
 /**
@@ -102,6 +109,17 @@ export type ColumnSpec =
 export type Combine = 'any' | 'all';
 
 /**
+ * O que todo tópico de filtro tem além do que a espécie dele pede.
+ *
+ * `kinds` segue a mesma regra das colunas: ausente vale para todos os Tipos; presente, só
+ * aparece quando os Tipos marcados estão contidos nele. Ver `browse/scope.ts`.
+ */
+interface FilterBase {
+  readonly id: string;
+  readonly kinds?: readonly string[];
+}
+
+/**
  * Um TÓPICO de filtro.
  *
  * Tópico e não "filtro de campo": o `id` é a identidade, e o campo é detalhe de como o
@@ -116,38 +134,33 @@ export type Combine = 'any' | 'all';
  */
 export type FilterSpec =
   /** Campo de valor único: grupo, categoria, livro. Vários marcados é OU. */
-  | { readonly kind: 'options'; readonly id: string; readonly field: string }
+  | ({ readonly kind: 'options'; readonly field: string } & FilterBase)
   /** Campo de sim/não. */
-  | { readonly kind: 'boolean'; readonly id: string; readonly field: string }
+  | ({ readonly kind: 'boolean'; readonly field: string } & FilterBase)
   /**
    * Campo que guarda uma LISTA — traços. Aqui o par E/OU faz diferença de verdade, e
    * `combine` é o padrão com que o tópico abre.
    */
-  | {
-      readonly kind: 'list';
-      readonly id: string;
-      readonly field: string;
-      readonly combine: Combine;
-    }
+  | ({ readonly kind: 'list'; readonly field: string; readonly combine: Combine } & FilterBase)
   /** O custo em ações, desenhado com os glifos: ◆ ◆◆ ◆◆◆ ◇ ↩ —. */
-  | { readonly kind: 'cost'; readonly id: string }
+  | ({ readonly kind: 'cost' } & FilterBase)
   /**
    * A raridade. Espécie própria por três motivos que `options` não atende: o domínio é
    * fechado e ordenado pelo JOGO (comum → única, e não alfabético), os valores têm
    * tradução fixa, e as quatro aparecem mesmo com zero resultados.
    */
-  | { readonly kind: 'rarity'; readonly id: string; readonly field: string }
+  | ({ readonly kind: 'rarity'; readonly field: string } & FilterBase)
   /**
    * A frequência de uso. As opções são pares `max:per` (`1:day`), ordenados pela DURAÇÃO e
    * não pelo alfabeto — "por rodada" antes de "por dia" é a ordem em que a pessoa pensa.
    */
-  | { readonly kind: 'frequency'; readonly id: string; readonly field: string }
+  | ({ readonly kind: 'frequency'; readonly field: string } & FilterBase)
   /**
    * O custo de CONJURAR. Uma opção por FORMATO do dado — as 26 que existem —, ordenadas
    * pela conta em `castRank`: ◆, ◆◆, ◆◆◆, as faixas, ◇, ↩, e o que leva tempo, do mais
    * curto para o mais longo.
    */
-  | { readonly kind: 'cast'; readonly id: string; readonly field: string }
+  | ({ readonly kind: 'cast'; readonly field: string } & FilterBase)
   /**
    * A DEFESA contra a magia: salvamento, defesa passiva e ATAQUE no mesmo tópico.
    *
@@ -155,7 +168,7 @@ export type FilterSpec =
    * só. MULTIVALOR, como `list`: 6 magias atacam a CA e ainda pedem salvamento, e cada uma
    * conta nas duas opções. Sem o par E/OU, que aqui não teria uso.
    */
-  | ({ readonly kind: 'defense'; readonly id: string } & DefenseFields)
+  | ({ readonly kind: 'defense' } & DefenseFields & FilterBase)
   /**
    * Uma FAIXA numérica preenchível: "de 30 a 60 pés". Sem opções — dois campos.
    *
@@ -165,7 +178,7 @@ export type FilterSpec =
    *
    * O campo pode guardar PROSA (`30 feet`, `1 mile`, `touch`) — ver `distanceFeet`.
    */
-  | { readonly kind: 'number'; readonly id: string; readonly field: string; readonly unit: Unit }
+  | ({ readonly kind: 'number'; readonly field: string; readonly unit: Unit } & FilterBase)
   /**
    * A ÁREA: o TIPO (opções) e o TAMANHO (faixa) no mesmo tópico, somados.
    *
@@ -173,7 +186,7 @@ export type FilterSpec =
    * até 20 pés". Dois tópicos chamados "área" na barra obrigariam a abrir os dois para
    * descobrir qual é qual.
    */
-  | { readonly kind: 'area'; readonly id: string; readonly field: string; readonly unit: Unit };
+  | ({ readonly kind: 'area'; readonly field: string; readonly unit: Unit } & FilterBase);
 
 /** A unidade de uma faixa numérica: pés de distância, cobre de preço, e o Volume. */
 export type Unit = 'feet' | 'copper' | 'bulk';
@@ -261,6 +274,21 @@ export interface SourceSpec {
   /** Nível, raridade e traços — fora do teto, ligadas por padrão. */
   readonly special: SpecialColumns;
   readonly filters: readonly FilterSpec[];
+  /**
+   * O id do filtro que faz o papel de TIPO nesta fonte, ou `null` se ela não tem um.
+   *
+   * É ele que comanda o recorte de colunas e filtros (ver `browse/scope.ts`). Em quase toda
+   * fonte é o `sector`, que vem da pasta do compêndio; em equipamento é o `kind`, porque lá
+   * 5.706 dos 5.869 não têm pasta.
+   */
+  readonly typeFilter: string | null;
+  /**
+   * Quais colunas ligam sozinhas quando UM Tipo está marcado, por valor de Tipo.
+   *
+   * O modelo é a tabela do Archives of Nethys: cada categoria tem suas colunas, e elas já
+   * vêm postas. Ausente para um Tipo: cai em `defaultColumns`, como a visão geral.
+   */
+  readonly presets?: Readonly<Record<string, readonly string[]>>;
   /** Campos que a busca indexa, em ordem de peso — o primeiro pesa mais. */
   readonly searchFields: readonly string[];
   /** O cabeçalho do detalhe. A descrição vem sempre, e não se declara. */
@@ -303,6 +331,8 @@ export const SOURCES: readonly SourceSpec[] = [
       { kind: 'boolean', id: 'valued', field: 'valued' },
       { kind: 'options', id: 'source', field: 'source.title' },
     ],
+    /* Condição não tem Tipo: a fonte inteira é uma coisa só. */
+    typeFilter: null,
     searchFields: ['name', 'summary'],
     /*
      * A ordem é do autor, e é a ordem de LEITURA de uma condição: o que ela é, se leva
@@ -370,6 +400,8 @@ export const SOURCES: readonly SourceSpec[] = [
       { kind: 'frequency', id: 'frequency', field: 'frequency' },
       { kind: 'options', id: 'source', field: 'source.title' },
     ],
+    /* O Tipo desta fonte vem da pasta do compêndio. Ver `browse/scope.ts`. */
+    typeFilter: 'sector',
     searchFields: ['name'],
     /*
      * A ordem é do autor, e segue a da ficha do jogo: o que a ação É (traços), quanto
@@ -409,6 +441,8 @@ export const SOURCES: readonly SourceSpec[] = [
       { kind: 'boolean', id: 'onlyLevel1', field: 'onlyLevel1' },
       { kind: 'options', id: 'source', field: 'source.title' },
     ],
+    /* O Tipo desta fonte vem da pasta do compêndio. Ver `browse/scope.ts`. */
+    typeFilter: 'sector',
     searchFields: ['name'],
     /*
      * Ordem do autor. Fora daqui ficam `prerequisites`, `maxTakable`, `onlyLevel1` e
@@ -461,6 +495,8 @@ export const SOURCES: readonly SourceSpec[] = [
       { kind: 'defense', id: 'save', ...DEFESA_DE_MAGIA },
       { kind: 'options', id: 'source', field: 'source.title' },
     ],
+    /* O Tipo desta fonte vem da pasta do compêndio. Ver `browse/scope.ts`. */
+    typeFilter: 'sector',
     searchFields: ['name'],
     /*
      * A ORDEM é a do livro, confirmada no AoN:
@@ -513,29 +549,65 @@ export const SOURCES: readonly SourceSpec[] = [
      */
     columns: [
       { kind: 'chip', id: 'kind', field: 'kind' },
-      { kind: 'chip', id: 'category', field: 'category' },
-      { kind: 'chip', id: 'group', field: 'group' },
-      { kind: 'chip', id: 'weaponType', field: 'weaponType' },
-      { kind: 'damage', id: 'damage', field: 'damage' },
-      { kind: 'chip', id: 'hands', field: 'hands' },
-      { kind: 'text', id: 'range', field: 'range' },
-      { kind: 'chip', id: 'reload', field: 'reload' },
+      {
+        kind: 'chip',
+        id: 'category',
+        field: 'category',
+        kinds: ['consumable', 'weapon', 'treasure', 'armor'],
+      },
+      { kind: 'chip', id: 'group', field: 'group', kinds: ['weapon', 'armor'] },
+      { kind: 'chip', id: 'weaponType', field: 'weaponType', kinds: ['weapon'] },
+      { kind: 'damage', id: 'damage', field: 'damage', kinds: ['weapon', 'consumable'] },
+      {
+        kind: 'chip',
+        id: 'hands',
+        field: 'hands',
+        kinds: ['equipment', 'consumable', 'weapon', 'backpack'],
+      },
+      { kind: 'text', id: 'range', field: 'range', kinds: ['weapon'] },
+      { kind: 'chip', id: 'reload', field: 'reload', kinds: ['weapon'] },
       { kind: 'price', id: 'price', field: 'price' },
       { kind: 'bulk', id: 'bulk', field: 'bulk' },
-      { kind: 'chip', id: 'carry', field: 'carry' },
-      { kind: 'text', id: 'usage', field: 'usage' },
-      { kind: 'text', id: 'acBonus', field: 'acBonus' },
-      { kind: 'text', id: 'dexCap', field: 'dexCap' },
-      { kind: 'text', id: 'checkPenalty', field: 'checkPenalty' },
-      { kind: 'text', id: 'speedPenalty', field: 'speedPenalty' },
-      { kind: 'text', id: 'strength', field: 'strength' },
-      { kind: 'text', id: 'hardness', field: 'hardness' },
-      { kind: 'text', id: 'hitPoints', field: 'hitPoints' },
-      { kind: 'text', id: 'uses', field: 'uses' },
+      {
+        kind: 'chip',
+        id: 'carry',
+        field: 'carry',
+        kinds: ['equipment', 'consumable', 'weapon', 'backpack'],
+      },
+      {
+        kind: 'text',
+        id: 'usage',
+        field: 'usage',
+        kinds: ['equipment', 'consumable', 'weapon', 'backpack'],
+      },
+      { kind: 'text', id: 'acBonus', field: 'acBonus', kinds: ['armor', 'shield'] },
+      { kind: 'text', id: 'dexCap', field: 'dexCap', kinds: ['armor'] },
+      { kind: 'text', id: 'checkPenalty', field: 'checkPenalty', kinds: ['armor'] },
+      { kind: 'text', id: 'speedPenalty', field: 'speedPenalty', kinds: ['armor', 'shield'] },
+      { kind: 'text', id: 'strength', field: 'strength', kinds: ['armor'] },
+      { kind: 'text', id: 'hardness', field: 'hardness', kinds: ['shield'] },
+      { kind: 'text', id: 'hitPoints', field: 'hitPoints', kinds: ['shield'] },
+      { kind: 'text', id: 'uses', field: 'uses', kinds: ['consumable', 'ammo'] },
       { kind: 'chip', id: 'family', field: 'family' },
       { kind: 'text', id: 'source', field: 'source.title' },
     ],
-    defaultColumns: [],
+    /* A visão geral mostra só o Tipo: é a única em que uma coluna pode estar vazia em 90%
+       das linhas. Ver `browse/scope.ts`. */
+    defaultColumns: ['kind'],
+    /*
+     * O que liga sozinho quando UM Tipo está marcado — copiado das tabelas do Archives of
+     * Nethys, uma por categoria. Três no máximo, que é o teto de colunas da lista.
+     */
+    presets: {
+      weapon: ['group', 'damage', 'hands'],
+      armor: ['category', 'acBonus', 'dexCap'],
+      shield: ['acBonus', 'hardness', 'hitPoints'],
+      consumable: ['category', 'usage'],
+      ammo: ['uses'],
+      equipment: ['carry', 'usage'],
+      treasure: ['category'],
+      backpack: ['usage'],
+    },
     special: { level: 'level', rarity: 'rarity', traits: 'traits' },
     /*
      * O TIPO aqui é o `kind` — o `type` do próprio documento do Foundry —, e não a pasta.
@@ -546,23 +618,43 @@ export const SOURCES: readonly SourceSpec[] = [
       { kind: 'options', id: 'level', field: 'level' },
       { kind: 'rarity', id: 'rarity', field: 'rarity' },
       { kind: 'list', id: 'traits', field: 'traits', combine: 'any' },
-      { kind: 'options', id: 'category', field: 'category' },
-      { kind: 'options', id: 'group', field: 'group' },
-      { kind: 'options', id: 'weaponType', field: 'weaponType' },
-      { kind: 'options', id: 'hands', field: 'hands' },
-      { kind: 'options', id: 'reload', field: 'reload' },
+      {
+        kind: 'options',
+        id: 'category',
+        field: 'category',
+        kinds: ['consumable', 'weapon', 'treasure', 'armor'],
+      },
+      { kind: 'options', id: 'group', field: 'group', kinds: ['weapon', 'armor'] },
+      { kind: 'options', id: 'weaponType', field: 'weaponType', kinds: ['weapon'] },
+      {
+        kind: 'options',
+        id: 'hands',
+        field: 'hands',
+        kinds: ['equipment', 'consumable', 'weapon', 'backpack'],
+      },
+      { kind: 'options', id: 'reload', field: 'reload', kinds: ['weapon'] },
       { kind: 'number', id: 'price', field: 'price', unit: 'copper' },
       { kind: 'number', id: 'bulk', field: 'bulk', unit: 'bulk' },
-      { kind: 'number', id: 'range', field: 'range', unit: 'feet' },
+      { kind: 'number', id: 'range', field: 'range', unit: 'feet', kinds: ['weapon'] },
       /*
        * `carry` e não `usage`: são as mesmas 5.161 respostas em OITO opções em vez de 120.
        * Vinte e sete grafias de "vestido" numa lista de filtro não respondem "o que é
        * vestido". O `usage` cru continua sendo o que a tela ESCREVE.
        */
-      { kind: 'options', id: 'carry', field: 'carry' },
+      {
+        kind: 'options',
+        id: 'carry',
+        field: 'carry',
+        kinds: ['equipment', 'consumable', 'weapon', 'backpack'],
+      },
       { kind: 'options', id: 'family', field: 'family' },
       { kind: 'options', id: 'source', field: 'source.title' },
     ],
+    /*
+     * O Tipo é o `kind`, e não a pasta: 5.706 dos 5.869 não têm pasta nenhuma.
+     * É ele que comanda quais colunas e filtros aparecem. Ver `browse/scope.ts`.
+     */
+    typeFilter: 'kind',
     searchFields: ['name'],
     /*
      * A ordem é a do bloco de item do AoN, conferida nos prints do autor:
@@ -606,6 +698,7 @@ export const SOURCES: readonly SourceSpec[] = [
     defaultColumns: [],
     special: NO_SPECIAL_COLUMNS,
     filters: [],
+    typeFilter: null,
     searchFields: [],
     detail: [],
   },
@@ -617,6 +710,7 @@ export const SOURCES: readonly SourceSpec[] = [
     defaultColumns: [],
     special: NO_SPECIAL_COLUMNS,
     filters: [],
+    typeFilter: null,
     searchFields: [],
     detail: [],
   },
@@ -628,6 +722,7 @@ export const SOURCES: readonly SourceSpec[] = [
     defaultColumns: [],
     special: NO_SPECIAL_COLUMNS,
     filters: [],
+    typeFilter: null,
     searchFields: [],
     detail: [],
   },
@@ -639,6 +734,7 @@ export const SOURCES: readonly SourceSpec[] = [
     defaultColumns: [],
     special: NO_SPECIAL_COLUMNS,
     filters: [],
+    typeFilter: null,
     searchFields: [],
     detail: [],
   },
@@ -650,6 +746,7 @@ export const SOURCES: readonly SourceSpec[] = [
     defaultColumns: [],
     special: NO_SPECIAL_COLUMNS,
     filters: [],
+    typeFilter: null,
     searchFields: [],
     detail: [],
   },
@@ -661,6 +758,7 @@ export const SOURCES: readonly SourceSpec[] = [
     defaultColumns: [],
     special: NO_SPECIAL_COLUMNS,
     filters: [],
+    typeFilter: null,
     searchFields: [],
     detail: [],
   },
@@ -672,6 +770,7 @@ export const SOURCES: readonly SourceSpec[] = [
     defaultColumns: [],
     special: NO_SPECIAL_COLUMNS,
     filters: [],
+    typeFilter: null,
     searchFields: [],
     detail: [],
   },
