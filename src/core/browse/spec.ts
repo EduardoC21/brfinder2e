@@ -703,32 +703,47 @@ export const SOURCES: readonly SourceSpec[] = [
      * Depois vêm os números que só armadura e escudo têm, e por fim de onde o item veio.
      * Nível e raridade NÃO são campos: viram a calha e a etiqueta ao lado do nome.
      */
+    /*
+     * A ORDEM é a dos blocos do próprio Archives of Nethys, lidos um a um. Seis blocos, e
+     * uma sequência que serve aos seis:
+     *
+     *   Full Plate        Preço · CA · Des · testes · deslocamento · Força · Volume · categoria · grupo
+     *   Steel Shield      Preço · CA · deslocamento · Volume · dureza · PV
+     *   Javelin           Preço · dano · Volume · mãos · alcance · tipo · categoria · grupo
+     *   Arrows            Preço · Volume · mãos · tipo · categoria · grupo
+     *   Bag of Holding    Uso · Volume
+     *   Alchemist's Fire  Uso · Volume
+     *
+     * O que os itens sem preço no cabeçalho mostram primeiro é o USO — por isso ele vem
+     * logo depois do preço, e não lá embaixo, onde eu o tinha posto.
+     *
+     * Os dois últimos são o Tipo e o livro, como em toda fonte.
+     */
     detail: [
       { kind: 'chips', field: 'traits' },
       { kind: 'price', field: 'price' },
+      { kind: 'text', field: 'usage' },
       { kind: 'damage', field: 'damage' },
-      { kind: 'bulk', field: 'bulk' },
-      { kind: 'text', field: 'hands' },
-      { kind: 'text', field: 'weaponType' },
-      { kind: 'text', field: 'category' },
-      { kind: 'text', field: 'group' },
-      { kind: 'stat', field: 'range', unit: 'ft.' },
-      { kind: 'text', field: 'reload' },
-      { kind: 'stat', field: 'acBonus' },
+      { kind: 'stat', field: 'acBonus', signed: true },
       { kind: 'stat', field: 'dexCap', signed: true },
       { kind: 'stat', field: 'checkPenalty', signed: true, hideZero: true },
       { kind: 'stat', field: 'speedPenalty', signed: true, unit: 'ft.', hideZero: true },
-      { kind: 'stat', field: 'strength' },
+      { kind: 'stat', field: 'strength', signed: true },
+      { kind: 'bulk', field: 'bulk' },
       { kind: 'stat', field: 'hardness' },
       { kind: 'stat', field: 'hitPoints' },
+      { kind: 'text', field: 'hands' },
+      { kind: 'stat', field: 'range', unit: 'ft.' },
+      { kind: 'text', field: 'reload' },
+      { kind: 'text', field: 'weaponType' },
+      { kind: 'text', field: 'category' },
+      { kind: 'text', field: 'group' },
       { kind: 'stat', field: 'uses' },
-      { kind: 'text', field: 'usage' },
       { kind: 'text', field: 'family' },
       /*
        * O TIPO é o PENÚLTIMO, antes do livro — a mesma posição que ele tem em ação,
        * talento e magia. Ele abre a lista de filtros e a de colunas porque ali é recorte;
-       * aqui a ordem é a de LEITURA da entrada, e no fim do bloco é onde o livro põe "de
-       * que espécie isto é". Estava no meio, e era desalinhamento meu com o combinado.
+       * aqui a ordem é a de LEITURA da entrada.
        */
       { kind: 'text', field: 'kind' },
       { kind: 'source' },

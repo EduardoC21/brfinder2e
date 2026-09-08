@@ -13,9 +13,19 @@ import { bulkText, capitalizar, priceText } from '@ui/text';
  * o recarregamento a quente do Vite.
  */
 
-/** `250` → `2 PO, 5 PP`. Vazio quando não há preço — 363 itens não têm. */
+/**
+ * `250` → `2 PO, 5 PP`. Vazio quando não há preço — 367 itens não têm.
+ *
+ * O LOTE entra junto quando existe: o AoN escreve `1 sp (price for 10)` nas flechas, e sem
+ * isso uma flecha pareceria custar dez vezes o que custa. São 48 itens, quase todos
+ * munição.
+ */
 export function itemPriceText(entity: BrowseEntity, field: string): string {
-  return priceText(Number(fieldValue(entity, field)));
+  const escrito = priceText(Number(fieldValue(entity, field)));
+  if (escrito === '') return '';
+  const lote = Number(fieldValue(entity, 'pricePer'));
+  if (!Number.isFinite(lote) || lote <= 1) return escrito;
+  return `${escrito} ${strings.browse.price.per(lote)}`;
 }
 
 /** `0` → nada, `0.1` → `L`, `2` → `2`. */

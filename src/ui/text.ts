@@ -79,7 +79,10 @@ export function fieldText(field: string, value: string): string {
 }
 
 /** Quanto vale cada moeda em cobre, da maior para a menor. Espelha `EM_COBRE` na receita. */
-const MOEDAS: readonly (readonly [keyof typeof MOEDA_ROTULO, number])[] = [
+/** As quatro moedas, e só elas: `none` e `per` também moram na tabela, e não são moeda. */
+type Moeda = 'pl' | 'po' | 'pp' | 'pc';
+
+const MOEDAS: readonly (readonly [Moeda, number])[] = [
   ['pl', 1000],
   ['po', 100],
   ['pp', 10],

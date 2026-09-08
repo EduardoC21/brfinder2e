@@ -174,6 +174,8 @@ export const ptBR = {
       pc: 'PC',
       /** Preço zero: nem toda coisa do livro tem preço impresso. */
       none: '—',
+      /** `1 PP (por 10)` — o AoN escreve `1 sp (price for 10)`. São 48 itens. */
+      per: (quantas: number) => `(por ${String(quantas)})`,
     },
     /** O VOLUME. `0` é insignificante e `0,1` é o "L" do livro. */
     bulk: {
