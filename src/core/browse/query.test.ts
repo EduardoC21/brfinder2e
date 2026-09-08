@@ -537,3 +537,52 @@ describe('topicMatters — o tópico ainda pode mudar alguma coisa?', () => {
     expect(topicMatters([entity('p', { price: 100 })], faixa)).toBe(true);
   });
 });
+
+/*
+ * O DOMÍNIO DECLARADO: os seis atributos aparecem inteiros e na ordem da ficha.
+ *
+ * Medido nas 17 perícias: nenhuma usa Constituição. Descoberta pelo dado, ela não
+ * existiria no filtro — e a ausência de uma opção não afirma "não há nenhuma".
+ */
+const pericias: BrowseEntity[] = [
+  entity('p1', { name: 'Athletics', attribute: 'Strength' }),
+  entity('p2', { name: 'Acrobatics', attribute: 'Dexterity' }),
+  entity('p3', { name: 'Arcana', attribute: 'Intelligence' }),
+];
+
+const atributo: FilterSpec = {
+  kind: 'options',
+  id: 'attribute',
+  field: 'attribute',
+  values: ['Strength', 'Dexterity', 'Constitution', 'Intelligence', 'Wisdom', 'Charisma'],
+};
+
+describe('o tópico que declara o próprio domínio', () => {
+  it('mostra as seis, na ordem da ficha, mesmo a que ninguém usa', () => {
+    expect(optionsFor(pericias, atributo)).toEqual([
+      { value: 'Strength', count: 1 },
+      { value: 'Dexterity', count: 1 },
+      { value: 'Constitution', count: 0 },
+      { value: 'Intelligence', count: 1 },
+      { value: 'Wisdom', count: 0 },
+      { value: 'Charisma', count: 0 },
+    ]);
+  });
+
+  /* Valor fora da lista não some: o filtro continua alcançando o dado inteiro. */
+  it('um valor que a lista não conhece vai para o fim', () => {
+    const comEstranho = [...pericias, entity('p4', { name: 'X', attribute: 'Luck' })];
+    const ultima = optionsFor(comEstranho, atributo).at(-1);
+    expect(ultima).toEqual({ value: 'Luck', count: 1 });
+  });
+
+  /* Sem `values`, tudo segue como antes: as opções saem do dado, em ordem alfabética. */
+  it('sem domínio declarado, nada muda', () => {
+    const semDominio: FilterSpec = { kind: 'options', id: 'attribute', field: 'attribute' };
+    expect(optionsFor(pericias, semDominio).map((opcao) => opcao.value)).toEqual([
+      'Dexterity',
+      'Intelligence',
+      'Strength',
+    ]);
+  });
+});

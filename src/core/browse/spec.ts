@@ -141,8 +141,24 @@ interface FilterBase {
  * compilador cobra o segundo. Nenhuma das doze telas precisa mudar por causa dele.
  */
 export type FilterSpec =
-  /** Campo de valor único: grupo, categoria, livro. Vários marcados é OU. */
-  | ({ readonly kind: 'options'; readonly field: string } & FilterBase)
+  /**
+   * Campo de valor único: grupo, categoria, livro. Vários marcados é OU.
+   *
+   * `values` declara um DOMÍNIO FECHADO — as opções que existem no jogo, na ordem do jogo.
+   * Sem ele, as opções saem do dado, que é o normal e o certo para quase tudo: um grupo
+   * novo numa versão futura aparece sozinho.
+   *
+   * Com ele, as declaradas aparecem SEMPRE, mesmo com zero entradas, e na ordem escrita.
+   * É o que os seis atributos precisam: nenhuma das 17 perícias usa Constituição, e a
+   * ausência da opção não diz "não há nenhuma" — não diz nada. E a ordem do jogo (For,
+   * Des, Con, Int, Sab, Car) é a que está impressa em toda ficha; alfabetada, ela vira
+   * Carisma, Constituição, Destreza… que ninguém reconhece.
+   */
+  | ({
+      readonly kind: 'options';
+      readonly field: string;
+      readonly values?: readonly string[];
+    } & FilterBase)
   /** Campo de sim/não. */
   | ({ readonly kind: 'boolean'; readonly field: string } & FilterBase)
   /**
@@ -359,6 +375,31 @@ const DEFESA_DE_MAGIA: DefenseFields = {
   traitsField: 'traits',
   attackTrait: 'attack',
 };
+
+/**
+ * Os SEIS atributos, na ordem da ficha: Força, Destreza, Constituição, Inteligência,
+ * Sabedoria, Carisma.
+ *
+ * Domínio fechado escrito à mão, e é uma das pouquíssimas listas assim no projeto — a
+ * regra é que opção sai do dado. Duas coisas a justificam, e as duas foram medidas nas 17
+ * perícias:
+ *
+ *   NENHUMA usa Constituição. Descoberta pelo dado, ela simplesmente não existiria no
+ *   filtro — e a ausência de uma opção não afirma "não há nenhuma", não afirma nada.
+ *   A ordem é do JOGO, não do alfabeto. Alfabetada ela sai Carisma, Constituição,
+ *   Destreza, Força, Inteligência, Sabedoria — que é a ordem de nenhuma ficha de PF2e.
+ *
+ * Os valores são os do dado, em inglês, como todo dado de jogo. Se um dia o Paizo criar
+ * um sétimo atributo, ele NÃO aparece sozinho — e é o preço consciente de fechar o domínio.
+ */
+const ATTRIBUTES: readonly string[] = [
+  'Strength',
+  'Dexterity',
+  'Constitution',
+  'Intelligence',
+  'Wisdom',
+  'Charisma',
+];
 
 export const SOURCES: readonly SourceSpec[] = [
   {
@@ -855,7 +896,7 @@ export const SOURCES: readonly SourceSpec[] = [
     columns: [{ kind: 'chip', id: 'attribute', field: 'attribute' }],
     defaultColumns: ['attribute'],
     special: NO_SPECIAL_COLUMNS,
-    filters: [{ kind: 'options', id: 'attribute', field: 'attribute' }],
+    filters: [{ kind: 'options', id: 'attribute', field: 'attribute', values: ATTRIBUTES }],
     typeFilter: null,
     searchFields: ['name'],
     /*

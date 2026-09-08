@@ -51,6 +51,15 @@ export type RunState =
       readonly rejected: string;
       readonly failures: number;
       readonly keeping: string;
+      /**
+       * O motivo REAL, quando a tentativa explodiu em vez de decodificar sujo.
+       *
+       * ⚠️ Ele era jogado fora, e a tela dizia "não foi possível ler a versão mais nova"
+       * para qualquer coisa que desse errado — rede caída, GitHub recusando, zip
+       * corrompido, IndexedDB sem espaço. Uma frase que AFIRMA um diagnóstico que o código
+       * não fez, e que deixa quem lê sem nada para investigar.
+       */
+      readonly reason?: string;
     }
   | { readonly status: 'error'; readonly message: string };
 
@@ -93,6 +102,7 @@ type SyncAction =
       readonly rejected: string;
       readonly failures: number;
       readonly keeping: string;
+      readonly reason?: string;
     }
   | { readonly kind: 'error'; readonly message: string }
   | { readonly kind: 'checking' }
@@ -138,6 +148,7 @@ function reduce(state: SyncState, action: SyncAction): SyncState {
           rejected: action.rejected,
           failures: action.failures,
           keeping: action.keeping,
+          ...(action.reason === undefined ? {} : { reason: action.reason }),
         },
       };
     case 'error':
@@ -311,7 +322,15 @@ export function useSync(): UseSync {
          * nenhuma e ficou sem nada.
          */
         if (atual !== null && plan.kind === 'newest') {
-          dispatch({ kind: 'refused', rejected: '', failures: 0, keeping: atual });
+          dispatch({
+            kind: 'refused',
+            rejected: '',
+            failures: 0,
+            keeping: atual,
+            // O motivo VAI JUNTO. Ficar só com "não foi possível" transforma uma falha
+            // investigável — a rede, a cota do GitHub, o disco — em mistério.
+            reason: error instanceof Error ? error.message : String(error),
+          });
           return;
         }
 

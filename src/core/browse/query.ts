@@ -376,6 +376,25 @@ function ordenar(counts: Map<string, number>, spec: FilterSpec): readonly Filter
     });
   }
 
+  /*
+   * Domínio declarado pela fonte: a ordem é a ESCRITA, e não a alfabética. Os seis
+   * atributos saem For, Des, Con, Int, Sab, Car, que é a ordem de toda ficha.
+   *
+   * Um valor que apareça no dado e não esteja na lista vai para o fim em vez de sumir: o
+   * filtro continua alcançando o dado inteiro mesmo se a lista envelhecer.
+   */
+  if (spec.kind === 'options' && spec.values !== undefined) {
+    const ordem = spec.values;
+    return lista.sort((a, b) => {
+      if (a.value === '') return 1;
+      if (b.value === '') return -1;
+      const ia = ordem.indexOf(a.value);
+      const ib = ordem.indexOf(b.value);
+      if (ia === -1 && ib === -1) return COLLATOR_NUMERICO.compare(a.value, b.value);
+      return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+    });
+  }
+
   /* Domínio fechado: a ordem é a do JOGO, e vem escrita em `RARITY_ORDER`. */
   if (spec.kind === 'rarity') {
     return lista.sort(
@@ -426,6 +445,14 @@ export function optionsFor(
    */
   if (spec.kind === 'rarity') {
     for (const rarity of RARITY_ORDER) counts.set(rarity, 0);
+  }
+
+  /*
+   * O mesmo, para um tópico que DECLARA seu domínio: os seis atributos aparecem inteiros,
+   * inclusive Constituição, que nenhuma das 17 perícias usa. Ver `values` em `spec.ts`.
+   */
+  if (spec.kind === 'options' && spec.values !== undefined) {
+    for (const value of spec.values) counts.set(value, 0);
   }
 
   for (const entity of entities) {

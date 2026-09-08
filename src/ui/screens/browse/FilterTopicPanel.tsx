@@ -85,9 +85,14 @@ export function FilterTopicPanel({
    *
    * Só `options` e `list` são reordenados. `rarity`, `frequency` e `cost` têm ordem de
    * domínio — comum→única, curto→longo, ◆→— — e alfabetá-las seria perdê-la.
+   *
+   * ⚠️ E um `options` que DECLARA seu domínio também tem ordem própria: os seis atributos
+   * saem For, Des, Con, Int, Sab, Car, que é a ordem de toda ficha. Alfabetá-los aqui
+   * desfaria o que o `core` acabou de ordenar.
    */
   const brutas = useMemo(() => optionsFor(entities, spec), [entities, spec]);
   const opcoes = useMemo(() => {
+    if (spec.kind === 'options' && spec.values !== undefined) return brutas;
     if (spec.kind !== 'options' && spec.kind !== 'list') return brutas;
     return [...brutas].sort((a, b) => {
       if (a.value === '') return 1;

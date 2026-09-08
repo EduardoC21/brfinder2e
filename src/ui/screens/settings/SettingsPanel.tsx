@@ -92,7 +92,12 @@ export function SettingsPanel({
           <UnreadPacks packs={run.unreadPacks} />
         )}
         {run.status === 'refused' && (
-          <Refused rejected={run.rejected} failures={run.failures} keeping={run.keeping} />
+          <Refused
+            rejected={run.rejected}
+            failures={run.failures}
+            keeping={run.keeping}
+            {...(run.reason === undefined ? {} : { reason: run.reason })}
+          />
         )}
         {run.status === 'error' && <Failure message={run.message} />}
 
@@ -256,10 +261,13 @@ function Refused({
   rejected,
   failures,
   keeping,
+  reason,
 }: {
   readonly rejected: string;
   readonly failures: number;
   readonly keeping: string;
+  /** O erro cru da tentativa. Só existe quando ela EXPLODIU, e aí vale mais que a frase. */
+  readonly reason?: string;
 }) {
   return (
     <>
@@ -269,6 +277,14 @@ function Refused({
           ? t.database.upgradeUnavailable
           : t.database.upgradeFailed(rejected, failures)}
       </p>
+      {/*
+        O motivo cru, em monoespaçada e sem tradução.
+
+        Ele é para INVESTIGAR, não para ler bonito: `Failed to fetch`, `403`, `QuotaExceeded`
+        dizem coisas diferentes e mandam para lugares diferentes. Traduzi-lo o achataria de
+        volta na frase genérica que ele veio consertar.
+      */}
+      {reason !== undefined && reason !== '' && <p className={styles['motivo']}>{reason}</p>}
     </>
   );
 }
