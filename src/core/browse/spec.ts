@@ -245,6 +245,14 @@ export type DetailFieldSpec =
   | { readonly kind: 'price'; readonly field: string }
   | { readonly kind: 'bulk'; readonly field: string }
   | ({ readonly kind: 'stat'; readonly field: string } & StatFormat)
+  /**
+   * A SUB-LISTA de ações de uma perícia, e ela é clicável.
+   *
+   * Primeira espécie de campo que não desenha um valor: desenha uma PONTE. Cada ação é uma
+   * referência `@UUID` para uma entrada que já existe na fonte de Ações, e clicar abre o
+   * detalhe dela — o mesmo que se veria lá. Nada é duplicado.
+   */
+  | { readonly kind: 'actions'; readonly field: string; readonly trained: string }
   /** `1d8 cortante`. Ver `EquipmentDamage` na receita. */
   | { readonly kind: 'damage'; readonly field: string }
   | { readonly kind: 'duration'; readonly field: string }
@@ -313,6 +321,14 @@ export interface SourceSpec {
    * 5.706 dos 5.869 não têm pasta.
    */
   readonly typeFilter: string | null;
+  /**
+   * Esta fonte APONTA para entradas de outras — e por isso a tela precisa de todas as bases
+   * carregadas, e não só da dela.
+   *
+   * Só perícia hoje: as ações dela moram em Ações. Sem isto, o clique numa ação não abriria
+   * nada, porque a base de ações não estaria em memória.
+   */
+  readonly crossReferences?: boolean;
   /**
    * Quais colunas ligam sozinhas quando UM Tipo está marcado, por valor de Tipo.
    *
@@ -831,15 +847,30 @@ export const SOURCES: readonly SourceSpec[] = [
   },
   {
     id: 'skills',
-    entityType: null,
+    entityType: 'skill',
     mode: 'list',
-    columns: [],
-    defaultColumns: [],
+    /*
+     * A fonte mais MAGRA do projeto: dezessete entradas, uma coluna.
+     *
+     * Perícia não tem nível, raridade, traço, livro nem descrição — nada disso existe no
+     * pacote do Foundry (ver a receita). O que ela tem é o atributo-chave e as ações, e as
+     * ações são o corpo da entrada, não uma coluna.
+     */
+    crossReferences: true,
+    columns: [{ kind: 'chip', id: 'attribute', field: 'attribute' }],
+    defaultColumns: ['attribute'],
     special: NO_SPECIAL_COLUMNS,
-    filters: [],
+    filters: [{ kind: 'options', id: 'attribute', field: 'attribute' }],
     typeFilter: null,
-    searchFields: [],
-    detail: [],
+    searchFields: ['name'],
+    /*
+     * O detalhe é a sub-lista: atributo em cima, e as ações separadas entre o que qualquer
+     * um tenta e o que exige treinamento. Clicar numa abre a ação.
+     */
+    detail: [
+      { kind: 'text', field: 'attribute' },
+      { kind: 'actions', field: 'untrained', trained: 'trained' },
+    ],
   },
 ];
 

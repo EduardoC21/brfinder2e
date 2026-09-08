@@ -92,7 +92,15 @@ export function BrowseScreen({ baseVersion }: BrowseScreenProps) {
    * pagaria uma leitura do IndexedDB e, com a busca por descrição ligada, 794 ms de
    * indexação. Aqui em cima eles sobrevivem entre uma abertura e outra.
    */
-  const bases = useAllBases(paletaAberta, baseVersion);
+  /*
+   * As bases carregam para a paleta E para a referência cruzada.
+   *
+   * Perícia é a primeira fonte que APONTA para outra: as ações dela moram em Ações, e sem
+   * a base de ações carregada o clique não abre nada. `useAllBases` já guarda o resultado,
+   * então abrir a paleta depois não relê nada.
+   */
+  const precisaDeTodas = paletaAberta || (source?.crossReferences ?? false);
+  const bases = useAllBases(precisaDeTodas, baseVersion);
   const carregadas = useMemo(() => (bases.status === 'ready' ? bases.sources : VAZIAS), [bases]);
   const indiceGlobal = useGlobalIndex(carregadas, buscaNaDescricao);
 
@@ -117,6 +125,23 @@ export function BrowseScreen({ baseVersion }: BrowseScreenProps) {
     despacharPopout({ kind: 'open', ...subject });
   };
 
+  /**
+   * Abre a entrada apontada por um `@UUID`, venha ela de que fonte for.
+   *
+   * É a primeira ponte entre fontes do aplicativo: a perícia guarda o UUID da ação, e quem
+   * sabe resolvê-lo é esta tela, que tem todas as bases. Referência que não resolve não faz
+   * nada — e não deveria acontecer: o teste de contrato prende as 50 da tabela de perícias.
+   */
+  const abrirReferencia = (uuid: string): void => {
+    const alvo = indiceGlobal.byUuid.get(uuid);
+    if (alvo === undefined) return;
+    abrirFlutuante({
+      entity: alvo.entity,
+      entityType: alvo.source.entityType ?? '',
+      fields: alvo.source.detail,
+    });
+  };
+
   return (
     <div className={styles['screen']}>
       <SourceRail
@@ -137,6 +162,7 @@ export function BrowseScreen({ baseVersion }: BrowseScreenProps) {
           entities={entities}
           loading={base.status === 'loading'}
           onPopOut={abrirFlutuante}
+          onOpenReference={abrirReferencia}
         />
       )}
 
@@ -194,11 +220,13 @@ function SourcePane({
   entities,
   loading,
   onPopOut,
+  onOpenReference,
 }: {
   readonly source: SourceSpec;
   readonly entities: readonly BrowseEntity[];
   readonly loading: boolean;
   readonly onPopOut: (subject: PopoutSubject) => void;
+  readonly onOpenReference: (uuid: string) => void;
 }) {
   const [term, setTerm] = useState('');
   const { prefs, update, ready } = usePreferences();
@@ -586,6 +614,7 @@ function SourcePane({
             });
           }
         }}
+        onOpenReference={onOpenReference}
         collapsed={fechadoAMao || (opened === null && overlay === null)}
         onToggleCollapsed={() => {
           setFechadoAMao((estava) => !estava);

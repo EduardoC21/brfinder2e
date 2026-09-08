@@ -62,7 +62,9 @@ function expandirPericias(document: unknown): readonly unknown[] {
   const paginas = document['pages'];
   if (!Array.isArray(paginas)) return [];
 
-  const pagina = paginas.find((entrada) => isRecord(entrada) && entrada['name'] === PAGINA);
+  const pagina: unknown = paginas.find(
+    (entrada: unknown) => isRecord(entrada) && entrada['name'] === PAGINA,
+  );
   if (!isRecord(pagina)) return [];
 
   const texto = pagina['text'];

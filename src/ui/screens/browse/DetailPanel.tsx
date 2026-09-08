@@ -41,6 +41,13 @@ export interface DetailPanelProps {
   readonly onCollapse?: () => void;
   /** Ausente quando já está flutuando: não se destaca o que já está destacado. */
   readonly onPopOut?: () => void;
+  /**
+   * Abre a entrada referida por um `@UUID`. Ausente: as referências viram texto morto.
+   *
+   * É a primeira ponte entre fontes do aplicativo — a perícia aponta para a ação, e quem
+   * sabe resolver o ponteiro é a tela, que tem todas as bases carregadas.
+   */
+  readonly onOpenReference?: (uuid: string) => void;
 }
 
 /**
@@ -57,6 +64,7 @@ export function DetailPanel({
   fields,
   onCollapse,
   onPopOut,
+  onOpenReference,
 }: DetailPanelProps) {
   const description = useDescription(entityType, entity.key);
   const nodes = useMemo(
@@ -109,7 +117,12 @@ export function DetailPanel({
 
         <dl className={styles['fields']}>
           {fields.map((spec, index) => (
-            <Field key={index} spec={spec} entity={entity} />
+            <Field
+              key={index}
+              spec={spec}
+              entity={entity}
+              {...(onOpenReference === undefined ? {} : { onOpenReference })}
+            />
           ))}
         </dl>
       </header>
@@ -201,9 +214,11 @@ function Actions({
 function Field({
   spec,
   entity,
+  onOpenReference,
 }: {
   readonly spec: DetailFieldSpec;
   readonly entity: BrowseEntity;
+  readonly onOpenReference?: (uuid: string) => void;
 }) {
   const label = (field: string): string => b.fieldLabel[field] ?? field;
 
@@ -297,6 +312,31 @@ function Field({
         <Row label={label(spec.field)}>
           <CastCost cast={cast} />
         </Row>
+      );
+    }
+
+    /*
+     * A SUB-LISTA de ações de uma perícia — o único campo que desenha uma ponte em vez de
+     * um valor. Cada ação é um botão; clicar abre a entrada dela, que já existe na fonte de
+     * Ações. Nada é duplicado: aqui mora o ponteiro, e lá mora o conteúdo.
+     */
+    case 'actions': {
+      const destreinadas = referencias(entity, spec.field);
+      const treinadas = referencias(entity, spec.trained);
+      if (destreinadas.length === 0 && treinadas.length === 0) return null;
+      return (
+        <>
+          {destreinadas.length > 0 && (
+            <Row label={s.untrained}>
+              <Referencias acoes={destreinadas} onAbrir={onOpenReference} />
+            </Row>
+          )}
+          {treinadas.length > 0 && (
+            <Row label={s.trained}>
+              <Referencias acoes={treinadas} onAbrir={onOpenReference} />
+            </Row>
+          )}
+        </>
       );
     }
 
@@ -400,4 +440,64 @@ function useDescription(type: string, key: string): string | null {
   }, [type, key, token]);
 
   return loaded?.token === token ? loaded.text : null;
+}
+
+const s = strings.browse.skill;
+
+/** Uma referência `@UUID` guardada num campo de lista. Ver a receita de perícia. */
+interface Referencia {
+  readonly uuid: string;
+  readonly name: string;
+}
+
+function referencias(entity: BrowseEntity, field: string): readonly Referencia[] {
+  const base = entity.base;
+  if (!isRecord(base)) return [];
+  const lista = base[field];
+  if (!Array.isArray(lista)) return [];
+  return lista
+    .filter((item): item is Record<string, unknown> => isRecord(item))
+    .map((item) => ({
+      uuid: typeof item['uuid'] === 'string' ? item['uuid'] : '',
+      name: typeof item['name'] === 'string' ? item['name'] : '',
+    }))
+    .filter((item) => item.name !== '');
+}
+
+/**
+ * As ações como BOTÕES, e não como texto.
+ *
+ * Sem `onAbrir` elas viram texto simples em vez de sumirem: o flutuante não sabe abrir
+ * outro flutuante, e a lista de ações continua sendo informação útil ali dentro.
+ */
+function Referencias({
+  acoes,
+  onAbrir,
+}: {
+  readonly acoes: readonly Referencia[];
+  readonly onAbrir: ((uuid: string) => void) | undefined;
+}) {
+  return (
+    <span className={styles['referencias']}>
+      {acoes.map((acao) =>
+        onAbrir === undefined ? (
+          <span key={acao.uuid} className={styles['referencia']}>
+            {acao.name}
+          </span>
+        ) : (
+          <button
+            key={acao.uuid}
+            type="button"
+            className={cx(styles['referencia'], styles['referenciaAtiva'])}
+            title={s.openAction}
+            onClick={() => {
+              onAbrir(acao.uuid);
+            }}
+          >
+            {acao.name}
+          </button>
+        ),
+      )}
+    </span>
+  );
 }

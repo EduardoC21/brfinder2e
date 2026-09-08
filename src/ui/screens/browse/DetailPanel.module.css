@@ -222,3 +222,36 @@
   color: var(--color-data);
   font: 500 var(--text-lg) / 1 var(--font-body);
 }
+
+/*
+ * As ações de uma perícia: caixinhas que se clicam.
+ *
+ * Quebram em várias linhas de propósito — Athletics tem nove destreinadas, e um trilho
+ * rolável aqui esconderia metade delas atrás de um gesto.
+ */
+.referencias {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.referencia {
+  border: 1px solid var(--color-hairline);
+  padding: 2px var(--space-2);
+  background: transparent;
+  color: var(--color-text-muted);
+  font: 400 var(--text-xs) / 1.4 var(--font-body);
+  text-align: left;
+}
+
+/* Clicável ganha o ponteiro e o realce; sem `onAbrir` a caixinha é só texto. */
+.referenciaAtiva {
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.referenciaAtiva:hover {
+  background: var(--color-state);
+  border-color: transparent;
+  color: #f6edea;
+}

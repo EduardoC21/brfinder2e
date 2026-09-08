@@ -39,6 +39,8 @@ interface DetailPaneProps {
   readonly entityType: string;
   readonly fields: readonly DetailFieldSpec[];
   readonly onPopOut: () => void;
+  /** Repassado ao painel: é ele que desenha as referências clicáveis. */
+  readonly onOpenReference?: (uuid: string) => void;
   /**
    * O painel de um tópico de filtro, quando há um aberto.
    *
@@ -70,6 +72,7 @@ export function DetailPane({
   overlay,
   collapsed,
   onToggleCollapsed,
+  onOpenReference,
 }: DetailPaneProps) {
   /*
    * A largura vem da preferência, não de um `useState` local: ela precisa sobreviver ao
@@ -168,6 +171,7 @@ export function DetailPane({
           fields={fields}
           onCollapse={onToggleCollapsed}
           onPopOut={onPopOut}
+          {...(onOpenReference === undefined ? {} : { onOpenReference })}
         />
       )}
 

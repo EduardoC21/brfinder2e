@@ -183,6 +183,21 @@ export const ptBR = {
       negligible: '—',
       label: 'volume',
     },
+    /**
+     * A sub-lista de ações de uma perícia.
+     *
+     * "Destreinado" e "Treinado" são os dois graus que a tabela do livro separa: o primeiro
+     * é o que qualquer um pode tentar, o segundo exige treinamento na perícia.
+     */
+    skill: {
+      untrained: 'Destreinado',
+      trained: 'Treinado',
+      /** Perícia é a única fonte sem descrição, e a tela diz por quê em vez de calar. */
+      noDescription:
+        'O pacote do Foundry não traz o texto que descreve a perícia — ele guarda só o ' +
+        'atributo e as ações. A descrição está no Player Core.',
+      openAction: 'Abrir a ação em painel',
+    },
     /** A defesa contra a magia: CA, salvamento, ou os dois. */
     defense: {
       save: {
@@ -279,6 +294,8 @@ export const ptBR = {
       price: 'preço',
       bulk: 'volume',
       usage: 'uso',
+      attribute: 'atributo-chave',
+      untrained: 'ações',
       /* A conta sobre `usage`, em oito respostas. Ver a receita de equipamento. */
       carry: 'como se usa',
       hands: 'mãos',

@@ -47,8 +47,12 @@ Antes: **Etapa 12** — receita de `equipment`: 5.869 itens de NOVE tipos do Fou
 receita só, com preço em cobre, volume na escala do jogo e os números de arma, armadura e
 escudo.
 
-Próxima: **Etapa 13** — as sete fontes que faltam (Ancestralidade, Antecedente, Arquétipo,
-Classe, Companheiro, Familiar, Perícias).
+Antes: **Etapa 13** — receita e tela de `skill`: as 17 perícias, que não são documento no
+Foundry — saem de uma tabela dentro de um jornal. Primeira fonte que APONTA para outra: as
+ações de cada perícia abrem a entrada que já existe em Ações.
+
+Próxima: **os jornais** — 532 páginas com a descrição de ancestralidade (55), classe (31) e
+arquétipo (265), além das 60 páginas de regras da tela do mestre.
 
 ## Requisitos
 

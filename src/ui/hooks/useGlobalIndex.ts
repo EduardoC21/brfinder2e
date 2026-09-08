@@ -28,6 +28,14 @@ export interface GlobalRow {
 export interface GlobalIndex {
   readonly rows: readonly GlobalRow[];
   readonly byId: ReadonlyMap<string, GlobalRow>;
+  /**
+   * A mesma linha, achada pelo UUID canônico do Foundry.
+   *
+   * É o que faz a referência cruzada funcionar: a perícia guarda
+   * `Compendium.pf2e.actionspf2e.Item.M76ycLAqHoAgbcej`, e é por aqui que a tela chega na
+   * ação. Entrada sem UUID (perícia, por exemplo) simplesmente não entra no mapa.
+   */
+  readonly byUuid: ReadonlyMap<string, GlobalRow>;
   /** Sobre o NOME. Pronto assim que as bases chegam. */
   readonly byName: SearchIndex | null;
   /** Sobre nome + descrição. `null` enquanto não foi pedido ou ainda está sendo montado. */
@@ -69,6 +77,12 @@ export function useGlobalIndex(
   );
 
   const byId = useMemo(() => new Map(rows.map((row) => [row.id, row])), [rows]);
+
+  const byUuid = useMemo(
+    () =>
+      new Map(rows.filter((row) => row.entity.uuid !== '').map((row) => [row.entity.uuid, row])),
+    [rows],
+  );
 
   const byName = useMemo(
     () =>
@@ -113,6 +127,7 @@ export function useGlobalIndex(
   return {
     rows,
     byId,
+    byUuid,
     byName,
     byText: pronto,
     buildingText: comDescricao && pronto === null && rows.length > 0,
