@@ -51,8 +51,18 @@ Antes: **Etapa 13** — receita e tela de `skill`: as 17 perícias, que não sã
 Foundry — saem de uma tabela dentro de um jornal. Primeira fonte que APONTA para outra: as
 ações de cada perícia abrem a entrada que já existe em Ações.
 
-Próxima: **os jornais** — 532 páginas com a descrição de ancestralidade (55), classe (31) e
-arquétipo (265), além das 60 páginas de regras da tela do mestre.
+Antes: **Etapa 14** — receita e tela de `background`: os 520 antecedentes, a fonte mais
+textual do projeto (descrição de 370 a 4.860 caracteres, mediana 666). Segunda ponte entre
+fontes: o talento concedido abre a entrada que já existe em Talentos.
+
+Próxima: **ancestralidade** — 50 do pack, com a mecânica (aumentos, PV, tamanho,
+deslocamento, visão) e o capítulo do jornal `Ancestries`, que traz 4.350 caracteres onde o
+pack traz 639. Primeira fonte cuja descrição vem de OUTRO pack.
+
+⚠️ Correção: a linha anterior daqui dizia que a descrição de ancestralidade e de classe
+morava nos jornais. Está errado — os packs `ancestries` (50/50), `classes` (29/29) e
+`backgrounds` (520/520) trazem descrição própria. O jornal é um SEGUNDO texto, muito maior,
+e não um substituto.
 
 ## Requisitos
 

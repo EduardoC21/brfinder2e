@@ -383,8 +383,8 @@ function ordenar(counts: Map<string, number>, spec: FilterSpec): readonly Filter
    * Um valor que apareça no dado e não esteja na lista vai para o fim em vez de sumir: o
    * filtro continua alcançando o dado inteiro mesmo se a lista envelhecer.
    */
-  if (spec.kind === 'options' && spec.values !== undefined) {
-    const ordem = spec.values;
+  const ordem = declaredValues(spec);
+  if (ordem.length > 0) {
     return lista.sort((a, b) => {
       if (a.value === '') return 1;
       if (b.value === '') return -1;
@@ -451,9 +451,7 @@ export function optionsFor(
    * O mesmo, para um tópico que DECLARA seu domínio: os seis atributos aparecem inteiros,
    * inclusive Constituição, que nenhuma das 17 perícias usa. Ver `values` em `spec.ts`.
    */
-  if (spec.kind === 'options' && spec.values !== undefined) {
-    for (const value of spec.values) counts.set(value, 0);
-  }
+  for (const value of declaredValues(spec)) counts.set(value, 0);
 
   for (const entity of entities) {
     // Uma entrada com três traços conta em três opções. A soma passa do total, e está
@@ -538,6 +536,18 @@ export function topicMatters(entities: readonly BrowseEntity[], spec: FilterSpec
   // A área pergunta duas coisas: mesmo com um tipo só, a FAIXA ainda recorta.
   if (spec.kind === 'area') return numericExtent(entities, spec) !== null;
   return false;
+}
+
+/**
+ * O domínio que o tópico DECLARA, ou vazio quando ele descobre as opções pelo dado.
+ *
+ * Uma leitura só para as duas espécies que aceitam `values` — `options` (o atributo-chave
+ * da perícia) e `list` (o aumento do antecedente). Sem isto, a segunda espécie teria de
+ * repetir a mesma condição em dois lugares, e é assim que uma delas fica para trás.
+ */
+function declaredValues(spec: FilterSpec): readonly string[] {
+  if (spec.kind !== 'options' && spec.kind !== 'list') return [];
+  return spec.values ?? [];
 }
 
 /** O valor que um tópico lê de uma entrada. Uma definição só, usada na conta e no casamento. */

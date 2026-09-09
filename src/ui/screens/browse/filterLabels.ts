@@ -2,6 +2,8 @@ import { parseDurationCode, type ColumnSpec, type FilterSpec } from '@core/brows
 import { strings } from '@i18n/index';
 import { BOOK_FIELD, bookLabel, capitalizar } from '@ui/text';
 
+import { ATTRIBUTE_FIELD, attributeName } from './backgroundFields';
+
 const t = strings.browse;
 
 /**
@@ -44,6 +46,14 @@ export function valueLabel(spec: FilterSpec, value: string): string {
   if (spec.kind === 'rarity') return capitalizar(t.rarity[value] ?? value);
   if (spec.kind === 'frequency') return frequencyLabel(value);
   if (spec.field === BOOK_FIELD) return bookLabel(value);
+  /*
+   * O código do atributo por EXTENSO: `str` → `Strength`.
+   *
+   * Sem isto o filtro escrevia `Str` enquanto a coluna ao lado escrevia
+   * `Strength ou Dexterity` — o mesmo dado com duas caras, e a de cá é a que não bate com
+   * a tela de perícias.
+   */
+  if (spec.field === ATTRIBUTE_FIELD) return attributeName(value);
   return capitalizar(value);
 }
 

@@ -28,6 +28,7 @@ import { useTrackWidth } from '@ui/hooks/useTrackWidth';
 import { useWindowedRows } from '@ui/hooks/useWindowedRows';
 
 import { columnLabel, frequencyLabel, specialColumnLabel } from './filterLabels';
+import { boostsText, referenceNames } from './backgroundFields';
 import { itemBulkText, itemDamageShort, itemPriceText, statText } from './itemFields';
 import { areaText, defenseText, durationText, spellCast } from './spellFields';
 import styles from './ResultList.module.css';
@@ -478,6 +479,10 @@ function textoDaColuna(spec: ColumnSpec, entity: BrowseEntity): string {
     }
     case 'chips':
       return fieldList(entity, spec.field).map(capitalizar).join(' ');
+    case 'boosts':
+      return boostsText(entity, spec.field);
+    case 'references':
+      return referenceNames(entity, spec.field);
     case 'price':
       return itemPriceText(entity, spec.field);
     case 'bulk':
@@ -608,6 +613,27 @@ function Column({ spec, entity }: { readonly spec: ColumnSpec; readonly entity: 
       const valor = itemDamageShort(entity, spec.field);
       if (valor === '') return null;
       return <span className={styles['chip']}>{valor}</span>;
+    }
+
+    /*
+     * O aumento é UMA frase — `Strength ou Dexterity` —, e não dois chips: dois chips lado
+     * a lado se leem como "ganha os dois", e o que o antecedente dá é uma escolha.
+     */
+    case 'boosts': {
+      const valor = boostsText(entity, spec.field);
+      if (valor === '') return null;
+      return <span className={styles['chip']}>{valor}</span>;
+    }
+
+    /*
+     * As referências na LISTA são texto, e não botões. Botão numa linha de 34px que já é
+     * clicável inteira (ela abre a entrada) daria dois alvos concorrentes no mesmo lugar —
+     * quem quer abrir o talento clica na linha e usa o botão do detalhe.
+     */
+    case 'references': {
+      const nomes = referenceNames(entity, spec.field);
+      if (nomes === '') return null;
+      return <span className={styles['chip']}>{nomes}</span>;
     }
 
     case 'area':

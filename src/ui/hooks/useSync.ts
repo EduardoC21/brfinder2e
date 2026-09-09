@@ -2,6 +2,7 @@ import { useCallback, useEffect, useReducer, useRef } from 'react';
 
 import {
   actionRecipe,
+  backgroundRecipe,
   conditionRecipe,
   equipmentRecipe,
   featRecipe,
@@ -174,6 +175,7 @@ const RECIPES: readonly Recipe<never, never>[] = [
   spellRecipe as Recipe<never, never>,
   equipmentRecipe as Recipe<never, never>,
   skillRecipe as Recipe<never, never>,
+  backgroundRecipe as Recipe<never, never>,
 ];
 
 const INITIAL: SyncState = { stored: null, run: { status: 'loading' }, update: NO_UPDATE };

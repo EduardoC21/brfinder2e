@@ -18,7 +18,7 @@
 
 import MiniSearch from 'minisearch';
 
-import { fieldValue, type BrowseEntity } from './query';
+import { fieldList, fieldValue, type BrowseEntity } from './query';
 
 /** Tira acento e caixa. `NFD` separa a letra do diacrítico; o range apaga o diacrítico. */
 export function foldTerm(term: string): string {
@@ -116,7 +116,16 @@ export function createSearchIndex(
   mini.addAll(
     entities.map((entity) => {
       const document: Record<string, string> = { key: entity.key };
-      for (const field of searchFields) document[field] = fieldValue(entity, field);
+      /*
+       * Campo de LISTA vira frase. `fieldValue` devolve vazio para array, e sem isto o
+       * Saber do antecedente — que é uma lista — não entraria no índice: digitar "circus"
+       * não acharia Acrobat. Nenhuma fonte anterior indexava lista, então nada muda para
+       * elas.
+       */
+      for (const field of searchFields) {
+        const valor = fieldValue(entity, field);
+        document[field] = valor === '' ? fieldList(entity, field).join(' ') : valor;
+      }
       return document;
     }),
   );

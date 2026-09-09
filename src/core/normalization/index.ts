@@ -7,6 +7,7 @@ export * from './language';
 export * from './paths';
 export * from './recipe';
 export * from './recipes/action';
+export * from './recipes/background';
 export * from './recipes/condition';
 export * from './recipes/equipment';
 export * from './recipes/feat';

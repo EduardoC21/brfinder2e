@@ -110,6 +110,21 @@ export type ColumnSpec =
    * armadura e escudo do Archives of Nethys.
    */
   | ({ readonly kind: 'stat'; readonly field: string } & StatFormat & ColumnBase)
+  /**
+   * O AUMENTO DE ATRIBUTO que um antecedente oferece: `Strength ou Dexterity`, `Livre`.
+   *
+   * Espécie própria e não `chips` por causa do vazio: lista vazia aqui quer dizer "aumento
+   * livre", que é informação, e um `chips` vazio não desenha nada. E o `ou` importa — são
+   * duas opções entre as quais se escolhe uma, não duas coisas que se ganham.
+   */
+  | ({ readonly kind: 'boosts'; readonly field: string } & ColumnBase)
+  /**
+   * Uma lista de REFERÊNCIAS `@UUID` — o talento que um antecedente concede.
+   *
+   * Na coluna são só os nomes; no detalhe elas viram botões que abrem a entrada referida.
+   * Ver `DetailFieldSpec`.
+   */
+  | ({ readonly kind: 'references'; readonly field: string } & ColumnBase)
   /** Texto simples, sem moldura de chip. Para valores mais longos que um rótulo. */
   | ({ readonly kind: 'text'; readonly field: string } & ColumnBase);
 
@@ -165,7 +180,13 @@ export type FilterSpec =
    * Campo que guarda uma LISTA — traços. Aqui o par E/OU faz diferença de verdade, e
    * `combine` é o padrão com que o tópico abre.
    */
-  | ({ readonly kind: 'list'; readonly field: string; readonly combine: Combine } & FilterBase)
+  | ({
+      readonly kind: 'list';
+      readonly field: string;
+      readonly combine: Combine;
+      /** Domínio fechado, como em `options`: as opções aparecem sempre, na ordem escrita. */
+      readonly values?: readonly string[];
+    } & FilterBase)
   /** O custo em ações, desenhado com os glifos: ◆ ◆◆ ◆◆◆ ◇ ↩ —. */
   | ({ readonly kind: 'cost' } & FilterBase)
   /**
@@ -269,6 +290,15 @@ export type DetailFieldSpec =
    * detalhe dela — o mesmo que se veria lá. Nada é duplicado.
    */
   | { readonly kind: 'actions'; readonly field: string; readonly trained: string }
+  /**
+   * UMA lista de referências `@UUID`, clicável — o talento que um antecedente concede.
+   *
+   * A mesma ponte de `actions`, sem a divisão em dois graus: antecedente não tem
+   * "destreinado" e "treinado", tem uma lista só (404 dos 520 com um talento, 2 com dois).
+   */
+  | { readonly kind: 'references'; readonly field: string }
+  /** O aumento de atributo com escolha. Ver a espécie de coluna homônima. */
+  | { readonly kind: 'boosts'; readonly field: string }
   /** `1d8 cortante`. Ver `EquipmentDamage` na receita. */
   | { readonly kind: 'damage'; readonly field: string }
   | { readonly kind: 'duration'; readonly field: string }
@@ -392,6 +422,16 @@ const DEFESA_DE_MAGIA: DefenseFields = {
  * Os valores são os do dado, em inglês, como todo dado de jogo. Se um dia o Paizo criar
  * um sétimo atributo, ele NÃO aparece sozinho — e é o preço consciente de fechar o domínio.
  */
+/**
+ * Os mesmos seis, mas nos CÓDIGOS que o pack de antecedentes usa (`str`, `dex`…).
+ *
+ * Duas listas para a mesma coisa porque as duas fontes escrevem diferente: a tabela das
+ * perícias traz `Strength` por extenso, e o antecedente traz `str`. Unificar aqui exigiria
+ * traduzir uma das duas na normalização, e receita não inventa vocabulário — ela projeta o
+ * que a fonte diz. Quem junta as duas leituras é a tela, em `attributeName`.
+ */
+const ATTRIBUTE_CODES: readonly string[] = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
+
 const ATTRIBUTES: readonly string[] = [
   'Strength',
   'Dexterity',
@@ -823,15 +863,61 @@ export const SOURCES: readonly SourceSpec[] = [
   },
   {
     id: 'backgrounds',
-    entityType: null,
+    entityType: 'background',
     mode: 'list',
-    columns: [],
-    defaultColumns: [],
-    special: NO_SPECIAL_COLUMNS,
-    filters: [],
+    /*
+     * A fonte mais TEXTUAL do projeto: 520 entradas, e o que importa nelas é a descrição
+     * (370 a 4.860 caracteres, mediana 666). A mecânica cabe em quatro campos, e por isso
+     * a lista é curta — ver a receita para os números.
+     *
+     * Sem TIPO: a pasta do compêndio existe em 188 dos 520 e responde a mesma pergunta que
+     * o livro, que responde nos 520. Ver o `ignore` da receita.
+     */
+    crossReferences: true,
+    columns: [
+      { kind: 'chips', id: 'skills', field: 'skills' },
+      { kind: 'chips', id: 'lore', field: 'lore' },
+      { kind: 'boosts', id: 'boosts', field: 'boosts' },
+      { kind: 'references', id: 'feats', field: 'feats' },
+      { kind: 'text', id: 'source', field: 'source.title' },
+    ],
+    /* Perícia e aumento: as duas perguntas que se faz ao escolher um antecedente. */
+    defaultColumns: ['skills', 'boosts'],
+    /*
+     * Sem calha de NÍVEL — antecedente não tem nenhum, e a calha vazia empurraria todos os
+     * nomes para a direita por nada. Raridade e traço ficam: a raridade separa 288 comuns
+     * de 137 raros, e o traço aparece em 8, que é pouco mas é verdade.
+     */
+    special: { level: null, rarity: 'rarity', traits: 'traits' },
+    filters: [
+      { kind: 'list', id: 'skills', field: 'skills', combine: 'any' },
+      /*
+       * Os seis atributos com DOMÍNIO DECLARADO, como o atributo-chave das perícias: a
+       * ordem é a da ficha, e não a alfabética. Ver `values` em `FilterSpec`.
+       */
+      { kind: 'list', id: 'boosts', field: 'boosts', combine: 'any', values: ATTRIBUTE_CODES },
+      { kind: 'rarity', id: 'rarity', field: 'rarity' },
+      { kind: 'options', id: 'source', field: 'source.title' },
+    ],
     typeFilter: null,
-    searchFields: [],
-    detail: [],
+    /*
+     * A busca cobre o SABER além do nome, e é o que compensa ele não ser filtro: são 186
+     * valores distintos, longos demais para uma lista de opções, e digitar "circus" acha
+     * Acrobat na hora.
+     */
+    searchFields: ['name', 'lore'],
+    /*
+     * A ordem é a da própria descrição do item, que escreve nesta sequência: "Escolha dois
+     * aumentos… Você é treinado em X e no Saber Y… Você ganha o talento Z."
+     */
+    detail: [
+      { kind: 'chips', field: 'traits' },
+      { kind: 'boosts', field: 'boosts' },
+      { kind: 'chips', field: 'skills' },
+      { kind: 'chips', field: 'lore' },
+      { kind: 'references', field: 'feats' },
+      { kind: 'source' },
+    ],
   },
   {
     id: 'archetypes',

@@ -195,6 +195,17 @@ export const ptBR = {
       persistent: 'persistente',
       splash: 'de respingo',
     },
+    /**
+     * O ANTECEDENTE, e as duas palavras que a tela precisa dizer por conta própria.
+     *
+     * `ou` porque o aumento é uma ESCOLHA entre dois atributos, e `Livre` porque 9 dos 520
+     * não recortam nenhum. Os nomes dos atributos continuam em inglês, como todo dado de
+     * jogo — ver `attributeName`.
+     */
+    background: {
+      or: 'ou',
+      freeBoost: 'Livre',
+    },
     /** O VOLUME. `0` é insignificante e `0,1` é o "L" do livro. */
     bulk: {
       light: 'L',
@@ -314,6 +325,11 @@ export const ptBR = {
       usage: 'uso',
       attribute: 'atributo-chave',
       untrained: 'ações',
+      /* Antecedente. "Saber" é como o livro brasileiro chama a perícia Lore. */
+      skills: 'perícia treinada',
+      lore: 'Saber',
+      boosts: 'aumento',
+      feats: 'talento',
       /*
        * "Uso", e não "como se usa": é o rótulo do AoN, e é o mesmo campo do detalhe visto
        * por outro ângulo — oito respostas em vez das 120 grafias cruas. Por isso o `usage`

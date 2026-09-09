@@ -20,6 +20,7 @@ import { CollapseToggle } from '@ui/components/CollapseToggle';
 import { cx } from '@ui/cx';
 import { bookLabel, capitalizar, fieldText } from '@ui/text';
 
+import { boostsText, references as referenciasDe, type Reference } from './backgroundFields';
 import { itemBulkText, itemDamageText, itemPriceText, statText } from './itemFields';
 import type { PopoutSubject } from './popouts';
 import { areaText, defenseText, durationText, ritualLines, spellCast } from './spellFields';
@@ -406,8 +407,8 @@ function Field({
      * Ações. Nada é duplicado: aqui mora o ponteiro, e lá mora o conteúdo.
      */
     case 'actions': {
-      const destreinadas = referencias(entity, spec.field);
-      const treinadas = referencias(entity, spec.trained);
+      const destreinadas = referenciasDe(entity, spec.field);
+      const treinadas = referenciasDe(entity, spec.trained);
       if (destreinadas.length === 0 && treinadas.length === 0) return null;
       const aberta = selected ?? null;
       return (
@@ -424,6 +425,27 @@ function Field({
           )}
         </>
       );
+    }
+
+    /*
+     * A MESMA ponte de `actions`, com uma lista só: o talento que um antecedente concede.
+     * Clicar abre o talento na sub-tela, e ele é a entrada que já existe em Talentos.
+     */
+    case 'references': {
+      const lista = referenciasDe(entity, spec.field);
+      if (lista.length === 0) return null;
+      return (
+        <Row label={label(spec.field)}>
+          <Referencias acoes={lista} aberta={selected ?? null} onAbrir={onToggleReference} />
+        </Row>
+      );
+    }
+
+    /* `Strength ou Dexterity`, ou `Livre`. Ver `boostsText`. */
+    case 'boosts': {
+      const valor = boostsText(entity, spec.field);
+      if (valor === '') return null;
+      return <Row label={label(spec.field)}>{valor}</Row>;
     }
 
     case 'stat': {
@@ -530,26 +552,6 @@ function useDescription(type: string, key: string): string | null {
 
 const s = strings.browse.skill;
 
-/** Uma referência `@UUID` guardada num campo de lista. Ver a receita de perícia. */
-interface Referencia {
-  readonly uuid: string;
-  readonly name: string;
-}
-
-function referencias(entity: BrowseEntity, field: string): readonly Referencia[] {
-  const base = entity.base;
-  if (!isRecord(base)) return [];
-  const lista = base[field];
-  if (!Array.isArray(lista)) return [];
-  return lista
-    .filter((item): item is Record<string, unknown> => isRecord(item))
-    .map((item) => ({
-      uuid: typeof item['uuid'] === 'string' ? item['uuid'] : '',
-      name: typeof item['name'] === 'string' ? item['name'] : '',
-    }))
-    .filter((item) => item.name !== '');
-}
-
 /**
  * As ações como BOTÕES, e não como texto — e a escolhida em BORDÔ.
  *
@@ -565,7 +567,7 @@ function Referencias({
   aberta,
   onAbrir,
 }: {
-  readonly acoes: readonly Referencia[];
+  readonly acoes: readonly Reference[];
   readonly aberta: string | null;
   readonly onAbrir: ((uuid: string) => void) | undefined;
 }) {

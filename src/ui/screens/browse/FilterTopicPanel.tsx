@@ -92,8 +92,8 @@ export function FilterTopicPanel({
    */
   const brutas = useMemo(() => optionsFor(entities, spec), [entities, spec]);
   const opcoes = useMemo(() => {
-    if (spec.kind === 'options' && spec.values !== undefined) return brutas;
     if (spec.kind !== 'options' && spec.kind !== 'list') return brutas;
+    if (spec.values !== undefined) return brutas;
     return [...brutas].sort((a, b) => {
       if (a.value === '') return 1;
       if (b.value === '') return -1;
