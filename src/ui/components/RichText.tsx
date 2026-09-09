@@ -18,8 +18,29 @@ import styles from './RichText.module.css';
  * pede que se destaquem "sem virar um mar de links azuis". Aqui é uma linha inferior
  * pontilhada em latão, que é a cor de dado de jogo no sistema.
  */
-export function RichText({ nodes }: { readonly nodes: readonly DocNode[] }) {
-  return <>{renderChildren(nodes)}</>;
+/**
+ * Como o texto abre as referências que ele cita.
+ *
+ * Ausente: os `@UUID` continuam marcados e NÃO clicáveis, que é o que eram antes. É por
+ * isso que o par é opcional — 2.559 dos 19.157 links da base apontam para coisa que este
+ * aplicativo nunca vai ter (efeito de VTT, bestiário), e eles precisam continuar legíveis
+ * em vez de virarem botões que não fazem nada.
+ */
+export interface RichTextLinks {
+  /** Este alvo existe na base? Só o que resolve vira botão. */
+  readonly resolves: (target: string) => boolean;
+  /** `novo` quer dizer "em painel novo" — Ctrl+clique ou clique do meio. */
+  readonly open: (target: string, novo: boolean) => void;
+}
+
+export function RichText({
+  nodes,
+  links,
+}: {
+  readonly nodes: readonly DocNode[];
+  readonly links?: RichTextLinks;
+}) {
+  return <>{renderChildren(nodes, links)}</>;
 }
 
 /**
@@ -33,15 +54,27 @@ export function RichText({ nodes }: { readonly nodes: readonly DocNode[] }) {
  * Por posição, e NÃO por lista de palavras: uma lista quebraria na primeira fonte com um
  * rótulo que ninguém previu, e são doze fontes pela frente.
  */
-function renderChildren(nodes: readonly DocNode[]): ReactNode[] {
+function renderChildren(nodes: readonly DocNode[], links?: RichTextLinks): ReactNode[] {
   const abertura = nodes.findIndex((node) => node.kind !== 'token' || node.token.raw.trim() !== '');
-  return nodes.map((node, index) => renderNode(node, index, index === abertura));
+  return nodes.map((node, index) => renderNode(node, index, links, index === abertura));
 }
 
-function renderNode(node: DocNode, key: number, abreBloco = false): ReactNode {
-  if (node.kind === 'token') return <TokenPiece key={key} token={node.token} />;
+/*
+ * `links` viaja por PARÂMETRO e não por contexto do React.
+ *
+ * Contexto seria menos ruído aqui — são três assinaturas —, mas estas três funções são
+ * puras e testáveis sem montar árvore nenhuma, e um contexto as tornaria dependentes de um
+ * provedor invisível. O ruído é local; a dependência escondida seria permanente.
+ */
+function renderNode(
+  node: DocNode,
+  key: number,
+  links?: RichTextLinks,
+  abreBloco = false,
+): ReactNode {
+  if (node.kind === 'token') return <TokenPiece key={key} token={node.token} links={links} />;
 
-  const children = renderChildren(node.children);
+  const children = renderChildren(node.children, links);
 
   /*
    * O símbolo de custo embutido na prosa. O Foundry manda a letra da fonte de ícones
@@ -66,19 +99,60 @@ function renderNode(node: DocNode, key: number, abreBloco = false): ReactNode {
   return createElement(node.tag, { key, className: classe }, ...children);
 }
 
-function TokenPiece({ token }: { readonly token: Token }) {
+function TokenPiece({
+  token,
+  links,
+}: {
+  readonly token: Token;
+  readonly links?: RichTextLinks | undefined;
+}) {
   const text = tokenText(token);
 
   switch (token.kind) {
     case 'text':
       return <Fragment>{text}</Fragment>;
 
-    case 'uuid':
+    /*
+     * A referência a outra entrada — 19.157 nas descrições que já importamos, e 16.598
+     * delas (86,6%) apontam para uma entrada que a base TEM.
+     *
+     * Vira botão só quando resolve. As outras 2.559 apontam para efeito de VTT
+     * (`spell-effects`, `feat-effects`) e para packs que este aplicativo não lê, e continuam
+     * exatamente como eram: marcadas, legíveis, inertes. Um botão que não faz nada é pior
+     * que texto — ele promete.
+     *
+     * Ctrl (ou ⌘) e o clique do MEIO abrem em painel novo, como no navegador e no
+     * explorador de arquivos. O botão DIREITO não: ele é do menu de contexto em toda
+     * plataforma, e sequestrá-lo brigaria primeiro com o navegador e depois com o Tauri.
+     */
+    case 'uuid': {
+      if (links?.resolves(token.target) !== true) {
+        return (
+          <span className={cx(styles['xref'], styles['uuid'])} title={token.target}>
+            {text}
+          </span>
+        );
+      }
       return (
-        <span className={cx(styles['xref'], styles['uuid'])} title={token.target}>
+        <button
+          type="button"
+          className={cx(styles['xref'], styles['uuid'], styles['clicavel'])}
+          title={token.target}
+          onClick={(event) => {
+            links.open(token.target, event.ctrlKey || event.metaKey);
+          }}
+          onAuxClick={(event) => {
+            // Botão do meio. `preventDefault` impede a rolagem automática do navegador.
+            if (event.button === 1) {
+              event.preventDefault();
+              links.open(token.target, true);
+            }
+          }}
+        >
           {text}
-        </span>
+        </button>
       );
+    }
 
     case 'damage':
     case 'check':

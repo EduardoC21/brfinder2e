@@ -139,18 +139,24 @@ export function BrowseScreen({ baseVersion }: BrowseScreenProps) {
    * Referência que não resolve devolve `null` e a caixinha não faz nada — não deveria
    * acontecer: o teste de contrato prende as 50 da tabela de perícias.
    */
-  const ponte: ReferenceBridge = {
-    resolve: (uuid) => {
-      const alvo = indiceGlobal.byUuid.get(uuid);
-      if (alvo === undefined) return null;
-      return {
-        entity: alvo.entity,
-        entityType: alvo.source.entityType ?? '',
-        fields: alvo.source.detail,
-      };
-    },
-    onPopOut: abrirFlutuante,
+  const resolver = (uuid: string): PopoutSubject | null => {
+    const alvo = indiceGlobal.byUuid.get(uuid);
+    if (alvo === undefined) return null;
+    return {
+      entity: alvo.entity,
+      entityType: alvo.source.entityType ?? '',
+      fields: alvo.source.detail,
+    };
   };
+
+  /*
+   * A ponte da LATERAL não navega — ela só destaca.
+   *
+   * Sem `onNavigate` de propósito: a lateral está presa à entrada escolhida na lista, e
+   * trocar o conteúdo dela no lugar deixaria a lista marcando uma linha que o painel já
+   * não mostra. Cada clique ali abre painel, e o Ctrl+clique não muda nada — já é isso.
+   */
+  const ponte: ReferenceBridge = { resolve: resolver, onPopOut: abrirFlutuante };
 
   return (
     <div className={styles['screen']}>
@@ -216,7 +222,25 @@ export function BrowseScreen({ baseVersion }: BrowseScreenProps) {
             entity={item.entity}
             entityType={item.entityType}
             fields={item.fields}
-            reference={ponte}
+            /*
+              A ponte do FLUTUANTE navega no lugar: clicar troca o que esta janela mostra e
+              empilha de onde veio, como um navegador. O Ctrl+clique continua abrindo
+              janela nova, e é por isso que `onPopOut` também vai junto.
+            */
+            reference={{
+              resolve: resolver,
+              onPopOut: abrirFlutuante,
+              onNavigate: (assunto) => {
+                despacharPopout({ kind: 'navigate', id: item.id, ...assunto });
+              },
+            }}
+            {...(item.back.length === 0
+              ? {}
+              : {
+                  onBack: () => {
+                    despacharPopout({ kind: 'back', id: item.id });
+                  },
+                })}
           />
         </FloatingPanel>
       ))}

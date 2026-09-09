@@ -907,14 +907,22 @@ export const SOURCES: readonly SourceSpec[] = [
      */
     searchFields: ['name', 'lore'],
     /*
-     * A ordem é a da própria descrição do item, que escreve nesta sequência: "Escolha dois
-     * aumentos… Você é treinado em X e no Saber Y… Você ganha o talento Z."
+     * ⚠️ O DETALHE É CURTO DE PROPÓSITO, e isto é a regra geral do aplicativo, não uma
+     * escolha desta fonte: o que a DESCRIÇÃO já diz não se repete no cabeçalho. É a mesma
+     * decisão de talento, onde `frequência`, `pré-requisitos` e `repetições` ficaram só em
+     * filtro e coluna.
+     *
+     * Medido nos 520 antes de tirar: a descrição cita a perícia treinada em **440 de 440**
+     * (100%), o aumento em 517 de 520 e o Saber em 416 de 427. Os três saíram — continuam
+     * como coluna e filtro, que é onde recortam.
+     *
+     * O TALENTO ficou, e o número é o motivo: só **379 dos 404** trazem o `@UUID` no texto.
+     * Os outros 25 citam o talento por NOME, sem link — "You gain the Battle Medicine skill
+     * feat" em Acupuncturist, Silk Farmer, Gossip… Sem esta linha, 25 antecedentes perderiam
+     * o caminho clicável e nada na tela diria por quê.
      */
     detail: [
       { kind: 'chips', field: 'traits' },
-      { kind: 'boosts', field: 'boosts' },
-      { kind: 'chips', field: 'skills' },
-      { kind: 'chips', field: 'lore' },
       { kind: 'references', field: 'feats' },
       { kind: 'source' },
     ],
@@ -987,7 +995,14 @@ export const SOURCES: readonly SourceSpec[] = [
     searchFields: ['name'],
     /*
      * O detalhe é a sub-lista: atributo em cima, e as ações separadas entre o que qualquer
-     * um tenta e o que exige treinamento. Clicar numa abre a ação.
+     * um tenta e o que exige treinamento.
+     *
+     * ⚠️ EXCEÇÃO À REGRA GERAL. Em toda outra fonte, o que se clica no detalhe abre um
+     * PAINEL. Aqui a ação abre uma sub-tela embaixo, e o motivo é que perícia é a única
+     * fonte sem texto próprio: o corpo do painel está vazio, e a sub-tela ocupa um espaço
+     * que ninguém está usando. No dia em que perícia ganhar descrição — e ela existe no
+     * Player Core, fora do pacote do Foundry —, esta exceção acaba e as ações passam a
+     * abrir painel como todas as outras referências.
      */
     detail: [
       { kind: 'text', field: 'attribute' },

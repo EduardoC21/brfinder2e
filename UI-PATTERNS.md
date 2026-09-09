@@ -578,6 +578,66 @@ botão que a pessoa ia clicar sairia de baixo do cursor.
 
 ---
 
+## 6g. O que se clica abre PAINEL
+
+**Decidido:** toda referência clicável — na prosa ou num campo do detalhe — abre a entrada
+num painel. Não empurra texto para baixo, não troca a lateral.
+
+**Uma exceção, e ela tem prazo:** a perícia abre a ação numa sub-tela embaixo, porque
+perícia é a única fonte **sem texto próprio** — o corpo do painel está vazio e a sub-tela
+ocupa um espaço que ninguém usa. No dia em que perícia ganhar descrição, a exceção acaba.
+
+### Onde o clique leva
+
+| onde se clica    | clique                                     | Ctrl+clique (ou o do meio) |
+| ---------------- | ------------------------------------------ | -------------------------- |
+| painel lateral   | painel novo                                | painel novo (é o mesmo)    |
+| painel flutuante | **navega no lugar**, empilhando o anterior | painel novo                |
+
+A lateral nunca navega no lugar: ela está presa à entrada escolhida na lista, e trocar o
+conteúdo dela deixaria a lista marcando uma linha que o painel já não mostra.
+
+O **Ctrl** e o **clique do meio** são o padrão do navegador e do explorador de arquivos. O
+botão DIREITO não entra: ele é do menu de contexto em toda plataforma, e sequestrá-lo
+brigaria primeiro com o navegador e depois com o Tauri.
+
+**Sem configuração.** O modificador É a escolha, e é por clique em vez de global — quem
+quer comparar duas coisas segura Ctrl uma vez, e não precisa lembrar de desligar depois.
+
+### O voltar
+
+Cada painel tem a própria pilha. O botão **aparece só quando há para onde voltar**, e some
+quando a pilha esvazia — em vez de ficar cinza no canto de um painel recém-aberto,
+sugerindo que falta algo. **Não há avançar:** ele se perde no primeiro clique depois de
+voltar, e quase ninguém o usa.
+
+### O que NÃO vira botão
+
+Medido nas descrições das sete fontes que importamos: **19.157 links `@UUID`**, e
+**16.598 (86,6%) apontam para uma entrada que a base tem** — todos na forma
+`Compendium.…`, e 19.154 já trazem o `{rótulo}` pronto.
+
+Os outros **2.559 continuam texto marcado e inerte**. Deles, 1.853 apontam para _efeito de
+VTT_ (`spell-effects`, `feat-effects`, `equipment-effects`), que este aplicativo nunca vai
+ter — não é "ainda não importamos", é "não existe aqui". Um botão que não faz nada é pior
+que texto: ele promete.
+
+E o destaque não é link azul. O Anexo A pede que se destaquem "sem virar um mar de links
+azuis", e são 16.598 — continuam em latão, com a linha pontilhada virando sólida quando
+abrem.
+
+### O detalhe não repete a descrição
+
+Corolário da mesma ideia: campo que a descrição já escreve **sai do cabeçalho** e fica só
+em coluna e filtro, onde recorta. Foi assim em talento (`frequência`, `pré-requisitos`,
+`repetições`) e em antecedente (`aumento`, `perícia treinada`, `Saber` — a descrição cita a
+perícia em **440 de 440**).
+
+Fica o que a descrição **não** garante. Em antecedente é o talento: só **379 dos 404**
+trazem o `@UUID` no texto, e os outros 25 o citam por nome, sem link.
+
+---
+
 ## 7. Preferências do usuário
 
 Tudo que o usuário configura na tela **sobrevive** ao fechamento do app e às atualizações

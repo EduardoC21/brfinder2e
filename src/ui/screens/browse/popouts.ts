@@ -30,6 +30,16 @@ export interface Popout extends PopoutSubject {
   readonly x: number;
   readonly y: number;
   readonly z: number;
+  /**
+   * Por onde este painel JÁ passou, do mais antigo para o mais recente.
+   *
+   * O painel navega no lugar: clicar numa referência dentro dele troca o que ele mostra,
+   * como um navegador. A pilha é o que dá sentido ao botão de voltar — sem ela, cada
+   * clique dentro de um painel seria um caminho sem volta.
+   *
+   * Vazia é o normal: 100% dos painéis nascem assim, e o botão de voltar não aparece.
+   */
+  readonly back: readonly PopoutSubject[];
 }
 
 export interface PopoutState {
@@ -40,11 +50,18 @@ export interface PopoutState {
 
 export type PopoutAction =
   | ({ readonly kind: 'open' } & PopoutSubject)
+  /** Troca o que UM painel mostra, guardando de onde veio. Ver `Popout.back`. */
+  | ({ readonly kind: 'navigate'; readonly id: number } & PopoutSubject)
+  /** Desfaz o último `navigate` daquele painel. Sem histórico, não faz nada. */
+  | { readonly kind: 'back'; readonly id: number }
   | { readonly kind: 'close'; readonly id: number }
   | { readonly kind: 'focus'; readonly id: number }
   | { readonly kind: 'clear' };
 
 export const EMPTY_POPOUTS: PopoutState = { items: [], next: 1 };
+
+/** Uma referência estável para "sem histórico". */
+const VAZIO: readonly PopoutSubject[] = [];
 
 /** Deslocamento de cada painel novo em relação ao anterior. */
 const CASCATA = 28;
@@ -76,9 +93,48 @@ export function popoutReducer(state: PopoutState, action: PopoutAction): PopoutS
             x: ORIGEM.x + passo * CASCATA,
             y: ORIGEM.y + passo * CASCATA,
             z: state.next,
+            back: VAZIO,
           },
         ],
         next: state.next + 1,
+      };
+    }
+
+    /*
+     * Navegar TROCA o conteúdo e empilha o anterior. A posição, o tamanho e o `z` ficam:
+     * é o mesmo painel, na mesma janela, mostrando outra coisa — mover ou reempilhar aqui
+     * faria a janela fugir debaixo do cursor no instante do clique.
+     */
+    case 'navigate': {
+      const { id, ...assunto } = action;
+      return {
+        ...state,
+        items: state.items.map((item) =>
+          item.id === id
+            ? {
+                ...item,
+                ...assunto,
+                back: [
+                  ...item.back,
+                  { entity: item.entity, entityType: item.entityType, fields: item.fields },
+                ],
+              }
+            : item,
+        ),
+      };
+    }
+
+    case 'back': {
+      const alvo = state.items.find((item) => item.id === action.id);
+      // Sem para onde voltar: devolve o MESMO estado, e o React não redesenha nada.
+      if (alvo === undefined || alvo.back.length === 0) return state;
+      const anterior = alvo.back[alvo.back.length - 1];
+      if (anterior === undefined) return state;
+      return {
+        ...state,
+        items: state.items.map((item) =>
+          item.id === action.id ? { ...item, ...anterior, back: item.back.slice(0, -1) } : item,
+        ),
       };
     }
 

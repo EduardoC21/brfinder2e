@@ -61,6 +61,93 @@ describe('popoutReducer', () => {
     expect(novo.items[2]?.x).toBe(tres.items[2]?.x);
   });
 
+  /*
+   * O painel navega no LUGAR, como um navegador: clicar numa referência dentro dele troca
+   * o que ele mostra. É o que dá sentido ao botão de voltar.
+   */
+  it('navegar troca o conteúdo e guarda de onde veio', () => {
+    const um = abrir(EMPTY_POPOUTS, 'a');
+    const painel = um.items[0];
+    if (painel === undefined) throw new Error('esperava um painel');
+
+    const foi = popoutReducer(um, {
+      kind: 'navigate',
+      id: painel.id,
+      entity: fake('b'),
+      entityType: 'feat',
+      fields: [],
+    });
+    const depois = foi.items[0];
+    expect(depois?.entity.key).toBe('b');
+    expect(depois?.entityType).toBe('feat');
+    expect(depois?.back).toHaveLength(1);
+    expect(depois?.back[0]?.entity.key).toBe('a');
+  });
+
+  /*
+   * A janela não se mexe ao navegar: é o MESMO painel mostrando outra coisa. Mover ou
+   * reempilhar faria a janela fugir debaixo do cursor no instante do clique.
+   */
+  it('navegar não move nem reempilha a janela', () => {
+    const um = abrir(EMPTY_POPOUTS, 'a');
+    const painel = um.items[0];
+    if (painel === undefined) throw new Error('esperava um painel');
+
+    const foi = popoutReducer(um, {
+      kind: 'navigate',
+      id: painel.id,
+      entity: fake('b'),
+      entityType: 'feat',
+      fields: [],
+    });
+    expect(foi.items[0]?.x).toBe(painel.x);
+    expect(foi.items[0]?.y).toBe(painel.y);
+    expect(foi.items[0]?.z).toBe(painel.z);
+  });
+
+  it('voltar desfaz a última navegação, e esvazia a pilha', () => {
+    const um = abrir(EMPTY_POPOUTS, 'a');
+    const painel = um.items[0];
+    if (painel === undefined) throw new Error('esperava um painel');
+
+    const foi = popoutReducer(um, {
+      kind: 'navigate',
+      id: painel.id,
+      entity: fake('b'),
+      entityType: 'feat',
+      fields: [],
+    });
+    const voltou = popoutReducer(foi, { kind: 'back', id: painel.id });
+    expect(voltou.items[0]?.entity.key).toBe('a');
+    expect(voltou.items[0]?.entityType).toBe('condition');
+    expect(voltou.items[0]?.back).toHaveLength(0);
+  });
+
+  /* Sem histórico, voltar não faz nada — e devolver o MESMO estado poupa um render. */
+  it('voltar sem histórico não gera estado novo', () => {
+    const um = abrir(EMPTY_POPOUTS, 'a');
+    const painel = um.items[0];
+    if (painel === undefined) throw new Error('esperava um painel');
+    expect(popoutReducer(um, { kind: 'back', id: painel.id })).toBe(um);
+  });
+
+  /* Navegar num painel não toca nos outros: cada janela tem a história dela. */
+  it('a história é de cada painel', () => {
+    const dois = abrir(abrir(EMPTY_POPOUTS, 'a'), 'b');
+    const primeiro = dois.items[0];
+    if (primeiro === undefined) throw new Error('esperava dois painéis');
+
+    const foi = popoutReducer(dois, {
+      kind: 'navigate',
+      id: primeiro.id,
+      entity: fake('c'),
+      entityType: 'spell',
+      fields: [],
+    });
+    expect(foi.items[1]).toBe(dois.items[1]);
+    expect(foi.items[1]?.back).toHaveLength(0);
+  });
+
   it('fechar um painel não move os outros', () => {
     const dois = abrir(abrir(EMPTY_POPOUTS, 'a'), 'b');
     const primeiro = dois.items[0];

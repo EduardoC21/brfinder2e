@@ -265,6 +265,11 @@ export const ptBR = {
     detail: {
       close: 'Fechar',
       popOut: 'Destacar em painel flutuante',
+      /*
+       * O voltar do painel, e a dica ensina o gesto que ninguém adivinha sozinho: o
+       * Ctrl+clique abre um painel novo em vez de navegar neste.
+       */
+      back: 'Voltar (Ctrl+clique abre em painel novo)',
       minimize: 'Minimizar',
       resize: 'Redimensionar',
       resizeSidebar: 'Largura do painel',

@@ -15,7 +15,7 @@ import { ActionCost } from '@ui/components/ActionCost';
 import { CastCost } from '@ui/components/CastCost';
 import { Frequency } from '@ui/components/Frequency';
 import { RarityMark } from '@ui/components/RarityMark';
-import { RichText } from '@ui/components/RichText';
+import { RichText, type RichTextLinks } from '@ui/components/RichText';
 import { CollapseToggle } from '@ui/components/CollapseToggle';
 import { cx } from '@ui/cx';
 import { bookLabel, capitalizar, fieldText } from '@ui/text';
@@ -50,6 +50,8 @@ export interface DetailPanelProps {
    * sabe resolver o ponteiro é a tela, que tem todas as bases carregadas.
    */
   readonly reference?: ReferenceBridge;
+  /** Desfaz a última navegação deste painel. Ausente quando não há para onde voltar. */
+  readonly onBack?: () => void;
   /**
    * O painel está EMBUTIDO dentro de outro — a ação aberta debaixo da perícia.
    *
@@ -69,7 +71,16 @@ export interface DetailPanelProps {
  */
 export interface ReferenceBridge {
   readonly resolve: (uuid: string) => PopoutSubject | null;
+  /** Abre em painel NOVO. É o que a lateral sempre faz, e o que o Ctrl+clique pede. */
   readonly onPopOut?: (subject: PopoutSubject) => void;
+  /**
+   * Troca o que ESTE painel mostra, guardando de onde veio.
+   *
+   * Só existe dentro de um flutuante. Na lateral não pode existir: ela está presa à
+   * entrada escolhida na lista, e navegá-la no lugar perderia a seleção sem aviso — a
+   * lista continuaria marcando uma linha que o painel já não mostra.
+   */
+  readonly onNavigate?: (subject: PopoutSubject) => void;
 }
 
 /**
@@ -87,6 +98,7 @@ export function DetailPanel({
   onCollapse,
   onPopOut,
   reference,
+  onBack,
   embedded = false,
 }: DetailPanelProps) {
   const description = useDescription(entityType, entity.key);
@@ -108,6 +120,27 @@ export function DetailPanel({
   }
   const alvo = reference === undefined || aberta === null ? null : reference.resolve(aberta);
   const destacar = reference?.onPopOut;
+
+  /**
+   * Abre uma referência — da prosa ou de um campo.
+   *
+   * `novo` decide ONDE, e a regra é a mesma dos dois lugares: painel novo quando a pessoa
+   * pede (Ctrl, clique do meio) ou quando não há para onde navegar — que é o caso da
+   * lateral, onde `onNavigate` não existe.
+   */
+  const abrir = (uuid: string, novo: boolean): void => {
+    const destino = reference?.resolve(uuid);
+    if (destino === undefined || destino === null) return;
+    const navegar = reference?.onNavigate;
+    if (!novo && navegar !== undefined) navegar(destino);
+    else reference?.onPopOut?.(destino);
+  };
+
+  /* Só o que RESOLVE vira botão na prosa. Ver `RichTextLinks`. */
+  const links: RichTextLinks | undefined =
+    reference === undefined
+      ? undefined
+      : { resolves: (target) => reference.resolve(target) !== null, open: abrir };
   const nodes = useMemo(
     () => (description === null ? null : parseDescription(description)),
     [description],
@@ -132,7 +165,7 @@ export function DetailPanel({
         separadas, o nome fica com a largura inteira e nada o disputa.
       */}
       <header className={styles['head']}>
-        <Actions onCollapse={onCollapse} onPopOut={onPopOut} />
+        <Actions onCollapse={onCollapse} onPopOut={onPopOut} onBack={onBack} />
 
         {/*
           Nome e raridade juntos, como na lista.
@@ -170,7 +203,7 @@ export function DetailPanel({
               spec={spec}
               entity={entity}
               selected={aberta}
-              {...(reference === undefined
+              {...(reference === undefined || embedded
                 ? {}
                 : {
                     onToggleReference: (uuid: string) => {
@@ -179,6 +212,7 @@ export function DetailPanel({
                       setAberta((atual) => (atual === uuid ? null : uuid));
                     },
                   })}
+              {...(reference === undefined ? {} : { onOpenReference: abrir })}
             />
           ))}
         </dl>
@@ -192,7 +226,7 @@ export function DetailPanel({
       <div className={styles['body']}>
         {nodes === null ? null : (
           <div className={styles['prose']}>
-            <RichText nodes={nodes} />
+            <RichText nodes={nodes} {...(links === undefined ? {} : { links })} />
           </div>
         )}
       </div>
@@ -205,13 +239,26 @@ export function DetailPanel({
         troca de ação lá dentro) ou só a ação. Ele não recebe `reference`, e é o que
         impede o aninhamento infinito: uma ação dentro da ação dentro da ação.
       */}
-      {alvo !== null && (
+      {alvo !== null && reference !== undefined && (
         <div className={styles['sub']}>
           <DetailPanel
             entity={alvo.entity}
             entityType={alvo.entityType}
             fields={alvo.fields}
             embedded
+            /*
+              A sub-tela recebe uma ponte PODADA: ela resolve e destaca, mas não navega.
+
+              Sem ponte nenhuma, os links do texto da ação ficavam mortos — `Athletics` e
+              `Broken` dentro de Force Open eram palavras marcadas que não faziam nada.
+              Com a ponte inteira, um clique ali navegaria o flutuante de FORA, trocando a
+              perícia pela outra entrada e levando a sub-tela junto. Só `onPopOut`, então:
+              tudo que se clica aqui dentro abre janela nova.
+
+              E `embedded` corta o `onToggleReference` mais acima — é o que garante que
+              não existe sub-tela dentro de sub-tela.
+            */
+            reference={{ resolve: reference.resolve, ...(destacar ? { onPopOut: destacar } : {}) }}
             {...(destacar === undefined
               ? {}
               : {
@@ -243,12 +290,36 @@ export function DetailPanel({
 function Actions({
   onCollapse,
   onPopOut,
+  onBack,
 }: {
   readonly onCollapse?: (() => void) | undefined;
   readonly onPopOut?: (() => void) | undefined;
+  readonly onBack?: (() => void) | undefined;
 }) {
   return (
     <div className={styles['actions']}>
+      {/*
+        O VOLTAR só existe quando há para onde voltar, e some quando não há.
+
+        Aparecer desabilitado seria o padrão do resto do app (o "limpar" do filtro faz
+        assim), e aqui não serve: aquele botão está sempre no mesmo lugar de uma tela que
+        não muda, enquanto este vive num painel que a pessoa acabou de abrir. Um botão
+        cinza permanente num painel recém-aberto sugere que falta alguma coisa.
+
+        E ele NÃO tem par: o avançar se perde no primeiro clique depois de voltar, e quase
+        ninguém o usa. Foi decisão do autor, e concordo — ver UI-PATTERNS.
+      */}
+      {onBack && (
+        <button
+          type="button"
+          className={cx(styles['icon'], 'chamfer-sm')}
+          aria-label={t.back}
+          title={t.back}
+          onClick={onBack}
+        >
+          ‹
+        </button>
+      )}
       {/*
         Recolher fica à ESQUERDA, na MESMA linha da tradução e do pop-out.
         Estava flutuando sobre o canto do painel, em cima do ×, e a barra subia e descia
@@ -299,12 +370,16 @@ function Field({
   entity,
   selected,
   onToggleReference,
+  onOpenReference,
 }: {
   readonly spec: DetailFieldSpec;
   readonly entity: BrowseEntity;
   /** O `@UUID` da referência aberta agora, para marcá-la. */
   readonly selected?: string | null;
+  /** Abre a sub-tela embaixo. SÓ perícia — ver a exceção em `spec.ts`. */
   readonly onToggleReference?: (uuid: string) => void;
+  /** Abre um painel. É o que todo o resto faz. */
+  readonly onOpenReference?: (uuid: string, novo: boolean) => void;
 }) {
   const label = (field: string): string => b.fieldLabel[field] ?? field;
 
@@ -434,9 +509,14 @@ function Field({
     case 'references': {
       const lista = referenciasDe(entity, spec.field);
       if (lista.length === 0) return null;
+      /*
+       * ABRE PAINEL, e não sub-tela. É a regra geral do aplicativo: o que se clica no
+       * detalhe vira painel. A sub-tela de `actions` é a exceção, e só existe porque
+       * perícia não tem texto próprio para ocupar o lugar dela — ver `spec.ts`.
+       */
       return (
         <Row label={label(spec.field)}>
-          <Referencias acoes={lista} aberta={selected ?? null} onAbrir={onToggleReference} />
+          <Referencias acoes={lista} aberta={null} onAbrir={onOpenReference} />
         </Row>
       );
     }
@@ -568,8 +648,9 @@ function Referencias({
   onAbrir,
 }: {
   readonly acoes: readonly Reference[];
+  /** O que está aberto na sub-tela, ou `null` quando o clique abre painel. */
   readonly aberta: string | null;
-  readonly onAbrir: ((uuid: string) => void) | undefined;
+  readonly onAbrir: ((uuid: string, novo: boolean) => void) | undefined;
 }) {
   return (
     <span className={styles['referencias']}>
@@ -593,8 +674,14 @@ function Referencias({
               marcada && styles['referenciaAberta'],
             )}
             title={marcada ? s.closeAction : s.openAction}
-            onClick={() => {
-              onAbrir(acao.uuid);
+            onClick={(event) => {
+              onAbrir(acao.uuid, event.ctrlKey || event.metaKey);
+            }}
+            onAuxClick={(event) => {
+              if (event.button === 1) {
+                event.preventDefault();
+                onAbrir(acao.uuid, true);
+              }
             }}
           >
             {acao.name}

@@ -131,6 +131,34 @@
   cursor: help;
 }
 
+/*
+ * A referência que ABRE, e o que a separa da que não abre.
+ *
+ * Continua latão e continua pontilhada — o Anexo A pede que se destaquem "sem virar um mar
+ * de links azuis", e são 16.598 delas: azul sublinhado transformaria toda descrição num
+ * formulário. O que muda é a LINHA, que vira sólida, e o cursor, que vira mão. Passar o
+ * mouse acende o fundo.
+ *
+ * `button` traz consigo fonte, fundo, borda e recheio do navegador; os quatro são zerados
+ * para ele fluir dentro do parágrafo como a palavra que era.
+ */
+.clicavel {
+  border: 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-data) 70%, transparent);
+  padding: 0;
+  background: none;
+  font: inherit;
+  color: var(--color-data);
+  cursor: pointer;
+}
+
+.clicavel:hover,
+.clicavel:focus-visible {
+  background: color-mix(in srgb, var(--color-data) 18%, transparent);
+  border-bottom-color: var(--color-data);
+  outline: none;
+}
+
 /* Dano e testes são números: mono os alinha e sinaliza "isto não é prosa". */
 .damage,
 .check,
