@@ -1,0 +1,65 @@
+import { useEffect, useState } from 'react';
+
+import { type TraitGlossary } from '@core/glossary/index';
+import { isRecord } from '@core/json';
+import { readGlossary } from '@core/store/index';
+import { createIndexedDbStore } from '@platform/store-indexeddb';
+
+const store = createIndexedDbStore();
+
+/** "Nada carregado ainda" e "não há glossário" são a mesma coisa para quem desenha. */
+const VAZIO: TraitGlossary = {};
+
+/**
+ * Lê o glossário de traços do armazenamento.
+ *
+ * Relê quando `version` muda — é o mesmo gatilho de `useBase`: uma sincronização nova pode
+ * trazer traço novo com descrição nova, e a caixinha tem de acompanhar.
+ *
+ * Devolve VAZIO enquanto carrega e quando não há: a caixinha simplesmente não aparece.
+ * Não há estado de erro porque não há o que fazer com ele — um traço sem descrição é
+ * exatamente o que a tela já sabe mostrar.
+ */
+export function useTraitGlossary(version: string | null): TraitGlossary {
+  const [loaded, setLoaded] = useState<{ version: string | null; glossary: TraitGlossary }>({
+    version: null,
+    glossary: VAZIO,
+  });
+
+  useEffect(() => {
+    let alive = true;
+    readGlossary(store, 'traits')
+      .then((raw) => {
+        if (!alive) return;
+        setLoaded({ version, glossary: raw === null ? VAZIO : parse(raw) });
+      })
+      .catch(() => {
+        if (alive) setLoaded({ version, glossary: VAZIO });
+      });
+    return () => {
+      alive = false;
+    };
+  }, [version]);
+
+  return loaded.version === version ? loaded.glossary : VAZIO;
+}
+
+/**
+ * O que veio do disco, conferido campo a campo.
+ *
+ * O armazenamento devolve `unknown`, e uma versão anterior do app pode ter gravado outra
+ * forma. Entrada que não tem as duas strings fica de fora em vez de derrubar o glossário
+ * inteiro — o pior que acontece é um traço sem caixinha.
+ */
+function parse(raw: Readonly<Record<string, unknown>>): TraitGlossary {
+  const glossary: Record<string, { label: string; description: string }> = {};
+  for (const [slug, entry] of Object.entries(raw)) {
+    if (!isRecord(entry)) continue;
+    const label = entry['label'];
+    const description = entry['description'];
+    if (typeof label === 'string' && typeof description === 'string') {
+      glossary[slug] = { label, description };
+    }
+  }
+  return glossary;
+}

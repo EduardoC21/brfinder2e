@@ -28,6 +28,7 @@ import {
   toStored,
   writeBase,
   writeDesc,
+  writeGlossary,
   writeMeta,
   writeRaw,
   writeRetiredRaw,
@@ -65,6 +66,15 @@ export async function persistSync(
   for (const type of result.types) {
     types.push(await persistType(store, type, result.releaseTag));
   }
+
+  /*
+   * O glossário é SUBSTITUÍDO inteiro, sem diff nem aposentadoria.
+   *
+   * As entradas têm as duas coisas porque uma ficha pode apontar para uma que sumiu. Um
+   * traço que sair da tabela de idioma some da caixinha e pronto — não há nada que
+   * dependa dele além do mouse parado em cima.
+   */
+  await writeGlossary(store, 'traits', result.traitGlossary);
 
   const meta: StoreMeta = {
     systemId: result.systemId,

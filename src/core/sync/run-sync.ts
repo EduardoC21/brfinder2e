@@ -22,6 +22,7 @@ import {
   type Progress,
   type ZipChannel,
 } from '../source/index';
+import { buildTraitGlossary, type TraitGlossary } from '../glossary/index';
 import { listRetiredRaw, type StorePort } from '../store/index';
 import { mergeLanguageFiles } from '../normalization/language';
 import { run, type PackDocuments, type Failure, type NormalizedEntity } from '../normalization/run';
@@ -90,6 +91,14 @@ export interface SyncResult {
    * novo que merece uma decisão sua. Ver `unread-packs.ts`.
    */
   readonly unreadPacks: readonly UnreadPack[];
+  /**
+   * O que cada traço quer dizer, lido da tabela de idioma. Ver `core/glossary/traits.ts`.
+   *
+   * Vem junto com as entradas porque nasce do mesmo zip e envelhece com ele: uma versão
+   * nova do Foundry pode trazer traço novo com descrição nova, e as duas coisas têm de
+   * chegar juntas.
+   */
+  readonly traitGlossary: TraitGlossary;
 }
 
 export interface SyncOptions {
@@ -214,6 +223,7 @@ export async function runSync(
     unreadPacks: scanUnreadPacks(loaded, recipes),
     types,
     total: types.reduce((sum, entry) => sum + entry.imported, 0),
+    traitGlossary: buildTraitGlossary(language),
   };
 }
 

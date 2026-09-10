@@ -1,0 +1,48 @@
+/*
+ * A caixinha do traço.
+ *
+ * `position: fixed` com a posição vinda do componente, que a mede depois de desenhar.
+ * `pointer-events: none` porque ela é SÓ leitura: se aceitasse o mouse, sair do chip em
+ * direção a ela fecharia e reabriria a caixinha a cada pixel de borda. E o `z-index` fica
+ * acima da paleta (60) e dos flutuantes — uma explicação que abre atrás do que está sendo
+ * explicado não explica nada.
+ *
+ * A largura tem teto e não valor fixo: a mediana das descrições tem 180 caracteres, e o
+ * teto de 340px dá umas quatro linhas para elas — legível sem virar um bloco de texto que
+ * cobre a lista. As de 1.894 caracteres rolam? Não: ficam altas. São 5% e quem parou o
+ * mouse para ler uma dessas quer o texto inteiro.
+ */
+.caixa {
+  position: fixed;
+  z-index: 80;
+  max-width: 340px;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-bg);
+  border: 1px solid var(--color-hairline);
+  box-shadow: 0 10px 28px rgb(0 0 0 / 50%);
+  pointer-events: none;
+  corner-shape: bevel;
+  border-radius: var(--chamfer-sm);
+}
+
+/* O nome do traço como o Foundry escreve — `Two-Hand`, não `two-hand-d8`. */
+.titulo {
+  display: block;
+  margin-bottom: var(--space-1);
+  font: 500 var(--text-sm) / 1.3 var(--font-body);
+  color: var(--color-data);
+}
+
+.texto {
+  font: 400 var(--text-sm) / 1.45 var(--font-body);
+  color: var(--color-text);
+}
+
+/* O texto vem em parágrafos em 10 das 536; o resto é uma frase só. Sem margem no fim. */
+.texto p {
+  margin: 0 0 var(--space-1);
+}
+
+.texto p:last-child {
+  margin-bottom: 0;
+}

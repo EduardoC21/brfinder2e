@@ -411,6 +411,26 @@ exportação para o Foundry (OPEN-DECISIONS, item 1).
 Gravar com `node:fs` é escolha do **comando**, não do domínio. A camada `core/store/` com
 porta própria entra na Etapa 4, junto com a tela de sincronização que vai precisar dela.
 
+### A quarta camada: o glossário (`core/glossary/`)
+
+Desde a Etapa 15b há uma chave que **não é por tipo de entidade**: `glossary/traits`. É o
+que cada traço quer dizer, para a caixinha que aparece ao passar o mouse.
+
+Um traço não é documento de pack nenhum. O texto dele mora na **tabela de idioma** do
+Foundry, em `PF2E.TraitDescription<Nome>` (536 no `pf2e-8.5.0`), e o rótulo em
+`PF2E.Trait<Nome>` (908). A sincronização já funde essa tabela para as receitas; o
+glossário é construído dela e gravado junto — nasce do mesmo zip e envelhece com ele.
+
+Chave própria em vez de esconder dentro de `desc/`: `desc/` é chaveada por entidade, e um
+traço não é uma. E **substituído inteiro** a cada sincronização, sem diff nem lápide: as
+entradas têm as duas coisas porque uma ficha pode apontar para uma que sumiu, e nada
+aponta para um traço além do mouse parado em cima.
+
+A regra do **sufixo** mora em `lookupTrait`: `deadly-d8` não existe na tabela e `deadly`
+existe, e a descrição de `deadly` foi escrita para isso ("of the listed size"). Medido:
+36 traços parametrizados, 685 usos, nenhum com descrição própria. Cobertura final: 98,9%
+dos 34.086 usos nas sete fontes importadas.
+
 ---
 
 ## 9. A camada de UI

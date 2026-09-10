@@ -6,6 +6,7 @@ import {
   createMemoryStore,
   readBase,
   readDesc,
+  readGlossary,
   readMeta,
   readRaw,
   readRetiredRaw,
@@ -45,12 +46,26 @@ function result(entities: readonly NormalizedEntity[]): SyncResult {
     types: [type],
     total: entities.length,
     unreadPacks: [],
+    traitGlossary: { agile: { label: 'Agile', description: 'The multiple attack penalty…' } },
   };
 }
 
 const at = (iso: string) => () => new Date(iso);
 
 describe('persistSync', () => {
+  /* A quarta camada: o que não é entrada. Substituída inteira a cada sincronização. */
+  it('grava o glossário de traços em chave própria', async () => {
+    const store: StorePort = createMemoryStore();
+    await persistSync(
+      store,
+      result([entity('u1', { name: 'Blinded' }, { main: '' })]),
+      at('2026-09-09T00:00:00Z'),
+    );
+    expect(await readGlossary(store, 'traits')).toEqual({
+      agile: { label: 'Agile', description: 'The multiple attack penalty…' },
+    });
+  });
+
   it('grava as três camadas do briefing 5.2', async () => {
     const store: StorePort = createMemoryStore();
     const primeira = [

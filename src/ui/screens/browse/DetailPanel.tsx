@@ -16,6 +16,7 @@ import { CastCost } from '@ui/components/CastCost';
 import { Frequency } from '@ui/components/Frequency';
 import { RarityMark } from '@ui/components/RarityMark';
 import { RichText, type RichTextLinks } from '@ui/components/RichText';
+import { TraitChip } from '@ui/components/TraitChip';
 import { CollapseToggle } from '@ui/components/CollapseToggle';
 import { cx } from '@ui/cx';
 import { bookLabel, capitalizar, fieldText } from '@ui/text';
@@ -425,10 +426,20 @@ function Field({
       return (
         <Row label={label(spec.field)}>
           <span className={styles['chips']}>
+            {/*
+              Todo chip passa pelo glossário, e não só os do campo `traits`: `arcane` numa
+              tradição É o traço arcano, e a explicação vale. Quem não está no glossário —
+              uma perícia, um grupo — sai como o `<span>` que sempre foi.
+            */}
             {list.map((item) => (
-              <span key={item} className={cx(styles['chip'], 'chamfer-sm')}>
+              <TraitChip
+                key={item}
+                slug={item}
+                className={cx(styles['chip'], 'chamfer-sm')}
+                focusable
+              >
                 {capitalizar(item)}
-              </span>
+              </TraitChip>
             ))}
           </span>
         </Row>

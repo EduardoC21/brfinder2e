@@ -638,6 +638,35 @@ trazem o `@UUID` no texto, e os outros 25 o citam por nome, sem link.
 
 ---
 
+## 6h. A caixinha do traço
+
+**Decidido:** parar o mouse sobre um chip de traço mostra o que ele quer dizer. Só traços
+por enquanto — é o primeiro glossário, e o único que a fonte traz (ver ARCHITECTURE, "A
+quarta camada").
+
+Quatro decisões, e cada uma tem o número dela:
+
+- **350 ms de atraso.** Sem ele, varrer a lista com o mouse faz uma caixinha piscar a cada
+  linha — 6.284 talentos com três traços cada são 18 mil gatilhos numa rolada. Com ele, a
+  caixinha só aparece para quem PAROU em cima, que é quem quer ler. Foco pelo teclado
+  abre na hora: quem chegou pelo Tab já parou ali de propósito.
+- **Portal para o `<body>`.** O chip mora dentro de uma lista com `overflow`, de um painel
+  que rola e — nos flutuantes — de um elemento com `transform`, que faz `position: fixed`
+  passar a ser relativo a ele. Qualquer um dos três cortaria ou deslocaria a caixinha.
+- **Focável só no detalhe.** Na lista, três paradas de foco por linha vezes sessenta
+  linhas inutilizariam o Tab — e a linha já é navegável pelo teclado.
+- **Contexto, e não prop.** O glossário é dado ambiente, só de leitura, consumido num
+  `<span>` que mora em quatro componentes em cinco arquivos, inclusive dentro dos
+  flutuantes. Passá-lo por prop atravessaria a lista, a linha, o painel e o campo — e cada
+  intermediário ganharia uma prop que ele não lê. (No `RichText` foi parâmetro, e a
+  diferença é de propósito: lá eram três funções puras num arquivo só.)
+
+O chip continua do chamador — a lista e o detalhe têm chips com CSS diferente, e o
+componente não impõe um terceiro. Sem descrição no glossário, ele é o `<span>` que sempre
+foi: nada muda para os 1,1% que a tabela do Foundry não explica.
+
+---
+
 ## 7. Preferências do usuário
 
 Tudo que o usuário configura na tela **sobrevive** ao fechamento do app e às atualizações

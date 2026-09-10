@@ -8,6 +8,7 @@
  *   raw/<pack>             os bytes do pack, como vieram do zip
  *   base/<tipo>            a projeção leve
  *   desc/<tipo>            as descrições, por chave de entidade
+ *   glossary/<nome>        texto que não pertence a entrada nenhuma — os traços
  */
 
 import { asNumber, asRecord, asString, isRecord } from '../json';
@@ -18,6 +19,14 @@ export const KEY_META = 'meta';
 export const keyRaw = (pack: string): string => `raw/${pack}`;
 export const keyBase = (type: string): string => `base/${type}`;
 export const keyDesc = (type: string): string => `desc/${type}`;
+/**
+ * A quarta camada, e a primeira que NÃO é por tipo de entidade.
+ *
+ * Um glossário é texto de apoio — o que um traço quer dizer — que vem da tabela de idioma
+ * do Foundry e não de documento nenhum. Chave própria em vez de esconder dentro de
+ * `desc/`: `desc/` é chaveada por entidade, e um traço não é uma.
+ */
+export const keyGlossary = (name: string): string => `glossary/${name}`;
 
 export interface StoreMeta {
   readonly systemId: string;
@@ -103,6 +112,22 @@ export async function readDesc(
   type: string,
 ): Promise<Readonly<Record<string, unknown>> | null> {
   const value = await store.get(keyDesc(type));
+  return isRecord(value) ? value : null;
+}
+
+export async function writeGlossary(
+  store: StorePort,
+  name: string,
+  entries: Readonly<Record<string, unknown>>,
+): Promise<void> {
+  await store.put(keyGlossary(name), entries);
+}
+
+export async function readGlossary(
+  store: StorePort,
+  name: string,
+): Promise<Readonly<Record<string, unknown>> | null> {
+  const value = await store.get(keyGlossary(name));
   return isRecord(value) ? value : null;
 }
 

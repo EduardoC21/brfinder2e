@@ -30,6 +30,8 @@ import { useAllBases } from '@ui/hooks/useAllBases';
 import { useBase } from '@ui/hooks/useBase';
 import { useGlobalIndex } from '@ui/hooks/useGlobalIndex';
 import { useNarrowScreen } from '@ui/hooks/useNarrowScreen';
+import { useTraitGlossary } from '@ui/hooks/useTraitGlossary';
+import { TraitGlossaryContext } from '@ui/glossary/TraitGlossaryContext';
 import { usePreferences } from '@ui/prefs/usePreferences';
 
 import { DetailPane } from './DetailPane';
@@ -104,6 +106,13 @@ export function BrowseScreen({ baseVersion }: BrowseScreenProps) {
    */
   const precisaDeTodas = paletaAberta || (source?.crossReferences ?? false);
   const bases = useAllBases(precisaDeTodas, baseVersion);
+
+  /*
+   * O glossário de traços, lido UMA vez por versão da base e servido por contexto a todo
+   * chip da tela — os da lista, os do detalhe e os de dentro dos flutuantes. Ver
+   * `TraitGlossaryContext` para o porquê de contexto e não prop.
+   */
+  const glossario = useTraitGlossary(baseVersion);
   const carregadas = useMemo(() => (bases.status === 'ready' ? bases.sources : VAZIAS), [bases]);
   const indiceGlobal = useGlobalIndex(carregadas, buscaNaDescricao);
 
@@ -159,57 +168,58 @@ export function BrowseScreen({ baseVersion }: BrowseScreenProps) {
   const ponte: ReferenceBridge = { resolve: resolver, onPopOut: abrirFlutuante };
 
   return (
-    <div className={styles['screen']}>
-      <SourceRail
-        sources={SOURCES}
-        currentId={sourceId}
-        currentCount={entities.length}
-        collapsed={trilhoRecolhido}
-        onToggle={alternarTrilho}
-        onSelect={setSourceId}
-      />
-
-      {source === undefined ? (
-        <p className={styles['empty']}>{t.empty}</p>
-      ) : (
-        <SourcePane
-          key={source.id}
-          source={source}
-          entities={entities}
-          loading={base.status === 'loading'}
-          onPopOut={abrirFlutuante}
-          reference={ponte}
+    <TraitGlossaryContext.Provider value={glossario}>
+      <div className={styles['screen']}>
+        <SourceRail
+          sources={SOURCES}
+          currentId={sourceId}
+          currentCount={entities.length}
+          collapsed={trilhoRecolhido}
+          onToggle={alternarTrilho}
+          onSelect={setSourceId}
         />
-      )}
 
-      {paletaAberta && (
-        <GlobalSearch
-          index={indiceGlobal}
-          sources={carregadas}
-          loading={bases.status !== 'ready'}
-          inText={buscaNaDescricao}
-          onInText={setBuscaNaDescricao}
-          onClose={() => {
-            setPaletaAberta(false);
-          }}
-          onOpenEntry={abrirFlutuante}
-        />
-      )}
+        {source === undefined ? (
+          <p className={styles['empty']}>{t.empty}</p>
+        ) : (
+          <SourcePane
+            key={source.id}
+            source={source}
+            entities={entities}
+            loading={base.status === 'loading'}
+            onPopOut={abrirFlutuante}
+            reference={ponte}
+          />
+        )}
 
-      {popouts.items.map((item) => (
-        <FloatingPanel
-          key={item.id}
-          title={fieldValue(item.entity, 'name')}
-          initial={{ x: item.x, y: item.y }}
-          z={item.z}
-          onFocus={() => {
-            despacharPopout({ kind: 'focus', id: item.id });
-          }}
-          onClose={() => {
-            despacharPopout({ kind: 'close', id: item.id });
-          }}
-        >
-          {/*
+        {paletaAberta && (
+          <GlobalSearch
+            index={indiceGlobal}
+            sources={carregadas}
+            loading={bases.status !== 'ready'}
+            inText={buscaNaDescricao}
+            onInText={setBuscaNaDescricao}
+            onClose={() => {
+              setPaletaAberta(false);
+            }}
+            onOpenEntry={abrirFlutuante}
+          />
+        )}
+
+        {popouts.items.map((item) => (
+          <FloatingPanel
+            key={item.id}
+            title={fieldValue(item.entity, 'name')}
+            initial={{ x: item.x, y: item.y }}
+            z={item.z}
+            onFocus={() => {
+              despacharPopout({ kind: 'focus', id: item.id });
+            }}
+            onClose={() => {
+              despacharPopout({ kind: 'close', id: item.id });
+            }}
+          >
+            {/*
             Sem `onCollapse` e sem `onPopOut`: o flutuante não recolhe (ele fecha, pelo ×
             da própria barra de título) e não se destaca de novo. Ausência de callback é o
             que apaga cada botão — o painel não pergunta onde está.
@@ -218,33 +228,34 @@ export function BrowseScreen({ baseVersion }: BrowseScreenProps) {
             cada ação aberta ali tem o próprio pop-out. Foi o pedido — destacar a perícia
             com a ação trocável dentro, ou destacar só a ação.
           */}
-          <DetailPanel
-            entity={item.entity}
-            entityType={item.entityType}
-            fields={item.fields}
-            /*
+            <DetailPanel
+              entity={item.entity}
+              entityType={item.entityType}
+              fields={item.fields}
+              /*
               A ponte do FLUTUANTE navega no lugar: clicar troca o que esta janela mostra e
               empilha de onde veio, como um navegador. O Ctrl+clique continua abrindo
               janela nova, e é por isso que `onPopOut` também vai junto.
             */
-            reference={{
-              resolve: resolver,
-              onPopOut: abrirFlutuante,
-              onNavigate: (assunto) => {
-                despacharPopout({ kind: 'navigate', id: item.id, ...assunto });
-              },
-            }}
-            {...(item.back.length === 0
-              ? {}
-              : {
-                  onBack: () => {
-                    despacharPopout({ kind: 'back', id: item.id });
-                  },
-                })}
-          />
-        </FloatingPanel>
-      ))}
-    </div>
+              reference={{
+                resolve: resolver,
+                onPopOut: abrirFlutuante,
+                onNavigate: (assunto) => {
+                  despacharPopout({ kind: 'navigate', id: item.id, ...assunto });
+                },
+              }}
+              {...(item.back.length === 0
+                ? {}
+                : {
+                    onBack: () => {
+                      despacharPopout({ kind: 'back', id: item.id });
+                    },
+                  })}
+            />
+          </FloatingPanel>
+        ))}
+      </div>
+    </TraitGlossaryContext.Provider>
   );
 }
 

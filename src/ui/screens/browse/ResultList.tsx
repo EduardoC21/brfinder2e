@@ -22,6 +22,7 @@ import { ActionCost } from '@ui/components/ActionCost';
 import { CastCost } from '@ui/components/CastCost';
 import { Frequency } from '@ui/components/Frequency';
 import { RarityMark } from '@ui/components/RarityMark';
+import { TraitChip } from '@ui/components/TraitChip';
 import { cx } from '@ui/cx';
 import { capitalizar, fieldText } from '@ui/text';
 import { useTrackWidth } from '@ui/hooks/useTrackWidth';
@@ -343,9 +344,9 @@ function Linha({
               caixa da primeira letra não muda quantos são.
             */}
             {traços.shown.map((trait) => (
-              <span key={trait} className={styles['chip']}>
+              <TraitChip key={trait} slug={trait} className={styles['chip'] ?? ''}>
                 {capitalizar(trait)}
-              </span>
+              </TraitChip>
             ))}
             {traços.hidden > 0 && (
               /*
