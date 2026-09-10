@@ -4,6 +4,7 @@ import { ScrollRail } from '@ui/components/ScrollRail';
 import { cx } from '@ui/cx';
 import { useTraitLabel } from '@ui/glossary/useTraitLabel';
 
+import { ATTRIBUTE_FIELDS } from './backgroundFields';
 import { topicLabel, valueLabel } from './filterLabels';
 import styles from './FilterBar.module.css';
 
@@ -47,7 +48,9 @@ export function FilterBar({
   /* O chip do filtro aplicado escreve o mesmo que o painel e a coluna. Ver o painel. */
   const rotuloDeTraco = useTraitLabel();
   const rotulo = (spec: FilterSpec, value: string): string =>
-    spec.kind === 'list' && value !== '' ? rotuloDeTraco(value) : valueLabel(spec, value);
+    spec.kind === 'list' && value !== '' && !ATTRIBUTE_FIELDS.has(spec.field)
+      ? rotuloDeTraco(value)
+      : valueLabel(spec, value);
 
   const desmarcar = (spec: FilterSpec, value: string): void => {
     const atual = state[spec.id]?.values ?? [];

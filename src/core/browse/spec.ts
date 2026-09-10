@@ -22,6 +22,18 @@ export type Align = 'start' | 'end';
  * a definição ser UMA. Ver `defenseTokens` em `query.ts` para o modelo, e a nota no
  * descritor de magias para as quatro entradas em que a fonte erra o traço.
  */
+/**
+ * Como desenhar um par de atributos "escolha um": `Strength ou Dexterity`.
+ *
+ * `free` diz o que a lista VAZIA quer dizer. No antecedente ela é o aumento LIVRE (9 dos
+ * 520), e a tela escreve "Livre"; na divindade ela é ausência (as 7 filosofias não têm
+ * atributo divino), e a linha some. Sem o sinal, a filosofia ganharia um "Livre" que o
+ * livro não dá.
+ */
+export interface BoostsFormat {
+  readonly free?: boolean;
+}
+
 export interface DefenseFields {
   /** O salvamento: `{statistic, basic}`. */
   readonly field: string;
@@ -117,7 +129,17 @@ export type ColumnSpec =
    * livre", que é informação, e um `chips` vazio não desenha nada. E o `ou` importa — são
    * duas opções entre as quais se escolhe uma, não duas coisas que se ganham.
    */
-  | ({ readonly kind: 'boosts'; readonly field: string } & ColumnBase)
+  | ({ readonly kind: 'boosts'; readonly field: string } & BoostsFormat & ColumnBase)
+  /**
+   * Uma lista de SLUGS que apontam para entradas de OUTRA fonte — os domínios de uma
+   * divindade (`fire` → a página Fire), a perícia divina (`medicine` → Medicine), a arma
+   * favorita (`scimitar` → o equipamento).
+   *
+   * Referência por slug e não por UUID porque é assim que a fonte guarda: a divindade
+   * escreve `fire`, não o UUID da página. Na coluna são chips de texto; no detalhe viram
+   * botões que abrem a entrada. Ver `DetailFieldSpec`.
+   */
+  | ({ readonly kind: 'links'; readonly field: string; readonly entityType: string } & ColumnBase)
   /**
    * Uma lista de REFERÊNCIAS `@UUID` — o talento que um antecedente concede.
    *
@@ -298,7 +320,15 @@ export type DetailFieldSpec =
    */
   | { readonly kind: 'references'; readonly field: string }
   /** O aumento de atributo com escolha. Ver a espécie de coluna homônima. */
-  | { readonly kind: 'boosts'; readonly field: string }
+  | ({ readonly kind: 'boosts'; readonly field: string } & BoostsFormat)
+  /**
+   * Slugs que abrem entradas de outra fonte, como botões. Ver a espécie de coluna.
+   *
+   * É a SEGUNDA forma de ponte do aplicativo. A primeira (`references`, `actions`) resolve
+   * por UUID, que é como o texto do Foundry aponta; esta resolve por slug, que é como os
+   * CAMPOS do Foundry apontam — `system.domains.primary: ['fire']`.
+   */
+  | { readonly kind: 'links'; readonly field: string; readonly entityType: string }
   /** `1d8 cortante`. Ver `EquipmentDamage` na receita. */
   | { readonly kind: 'damage'; readonly field: string }
   | { readonly kind: 'duration'; readonly field: string }
@@ -431,6 +461,9 @@ const DEFESA_DE_MAGIA: DefenseFields = {
  * que a fonte diz. Quem junta as duas leituras é a tela, em `attributeName`.
  */
 const ATTRIBUTE_CODES: readonly string[] = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
+
+/** Os quatro tipos de divindade, do mais numeroso ao menos: 419, 37, 17, 7. */
+const DEITY_KINDS: readonly string[] = ['deity', 'pantheon', 'covenant', 'philosophy'];
 
 const ATTRIBUTES: readonly string[] = [
   'Strength',
@@ -877,7 +910,7 @@ export const SOURCES: readonly SourceSpec[] = [
     columns: [
       { kind: 'chips', id: 'skills', field: 'skills' },
       { kind: 'chips', id: 'lore', field: 'lore' },
-      { kind: 'boosts', id: 'boosts', field: 'boosts' },
+      { kind: 'boosts', id: 'boosts', field: 'boosts', free: true },
       { kind: 'references', id: 'feats', field: 'feats' },
       { kind: 'text', id: 'source', field: 'source.title' },
     ],
@@ -994,6 +1027,104 @@ export const SOURCES: readonly SourceSpec[] = [
     typeFilter: null,
     searchFields: ['name'],
     detail: [{ kind: 'chips', field: 'traits' }, { kind: 'cost' }, { kind: 'source' }],
+  },
+  {
+    id: 'deities',
+    entityType: 'deity',
+    mode: 'list',
+    /*
+     * A fonte que o trilho NÃO previa (Etapa 17). Ao contrário do antecedente, aqui a
+     * DESCRIÇÃO NÃO TRAZ A MECÂNICA — ela traz éditos, anátema e símbolo —, então
+     * atributo, fonte, santificação, perícia, arma, domínios e magias ficam TODOS no
+     * detalhe. É a mesma regra da 15a lida ao contrário: o cabeçalho mostra o que a
+     * descrição não garante, e aqui ela não garante nada disso.
+     *
+     * Os campos de slug (`skills`, `weapons`, `domains`) são PONTES: abrem a perícia, o
+     * equipamento e o domínio. Ver `links`.
+     */
+    crossReferences: true,
+    columns: [
+      { kind: 'chip', id: 'kind', field: 'kind' },
+      { kind: 'chip', id: 'group', field: 'group' },
+      { kind: 'boosts', id: 'divineAttribute', field: 'divineAttribute' },
+      { kind: 'chips', id: 'font', field: 'font' },
+      { kind: 'chip', id: 'sanctification', field: 'sanctification' },
+      { kind: 'links', id: 'divineSkill', field: 'divineSkill', entityType: 'skill' },
+      { kind: 'links', id: 'weapons', field: 'weapons', entityType: 'equipment' },
+      { kind: 'links', id: 'domains', field: 'domains', entityType: 'domain' },
+      { kind: 'text', id: 'source', field: 'source.title' },
+    ],
+    /* Grupo e atributo: "que tipo de deus é" e "serve para o meu clérigo". */
+    defaultColumns: ['group', 'divineAttribute'],
+    /* Divindade não tem nível, raridade nem traço na fonte — a chave `traits` vem vazia. */
+    special: NO_SPECIAL_COLUMNS,
+    filters: [
+      /* Deus primeiro, e não "Covenant": a ordem é a de quantos são, e é a do livro. */
+      { kind: 'options', id: 'kind', field: 'kind', values: DEITY_KINDS },
+      { kind: 'options', id: 'group', field: 'group' },
+      /* Os seis na ordem da ficha, como no antecedente e na perícia. */
+      {
+        kind: 'list',
+        id: 'divineAttribute',
+        field: 'divineAttribute',
+        combine: 'any',
+        values: ATTRIBUTE_CODES,
+      },
+      { kind: 'list', id: 'font', field: 'font', combine: 'any' },
+      { kind: 'options', id: 'sanctification', field: 'sanctification' },
+      { kind: 'list', id: 'divineSkill', field: 'divineSkill', combine: 'any' },
+      { kind: 'list', id: 'domains', field: 'domains', combine: 'any' },
+      { kind: 'options', id: 'source', field: 'source.title' },
+    ],
+    /* O Tipo é a categoria: deus, panteão, pacto, filosofia. Cobre os 480. */
+    typeFilter: 'kind',
+    searchFields: ['name'],
+    /*
+     * A ordem é a do bloco de divindade do livro: atributo, fonte, santificação, perícia,
+     * arma favorita, domínios, domínios alternativos, magias de clérigo. Grupo e Tipo no
+     * fim, antes do livro, como em toda fonte.
+     */
+    detail: [
+      { kind: 'boosts', field: 'divineAttribute' },
+      { kind: 'chips', field: 'font' },
+      { kind: 'text', field: 'sanctification' },
+      { kind: 'links', field: 'divineSkill', entityType: 'skill' },
+      { kind: 'links', field: 'weapons', entityType: 'equipment' },
+      { kind: 'links', field: 'domains', entityType: 'domain' },
+      { kind: 'links', field: 'alternateDomains', entityType: 'domain' },
+      { kind: 'references', field: 'spells' },
+      { kind: 'text', field: 'group' },
+      { kind: 'text', field: 'kind' },
+      { kind: 'source' },
+    ],
+  },
+  {
+    id: 'domains',
+    entityType: 'domain',
+    mode: 'list',
+    /*
+     * Sessenta e um domínios, e a PÁGINA é a entrada: a lista de divindades que o
+     * concedem já está lá, cada nome um `@UUID` clicável. Tirá-la para o cabeçalho
+     * repetiria 2.473 links que a descrição já tem. Sobram as duas magias, como coluna.
+     */
+    crossReferences: true,
+    columns: [
+      { kind: 'references', id: 'spell', field: 'spell' },
+      { kind: 'references', id: 'advancedSpell', field: 'advancedSpell' },
+    ],
+    defaultColumns: ['spell', 'advancedSpell'],
+    special: NO_SPECIAL_COLUMNS,
+    /* Sem filtro: 61 nomes cabem numa tela, e a busca resolve o resto. */
+    filters: [],
+    typeFilter: null,
+    searchFields: ['name'],
+    /*
+     * DETALHE VAZIO, e é a regra da 15a levada ao limite: a página escreve "Domain Spell
+     * Fire Ray" na primeira linha, com o link. Repetir as duas magias no cabeçalho era
+     * dizer a mesma coisa duas vezes a três centímetros de distância. Elas continuam como
+     * coluna, que é onde se varre.
+     */
+    detail: [],
   },
   {
     id: 'skills',

@@ -30,7 +30,8 @@ import { useTrackWidth } from '@ui/hooks/useTrackWidth';
 import { useWindowedRows } from '@ui/hooks/useWindowedRows';
 
 import { columnLabel, frequencyLabel, specialColumnLabel } from './filterLabels';
-import { boostsText, referenceNames } from './backgroundFields';
+import { boostsText } from './backgroundFields';
+import { referenceNames } from './referenceFields';
 import { itemBulkText, itemDamageShort, itemPriceText, statText } from './itemFields';
 import { areaText, defenseText, durationText, spellCast } from './spellFields';
 import styles from './ResultList.module.css';
@@ -484,9 +485,11 @@ function textoDaColuna(spec: ColumnSpec, entity: BrowseEntity): string {
     case 'chips':
       return fieldList(entity, spec.field).map(capitalizar).join(' ');
     case 'boosts':
-      return boostsText(entity, spec.field);
+      return boostsText(entity, spec.field, spec.free === true);
     case 'references':
       return referenceNames(entity, spec.field);
+    case 'links':
+      return fieldList(entity, spec.field).map(capitalizar).join(' ');
     case 'price':
       return itemPriceText(entity, spec.field);
     case 'bulk':
@@ -629,9 +632,24 @@ function Column({ spec, entity }: { readonly spec: ColumnSpec; readonly entity: 
      * a lado se leem como "ganha os dois", e o que o antecedente dá é uma escolha.
      */
     case 'boosts': {
-      const valor = boostsText(entity, spec.field);
+      const valor = boostsText(entity, spec.field, spec.free === true);
       if (valor === '') return null;
       return <span className={styles['chip']}>{valor}</span>;
+    }
+
+    /* Slugs na LISTA são texto, como as referências: a linha inteira já é o alvo. */
+    case 'links': {
+      const lista = fieldList(entity, spec.field);
+      if (lista.length === 0) return null;
+      return (
+        <>
+          {lista.map((item) => (
+            <span key={item} className={styles['chip']}>
+              {capitalizar(item)}
+            </span>
+          ))}
+        </>
+      );
     }
 
     /*

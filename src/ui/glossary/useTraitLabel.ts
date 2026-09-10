@@ -1,4 +1,4 @@
-import { useContext } from 'react';
+import { useCallback, useContext } from 'react';
 
 import { traitLabel } from '@core/glossary/index';
 import { capitalizar } from '@ui/text';
@@ -21,5 +21,6 @@ import { TraitGlossaryContext } from './TraitGlossaryContext';
  */
 export function useTraitLabel(): (slug: string) => string {
   const glossary = useContext(TraitGlossaryContext);
-  return (slug) => capitalizar(traitLabel(glossary, slug) ?? slug);
+  // Estável enquanto o glossário for o mesmo: quem a põe num `useMemo` não refaz à toa.
+  return useCallback((slug: string) => capitalizar(traitLabel(glossary, slug) ?? slug), [glossary]);
 }

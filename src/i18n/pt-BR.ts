@@ -206,6 +206,22 @@ export const ptBR = {
       or: 'ou',
       freeBoost: 'Livre',
     },
+    /**
+     * A SANTIFICAÇÃO da divindade: o que o clérigo pode (ou deve) ser.
+     *
+     * `holy` e `unholy` são traços do jogo, e ficam em inglês em todo lugar — menos aqui,
+     * onde entram numa frase em português. "Pode ser holy" seria pior que os dois.
+     */
+    sanctification: {
+      can: 'pode ser',
+      must: 'deve ser',
+      or: 'ou',
+      none: 'nenhuma',
+      what: {
+        holy: 'sagrado',
+        unholy: 'profano',
+      } as Record<string, string>,
+    },
     /** O VOLUME. `0` é insignificante e `0,1` é o "L" do livro. */
     bulk: {
       light: 'L',
@@ -335,6 +351,18 @@ export const ptBR = {
       lore: 'Saber',
       boosts: 'aumento',
       feats: 'talento',
+      /* Divindade. `kind` é o Tipo, como em equipamento. */
+      divineAttribute: 'atributo divino',
+      font: 'fonte divina',
+      sanctification: 'santificação',
+      divineSkill: 'perícia divina',
+      weapons: 'arma favorita',
+      domains: 'domínios',
+      alternateDomains: 'domínios alternativos',
+      spells: 'magias de clérigo',
+      /* Domínio. */
+      spell: 'magia de domínio',
+      advancedSpell: 'magia de domínio avançada',
       /*
        * "Uso", e não "como se usa": é o rótulo do AoN, e é o mesmo campo do detalhe visto
        * por outro ângulo — oito respostas em vez das 120 grafias cruas. Por isso o `usage`
@@ -369,6 +397,8 @@ export const ptBR = {
     classes: 'Classe',
     companions: 'Companheiro',
     familiars: 'Familiar',
+    deities: 'Divindades',
+    domains: 'Domínios',
     skills: 'Perícias',
   } as Record<string, string>,
   settings: {

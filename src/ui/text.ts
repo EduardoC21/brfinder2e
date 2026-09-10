@@ -75,7 +75,31 @@ export const BOOK_FIELD = 'source.title';
  * chama por dentro depois de tratar as espécies que têm tradução própria.
  */
 export function fieldText(field: string, value: string): string {
-  return field === BOOK_FIELD ? bookLabel(value) : capitalizar(value);
+  if (field === BOOK_FIELD) return bookLabel(value);
+  if (field === SANCTIFICATION_FIELD) return sanctificationLabel(value);
+  return capitalizar(value);
+}
+
+/**
+ * O campo de santificação da divindade. Nomeado como `BOOK_FIELD`: o filtro e o detalhe
+ * precisam escrever a mesma frase, e escrevem porque os dois passam por aqui.
+ */
+export const SANCTIFICATION_FIELD = 'sanctification';
+
+/**
+ * `can:holy` → "pode ser sagrado"; `must:unholy` → "deve ser profano";
+ * `can:holy+unholy` → "pode ser sagrado ou profano". Vazio → "nenhuma".
+ *
+ * A receita guarda o token porque a fonte guarda dois campos (`modal` e `what`) e uma
+ * pergunta só. A frase é montada aqui, uma vez, para a coluna, o detalhe e o filtro.
+ */
+export function sanctificationLabel(token: string): string {
+  const s = strings.browse.sanctification;
+  if (token === '') return s.none;
+  const [modal, what] = token.split(':');
+  const verbo = modal === 'must' ? s.must : s.can;
+  const partes = (what ?? '').split('+').map((w) => s.what[w] ?? w);
+  return `${verbo} ${partes.join(` ${s.or} `)}`;
 }
 
 /**

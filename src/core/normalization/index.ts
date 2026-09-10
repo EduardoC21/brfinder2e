@@ -9,6 +9,8 @@ export * from './recipe';
 export * from './recipes/action';
 export * from './recipes/background';
 export * from './recipes/condition';
+export * from './recipes/deity';
+export * from './recipes/domain';
 export * from './recipes/equipment';
 export * from './recipes/familiar';
 export * from './recipes/feat';

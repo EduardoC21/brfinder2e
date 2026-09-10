@@ -626,6 +626,20 @@ E o destaque não é link azul. O Anexo A pede que se destaquem "sem virar um ma
 azuis", e são 16.598 — continuam em latão, com a linha pontilhada virando sólida quando
 abrem.
 
+### Duas formas de ponte: por UUID e por slug
+
+O texto do Foundry aponta por `@UUID`; os **campos** do Foundry apontam por **slug**. A
+divindade guarda `domains: ['fire']`, `skill: ['medicine']`, `weapons: ['scimitar']` — e
+`fire` só é único dentro de um tipo (é domínio e também traço). Por isso a segunda ponte é
+`resolveSlug(tipo, slug)`, e o índice global guarda `bySlug` chaveado `tipo/slug`.
+
+Na tela é a espécie `links`: a mesma caixinha das referências, resolvida pelo outro
+caminho. O que não resolve (`void`, `wyrmkin`, `delirium` não têm página) fica texto.
+
+E uma referência pode vir **sem nome**: a divindade guarda só o UUID das magias de
+clérigo. Aí o nome vem do índice na hora de desenhar (`1º Breathe Fire`), e sem índice
+sai o UUID — feio, mas honesto.
+
 ### O detalhe não repete a descrição
 
 Corolário da mesma ideia: campo que a descrição já escreve **sai do cabeçalho** e fica só

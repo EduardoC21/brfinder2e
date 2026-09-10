@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import {
   combineOf,
@@ -23,6 +23,7 @@ import { SearchInput } from '@ui/components/SearchInput';
 import { cx } from '@ui/cx';
 import { useTraitLabel } from '@ui/glossary/useTraitLabel';
 
+import { ATTRIBUTE_FIELDS } from './backgroundFields';
 import { formatNumber, topicLabel, valueLabel } from './filterLabels';
 import styles from './FilterTopicPanel.module.css';
 
@@ -82,8 +83,13 @@ export function FilterTopicPanel({
    * `Two-Hand d8`: o mesmo dado com duas caras, e o de cá é o que a pessoa vai MARCAR.
    */
   const rotuloDeTraco = useTraitLabel();
-  const rotulo = (value: string): string =>
-    spec.kind === 'list' && value !== '' ? rotuloDeTraco(value) : valueLabel(spec, value);
+  const rotulo = useCallback(
+    (value: string): string =>
+      spec.kind === 'list' && value !== '' && !ATTRIBUTE_FIELDS.has(spec.field)
+        ? rotuloDeTraco(value)
+        : valueLabel(spec, value),
+    [spec, rotuloDeTraco],
+  );
 
   /*
    * A ordem segue o que é DESENHADO, e não o valor cru.
@@ -116,7 +122,7 @@ export function FilterTopicPanel({
       if (na !== nb) return na - nb;
       return COLLATOR.compare(ra, rb);
     });
-  }, [brutas, spec]);
+  }, [brutas, spec, rotulo]);
   /*
    * Memoizado porque entra nas dependências do `useMemo` abaixo: `?? []` cria um array
    * novo a cada render quando o tópico não tem nada marcado, e isso refaria a filtragem
@@ -136,7 +142,7 @@ export function FilterTopicPanel({
     return opcoes.filter(
       (opcao) => marcados.includes(opcao.value) || foldTerm(rotulo(opcao.value)).includes(termo),
     );
-  }, [opcoes, busca, marcados, spec]);
+  }, [opcoes, busca, marcados, rotulo]);
 
   const alternar = (value: string): void => {
     const proximos = marcados.includes(value)

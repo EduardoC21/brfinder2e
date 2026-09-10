@@ -165,7 +165,22 @@ export function BrowseScreen({ baseVersion }: BrowseScreenProps) {
    * trocar o conteúdo dela no lugar deixaria a lista marcando uma linha que o painel já
    * não mostra. Cada clique ali abre painel, e o Ctrl+clique não muda nada — já é isso.
    */
-  const ponte: ReferenceBridge = { resolve: resolver, onPopOut: abrirFlutuante };
+  /** A outra forma de resolver: por tipo e slug, como os CAMPOS apontam. */
+  const resolverSlug = (entityType: string, slug: string): PopoutSubject | null => {
+    const alvo = indiceGlobal.bySlug.get(`${entityType}/${slug}`);
+    if (alvo === undefined) return null;
+    return {
+      entity: alvo.entity,
+      entityType: alvo.source.entityType ?? '',
+      fields: alvo.source.detail,
+    };
+  };
+
+  const ponte: ReferenceBridge = {
+    resolve: resolver,
+    resolveSlug: resolverSlug,
+    onPopOut: abrirFlutuante,
+  };
 
   return (
     <TraitGlossaryContext.Provider value={glossario}>
@@ -239,6 +254,7 @@ export function BrowseScreen({ baseVersion }: BrowseScreenProps) {
             */
               reference={{
                 resolve: resolver,
+                resolveSlug: resolverSlug,
                 onPopOut: abrirFlutuante,
                 onNavigate: (assunto) => {
                   despacharPopout({ kind: 'navigate', id: item.id, ...assunto });

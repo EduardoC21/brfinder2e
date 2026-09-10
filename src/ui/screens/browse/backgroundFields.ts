@@ -3,7 +3,7 @@ import { isRecord } from '@core/json';
 import { strings } from '@i18n/index';
 
 /**
- * Os dois campos de antecedente que viram frase.
+ * O aumento de atributo, que antecedente e divindade escrevem do mesmo jeito.
  *
  * Mesma razão de `itemFields` e `spellFields`: a lista e o detalhe desenham os mesmos
  * valores, e uma segunda cópia divergiria no primeiro ajuste.
@@ -39,11 +39,12 @@ const ATTRIBUTE_ORDER: readonly string[] = Object.keys(ATTRIBUTE_NAME);
 /**
  * O campo cujos valores são CÓDIGOS de atributo.
  *
- * Nomeado, e não a string solta em dois arquivos: o rótulo do filtro e o texto da coluna
+ * Nomeados, e não a string solta em dois arquivos: o rótulo do filtro e o texto da coluna
  * precisam concordar, e foi a divergência entre eles que fez o filtro escrever `Str`
- * enquanto a coluna escrevia `Strength`. Mesmo padrão de `BOOK_FIELD`.
+ * enquanto a coluna escrevia `Strength`. Mesmo padrão de `BOOK_FIELD`. Dois campos: o
+ * aumento do antecedente e o atributo divino, que a fonte escreve com os mesmos códigos.
  */
-export const ATTRIBUTE_FIELD = 'boosts';
+export const ATTRIBUTE_FIELDS: ReadonlySet<string> = new Set(['boosts', 'divineAttribute']);
 
 /** Um código desconhecido volta como veio, em vez de sumir. */
 export function attributeName(code: string): string {
@@ -62,52 +63,21 @@ const b = strings.browse.background;
  * do código, e o livro escreve "Strength or Dexterity". Ordenar aqui faz a linha bater com
  * o texto da descrição logo abaixo dela.
  *
- * Vazio é `Livre`, e não nada: 9 dos 520 dão aumento livre, e isso é uma resposta.
+ * Vazio é `Livre` quando `free` diz que é: 9 dos 520 antecedentes dão aumento livre, e
+ * isso é uma resposta. Na divindade o vazio é ausência (7 filosofias), e a linha some.
  */
-export function boostsText(entity: BrowseEntity, field: string): string {
+export function boostsText(entity: BrowseEntity, field: string, free = false): string {
   const base = entity.base;
   if (!isRecord(base)) return '';
   const valor = base[field];
   if (!Array.isArray(valor)) return '';
 
   const codigos = valor.filter((item): item is string => typeof item === 'string');
-  if (codigos.length === 0) return b.freeBoost;
+  // Vazio é "Livre" só onde a fonte diz isso (antecedente); na divindade é ausência.
+  if (codigos.length === 0) return free ? b.freeBoost : '';
 
   return [...codigos]
     .sort((x, y) => ATTRIBUTE_ORDER.indexOf(x) - ATTRIBUTE_ORDER.indexOf(y))
     .map(attributeName)
     .join(` ${b.or} `);
-}
-
-/** Uma referência `@UUID` guardada num campo de lista. Ver a receita de antecedente. */
-export interface Reference {
-  readonly uuid: string;
-  readonly name: string;
-}
-
-/**
- * As referências de um campo, já limpas.
- *
- * Uma definição só, usada pela coluna (que escreve os nomes) e pelo detalhe (que os
- * transforma em botões). Entrada sem nome cai fora: sem nome não há o que desenhar.
- */
-export function references(entity: BrowseEntity, field: string): readonly Reference[] {
-  const base = entity.base;
-  if (!isRecord(base)) return [];
-  const lista = base[field];
-  if (!Array.isArray(lista)) return [];
-  return lista
-    .filter((item): item is Record<string, unknown> => isRecord(item))
-    .map((item) => ({
-      uuid: typeof item['uuid'] === 'string' ? item['uuid'] : '',
-      name: typeof item['name'] === 'string' ? item['name'] : '',
-    }))
-    .filter((item) => item.name !== '');
-}
-
-/** Os nomes, para a COLUNA — onde referência é texto e não botão. */
-export function referenceNames(entity: BrowseEntity, field: string): string {
-  return references(entity, field)
-    .map((item) => item.name)
-    .join(', ');
 }

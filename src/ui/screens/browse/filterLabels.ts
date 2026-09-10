@@ -1,8 +1,14 @@
 import { parseDurationCode, type ColumnSpec, type FilterSpec } from '@core/browse/index';
 import { strings } from '@i18n/index';
-import { BOOK_FIELD, bookLabel, capitalizar } from '@ui/text';
+import {
+  BOOK_FIELD,
+  SANCTIFICATION_FIELD,
+  bookLabel,
+  capitalizar,
+  sanctificationLabel,
+} from '@ui/text';
 
-import { ATTRIBUTE_FIELD, attributeName } from './backgroundFields';
+import { ATTRIBUTE_FIELDS, attributeName } from './backgroundFields';
 
 const t = strings.browse;
 
@@ -39,6 +45,10 @@ export function valueLabel(spec: FilterSpec, value: string): string {
     if (value.startsWith('min:')) return boundLabel(spec.unit, 'min', Number(value.slice(4)));
     if (value.startsWith('max:')) return boundLabel(spec.unit, 'max', Number(value.slice(4)));
   }
+  /* A santificação VAZIA é resposta ("nenhuma"), e não ausência: vem antes do "sem valor". */
+  if (spec.kind === 'options' && spec.field === SANCTIFICATION_FIELD) {
+    return sanctificationLabel(value);
+  }
   if (value === '') return t.noValue;
   if (spec.kind === 'defense') return defenseLabel(value);
   if (spec.kind === 'boolean') return capitalizar(value === 'true' ? t.yes : t.no);
@@ -53,7 +63,7 @@ export function valueLabel(spec: FilterSpec, value: string): string {
    * `Strength ou Dexterity` — o mesmo dado com duas caras, e a de cá é a que não bate com
    * a tela de perícias.
    */
-  if (spec.field === ATTRIBUTE_FIELD) return attributeName(value);
+  if (ATTRIBUTE_FIELDS.has(spec.field)) return attributeName(value);
   return capitalizar(value);
 }
 

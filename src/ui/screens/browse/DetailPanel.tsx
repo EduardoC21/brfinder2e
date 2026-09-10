@@ -22,7 +22,8 @@ import { CollapseToggle } from '@ui/components/CollapseToggle';
 import { cx } from '@ui/cx';
 import { bookLabel, capitalizar, fieldText } from '@ui/text';
 
-import { boostsText, references as referenciasDe, type Reference } from './backgroundFields';
+import { boostsText } from './backgroundFields';
+import { references as referenciasDe, type Reference } from './referenceFields';
 import { itemBulkText, itemDamageText, itemPriceText, statText } from './itemFields';
 import type { PopoutSubject } from './popouts';
 import { areaText, defenseText, durationText, ritualLines, spellCast } from './spellFields';
@@ -73,6 +74,11 @@ export interface DetailPanelProps {
  */
 export interface ReferenceBridge {
   readonly resolve: (uuid: string) => PopoutSubject | null;
+  /**
+   * A segunda forma de resolver: por TIPO e SLUG. É como os campos apontam — a divindade
+   * guarda `domains: ['fire']`, e `fire` só é único dentro de `domain`.
+   */
+  readonly resolveSlug: (entityType: string, slug: string) => PopoutSubject | null;
   /** Abre em painel NOVO. É o que a lateral sempre faz, e o que o Ctrl+clique pede. */
   readonly onPopOut?: (subject: PopoutSubject) => void;
   /**
@@ -136,6 +142,24 @@ export function DetailPanel({
     const navegar = reference?.onNavigate;
     if (!novo && navegar !== undefined) navegar(destino);
     else reference?.onPopOut?.(destino);
+  };
+
+  /** O mesmo `abrir`, para quem aponta por slug. */
+  const abrirSlug = (entityType: string, slug: string, novo: boolean): void => {
+    const destino = reference?.resolveSlug(entityType, slug);
+    if (destino === undefined || destino === null) return;
+    const navegar = reference?.onNavigate;
+    if (!novo && navegar !== undefined) navegar(destino);
+    else reference?.onPopOut?.(destino);
+  };
+
+  /**
+   * O NOME de uma referência que não o guarda — as magias da divindade só têm o UUID.
+   * Resolvido pelo índice; sem índice, a caixinha escreve o UUID, que é feio mas honesto.
+   */
+  const nomeDe = (uuid: string): string | null => {
+    const alvo = reference?.resolve(uuid);
+    return alvo === undefined || alvo === null ? null : fieldValue(alvo.entity, 'name');
   };
 
   /* Só o que RESOLVE vira botão na prosa. Ver `RichTextLinks`. */
@@ -214,7 +238,9 @@ export function DetailPanel({
                       setAberta((atual) => (atual === uuid ? null : uuid));
                     },
                   })}
-              {...(reference === undefined ? {} : { onOpenReference: abrir })}
+              {...(reference === undefined
+                ? {}
+                : { onOpenReference: abrir, onOpenSlug: abrirSlug, nameOf: nomeDe })}
             />
           ))}
         </dl>
@@ -260,7 +286,11 @@ export function DetailPanel({
               E `embedded` corta o `onToggleReference` mais acima — é o que garante que
               não existe sub-tela dentro de sub-tela.
             */
-            reference={{ resolve: reference.resolve, ...(destacar ? { onPopOut: destacar } : {}) }}
+            reference={{
+              resolve: reference.resolve,
+              resolveSlug: reference.resolveSlug,
+              ...(destacar ? { onPopOut: destacar } : {}),
+            }}
             {...(destacar === undefined
               ? {}
               : {
@@ -373,6 +403,8 @@ function Field({
   selected,
   onToggleReference,
   onOpenReference,
+  onOpenSlug,
+  nameOf,
 }: {
   readonly spec: DetailFieldSpec;
   readonly entity: BrowseEntity;
@@ -382,6 +414,10 @@ function Field({
   readonly onToggleReference?: (uuid: string) => void;
   /** Abre um painel. É o que todo o resto faz. */
   readonly onOpenReference?: (uuid: string, novo: boolean) => void;
+  /** Abre um painel a partir de um slug — os `links`. */
+  readonly onOpenSlug?: (entityType: string, slug: string, novo: boolean) => void;
+  /** O nome de uma referência que só guarda o UUID. */
+  readonly nameOf?: (uuid: string) => string | null;
 }) {
   const label = (field: string): string => b.fieldLabel[field] ?? field;
   const rotuloDeTraco = useTraitLabel();
@@ -529,14 +565,38 @@ function Field({
        */
       return (
         <Row label={label(spec.field)}>
-          <Referencias acoes={lista} aberta={null} onAbrir={onOpenReference} />
+          <Referencias
+            acoes={lista}
+            aberta={null}
+            onAbrir={onOpenReference}
+            {...(nameOf === undefined ? {} : { nameOf })}
+          />
         </Row>
       );
     }
 
-    /* `Strength ou Dexterity`, ou `Livre`. Ver `boostsText`. */
+    /*
+     * A ponte por SLUG: os domínios de uma divindade, a perícia divina, a arma favorita.
+     * Cada slug vira um botão que abre a entrada daquele tipo — quando ela existe. Os que
+     * não resolvem (`void`, `wyrmkin`, `delirium` não têm página) saem como texto.
+     */
+    case 'links': {
+      const slugs = readList(entity, spec.field);
+      if (slugs.length === 0) return null;
+      return (
+        <Row label={label(spec.field)}>
+          <Ligacoes
+            slugs={slugs}
+            entityType={spec.entityType}
+            {...(onOpenSlug === undefined ? {} : { onAbrir: onOpenSlug })}
+          />
+        </Row>
+      );
+    }
+
+    /* `Strength ou Dexterity`, ou `Livre` onde a fonte diz que é. Ver `boostsText`. */
     case 'boosts': {
-      const valor = boostsText(entity, spec.field);
+      const valor = boostsText(entity, spec.field, spec.free === true);
       if (valor === '') return null;
       return <Row label={label(spec.field)}>{valor}</Row>;
     }
@@ -659,19 +719,29 @@ function Referencias({
   acoes,
   aberta,
   onAbrir,
+  nameOf,
 }: {
   readonly acoes: readonly Reference[];
   /** O que está aberto na sub-tela, ou `null` quando o clique abre painel. */
   readonly aberta: string | null;
   readonly onAbrir: ((uuid: string, novo: boolean) => void) | undefined;
+  readonly nameOf?: (uuid: string) => string | null;
 }) {
+  /*
+   * O texto da caixinha: o ranque na frente quando há (`1º Heal`), e o nome resolvido pelo
+   * índice quando a fonte não o guarda. As magias da divindade são o caso: só o UUID.
+   */
+  const rotulo = (acao: Reference): string => {
+    const nome = acao.name !== '' ? acao.name : (nameOf?.(acao.uuid) ?? acao.uuid);
+    return acao.rank === undefined ? nome : `${String(acao.rank)}º ${nome}`;
+  };
   return (
     <span className={styles['referencias']}>
       {acoes.map((acao) => {
         if (onAbrir === undefined) {
           return (
             <span key={acao.uuid} className={styles['referencia']}>
-              {acao.name}
+              {rotulo(acao)}
             </span>
           );
         }
@@ -697,10 +767,55 @@ function Referencias({
               }
             }}
           >
-            {acao.name}
+            {rotulo(acao)}
           </button>
         );
       })}
+    </span>
+  );
+}
+
+/**
+ * As LIGAÇÕES por slug, como botões — e como texto quando não há para onde ir.
+ *
+ * Mesmo desenho das referências, porque para quem lê é a mesma coisa: um nome que abre a
+ * entrada. A diferença é só de onde vem o ponteiro (campo, e não `@UUID`).
+ */
+function Ligacoes({
+  slugs,
+  entityType,
+  onAbrir,
+}: {
+  readonly slugs: readonly string[];
+  readonly entityType: string;
+  readonly onAbrir?: (entityType: string, slug: string, novo: boolean) => void;
+}) {
+  return (
+    <span className={styles['referencias']}>
+      {slugs.map((slug) =>
+        onAbrir === undefined ? (
+          <span key={slug} className={styles['referencia']}>
+            {capitalizar(slug)}
+          </span>
+        ) : (
+          <button
+            key={slug}
+            type="button"
+            className={cx(styles['referencia'], styles['referenciaAtiva'])}
+            onClick={(event) => {
+              onAbrir(entityType, slug, event.ctrlKey || event.metaKey);
+            }}
+            onAuxClick={(event) => {
+              if (event.button === 1) {
+                event.preventDefault();
+                onAbrir(entityType, slug, true);
+              }
+            }}
+          >
+            {capitalizar(slug)}
+          </button>
+        ),
+      )}
     </span>
   );
 }

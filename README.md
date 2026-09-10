@@ -55,6 +55,11 @@ Antes: **Etapa 14** — receita e tela de `background`: os 520 antecedentes, a f
 textual do projeto (descrição de 370 a 4.860 caracteres, mediana 666). Segunda ponte entre
 fontes: o talento concedido abre a entrada que já existe em Talentos.
 
+Antes: **Etapas 16 e 17** — `familiar` (111 habilidades, a receita mais barata), e as
+duas fontes que o trilho não previa: `deity` (480 divindades, panteões, pactos e
+filosofias) e `domain` (61 páginas de jornal). Segunda forma de ponte, por slug: os
+domínios, a perícia e a arma de uma divindade abrem a entrada correspondente.
+
 Próxima: **ancestralidade** — 50 do pack, com a mecânica (aumentos, PV, tamanho,
 deslocamento, visão) e o capítulo do jornal `Ancestries`, que traz 4.350 caracteres onde o
 pack traz 639. Primeira fonte cuja descrição vem de OUTRO pack.

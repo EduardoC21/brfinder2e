@@ -36,6 +36,15 @@ export interface GlobalIndex {
    * ação. Entrada sem UUID (perícia, por exemplo) simplesmente não entra no mapa.
    */
   readonly byUuid: ReadonlyMap<string, GlobalRow>;
+  /**
+   * A mesma linha, achada por TIPO e SLUG: `domain/fire`, `skill/medicine`,
+   * `equipment/scimitar`.
+   *
+   * É a segunda forma de ponte. Os CAMPOS do Foundry apontam por slug (a divindade
+   * guarda `domains: ['fire']`), e o slug só é único dentro de um tipo — `fire` é um
+   * domínio e também um traço. Por isso a chave leva o tipo na frente.
+   */
+  readonly bySlug: ReadonlyMap<string, GlobalRow>;
   /** Sobre o NOME. Pronto assim que as bases chegam. */
   readonly byName: SearchIndex | null;
   /** Sobre nome + descrição. `null` enquanto não foi pedido ou ainda está sendo montado. */
@@ -84,6 +93,16 @@ export function useGlobalIndex(
     [rows],
   );
 
+  const bySlug = useMemo(
+    () =>
+      new Map(
+        rows
+          .filter((row) => row.source.entityType !== null && fieldValue(row.entity, 'slug') !== '')
+          .map((row) => [`${row.source.entityType ?? ''}/${fieldValue(row.entity, 'slug')}`, row]),
+      ),
+    [rows],
+  );
+
   const byName = useMemo(
     () =>
       rows.length === 0
@@ -128,6 +147,7 @@ export function useGlobalIndex(
     rows,
     byId,
     byUuid,
+    bySlug,
     byName,
     byText: pronto,
     buildingText: comDescricao && pronto === null && rows.length > 0,
