@@ -244,3 +244,29 @@ Foundry.
 
 **Decidir quando:** quando a divergência voltar a doer. Enquanto for uma linha de defesa em
 quatro magias, o custo de manter duas fontes é maior que o erro.
+
+---
+
+## 10. Tradução dos traços, e onde ela mora `novo`
+
+Registrado pelo autor na Etapa 15b, para não se perder até a etapa da tradução.
+
+**O problema:** a caixinha do traço mostra a descrição em inglês, vinda da tabela de idioma
+do Foundry (`glossary/traits`). Quando a tradução sob demanda existir, como se pede a
+tradução DESSE texto? Ele não é entrada — não tem botão "Traduzir" próprio.
+
+**A proposta do autor:** ao traduzir uma entrada, traduzir junto as descrições dos traços
+que ela tem. O traço `agile` é traduzido uma vez e vale para todo chip que o carregue.
+
+**O que isso puxa atrás:** uma vez traduzido, o traço passaria a aparecer SEMPRE traduzido,
+em toda entrada — inclusive nas que a pessoa ainda lê no original. Daí a segunda parte da
+proposta: uma **configuração** para escolher entre "o que tiver tradução aparece
+traduzido" e "o original primeiro, sempre". Vale para traço e provavelmente para tudo.
+
+**Consequência provável:** o traço vai precisar de uma **tabela própria** — original,
+tradução e de onde veio —, e não só da chave `glossary/traits` de hoje, que guarda só o
+original. Quando as fontes forem setorizadas, ela ficaria numa categoria de "termos de
+jogo" ou "core", junto com perícia e ação.
+
+**Decidir quando:** na etapa da tradução. Nada aqui muda o que a 15b gravou — o glossário
+de hoje é o "original" dessa tabela futura.

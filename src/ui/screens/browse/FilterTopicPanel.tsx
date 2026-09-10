@@ -21,6 +21,7 @@ import { CastCost } from '@ui/components/CastCost';
 import { RarityMark } from '@ui/components/RarityMark';
 import { SearchInput } from '@ui/components/SearchInput';
 import { cx } from '@ui/cx';
+import { useTraitLabel } from '@ui/glossary/useTraitLabel';
 
 import { formatNumber, topicLabel, valueLabel } from './filterLabels';
 import styles from './FilterTopicPanel.module.css';
@@ -76,6 +77,15 @@ export function FilterTopicPanel({
   const [busca, setBusca] = useState('');
 
   /*
+   * O rótulo de uma opção — e a lista de traços passa pelo glossário, como os chips.
+   * Sem isto o filtro escreveria `Two-hand-d8` enquanto a coluna ao lado escreve
+   * `Two-Hand d8`: o mesmo dado com duas caras, e o de cá é o que a pessoa vai MARCAR.
+   */
+  const rotuloDeTraco = useTraitLabel();
+  const rotulo = (value: string): string =>
+    spec.kind === 'list' && value !== '' ? rotuloDeTraco(value) : valueLabel(spec, value);
+
+  /*
    * A ordem segue o que é DESENHADO, e não o valor cru.
    *
    * O `core` devolve as opções ordenadas pelo valor, e para quase todo tópico as duas
@@ -97,8 +107,8 @@ export function FilterTopicPanel({
     return [...brutas].sort((a, b) => {
       if (a.value === '') return 1;
       if (b.value === '') return -1;
-      const ra = valueLabel(spec, a.value);
-      const rb = valueLabel(spec, b.value);
+      const ra = rotulo(a.value);
+      const rb = rotulo(b.value);
       // As aventuras numeradas por último: `#` vence qualquer letra no alfabeto, e elas
       // são 48 dos 127 livros — ordenadas junto, ocupam o topo inteiro da lista.
       const na = isNumberedAdventure(ra) ? 1 : 0;
@@ -124,8 +134,7 @@ export function FilterTopicPanel({
     const termo = foldTerm(busca);
     if (termo === '') return opcoes;
     return opcoes.filter(
-      (opcao) =>
-        marcados.includes(opcao.value) || foldTerm(valueLabel(spec, opcao.value)).includes(termo),
+      (opcao) => marcados.includes(opcao.value) || foldTerm(rotulo(opcao.value)).includes(termo),
     );
   }, [opcoes, busca, marcados, spec]);
 
@@ -251,7 +260,7 @@ export function FilterTopicPanel({
                   ) : spec.kind === 'rarity' ? (
                     <RarityOption value={opcao.value} />
                   ) : (
-                    <span className={styles['labelText']}>{valueLabel(spec, opcao.value)}</span>
+                    <span className={styles['labelText']}>{rotulo(opcao.value)}</span>
                   )}
                 </span>
                 <span className={styles['count']}>{opcao.count}</span>

@@ -23,6 +23,7 @@ import { CastCost } from '@ui/components/CastCost';
 import { Frequency } from '@ui/components/Frequency';
 import { RarityMark } from '@ui/components/RarityMark';
 import { TraitChip } from '@ui/components/TraitChip';
+import { useTraitLabel } from '@ui/glossary/useTraitLabel';
 import { cx } from '@ui/cx';
 import { capitalizar, fieldText } from '@ui/text';
 import { useTrackWidth } from '@ui/hooks/useTrackWidth';
@@ -286,6 +287,7 @@ function Linha({
   readonly onOpen: (index: number) => void;
 }) {
   const nome = fieldValue(entity, 'name');
+  const rotuloDeTraco = useTraitLabel();
   const nivel = specials.level === null ? null : fieldValue(entity, specials.level);
   const raridade = specials.rarity === null ? null : fieldValue(entity, specials.rarity);
   const letra = raridade === null ? null : rarityLetter(raridade);
@@ -340,12 +342,13 @@ function Linha({
         {traços !== null && (traços.shown.length > 0 || traços.hidden > 0) && (
           <span className={styles['tracos']}>
             {/*
-              Capitalizar NÃO mexe na conta de `fitTraits`: ela mede caracteres, e trocar a
-              caixa da primeira letra não muda quantos são.
+              O rótulo do glossário NÃO mexe na conta de `fitTraits`: ela mede o slug, e
+              medido nos 360 com rótulo, 352 têm o mesmo comprimento (`two-hand-d8` e
+              `Two-Hand d8` são onze caracteres os dois). Só os 8 `persona-*` ganham um.
             */}
             {traços.shown.map((trait) => (
               <TraitChip key={trait} slug={trait} className={styles['chip'] ?? ''}>
-                {capitalizar(trait)}
+                {rotuloDeTraco(trait)}
               </TraitChip>
             ))}
             {traços.hidden > 0 && (
@@ -358,7 +361,7 @@ function Linha({
                 className={cx(styles['chip'], styles['resto'])}
                 title={fieldList(entity, specials.traits ?? '')
                   .slice(traços.shown.length)
-                  .map(capitalizar)
+                  .map(rotuloDeTraco)
                   .join(', ')}
               >
                 +{traços.hidden}
@@ -533,6 +536,7 @@ function alinhamento(spec: ColumnSpec): string | undefined {
  * caixa é o que dá à célula uma borda visível e faz a coluna parecer coluna.
  */
 function Column({ spec, entity }: { readonly spec: ColumnSpec; readonly entity: BrowseEntity }) {
+  const rotuloDeTraco = useTraitLabel();
   switch (spec.kind) {
     case 'chip': {
       const value = fieldValue(entity, spec.field);
@@ -568,15 +572,19 @@ function Column({ spec, entity }: { readonly spec: ColumnSpec; readonly entity: 
     case 'frequency':
       return <Frequency entity={entity} field={spec.field} />;
 
+    /*
+     * Toda lista de chips passa pelo glossário, como no detalhe: `arcane` numa tradição É
+     * o traço arcano. Perícia e Saber não estão lá e saem como sempre saíram.
+     */
     case 'chips': {
       const lista = fieldList(entity, spec.field);
       if (lista.length === 0) return null;
       return (
         <>
           {lista.map((item) => (
-            <span key={item} className={styles['chip']}>
-              {capitalizar(item)}
-            </span>
+            <TraitChip key={item} slug={item} className={styles['chip'] ?? ''}>
+              {rotuloDeTraco(item)}
+            </TraitChip>
           ))}
         </>
       );

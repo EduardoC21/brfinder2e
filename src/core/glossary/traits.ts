@@ -88,3 +88,28 @@ export function lookupTrait(glossary: TraitGlossary, slug: string): TraitEntry |
   if (base === slug) return null;
   return glossary[base] ?? null;
 }
+
+/**
+ * O RÓTULO do chip: `two-hand-d8` → `Two-Hand d8`, `versatile-p` → `Versatile S`… `P`.
+ *
+ * O nome vem da tabela (908 rótulos), e o parâmetro volta atrás dele com um espaço, como o
+ * livro escreve: "Two-Hand d8", "Versatile S", "Thrown 10". A letra solta sobe para
+ * maiúscula porque é a inicial de um tipo de dano; o dado e o número ficam como estão.
+ *
+ * `null` quando o glossário não conhece nem a base — aí a tela cai no que sempre fez, e
+ * é a tela que decide isso, não o `core`: capitalizar é assunto de idioma.
+ *
+ * Medido nos 360 traços com rótulo: 352 têm o MESMO comprimento do texto antigo, e os 8
+ * `persona-*` ganham um caractere (`Persona: Flirt`). A conta de largura da lista, que
+ * mede o slug, não se abala.
+ */
+export function traitLabel(glossary: TraitGlossary, slug: string): string | null {
+  const exact = glossary[slug];
+  if (exact !== undefined) return exact.label;
+  const match = SUFFIX.exec(slug);
+  if (match === null) return null;
+  const base = glossary[slug.replace(SUFFIX, '')];
+  if (base === undefined) return null;
+  const param = match[1] ?? '';
+  return `${base.label} ${param.length === 1 ? param.toUpperCase() : param}`;
+}

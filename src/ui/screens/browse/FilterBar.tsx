@@ -2,6 +2,7 @@ import type { FilterSpec, FilterState } from '@core/browse/index';
 import { strings } from '@i18n/index';
 import { ScrollRail } from '@ui/components/ScrollRail';
 import { cx } from '@ui/cx';
+import { useTraitLabel } from '@ui/glossary/useTraitLabel';
 
 import { topicLabel, valueLabel } from './filterLabels';
 import styles from './FilterBar.module.css';
@@ -42,6 +43,11 @@ export function FilterBar({
   const aplicados = specs.flatMap((spec) =>
     (state[spec.id]?.values ?? []).map((value) => ({ spec, value })),
   );
+
+  /* O chip do filtro aplicado escreve o mesmo que o painel e a coluna. Ver o painel. */
+  const rotuloDeTraco = useTraitLabel();
+  const rotulo = (spec: FilterSpec, value: string): string =>
+    spec.kind === 'list' && value !== '' ? rotuloDeTraco(value) : valueLabel(spec, value);
 
   const desmarcar = (spec: FilterSpec, value: string): void => {
     const atual = state[spec.id]?.values ?? [];
@@ -125,7 +131,7 @@ export function FilterBar({
                 }}
               >
                 <span className={styles['chipTopic']}>{topicLabel(spec)}</span>
-                {valueLabel(spec, value)}
+                {rotulo(spec, value)}
                 <span className={styles['chipX']}>×</span>
               </button>
             ))}

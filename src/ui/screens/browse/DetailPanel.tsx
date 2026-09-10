@@ -17,6 +17,7 @@ import { Frequency } from '@ui/components/Frequency';
 import { RarityMark } from '@ui/components/RarityMark';
 import { RichText, type RichTextLinks } from '@ui/components/RichText';
 import { TraitChip } from '@ui/components/TraitChip';
+import { useTraitLabel } from '@ui/glossary/useTraitLabel';
 import { CollapseToggle } from '@ui/components/CollapseToggle';
 import { cx } from '@ui/cx';
 import { bookLabel, capitalizar, fieldText } from '@ui/text';
@@ -383,6 +384,7 @@ function Field({
   readonly onOpenReference?: (uuid: string, novo: boolean) => void;
 }) {
   const label = (field: string): string => b.fieldLabel[field] ?? field;
+  const rotuloDeTraco = useTraitLabel();
 
   switch (spec.kind) {
     case 'cost': {
@@ -438,7 +440,7 @@ function Field({
                 className={cx(styles['chip'], 'chamfer-sm')}
                 focusable
               >
-                {capitalizar(item)}
+                {rotuloDeTraco(item)}
               </TraitChip>
             ))}
           </span>

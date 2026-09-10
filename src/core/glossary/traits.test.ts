@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildTraitGlossary, lookupTrait } from './traits';
+import { buildTraitGlossary, lookupTrait, traitLabel } from './traits';
 
 /* Uma tabela de idioma mínima, com a FORMA real das chaves do `pf2e-8.5.0`. */
 const language = new Map<string, string>([
@@ -75,5 +75,36 @@ describe('lookupTrait', () => {
   it('nem a base existindo, devolve nulo', () => {
     expect(lookupTrait(glossary, 'jotunborn')).toBeNull();
     expect(lookupTrait(glossary, 'yaksha-d6')).toBeNull();
+  });
+});
+
+/* O rótulo como o livro escreve: nome da tabela, parâmetro atrás, com espaço. */
+describe('traitLabel', () => {
+  const g = {
+    ...glossary,
+    versatile: { label: 'Versatile', description: 'x' },
+    thrown: { label: 'Thrown', description: 'x' },
+  };
+
+  it('o nome exato vem da tabela', () => {
+    expect(traitLabel(g, 'two-hand')).toBe('Two-Hand');
+  });
+
+  it('o dado volta atrás do nome: two-hand-d8 → Two-Hand d8', () => {
+    expect(traitLabel(g, 'two-hand-d8')).toBe('Two-Hand d8');
+    expect(traitLabel(g, 'deadly-d12')).toBe('deadly d12');
+  });
+
+  it('a letra solta sobe: versatile-p → Versatile P', () => {
+    expect(traitLabel(g, 'versatile-p')).toBe('Versatile P');
+  });
+
+  it('o número fica como está: thrown-20 → Thrown 20', () => {
+    expect(traitLabel(g, 'thrown-20')).toBe('Thrown 20');
+  });
+
+  it('desconhecido devolve nulo — e a tela decide o que fazer', () => {
+    expect(traitLabel(g, 'jotunborn')).toBeNull();
+    expect(traitLabel(g, 'yaksha-d6')).toBeNull();
   });
 });
