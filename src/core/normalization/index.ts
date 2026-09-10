@@ -10,6 +10,7 @@ export * from './recipes/action';
 export * from './recipes/background';
 export * from './recipes/condition';
 export * from './recipes/equipment';
+export * from './recipes/familiar';
 export * from './recipes/feat';
 export * from './recipes/skill';
 export * from './recipes/spell';

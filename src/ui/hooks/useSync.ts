@@ -5,6 +5,7 @@ import {
   backgroundRecipe,
   conditionRecipe,
   equipmentRecipe,
+  familiarRecipe,
   featRecipe,
   skillRecipe,
   spellRecipe,
@@ -176,6 +177,7 @@ const RECIPES: readonly Recipe<never, never>[] = [
   equipmentRecipe as Recipe<never, never>,
   skillRecipe as Recipe<never, never>,
   backgroundRecipe as Recipe<never, never>,
+  familiarRecipe as Recipe<never, never>,
 ];
 
 const INITIAL: SyncState = { stored: null, run: { status: 'loading' }, update: NO_UPDATE };

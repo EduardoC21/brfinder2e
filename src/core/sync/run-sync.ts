@@ -274,7 +274,14 @@ function scanUnreadPacks(
   recipes: readonly Recipe<never, never>[],
 ): readonly UnreadPack[] {
   const lidos = new Set(recipes.flatMap((recipe) => recipe.packs.map((pack) => pack.name)));
-  const importados = new Set(recipes.map((recipe) => recipe.type));
+  /*
+   * ⚠️ O tipo do DOCUMENTO, e não o da entidade. Eram a mesma coisa até a Etapa 12; deixaram
+   * de ser com `accepts` (equipamento produz `equipment` a partir de nove tipos) e com a
+   * receita de familiar (produz `familiar` a partir de `action`). Cruzando pela entidade, o
+   * aviso apontava 5 FICHAS de familiar pré-geradas em `iconics` e `paizo-pregens` — atores
+   * do Foundry, não habilidades — e deixava passar um pack novo só de `weapon`.
+   */
+  const importados = new Set(recipes.flatMap((recipe) => recipe.accepts));
 
   const contents: PackContents[] = [];
   for (const pack of loaded.inventory.packs) {

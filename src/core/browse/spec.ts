@@ -965,15 +965,35 @@ export const SOURCES: readonly SourceSpec[] = [
   },
   {
     id: 'familiars',
-    entityType: null,
+    entityType: 'familiar',
     mode: 'list',
-    columns: [],
-    defaultColumns: [],
-    special: NO_SPECIAL_COLUMNS,
-    filters: [],
+    /*
+     * A fonte mais BARATA do projeto: 111 habilidades com a forma de uma ação, e a tela é
+     * a de Ações sem o Tipo — a pasta separaria 10 de 101 e o nome já diz a que familiar
+     * específico a habilidade pertence. Ver a receita.
+     */
+    columns: [
+      { kind: 'cost', id: 'cost' },
+      { kind: 'frequency', id: 'frequency', field: 'frequency' },
+      { kind: 'text', id: 'source', field: 'source.title' },
+    ],
+    /* O custo é a pergunta que se faz: "o que o familiar ganha de graça e o que ele executa". */
+    defaultColumns: ['cost'],
+    /*
+     * Raridade continua como especial — todas são `common`, então a etiqueta nunca
+     * aparece — mas NÃO como filtro: um tópico com uma resposta só não recorta nada, e a
+     * barra o esconderia de qualquer jeito. Escrever um filtro que nasce escondido é ruído.
+     */
+    special: { level: null, rarity: 'rarity', traits: 'traits' },
+    filters: [
+      { kind: 'cost', id: 'cost' },
+      { kind: 'list', id: 'traits', field: 'traits', combine: 'any' },
+      { kind: 'frequency', id: 'frequency', field: 'frequency' },
+      { kind: 'options', id: 'source', field: 'source.title' },
+    ],
     typeFilter: null,
-    searchFields: [],
-    detail: [],
+    searchFields: ['name'],
+    detail: [{ kind: 'chips', field: 'traits' }, { kind: 'cost' }, { kind: 'source' }],
   },
   {
     id: 'skills',
