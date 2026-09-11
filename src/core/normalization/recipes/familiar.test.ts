@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { isClean } from '../report';
 import { run } from '../run';
-import { familiarRecipe } from './familiar';
+import { familiarKind, familiarRecipe } from './familiar';
 import { todas } from './familiar.fixtures';
 
 const result = run(familiarRecipe, [{ pack: 'familiar-abilities', documents: todas }]);
@@ -31,6 +31,7 @@ describe('receita de familiar', () => {
     expect(base('Stunning Flare')).toEqual({
       name: 'Stunning Flare',
       slug: 'stunning-flare',
+      kind: 'specific',
       costKind: 'action',
       costCount: 1,
       traits: ['fire', 'light', 'magical'],
@@ -42,6 +43,16 @@ describe('receita de familiar', () => {
         title: 'Pathfinder Lost Omens Tian Xia Character Guide',
       },
     });
+  });
+
+  /* O tipo vem do nome e da pasta; a lista de mestre vence a pasta. */
+  it('deriva o tipo pelo nome e pela pasta', () => {
+    expect(base('Versatile Form').kind).toBe('familiar');
+    expect(base('Mass-Produced').kind).toBe('specific');
+    expect(familiarKind({ name: 'Familiar of Keen Senses' })).toBe('patron');
+    expect(familiarKind({ name: 'Elemental Familiar (Air)' })).toBe('elemental');
+    expect(familiarKind({ name: 'Spell Delivery', folder: 'x' })).toBe('master');
+    expect(familiarKind(null)).toBe('familiar');
   });
 
   /* 52 dos 111 não declaram raridade, e o padrão do sistema é `common`. */

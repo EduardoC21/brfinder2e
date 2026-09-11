@@ -321,3 +321,26 @@ que não sincronizamos.
 - `@Localize` (a Sickened) — a tabela de idioma já está lida; falta só ligar.
 
 **Decidir quando:** ao fazer `classe`, a terceira fonte grande.
+
+## 13. Familiares específicos e companheiros: não estão no zip `novo`
+
+Medido na análise contra o AoN, Etapa 21 (11/09/2026).
+
+**Familiares específicos:** o AoN lista 37 (Aeon Wyrd, Calligraphy Wyrm, Imp, Poppet…),
+cada um com número de habilidades exigido, habilidades concedidas e 1–5 únicas. No zip,
+**zero** como entidade — nem o nome aparece. O que existe são 10 habilidades únicas na
+pasta `Specific Familiary Abilities` (Pot of Tea, Vina Song, Seal-Bearer…), que apontam
+para familiares que o pack não tem. No Foundry o familiar é um ator que o jogador monta.
+
+**Companheiros:** o AoN lista 97 (animais, elementais, mortos-vivos, avançados, únicos; 32
+_Legacy_), 5 opções de avanço (Nimble, Savage, Indomitable, Genie-Touched, Unseen) e 11
+especializações (Ambusher, Bully, Racer…). No zip, **nenhum pack** — "animal companion"
+aparece 166 vezes em `feats` e 45 em `journals`, sempre como texto, nunca como bloco. O
+"Wolf" que existe é o monstro do Monster Core. O sistema deixa companheiros para módulo à
+parte; qual módulo, e se o dado dele serve, **não foi medido** — é a pesquisa do autor.
+
+**Decidido por ora:** só a divisão de tipo das habilidades (Etapa 21). Familiares
+específicos e companheiros esperam uma fonte: ou o módulo da comunidade tem JSON
+aproveitável, ou é o AoN — e aí é a decisão do item 9.
+
+**Decidir quando:** depois das três fontes grandes, com a pesquisa de companheiros feita.

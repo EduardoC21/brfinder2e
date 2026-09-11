@@ -62,6 +62,18 @@ describe('o que as 111 confirmam', () => {
     expect(base().every((item) => item.rarity === 'common')).toBe(true);
   });
 
+  it('o tipo derivado reparte os 111 em 65 / 16 / 14 / 10 / 6', () => {
+    const porTipo = new Map<string, number>();
+    for (const item of base()) porTipo.set(item.kind, (porTipo.get(item.kind) ?? 0) + 1);
+    expect(Object.fromEntries(porTipo)).toEqual({
+      familiar: 65,
+      patron: 16,
+      master: 14,
+      specific: 10,
+      elemental: 6,
+    });
+  });
+
   it('a frequência existe em 7', () => {
     expect(base().filter((item) => item.frequency !== null)).toHaveLength(7);
   });

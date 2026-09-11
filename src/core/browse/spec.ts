@@ -474,6 +474,12 @@ const RULE_SECTIONS: readonly string[] = [
   'Remaster Changes',
 ];
 
+/**
+ * Os cinco tipos de habilidade de familiar, do mais numeroso ao menos: 65, 16, 14, 10, 6.
+ * Derivados na receita — o dado não os tem (INCONSISTENCIAS-FOUNDRY 1.11).
+ */
+const FAMILIAR_KINDS: readonly string[] = ['familiar', 'patron', 'master', 'specific', 'elemental'];
+
 /** Os quatro tipos de divindade, do mais numeroso ao menos: 419, 37, 17, 7. */
 const DEITY_KINDS: readonly string[] = ['deity', 'pantheon', 'covenant', 'philosophy'];
 
@@ -1013,17 +1019,18 @@ export const SOURCES: readonly SourceSpec[] = [
     entityType: 'familiar',
     mode: 'list',
     /*
-     * A fonte mais BARATA do projeto: 111 habilidades com a forma de uma ação, e a tela é
-     * a de Ações sem o Tipo — a pasta separaria 10 de 101 e o nome já diz a que familiar
-     * específico a habilidade pertence. Ver a receita.
+     * A fonte mais BARATA do projeto: 111 habilidades com a forma de uma ação. O Tipo
+     * (Etapa 21) é o que o livro separa e o dado não: de familiar, de mestre, do patrono
+     * da bruxa, de familiar específico, elemental. Ver a receita.
      */
     columns: [
+      { kind: 'text', id: 'kind', field: 'kind' },
       { kind: 'cost', id: 'cost' },
       { kind: 'frequency', id: 'frequency', field: 'frequency' },
       { kind: 'text', id: 'source', field: 'source.title' },
     ],
-    /* O custo é a pergunta que se faz: "o que o familiar ganha de graça e o que ele executa". */
-    defaultColumns: ['cost'],
+    /* Tipo e custo: "de quem é esta habilidade" e "o que o familiar ganha de graça e o que executa". */
+    defaultColumns: ['kind', 'cost'],
     /*
      * Raridade continua como especial — todas são `common`, então a etiqueta nunca
      * aparece — mas NÃO como filtro: um tópico com uma resposta só não recorta nada, e a
@@ -1031,14 +1038,21 @@ export const SOURCES: readonly SourceSpec[] = [
      */
     special: { level: null, rarity: 'rarity', traits: 'traits' },
     filters: [
+      { kind: 'options', id: 'kind', field: 'kind', values: FAMILIAR_KINDS },
       { kind: 'cost', id: 'cost' },
       { kind: 'list', id: 'traits', field: 'traits', combine: 'any' },
       { kind: 'frequency', id: 'frequency', field: 'frequency' },
       { kind: 'options', id: 'source', field: 'source.title' },
     ],
-    typeFilter: null,
+    /* O Tipo é a divisão do livro, que a descrição NÃO diz — é por isso que entra no detalhe. */
+    typeFilter: 'kind',
     searchFields: ['name'],
-    detail: [{ kind: 'chips', field: 'traits' }, { kind: 'cost' }, { kind: 'source' }],
+    detail: [
+      { kind: 'chips', field: 'traits' },
+      { kind: 'cost' },
+      { kind: 'text', field: 'kind' },
+      { kind: 'source' },
+    ],
   },
   {
     id: 'deities',
