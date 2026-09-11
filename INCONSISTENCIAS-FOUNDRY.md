@@ -118,6 +118,18 @@ Versão medida: **`pf2e-8.5.0`**.
 - **Como foi visto:** contagem na receita de divindade. Etapa 17.
 - **No app:** a linha some.
 
+### 1.11 `familiar-abilities` — as 14 habilidades de MESTRE não têm marca
+
+- **Caminho:** `system.category` (vale `familiar` nas 111), `system.traits.value`, `folder`
+- **O quê:** o livro divide as habilidades em "familiar abilities" e "master abilities"
+  (Player Core pg. 212–214); o pack tem as 63 do livro (49 + 14, conferidas nome a nome
+  contra o AoN) e nenhum campo diz qual é qual. A única pista é prosa: 3 descrições dizem
+  "master ability" (`Spell Battery`, `Versatile Form`, `Spirit Touch`). A pasta única
+  (`Specific Familiary Abilities`, 10 documentos) marca outra coisa.
+- **Como foi visto:** análise de familiar contra o AoN, depois da Etapa 20b.
+- **No app:** por ora nada; a tela de familiar não separa. Quando separar, a lista das 14
+  terá de ser nossa.
+
 ---
 
 ## 2. Chaves mortas e erros de grafia
