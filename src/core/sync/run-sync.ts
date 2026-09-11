@@ -17,6 +17,7 @@ import {
   readEntries,
   readTextEntry,
   type FolderRoots,
+  type LoadedSource,
   type HttpPort,
   type PackListing,
   type Progress,
@@ -24,6 +25,7 @@ import {
 } from '../source/index';
 import { buildTraitGlossary, type TraitGlossary } from '../glossary/index';
 import { listRetiredRaw, type StorePort } from '../store/index';
+import { indexJournalPages, type JournalPages } from '../normalization/journals';
 import { mergeLanguageFiles } from '../normalization/language';
 import { run, type PackDocuments, type Failure, type NormalizedEntity } from '../normalization/run';
 import type { Recipe } from '../normalization/recipe';
@@ -146,6 +148,13 @@ export async function runSync(
     ),
   );
 
+  /*
+   * O índice de páginas de jornal, montado UMA vez — a ancestralidade lê a página dela
+   * daqui (`fromJournal`), e classe e arquétipo vão ler das deles. Sem o pack no
+   * manifesto, o índice fica vazio e a página fica vazia; nada falha.
+   */
+  const journals = indexJournalPages(readPackDocuments(loaded, 'journals') ?? []);
+
   const types: TypeResult[] = [];
 
   for (const recipe of recipes) {
@@ -192,14 +201,14 @@ export async function runSync(
       });
     }
 
-    const result = run(recipe, sources, { language });
+    const result = run(recipe, sources, { language, journals });
 
     // Os aposentados passam pela MESMA receita, na mesma execução. É o que garante uma
     // forma só para o front desenhar.
     const retired =
       options.store === undefined
         ? { entities: [], failures: [] }
-        : renormalizeRetired(recipe, options.store, language, mergeFolders(sources));
+        : renormalizeRetired(recipe, options.store, { language, journals }, mergeFolders(sources));
 
     const retiredResult = await retired;
 
@@ -330,7 +339,7 @@ function mergeFolders(sources: readonly PackDocuments[]): ReadonlyMap<string, st
 async function renormalizeRetired(
   recipe: Recipe<never, never>,
   store: StorePort,
-  language: ReadonlyMap<string, string>,
+  tables: { language: ReadonlyMap<string, string>; journals: JournalPages },
   folders: ReadonlyMap<string, string>,
 ): Promise<{ entities: readonly NormalizedEntity[]; failures: readonly Failure[] }> {
   const stored = await listRetiredRaw(store, recipe.type);
@@ -345,7 +354,15 @@ async function renormalizeRetired(
         folders,
       },
     ],
-    { language },
+    tables,
   );
   return { entities: result.entities, failures: result.failures };
+}
+
+/** Os documentos de um pack do zip, ou `null` quando o pack não está no manifesto. */
+function readPackDocuments(loaded: LoadedSource, nome: string): unknown[] | null {
+  const pack = loaded.inventory.packs.find((entry) => entry.name === nome);
+  if (!pack) return null;
+  const parsed: unknown = JSON.parse(readTextEntry(loaded.zip, pack.file));
+  return Array.isArray(parsed) ? (parsed as unknown[]) : null;
 }

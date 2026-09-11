@@ -66,7 +66,7 @@ const b = strings.browse.background;
  * Vazio é `Livre` quando `free` diz que é: 9 dos 520 antecedentes dão aumento livre, e
  * isso é uma resposta. Na divindade o vazio é ausência (7 filosofias), e a linha some.
  */
-export function boostsText(entity: BrowseEntity, field: string, free = false): string {
+export function boostsText(entity: BrowseEntity, field: string, free = false, all = false): string {
   const base = entity.base;
   if (!isRecord(base)) return '';
   const valor = base[field];
@@ -75,6 +75,13 @@ export function boostsText(entity: BrowseEntity, field: string, free = false): s
   const codigos = valor.filter((item): item is string => typeof item === 'string');
   // Vazio é "Livre" só onde a fonte diz isso (antecedente); na divindade é ausência.
   if (codigos.length === 0) return free ? b.freeBoost : '';
+
+  /*
+   * TODOS ganhos, na ordem da fonte — que é a do livro: "Constitution, Wisdom, Free". O
+   * `free` aqui é código na lista (a ancestralidade tem um slot livre ao lado dos fixos),
+   * e não a lista vazia do antecedente.
+   */
+  if (all) return codigos.map((c) => (c === 'free' ? b.freeBoost : attributeName(c))).join(', ');
 
   return [...codigos]
     .sort((x, y) => ATTRIBUTE_ORDER.indexOf(x) - ATTRIBUTE_ORDER.indexOf(y))

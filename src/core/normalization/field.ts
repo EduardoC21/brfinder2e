@@ -11,7 +11,7 @@
 
 import { raw, text, type Decoder } from './decoders';
 
-export type FieldSource = 'document' | 'language' | 'sector' | 'derived';
+export type FieldSource = 'document' | 'language' | 'journal' | 'sector' | 'derived';
 
 export interface Field<T> {
   readonly source: FieldSource;
@@ -74,6 +74,32 @@ export function fromLang<T>(keyTemplate: string, decoder: Decoder<T>): Field<T> 
   return build<T>({
     source: 'language',
     path: keyTemplate,
+    decoder,
+    isOptional: false,
+    fallback: null,
+    transform: null,
+  });
+}
+
+/**
+ * Lê uma PÁGINA DE JORNAL pelo nome, da tabela que `indexJournalPages` monta.
+ *
+ * O modelo aceita `{caminho.no.documento}`, como `fromLang`:
+ *
+ *   fromJournal('Ancestries', '{name}', html)
+ *
+ * Existe porque a ancestralidade mora em dois lugares — a mecânica no pack, o texto no
+ * jornal `Ancestries` — e a receita lê um documento só. Sem a tabela, a página fica
+ * ausente: quem declara o campo decide se isso é falha, `optional()` ou `withDefault()`.
+ */
+export function fromJournal<T>(
+  journal: string,
+  pageTemplate: string,
+  decoder: Decoder<T>,
+): Field<T> {
+  return build<T>({
+    source: 'journal',
+    path: `${journal}/${pageTemplate}`,
     decoder,
     isOptional: false,
     fallback: null,

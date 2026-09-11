@@ -137,6 +137,12 @@ describe('columnWidth', () => {
     expect(columnWidth(grupos, 0)).toBe(Math.ceil(9 * 6.6 + 28));
   });
 
+  /* A coluna de PV: 42 valores `8` e 8 valores `10`. A cerca cai em 1 e o `10` virava `1…`. */
+  it('valor curto nunca é cortado, mesmo atípico', () => {
+    const pv = [...muitos(42, 1), ...muitos(8, 2)];
+    expect(columnWidth(pv, 0)).toBe(Math.ceil(2 * 6.6 + 28));
+  });
+
   it('quando quase tudo é grande, a coluna acompanha', () => {
     expect(columnWidth(muitos(100, 30), 0)).toBeGreaterThan(columnWidth(muitos(100, 10), 0));
   });

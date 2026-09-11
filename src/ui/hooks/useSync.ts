@@ -2,6 +2,7 @@ import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 
 import {
   actionRecipe,
+  ancestryRecipe,
   backgroundRecipe,
   conditionRecipe,
   deityRecipe,
@@ -191,6 +192,7 @@ const RECIPES: readonly Recipe<never, never>[] = [
   deityRecipe as Recipe<never, never>,
   domainRecipe as Recipe<never, never>,
   ruleRecipe as Recipe<never, never>,
+  ancestryRecipe as Recipe<never, never>,
 ];
 
 const INITIAL: SyncState = { stored: null, run: { status: 'loading' }, update: NO_UPDATE };

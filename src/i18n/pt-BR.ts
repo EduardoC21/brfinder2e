@@ -207,6 +207,24 @@ export const ptBR = {
       freeBoost: 'Livre',
     },
     /**
+     * Os VALORES da ancestralidade que têm rótulo em português. São códigos do Foundry,
+     * não dado de jogo em inglês — `med` não é palavra do livro —, e por isso traduzem.
+     */
+    ancestry: {
+      size: {
+        tiny: 'Minúsculo',
+        sm: 'Pequeno',
+        med: 'Médio',
+        lg: 'Grande',
+      } as Record<string, string>,
+      vision: {
+        normal: 'Normal',
+        'low-light-vision': 'Penumbra',
+        darkvision: 'Escuridão',
+      } as Record<string, string>,
+      feet: (valor: string) => `${valor} pés`,
+    },
+    /**
      * A SANTIFICAÇÃO da divindade: o que o clérigo pode (ou deve) ser.
      *
      * `holy` e `unholy` são traços do jogo, e ficam em inglês em todo lugar — menos aqui,
@@ -346,6 +364,15 @@ export const ptBR = {
       usage: 'uso',
       attribute: 'atributo-chave',
       untrained: 'ações',
+      /* Ancestralidade. Os rótulos da ficha: PV, tamanho, deslocamento, falha, visão. */
+      hp: 'PV',
+      size: 'tamanho',
+      speed: 'deslocamento',
+      flaws: 'falha',
+      vision: 'visão',
+      languages: 'idiomas',
+      additionalLanguages: 'idiomas adicionais',
+      features: 'habilidades',
       /* Antecedente. "Saber" é como o livro brasileiro chama a perícia Lore. */
       skills: 'perícia treinada',
       lore: 'Saber',

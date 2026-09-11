@@ -77,8 +77,20 @@ export const BOOK_FIELD = 'source.title';
 export function fieldText(field: string, value: string): string {
   if (field === BOOK_FIELD) return bookLabel(value);
   if (field === SANCTIFICATION_FIELD) return sanctificationLabel(value);
+  if (field === SIZE_FIELD) return strings.browse.ancestry.size[value] ?? capitalizar(value);
+  if (field === VISION_FIELD) return strings.browse.ancestry.vision[value] ?? capitalizar(value);
+  if (field === SPEED_FIELD) return strings.browse.ancestry.feet(value);
   return capitalizar(value);
 }
+
+/**
+ * Os três campos da ancestralidade cujo VALOR tem rótulo próprio: `med` é "Médio", não
+ * "Med"; `low-light-vision` é "Visão na penumbra"; `20` é "20 pés". Nomeados como
+ * `BOOK_FIELD`, pelo mesmo motivo — coluna, filtro e detalhe têm de escrever igual.
+ */
+export const SIZE_FIELD = 'size';
+export const VISION_FIELD = 'vision';
+export const SPEED_FIELD = 'speed';
 
 /**
  * O campo de santificação da divindade. Nomeado como `BOOK_FIELD`: o filtro e o detalhe

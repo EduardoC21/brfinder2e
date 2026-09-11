@@ -13,6 +13,7 @@ import { isRecord } from '../json';
 import { expandLocalize } from '../markup/localize';
 import { DecodeError } from './decoders';
 import { resolveTemplate, type Field } from './field';
+import type { JournalPages } from './journals';
 import { collectPaths, emptyCoverage, isCovered, readPath, type Coverage } from './paths';
 import { IDENTITY_PATHS, type FieldMap, type Recipe } from './recipe';
 import { buildReport, type NormalizationReport } from './report';
@@ -50,6 +51,8 @@ export interface RunResult<TBase = unknown, TDesc = unknown> {
 
 export interface RunOptions {
   readonly language?: LanguageTable;
+  /** As páginas de jornal por `<jornal>/<página>`. Ver `fromJournal`. */
+  readonly journals?: JournalPages;
 }
 
 /**
@@ -255,7 +258,9 @@ function readField(
       ? readFromDocument(field, document, coverage)
       : field.source === 'sector'
         ? readSector(field, document, coverage, context)
-        : readFromLanguage(field, document, options.language);
+        : field.source === 'journal'
+          ? readFromTable(field, document, options.journals)
+          : readFromTable(field, document, options.language);
 
   if (!found.present) {
     if (field.fallback !== null) return applyTransform(field, field.fallback.value);
@@ -325,12 +330,17 @@ function readSector(
   return { present: true, value: context.folders?.get(read.value) ?? '' };
 }
 
-function readFromLanguage(
+/**
+ * Uma TABELA de consulta, pela chave que o modelo do campo resolve contra o documento. É
+ * a mesma leitura para a tabela de idioma (`fromLang`) e a de páginas de jornal
+ * (`fromJournal`): as duas são `Map<string, string>` e as duas têm chave com `{caminho}`.
+ */
+function readFromTable(
   field: Field<unknown>,
   document: unknown,
-  language: LanguageTable | undefined,
+  table: ReadonlyMap<string, string> | undefined,
 ): Found {
-  if (!language) return { present: false, value: undefined };
+  if (!table) return { present: false, value: undefined };
 
   const key = resolveTemplate(field.path, (path) => {
     const read = readPath(document, path);
@@ -338,7 +348,7 @@ function readFromLanguage(
   });
   if (key === null) return { present: false, value: undefined };
 
-  const value = language.get(key);
+  const value = table.get(key);
   return value === undefined ? { present: false, value: undefined } : { present: true, value };
 }
 

@@ -601,7 +601,7 @@ function Field({
 
     /* `Strength ou Dexterity`, ou `Livre` onde a fonte diz que é. Ver `boostsText`. */
     case 'boosts': {
-      const valor = boostsText(entity, spec.field, spec.free === true);
+      const valor = boostsText(entity, spec.field, spec.free === true, spec.all === true);
       if (valor === '') return null;
       return <Row label={label(spec.field)}>{valor}</Row>;
     }

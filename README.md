@@ -64,6 +64,12 @@ Antes: **Etapa 19** — `rule`: as 64 páginas da tela do mestre e do Remaster C
 seção do livro como Tipo. Os índices viram sumário clicável — a referência relativa
 `@UUID[.página]`, que só jornal usa, é reescrita na forma canônica.
 
+Antes: **Etapa 22** — `ancestry`, a primeira das três fontes grandes: 50 do pack com a
+mecânica em campos (PV, tamanho, deslocamento, aumentos, falha, visão, idiomas) e a
+página do jornal `Ancestries` colada por `fromJournal`, a segunda tabela de consulta do
+motor. A lista e o painel lateral mostram o básico; a página fica guardada para a tela
+completa.
+
 Antes: **Etapa 21** — o Tipo do familiar, derivado: o livro separa habilidade de familiar
 e de mestre e o pack não; contra o AoN, nome a nome, os 111 viram 65 de familiar, 16 do
 patrono da bruxa, 14 de mestre (a única lista nossa), 10 de familiar específico, 6
@@ -75,9 +81,9 @@ Antes: **Etapa 20** — as tabelas das regras param de quebrar (célula compacta
 linha, `@Embed` cola a entrada apontada, e as duas vassouras em Configurações: apagar as
 entradas aposentadas e apagar a base inteira.
 
-Próxima: **ancestralidade** — 50 do pack, com a mecânica (aumentos, PV, tamanho,
-deslocamento, visão) e o capítulo do jornal `Ancestries`, que traz 4.350 caracteres onde o
-pack traz 639. Primeira fonte cuja descrição vem de OUTRO pack.
+Próxima: **a tela completa** (22b) — o botão na linha e no painel que troca a lista pela
+entidade com abas em cima (Detalhes, Heranças, Talentos), com Voltar. Depois as heranças
+(328) e as abas de lista com filtro travado; depois classe e arquétipo pelo mesmo desenho.
 
 ⚠️ Correção: a linha anterior daqui dizia que a descrição de ancestralidade e de classe
 morava nos jornais. Está errado — os packs `ancestries` (50/50), `classes` (29/29) e

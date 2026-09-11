@@ -316,6 +316,15 @@ foi o erro das duas tentativas anteriores.
 `fromLang('PF2E.condition.{system.slug}.summary', text)`. Existe porque há conteúdo que só
 mora lá — `summary` está em 42 das 43 condições e em nenhum pack.
 
+**`fromJournal()` lê uma página de jornal pelo nome**, da segunda tabela de consulta do
+motor: `fromJournal('Ancestries', '{name}', html)`. Existe porque há entrada que mora em
+DOIS lugares — a ancestralidade tem a mecânica no pack `ancestries` e o texto do livro no
+jornal `Ancestries` (50 páginas com o mesmo nome, 4.693 a 13.239 caracteres, contra 231 a
+1.123 do resumo do pack). Uma receita lê um documento; a página entra como a chave de
+idioma entra: por tabela, resolvida contra o documento. `indexJournalPages` monta a tabela
+uma vez por sincronização (`<jornal>/<página>` → HTML), e sem o pack `journals` ela fica
+vazia e a página fica vazia — nada falha. Classe e arquétipo têm a mesma forma.
+
 ### A garantia de que nada some (seção 5.1)
 
 O motor monta o inventário de todo caminho-folha do documento e subtrai o que a receita

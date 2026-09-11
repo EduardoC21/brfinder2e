@@ -168,6 +168,9 @@ export const CELL_PAD_PX = 14;
  */
 export const TUKEY_K = 3;
 
+/** Até aqui a cerca não se aplica: cortar o curto muda o valor, não só o comprimento. */
+export const CURTO = 8;
+
 /** O que uma coluna de símbolo ocupa: três losangos de 7px com 3px de vão. */
 export const SYMBOL_PX = 27;
 
@@ -249,10 +252,18 @@ export function columnWidth(drawn: readonly string[], headerLength: number): num
     }
   }
 
+  /*
+   * ⚠️ A CERCA NÃO CORTA O QUE É CURTO.
+   *
+   * Vista na coluna de PV da ancestralidade: 42 valores de um caractere (`6`, `8`) e 8 de
+   * dois (`10`). Q1 = Q3 = 1, IQR = 0, cerca = 1 — e o `10` saía como `1…`, que é OUTRO
+   * número. Cortar um valor de até 8 caracteres economiza no máximo 7 × 6,6 = 46px e custa
+   * o significado; a cerca é régua de prosa, e prosa curta não existe.
+   */
   const q1 = quantil(0.25);
   const q3 = quantil(0.75);
   const cerca = q3 + TUKEY_K * (q3 - q1);
-  const comprimento = Math.min(maior, cerca);
+  const comprimento = maior <= CURTO ? maior : Math.min(maior, cerca);
 
   const conteudo = comprimento * CELL_CHAR_PX + CHIP_PAD_PX + CELL_PAD_PX;
   return Math.ceil(Math.max(conteudo, piso));

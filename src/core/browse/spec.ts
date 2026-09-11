@@ -31,7 +31,13 @@ export type Align = 'start' | 'end';
  * livro não dá.
  */
 export interface BoostsFormat {
+  /** Lista vazia é "Livre" (antecedente). */
   readonly free?: boolean;
+  /**
+   * Os códigos são TODOS ganhos, não uma escolha: `Constitution, Wisdom, Livre` em vez de
+   * `Constitution ou Wisdom`. É a ancestralidade, cujo `free` vem como código na lista.
+   */
+  readonly all?: boolean;
 }
 
 export interface DefenseFields {
@@ -461,6 +467,12 @@ const DEFESA_DE_MAGIA: DefenseFields = {
  * que a fonte diz. Quem junta as duas leituras é a tela, em `attributeName`.
  */
 const ATTRIBUTE_CODES: readonly string[] = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
+
+/** Os quatro tamanhos de ancestralidade, do menor ao maior: 2, 12, 33, 3. */
+const ANCESTRY_SIZES: readonly string[] = ['tiny', 'sm', 'med', 'lg'];
+
+/** As três visões, da comum à melhor: 13, 24, 13. */
+const VISIONS: readonly string[] = ['normal', 'low-light-vision', 'darkvision'];
 
 /**
  * As seções da tela do mestre, na ordem do livro, e o Remaster Changes por último — ele é
@@ -902,15 +914,56 @@ export const SOURCES: readonly SourceSpec[] = [
   },
   {
     id: 'ancestries',
-    entityType: null,
+    entityType: 'ancestry',
     mode: 'list',
-    columns: [],
-    defaultColumns: [],
-    special: NO_SPECIAL_COLUMNS,
-    filters: [],
+    /*
+     * A primeira das três fontes GRANDES (Etapa 22). O painel lateral mostra o BÁSICO — a
+     * mecânica em campos e o resumo do pack; a página do jornal, com heranças e tudo, é
+     * da tela completa (22b). Colunas são a ficha do livro: PV, tamanho, deslocamento,
+     * aumentos, visão.
+     */
+    columns: [
+      { kind: 'text', id: 'hp', field: 'hp' },
+      { kind: 'text', id: 'size', field: 'size' },
+      { kind: 'text', id: 'speed', field: 'speed' },
+      { kind: 'boosts', id: 'boosts', field: 'boosts', all: true },
+      { kind: 'boosts', id: 'flaws', field: 'flaws', all: true },
+      { kind: 'text', id: 'vision', field: 'vision' },
+      { kind: 'text', id: 'source', field: 'source.title' },
+    ],
+    /* PV, tamanho e aumentos: o que se compara ao escolher. */
+    defaultColumns: ['hp', 'size', 'boosts'],
+    /* A fonte mais RARA do projeto — 22 raras, 20 incomuns, 8 comuns — e a etiqueta importa. */
+    special: { level: null, rarity: 'rarity', traits: 'traits' },
+    filters: [
+      { kind: 'rarity', id: 'rarity', field: 'rarity' },
+      { kind: 'options', id: 'size', field: 'size', values: ANCESTRY_SIZES },
+      { kind: 'options', id: 'hp', field: 'hp' },
+      /* Só os seis: `free` não é atributo, e o filtro é "quem aumenta Constituição". */
+      { kind: 'list', id: 'boosts', field: 'boosts', combine: 'any', values: ATTRIBUTE_CODES },
+      { kind: 'options', id: 'vision', field: 'vision', values: VISIONS },
+      { kind: 'list', id: 'traits', field: 'traits', combine: 'any' },
+      { kind: 'options', id: 'source', field: 'source.title' },
+    ],
     typeFilter: null,
-    searchFields: [],
-    detail: [],
+    searchFields: ['name'],
+    /*
+     * A ordem do bloco de mecânica do livro: PV, tamanho, deslocamento, aumentos, falha,
+     * idiomas, visão, habilidades. O resumo do pack fica embaixo, como descrição.
+     */
+    detail: [
+      { kind: 'chips', field: 'traits' },
+      { kind: 'text', field: 'hp' },
+      { kind: 'text', field: 'size' },
+      { kind: 'text', field: 'speed' },
+      { kind: 'boosts', field: 'boosts', all: true },
+      { kind: 'boosts', field: 'flaws', all: true },
+      { kind: 'chips', field: 'languages' },
+      { kind: 'chips', field: 'additionalLanguages' },
+      { kind: 'text', field: 'vision' },
+      { kind: 'references', field: 'features' },
+      { kind: 'source' },
+    ],
   },
   {
     id: 'backgrounds',
