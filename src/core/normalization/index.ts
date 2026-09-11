@@ -14,6 +14,7 @@ export * from './recipes/domain';
 export * from './recipes/equipment';
 export * from './recipes/familiar';
 export * from './recipes/feat';
+export * from './recipes/rule';
 export * from './recipes/skill';
 export * from './recipes/spell';
 export * from './report';

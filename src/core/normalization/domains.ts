@@ -17,6 +17,8 @@
  * 15a), e são 2.473 links de página para divindade.
  */
 
+import { slugify } from './slug';
+
 /** Uma magia de domínio. O conteúdo mora em Magias; aqui só o ponteiro e o rótulo. */
 export interface DomainSpell {
   readonly uuid: string;
@@ -54,10 +56,5 @@ export function parseDomainPage(title: string, html: string): DomainPage | null 
 
 /** `Fire` → `fire`, `Nothingness` → `nothingness`. Casa com `system.domains.primary`. */
 export function domainSlug(name: string): string {
-  return name
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
+  return slugify(name);
 }

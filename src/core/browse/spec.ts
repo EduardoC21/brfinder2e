@@ -462,6 +462,19 @@ const DEFESA_DE_MAGIA: DefenseFields = {
  */
 const ATTRIBUTE_CODES: readonly string[] = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
 
+/**
+ * As seções da tela do mestre, na ordem do livro. Os dois índices primeiro, depois as três
+ * seções de conteúdo, e o Remaster Changes por último — ele é outro jornal.
+ */
+const RULE_SECTIONS: readonly string[] = [
+  'GM Screen',
+  'Player Screen',
+  'Playing the Game',
+  'Running the Game',
+  'Subsystems and Variant Rules',
+  'Remaster Changes',
+];
+
 /** Os quatro tipos de divindade, do mais numeroso ao menos: 419, 37, 17, 7. */
 const DEITY_KINDS: readonly string[] = ['deity', 'pantheon', 'covenant', 'philosophy'];
 
@@ -1124,6 +1137,27 @@ export const SOURCES: readonly SourceSpec[] = [
      * dizer a mesma coisa duas vezes a três centímetros de distância. Elas continuam como
      * coluna, que é onde se varre.
      */
+    detail: [],
+  },
+  {
+    id: 'rules',
+    entityType: 'rule',
+    mode: 'list',
+    /*
+     * As regras: 64 páginas de dois jornais, e a PÁGINA é a entrada. Não há mecânica —
+     * regra não tem nível, custo nem raridade —, então o cabeçalho é só a seção, e a
+     * descrição é tudo. As 49 tabelas (DCs por nível, orçamento de encontro…) vêm na
+     * descrição, pelo desenhista que já desenha a tabela dos escudos.
+     */
+    crossReferences: true,
+    columns: [{ kind: 'chip', id: 'section', field: 'section' }],
+    defaultColumns: ['section'],
+    special: NO_SPECIAL_COLUMNS,
+    /* A seção na ORDEM DO LIVRO, e não alfabética: é como a tela do mestre se organiza. */
+    filters: [{ kind: 'options', id: 'section', field: 'section', values: RULE_SECTIONS }],
+    typeFilter: 'section',
+    searchFields: ['name'],
+    /* Detalhe VAZIO: a página é a entrada, e a seção já está na coluna e no filtro. */
     detail: [],
   },
   {

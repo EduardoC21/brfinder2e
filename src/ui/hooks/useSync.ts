@@ -9,6 +9,7 @@ import {
   equipmentRecipe,
   familiarRecipe,
   featRecipe,
+  ruleRecipe,
   skillRecipe,
   spellRecipe,
 } from '@core/normalization/index';
@@ -182,6 +183,7 @@ const RECIPES: readonly Recipe<never, never>[] = [
   familiarRecipe as Recipe<never, never>,
   deityRecipe as Recipe<never, never>,
   domainRecipe as Recipe<never, never>,
+  ruleRecipe as Recipe<never, never>,
 ];
 
 const INITIAL: SyncState = { stored: null, run: { status: 'loading' }, update: NO_UPDATE };

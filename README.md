@@ -60,6 +60,10 @@ duas fontes que o trilho não previa: `deity` (480 divindades, panteões, pactos
 filosofias) e `domain` (61 páginas de jornal). Segunda forma de ponte, por slug: os
 domínios, a perícia e a arma de uma divindade abrem a entrada correspondente.
 
+Antes: **Etapa 19** — `rule`: as 64 páginas da tela do mestre e do Remaster Changes, com a
+seção do livro como Tipo. Os índices viram sumário clicável — a referência relativa
+`@UUID[.página]`, que só jornal usa, é reescrita na forma canônica.
+
 Próxima: **ancestralidade** — 50 do pack, com a mecânica (aumentos, PV, tamanho,
 deslocamento, visão) e o capítulo do jornal `Ancestries`, que traz 4.350 caracteres onde o
 pack traz 639. Primeira fonte cuja descrição vem de OUTRO pack.

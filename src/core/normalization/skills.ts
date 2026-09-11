@@ -23,6 +23,8 @@
  * fonte.
  */
 
+import { slugify } from './slug';
+
 /** Uma ação ligada a uma perícia. O conteúdo mora na fonte de Ações; aqui vai o ponteiro. */
 export interface SkillAction {
   /** `Compendium.pf2e.actionspf2e.Item.M76ycLAqHoAgbcej` — casa com o `uuid` da ação. */
@@ -88,10 +90,5 @@ export function parseSkillTable(html: string): readonly SkillRow[] {
 
 /** `Acrobatics` → `acrobatics`. É a identidade da perícia: ela não tem `_id` de Foundry. */
 export function skillSlug(name: string): string {
-  return name
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
+  return slugify(name);
 }

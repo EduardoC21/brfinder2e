@@ -360,6 +360,8 @@ export const ptBR = {
       domains: 'domínios',
       alternateDomains: 'domínios alternativos',
       spells: 'magias de clérigo',
+      /* Regra: a seção da tela do mestre. Faz o papel de Tipo. */
+      section: 'seção',
       /* Domínio. */
       spell: 'magia de domínio',
       advancedSpell: 'magia de domínio avançada',
@@ -399,6 +401,7 @@ export const ptBR = {
     familiars: 'Familiar',
     deities: 'Divindades',
     domains: 'Domínios',
+    rules: 'Regras',
     skills: 'Perícias',
   } as Record<string, string>,
   settings: {
