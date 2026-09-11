@@ -227,10 +227,36 @@ Salvamentos e perícias são nome próprio no PF2e: `Reflex`, `Fortitude`, `Athl
 
 ### O que não sabemos resolver
 
-`@Localize` e `@Embed` puxam conteúdo de outro lugar. Enquanto não resolvem, aparecem
-discretos com o alvo no `title` — mas **`@Localize` sozinho numa descrição é uma descrição
-vazia**: a condição Sickened é exatamente isto, e na tela sai
-`PF2E.condition.sickened.rules`. A chave existe na tabela de idioma que a receita já lê.
+`@Localize` puxa texto da tabela de idioma. Enquanto não resolve, aparece discreto com o
+alvo no `title` — mas **`@Localize` sozinho numa descrição é uma descrição vazia**: a
+condição Sickened é exatamente isto, e na tela sai `PF2E.condition.sickened.rules`. A chave
+existe na tabela de idioma que a receita já lê.
+
+### `@Embed`: a entrada colada
+
+**Decidido (Etapa 20b):** `@Embed[<uuid> inline]` cola a descrição da entrada apontada no
+lugar do token, quando ela está na base. É como as páginas de subsistema são escritas —
+Hexploration tem o título "Travel" como link e, logo abaixo, o embed da ação. 19 nas
+regras (Infiltration 7, Duels 5, Hexploration 4, Influence 2, Research 1), todos para
+`actionspf2e`.
+
+Não fere "clicável abre pop-out": o embed não é clicável, é o corpo da página; o link é o
+título acima. A entrada colada leva um fio à esquerda, para se ver onde a página para e a
+entrada começa. Resolve UM nível: dentro da entrada colada, um embed fica pendente — é o
+que impede o laço sem contador, e nenhuma das 19 tem embed dentro.
+
+O que aponta para fora da base fica como antes, discreto com o alvo no `title`. Onde isso
+acontece e quando volta: OPEN-DECISIONS #12.
+
+### Os três atributos que sobrevivem
+
+O parser de HTML descarta tudo que não é `class` — exceto `colspan`, `rowspan` e UM valor
+de `style`, `float:right`, lido como `align: 'right'`. Os números que os fizeram entrar:
+64 `colspan`/`rowspan` no zip, e a nota de rodapé de Skill Actions (`<td colspan="4">`)
+caindo na primeira coluna; 5.400 `float:right`, que é o rodapé
+`<em>Section: …</em><span style="float:right"><em>Player Core pg. 227</em></span>` de 50
+das 67 páginas de regras — sem ele os dois `<em>` grudavam. Não é estilo inline permitido:
+é um atributo semântico lido de onde o Foundry o escreve, e o CSS é nosso.
 
 ### Negrito: rótulo de bloco, não ênfase
 

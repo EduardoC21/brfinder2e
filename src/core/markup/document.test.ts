@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { actionGlyph, parseDescription, tokenText } from './document';
-import { decodeEntities, parseHtml } from './html';
+import { decodeEntities, parseHtml, type HtmlNode } from './html';
 
 const texto = (nodes: readonly unknown[]): string =>
   nodes
@@ -11,6 +11,17 @@ const texto = (nodes: readonly unknown[]): string =>
       return texto(node.children ?? []);
     })
     .join('');
+
+/** O primeiro elemento com a tag, em profundidade. */
+function achar(node: HtmlNode | undefined, tag: string): (HtmlNode & { kind: 'element' }) | null {
+  if (node?.kind !== 'element') return null;
+  if (node.tag === tag) return node;
+  for (const child of node.children) {
+    const found = achar(child, tag);
+    if (found !== null) return found;
+  }
+  return null;
+}
 
 describe('parseHtml', () => {
   it('monta a árvore das tags permitidas', () => {
@@ -35,6 +46,25 @@ describe('parseHtml', () => {
   it('lê a classe, que é como o Foundry marca o símbolo de ação', () => {
     const [node] = parseHtml('<span class="action-glyph">1</span>');
     expect(node).toMatchObject({ kind: 'element', tag: 'span', className: 'action-glyph' });
+  });
+
+  it('guarda colspan e rowspan, e só eles', () => {
+    const [table] = parseHtml(
+      '<table><tr><td colspan="4" data-colwidth="281,0">nota</td></tr></table>',
+    );
+    const td = achar(table, 'td');
+    expect(td?.attrs).toEqual({ colspan: 4 });
+    const [semSpan] = parseHtml('<p><td colspan="1">x</td></p>');
+    expect(achar(semSpan, 'td')?.attrs).toBeUndefined();
+  });
+
+  it('lê o float:right como align, e descarta o resto do style', () => {
+    const [p] = parseHtml(
+      '<p><em>Section</em><span style="float:right"><em>pg. 227</em></span></p>',
+    );
+    expect(achar(p, 'span')?.attrs).toEqual({ align: 'right' });
+    const [outro] = parseHtml('<p><span style="text-align:right">x</span></p>');
+    expect(achar(outro, 'span')?.attrs).toBeUndefined();
   });
 
   it('tag sem fechamento não engole o resto', () => {

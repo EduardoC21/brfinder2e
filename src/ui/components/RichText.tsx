@@ -1,8 +1,15 @@
-import { createElement, Fragment, type ReactNode } from 'react';
+import { createElement, Fragment, useMemo, type ReactNode } from 'react';
 
-import { actionGlyph, tokenText, type DocNode, type Token } from '@core/markup/index';
+import {
+  actionGlyph,
+  parseDescription,
+  tokenText,
+  type DocNode,
+  type Token,
+} from '@core/markup/index';
 import { ActionCost } from '@ui/components/ActionCost';
 import { cx } from '@ui/cx';
+import { useDescription } from '@ui/hooks/useDescription';
 
 import styles from './RichText.module.css';
 
@@ -31,6 +38,17 @@ export interface RichTextLinks {
   readonly resolves: (target: string) => boolean;
   /** `novo` quer dizer "em painel novo" — Ctrl+clique ou clique do meio. */
   readonly open: (target: string, novo: boolean) => void;
+  /**
+   * Onde está a entrada que um `@Embed` quer colar aqui — ou `null` quando ela não está na
+   * base. Ausente dentro de uma entrada colada: o embed resolve UM nível (ver `Colada`).
+   */
+  readonly embed?: (target: string) => EmbedSubject | null;
+}
+
+/** A entrada a colar: o tipo e a chave, que é o que `useDescription` precisa. */
+export interface EmbedSubject {
+  readonly type: string;
+  readonly key: string;
 }
 
 export function RichText({
@@ -97,6 +115,37 @@ function renderNode(
   // Void: `hr` e `br` não aceitam filhos, e passá-los é erro de runtime no React.
   if (node.tag === 'hr' || node.tag === 'br') {
     return createElement(node.tag, { key, className: styles[node.tag] });
+  }
+
+  /*
+   * O `float:right` do Foundry, lido pelo parser como `align` (ver `ElementAttrs`). É o
+   * livro e a página no rodapé de 50 páginas de regras, e o nível ao lado do título em
+   * Automatic Bonus Progression. Sem isto os dois `<em>` do rodapé grudavam:
+   * "Section: Playing the GamePathfinder Player Core pg. 227".
+   */
+  if (node.attrs?.align === 'right') {
+    return createElement(
+      node.tag,
+      { key, className: cx(styles[node.tag], styles['direita']) },
+      ...children,
+    );
+  }
+
+  /*
+   * `colspan`/`rowspan` passam adiante. A célula que atravessa colunas nunca é compacta:
+   * é nota de rodapé ou título de grupo, e as duas são prosa.
+   */
+  if ((node.tag === 'td' || node.tag === 'th') && node.attrs !== undefined) {
+    return createElement(
+      node.tag,
+      {
+        key,
+        className: styles[node.tag],
+        colSpan: node.attrs.colspan,
+        rowSpan: node.attrs.rowspan,
+      },
+      ...children,
+    );
   }
 
   /*
@@ -194,11 +243,29 @@ function TokenPiece({
         </span>
       );
 
-    // `@Localize` e `@Embed` puxam conteúdo de outro lugar. Sem resolvê-los, mostrar a
-    // chave crua seria pior que mostrar nada legível — então ficam discretos, com o alvo
-    // no title, até a resolução existir.
+    /*
+     * `@Embed[<uuid> inline]` cola a descrição de OUTRA entrada aqui. É como as páginas de
+     * subsistema são escritas: Hexploration tem o título "Travel" como link e, logo
+     * abaixo, o embed da ação — 19 nas regras (Infiltration 7, Duels 5, Hexploration 4,
+     * Influence 2, Research 1), todos apontando para ações que a base tem.
+     *
+     * Não fere "clicável abre pop-out": o embed não é clicável, é o corpo da página. O
+     * link é o título acima dele. E só cola o que está na base — o que não está fica
+     * discreto com o alvo no title, como antes.
+     */
+    case 'embed': {
+      const alvo = links?.embed?.(embedTarget(token.body)) ?? null;
+      if (alvo !== null) return <Colada subject={alvo} links={links} />;
+      return (
+        <span className={styles['pending']} title={token.raw}>
+          {text}
+        </span>
+      );
+    }
+
+    // `@Localize` puxa texto da tabela de idioma. Sem resolvê-lo, mostrar a chave crua
+    // seria pior que mostrar nada legível — então fica discreto, com o alvo no title.
     case 'localize':
-    case 'embed':
       return (
         <span className={styles['pending']} title={token.raw}>
           {text}
@@ -208,6 +275,47 @@ function TokenPiece({
     case 'unknown':
       return <Fragment>{text}</Fragment>;
   }
+}
+
+/** O alvo de um `@Embed`: a primeira palavra do corpo. O resto (`inline`, `hr=false`) é modo. */
+function embedTarget(body: string): string {
+  return body.trim().split(/\s+/)[0] ?? '';
+}
+
+/**
+ * A entrada COLADA por um `@Embed`.
+ *
+ * Um nível só: os `links` que descem não têm `embed`, então um embed dentro da entrada
+ * colada fica pendente em vez de colar de novo. É o que impede o laço (A cola B que cola
+ * A) sem contador de profundidade — e nenhuma das 19 ações coladas pelas regras tem embed
+ * dentro, então o nível a mais não faz falta.
+ */
+function Colada({
+  subject,
+  links,
+}: {
+  readonly subject: EmbedSubject;
+  readonly links?: RichTextLinks | undefined;
+}) {
+  const description = useDescription(subject.type, subject.key);
+  const nodes = useMemo(
+    () => (description === null ? null : parseDescription(description)),
+    [description],
+  );
+  const semEmbed = useMemo<RichTextLinks | undefined>(
+    () => (links === undefined ? undefined : { resolves: links.resolves, open: links.open }),
+    [links],
+  );
+  if (nodes === null) return null;
+  return (
+    <div className={styles['colada']}>
+      {semEmbed === undefined ? (
+        <RichText nodes={nodes} />
+      ) : (
+        <RichText nodes={nodes} links={semEmbed} />
+      )}
+    </div>
+  );
 }
 
 /** Até aqui é rótulo; acima é prosa. Ver o comentário em `renderNode`. */

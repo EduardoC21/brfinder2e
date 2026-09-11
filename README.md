@@ -64,6 +64,11 @@ Antes: **Etapa 19** — `rule`: as 64 páginas da tela do mestre e do Remaster C
 seção do livro como Tipo. Os índices viram sumário clicável — a referência relativa
 `@UUID[.página]`, que só jornal usa, é reescrita na forma canônica.
 
+Antes: **Etapa 20** — as tabelas das regras param de quebrar (célula compacta medida em
+40 caracteres, `pf2-icon`, `sup`, `colspan`, `float:right`), o link na prosa perde a
+linha, `@Embed` cola a entrada apontada, e as duas vassouras em Configurações: apagar as
+entradas aposentadas e apagar a base inteira.
+
 Próxima: **ancestralidade** — 50 do pack, com a mecânica (aumentos, PV, tamanho,
 deslocamento, visão) e o capítulo do jornal `Ancestries`, que traz 4.350 caracteres onde o
 pack traz 639. Primeira fonte cuja descrição vem de OUTRO pack.

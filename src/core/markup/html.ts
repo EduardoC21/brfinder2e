@@ -20,9 +20,31 @@ export type HtmlNode =
       readonly kind: 'element';
       readonly tag: string;
       readonly className: string | null;
+      /** Só existe quando a tag traz um dos três atributos de `ElementAttrs`. */
+      readonly attrs?: ElementAttrs;
       readonly children: readonly HtmlNode[];
     }
   | { readonly kind: 'text'; readonly text: string };
+
+/**
+ * Os ÚNICOS atributos além de `class` que sobrevivem à leitura. Lista fechada, como a de
+ * tags: o resto (`style`, `data-colwidth`, `border`) é descartado.
+ *
+ * `colspan`/`rowspan` — 64 no zip, 13 nas regras. Sem eles a nota de rodapé de Skill
+ * Actions (`<td colspan="4">`) caía na primeira coluna, a mais estreita.
+ *
+ * `align: 'right'` — a leitura de UM valor de `style`: `float:right`. É o padrão de
+ * diagramação das páginas de jornal, 5.400 no zip (5.517 só em `journals`): o rodapé
+ * `<em>Section: …</em><span style="float:right"><em>Player Core pg. 227</em></span>` em
+ * 50 das 67 páginas de regras, e o nível ao lado do título em Automatic Bonus
+ * Progression. Não é "estilo inline permitido" — é um atributo semântico lido de onde o
+ * Foundry o escreve.
+ */
+export interface ElementAttrs {
+  readonly colspan?: number;
+  readonly rowspan?: number;
+  readonly align?: 'right';
+}
 
 /**
  * As tags que a tela sabe desenhar. Medidas nas descrições reais, por frequência:
@@ -83,6 +105,9 @@ const CLOSES_PREVIOUS: Readonly<Record<string, readonly string[]>> = {
 
 const TAG = /<(\/?)([a-zA-Z][a-zA-Z0-9]*)((?:"[^"]*"|'[^']*'|[^>])*)>/g;
 const CLASS = /class\s*=\s*"([^"]*)"|class\s*=\s*'([^']*)'/;
+const COLSPAN = /colspan\s*=\s*["']?(\d+)/;
+const ROWSPAN = /rowspan\s*=\s*["']?(\d+)/;
+const FLOAT_RIGHT = /style\s*=\s*["'][^"']*float\s*:\s*right/;
 
 const ENTITIES: Readonly<Record<string, string>> = {
   amp: '&',
@@ -119,6 +144,7 @@ export function decodeEntities(text: string): string {
 interface Frame {
   readonly tag: string;
   readonly className: string | null;
+  readonly attrs: ElementAttrs | undefined;
   readonly children: HtmlNode[];
 }
 
@@ -144,6 +170,7 @@ export function parseHtml(html: string): HtmlNode[] {
         kind: 'element',
         tag: frame.tag,
         className: frame.className,
+        ...(frame.attrs === undefined ? {} : { attrs: frame.attrs }),
         children: frame.children,
       });
     } else {
@@ -189,7 +216,7 @@ export function parseHtml(html: string): HtmlNode[] {
       }
     }
 
-    stack.push({ tag, className: readClass(attrs), children: [] });
+    stack.push({ tag, className: readClass(attrs), attrs: readAttrs(attrs), children: [] });
   }
 
   pushText(html.slice(cursor));
@@ -206,4 +233,15 @@ export function parseHtml(html: string): HtmlNode[] {
 function readClass(attrs: string): string | null {
   const match = CLASS.exec(attrs);
   return match?.[1] ?? match?.[2] ?? null;
+}
+
+/** Os atributos de `ElementAttrs` que a tag traz, ou `undefined` quando não traz nenhum. */
+function readAttrs(attrs: string): ElementAttrs | undefined {
+  const lidos: { colspan?: number; rowspan?: number; align?: 'right' } = {};
+  const colspan = COLSPAN.exec(attrs)?.[1];
+  if (colspan !== undefined && Number(colspan) > 1) lidos.colspan = Number(colspan);
+  const rowspan = ROWSPAN.exec(attrs)?.[1];
+  if (rowspan !== undefined && Number(rowspan) > 1) lidos.rowspan = Number(rowspan);
+  if (FLOAT_RIGHT.test(attrs)) lidos.align = 'right';
+  return Object.keys(lidos).length === 0 ? undefined : lidos;
 }

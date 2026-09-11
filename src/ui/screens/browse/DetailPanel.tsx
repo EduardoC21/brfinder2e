@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import {
   fieldValue,
@@ -8,9 +8,7 @@ import {
 } from '@core/browse/index';
 import { isRecord } from '@core/json';
 import { parseDescription } from '@core/markup/index';
-import { readDesc } from '@core/store/index';
 import { strings } from '@i18n/index';
-import { createIndexedDbStore } from '@platform/store-indexeddb';
 import { ActionCost } from '@ui/components/ActionCost';
 import { CastCost } from '@ui/components/CastCost';
 import { Frequency } from '@ui/components/Frequency';
@@ -18,6 +16,7 @@ import { RarityMark } from '@ui/components/RarityMark';
 import { RichText, type RichTextLinks } from '@ui/components/RichText';
 import { TraitChip } from '@ui/components/TraitChip';
 import { useTraitLabel } from '@ui/glossary/useTraitLabel';
+import { useDescription } from '@ui/hooks/useDescription';
 import { CollapseToggle } from '@ui/components/CollapseToggle';
 import { cx } from '@ui/cx';
 import { bookLabel, capitalizar, fieldText } from '@ui/text';
@@ -29,7 +28,6 @@ import type { PopoutSubject } from './popouts';
 import { areaText, defenseText, durationText, ritualLines, spellCast } from './spellFields';
 import styles from './DetailPanel.module.css';
 
-const store = createIndexedDbStore();
 const t = strings.browse.detail;
 const b = strings.browse;
 
@@ -162,11 +160,18 @@ export function DetailPanel({
     return alvo === undefined || alvo === null ? null : fieldValue(alvo.entity, 'name');
   };
 
-  /* Só o que RESOLVE vira botão na prosa. Ver `RichTextLinks`. */
+  /* Só o que RESOLVE vira botão na prosa — e só o que resolve é colado. Ver `RichTextLinks`. */
   const links: RichTextLinks | undefined =
     reference === undefined
       ? undefined
-      : { resolves: (target) => reference.resolve(target) !== null, open: abrir };
+      : {
+          resolves: (target) => reference.resolve(target) !== null,
+          open: abrir,
+          embed: (target) => {
+            const alvo = reference.resolve(target);
+            return alvo === null ? null : { type: alvo.entityType, key: alvo.entity.key };
+          },
+        };
   const nodes = useMemo(
     () => (description === null ? null : parseDescription(description)),
     [description],
@@ -675,32 +680,6 @@ function readList(entity: BrowseEntity, field: string): string[] {
   return Array.isArray(value)
     ? value.filter((item): item is string => typeof item === 'string')
     : [];
-}
-
-/** As descrições moram em `desc/<tipo>`, à parte, por serem pesadas (briefing 5.2). */
-function useDescription(type: string, key: string): string | null {
-  const [loaded, setLoaded] = useState<{ token: string; text: string } | null>(null);
-  const token = `${type}/${key}`;
-
-  useEffect(() => {
-    let alive = true;
-    readDesc(store, type)
-      .then((all) => {
-        if (!alive || all === null) return;
-        const entry = all[key];
-        if (!isRecord(entry)) return;
-        const main = entry['main'];
-        if (typeof main === 'string') setLoaded({ token, text: main });
-      })
-      .catch(() => {
-        // Sem descrição gravada, o painel mostra só o cabeçalho.
-      });
-    return () => {
-      alive = false;
-    };
-  }, [type, key, token]);
-
-  return loaded?.token === token ? loaded.text : null;
 }
 
 const s = strings.browse.skill;

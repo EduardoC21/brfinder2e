@@ -14,7 +14,7 @@
  * eslint.config.js), e a UI tem um desenhista por espécie de nó.
  */
 
-import { parseHtml, type HtmlNode } from './html';
+import { parseHtml, type ElementAttrs, type HtmlNode } from './html';
 import { checkLabel, damageLabel, rollLabel, templateLabel } from './label';
 import { parseMarkup } from './parse';
 import type { Token } from './types';
@@ -24,6 +24,8 @@ export type DocNode =
       readonly kind: 'element';
       readonly tag: string;
       readonly className: string | null;
+      /** Ver `ElementAttrs` em `html.ts`: `colspan`, `rowspan` e o `float:right`. */
+      readonly attrs?: ElementAttrs;
       readonly children: readonly DocNode[];
     }
   | { readonly kind: 'token'; readonly token: Token };
@@ -43,6 +45,7 @@ function convert(nodes: readonly HtmlNode[]): DocNode[] {
       kind: 'element',
       tag: node.tag,
       className: node.className,
+      ...(node.attrs === undefined ? {} : { attrs: node.attrs }),
       children: convert(node.children),
     });
   }
