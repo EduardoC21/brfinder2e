@@ -6,12 +6,13 @@
  * nível, o texto de Counteracting, as atividades de exploração.
  *
  * DOIS jornais, uma fonte. `GM Screen` são as 60 páginas da tela do mestre, organizadas
- * em cinco seções (ver `rules.ts`). `Remaster Changes` são 7 páginas sobre o que mudou
+ * em seções (ver `rules.ts`) — 55 viram entrada; as três divisórias e os dois índices
+ * ficam de fora. `Remaster Changes` são 7 páginas sobre o que mudou
  * entre a edição original e o Remaster — referência de regra, e cabe como uma seção a
  * mais. `Hero Point Deck` fica de fora: é um produto à parte (53 cartas), não regra.
  *
  * ⚠️ A DESCRIÇÃO É A PÁGINA, e o cabeçalho é só a seção. Não há mecânica a extrair — uma
- * regra não tem nível, custo nem raridade. O que a fonte tem além do texto são 44 páginas
+ * regra não tem nível, custo nem raridade. O que a fonte tem além do texto são 47 páginas
  * com TABELA, que o desenhista de descrição já desenha, e 88 links de outras fontes
  * apontando para cá (condições, talentos e magias que citam Counteracting, Falling, Treat
  * Wounds), que passam a resolver.

@@ -463,12 +463,11 @@ const DEFESA_DE_MAGIA: DefenseFields = {
 const ATTRIBUTE_CODES: readonly string[] = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
 
 /**
- * As seções da tela do mestre, na ordem do livro. Os dois índices primeiro, depois as três
- * seções de conteúdo, e o Remaster Changes por último — ele é outro jornal.
+ * As seções da tela do mestre, na ordem do livro, e o Remaster Changes por último — ele é
+ * outro jornal. Os dois índices (GM Screen, Player Screen) não são seção de nada: ficaram
+ * de fora, ver `normalization/rules.ts`.
  */
 const RULE_SECTIONS: readonly string[] = [
-  'GM Screen',
-  'Player Screen',
   'Playing the Game',
   'Running the Game',
   'Subsystems and Variant Rules',
@@ -1144,9 +1143,9 @@ export const SOURCES: readonly SourceSpec[] = [
     entityType: 'rule',
     mode: 'list',
     /*
-     * As regras: 64 páginas de dois jornais, e a PÁGINA é a entrada. Não há mecânica —
+     * As regras: 62 páginas de dois jornais, e a PÁGINA é a entrada. Não há mecânica —
      * regra não tem nível, custo nem raridade —, então o cabeçalho é só a seção, e a
-     * descrição é tudo. As 49 tabelas (DCs por nível, orçamento de encontro…) vêm na
+     * descrição é tudo. As 47 tabelas (DCs por nível, orçamento de encontro…) vêm na
      * descrição, pelo desenhista que já desenha a tabela dos escudos.
      */
     crossReferences: true,

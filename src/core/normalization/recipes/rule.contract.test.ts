@@ -27,7 +27,7 @@ beforeAll(async () => {
 describe('as 64 regras reais', () => {
   it('normalizam todas, sem falha e com relatório limpo', () => {
     expect(result.failures).toEqual([]);
-    expect(result.entities).toHaveLength(64);
+    expect(result.entities).toHaveLength(62);
     expect(isClean(result.report)).toBe(true);
   });
 
@@ -35,12 +35,10 @@ describe('as 64 regras reais', () => {
    * ⚠️ A estrutura do jornal É o Tipo. Se estes números mudarem, o Foundry reorganizou a
    * tela do mestre — e aí vale olhar se a conta da seção ainda faz sentido.
    */
-  it('as seis seções, com as três divisórias fora', () => {
+  it('as quatro seções, com as divisórias e os índices fora', () => {
     const por = new Map<string, number>();
     for (const e of result.entities) por.set(e.base.section, (por.get(e.base.section) ?? 0) + 1);
     expect(Object.fromEntries(por)).toEqual({
-      'GM Screen': 1,
-      'Player Screen': 1,
       'Playing the Game': 21,
       'Running the Game': 17,
       'Subsystems and Variant Rules': 17,
@@ -48,10 +46,11 @@ describe('as 64 regras reais', () => {
     });
   });
 
-  it('nenhuma referência relativa sobra, e o índice aponta para 55 páginas', () => {
+  /* Os dois índices (GM Screen, Player Screen) ficam de fora: só apontam para o resto. */
+  it('os índices não entram, e nenhuma referência relativa sobra', () => {
+    expect(result.entities.find((e) => e.base.name === 'GM Screen')).toBeUndefined();
+    expect(result.entities.find((e) => e.base.name === 'Player Screen')).toBeUndefined();
     for (const e of result.entities) expect(e.desc.main).not.toContain('@UUID[.');
-    const indice = result.entities.find((e) => e.base.name === 'GM Screen');
-    expect((indice?.desc.main.match(/JournalEntryPage/g) ?? []).length).toBe(55);
   });
 
   /* Skill Actions é regra E é a fonte das 17 perícias — duas leituras, nenhuma cópia. */
@@ -61,8 +60,8 @@ describe('as 64 regras reais', () => {
     );
   });
 
-  /* 44 da tela do mestre e 5 do Remaster Changes: é a razão de o desenhista ter tabela. */
-  it('49 das 64 páginas têm tabela', () => {
-    expect(result.entities.filter((e) => e.desc.main.includes('<table'))).toHaveLength(49);
+  /* 42 da tela do mestre e 5 do Remaster Changes: é a razão de o desenhista ter tabela. */
+  it('47 das 62 páginas têm tabela', () => {
+    expect(result.entities.filter((e) => e.desc.main.includes('<table'))).toHaveLength(47);
   });
 });

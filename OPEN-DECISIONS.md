@@ -270,3 +270,27 @@ jogo" ou "core", junto com perícia e ação.
 
 **Decidir quando:** na etapa da tradução. Nada aqui muda o que a 15b gravou — o glossário
 de hoje é o "original" dessa tabela futura.
+
+---
+
+## 11. O Escudo do Mestre como módulo montável `novo`
+
+Registrado pelo autor na Etapa 19b, ao tirar os dois índices da fonte de Regras.
+
+**A ideia:** um módulo próprio, no topo do app, onde o usuário monta o SEU escudo do mestre
+— colando blocos de informação de forma modular ao longo da tela (uma tabela de DCs, uma
+regra, uma lista de condições), escrevendo anotações próprias, ou só deixando links que
+abrem pop-outs.
+
+**O que já existe para isso:** as duas páginas-índice do jornal `GM Screen` (`GM Screen`,
+com 55 links, e `Player Screen`, com 11) são exatamente um escudo montado pela Paizo. Elas
+ficaram FORA da fonte de Regras porque só apontam para o que a seção já organiza — mas
+podem servir de molde, ou de "escudo padrão", quando o módulo existir. A leitura delas
+está pronta: `sectionPages` em `normalization/rules.ts` já reescreve as referências
+relativas para a forma canônica.
+
+**O que ele exigiria:** um lugar para guardar o que o usuário montou (é preferência, então
+`prefs/`), um desenho de bloco reordenável, e a decisão de se o texto colado é cópia ou
+referência viva à entrada.
+
+**Decidir quando:** depois das três fontes grandes e da setorização do trilho.

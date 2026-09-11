@@ -14,17 +14,23 @@
  * que vem antes dela. Isso dá o Tipo da tela sem inventar nada — é a estrutura do próprio
  * livro (Player Core, GM Core), que o Foundry preservou na ordem.
  *
- * Três das cinco são só divisórias ("Sources: Pathfinder Player Core", 30 a 54
- * caracteres) e não viram entrada. Duas têm conteúdo de verdade — os índices, com a
- * tabela de links para as outras páginas — e viram entrada da própria seção. O corte é
- * por TAMANHO, e o número é medido: a menor página de conteúdo tem 103 caracteres
- * (`Simple DCs`), a maior divisória tem 54. O limiar fica no meio.
+ * NENHUMA das cinco vira entrada, por dois motivos diferentes:
  *
- * ⚠️ REFERÊNCIA RELATIVA. Os índices apontam para as outras páginas como
- * `@UUID[.ZrEmfrgDlmlhdvQg]{Basic Actions}` — o ponto na frente quer dizer "página deste
- * mesmo jornal", uma forma que nenhuma outra fonte usa. São 66 nos jornais, todas para o
- * próprio jornal. Aqui elas viram a forma canônica, e o índice passa a ser um sumário
- * clicável de graça.
+ *   as DIVISÓRIAS ("Sources: Pathfinder Player Core", 30 a 54 caracteres) não têm o que
+ *   mostrar. O corte é por tamanho, e o número é medido: a menor página de conteúdo tem
+ *   103 caracteres (`Simple DCs`), a maior divisória tem 54.
+ *
+ *   os ÍNDICES (GM Screen, Player Screen) só apontam para o que a seção já organiza — são
+ *   tabelas de `@UUID[.página]`, e a lista da tela é esse sumário. Decisão do autor na
+ *   Etapa 19b: ficam de fora até existir o módulo de Escudo do Mestre (OPEN-DECISIONS #11),
+ *   onde eles podem servir de molde. O que os define é o conteúdo, e não o nome: são
+ *   páginas de nível 1 feitas de referência RELATIVA — as 66 da base estão nelas (55 + 11),
+ *   e a abertura do `Remaster Changes`, que é prosa de verdade, tem zero e fica.
+ *
+ * ⚠️ REFERÊNCIA RELATIVA. `@UUID[.ZrEmfrgDlmlhdvQg]{Basic Actions}` — o ponto na frente
+ * quer dizer "página deste mesmo jornal", uma forma que nenhuma outra fonte usa. Quem a
+ * tiver é reescrito para a forma canônica; hoje só os índices a têm, e eles ficam de fora,
+ * mas a regra vale para qualquer página que um dia a use.
  */
 
 import { slugify } from './slug';
@@ -58,6 +64,12 @@ const MINIMO_DE_CONTEUDO = 100;
 const ETIQUETA = /<[^>]*>/g;
 const RELATIVA = /@UUID\[\.([A-Za-z0-9]+)\]/g;
 
+/** Uma página de nível 1 com referência RELATIVA é índice, e índice não vira entrada. */
+function ehIndice(html: string): boolean {
+  RELATIVA.lastIndex = 0;
+  return RELATIVA.test(html);
+}
+
 function tamanhoDoTexto(html: string): number {
   return html.replace(ETIQUETA, '').trim().length;
 }
@@ -85,8 +97,11 @@ export function sectionPages(jornal: string, paginas: readonly Pagina[]): readon
   for (const pagina of ordenadas) {
     if (pagina.level === 1) {
       secao = pagina.name;
-      // Divisória: só marca a seção e some. Índice: é a seção E uma entrada dela.
-      if (tamanhoDoTexto(pagina.content) < MINIMO_DE_CONTEUDO) continue;
+      // Divisória e índice só marcam a seção e somem. Abertura com prosa (o Remaster
+      // Changes) é a seção E uma entrada dela.
+      if (tamanhoDoTexto(pagina.content) < MINIMO_DE_CONTEUDO || ehIndice(pagina.content)) {
+        continue;
+      }
     }
     saida.push({
       id: pagina.id,

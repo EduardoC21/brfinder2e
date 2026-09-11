@@ -55,9 +55,29 @@ describe('sectionPages', () => {
     expect(por('Running the Game')).toBeUndefined();
   });
 
-  /* O índice tem conteúdo de verdade: é a seção E uma entrada dela mesma. */
-  it('o índice vira entrada da própria seção', () => {
-    expect(por('GM Screen')?.section).toBe('GM Screen');
+  /*
+   * O índice só aponta para o que a seção já organiza, e a lista da tela já é esse
+   * sumário. O que o define é a referência RELATIVA, não o nome.
+   */
+  it('o índice não vira entrada', () => {
+    expect(por('GM Screen')).toBeUndefined();
+  });
+
+  /* Abertura de nível 1 com prosa e sem referência relativa É entrada, da própria seção. */
+  it('a abertura com prosa vira entrada da própria seção', () => {
+    const comAbertura = [
+      ...paginas,
+      {
+        id: 'rc',
+        name: 'Remaster Changes',
+        level: 1,
+        sort: 9_000_000,
+        content:
+          '<p>' + 'With the 5.9.0 release we moved to the remaster rules. '.repeat(3) + '</p>',
+      },
+    ];
+    const abertura = sectionPages(JORNAL, comAbertura).find((r) => r.name === 'Remaster Changes');
+    expect(abertura?.section).toBe('Remaster Changes');
   });
 
   it('a ordem é a de sort, não a do array', () => {
@@ -68,14 +88,24 @@ describe('sectionPages', () => {
   });
 
   /*
-   * ⚠️ A referência RELATIVA — `@UUID[.bas]` — vira a forma canônica, e é o que faz o
-   * índice virar sumário clicável. Nenhuma outra fonte usa essa forma.
+   * ⚠️ A referência RELATIVA — `@UUID[.bas]` — vira a forma canônica em qualquer página
+   * que a use. Hoje só os índices a têm, e eles ficam de fora; a regra fica para o dia em
+   * que uma página de conteúdo apontar para outra assim.
    */
   it('reescreve as referências relativas para a forma canônica', () => {
-    const indice = por('GM Screen')?.content ?? '';
-    expect(indice).not.toContain('@UUID[.');
-    expect(indice).toContain(`@UUID[${pageUuid(JORNAL, 'bas')}]`);
-    expect(indice).toContain(`@UUID[${pageUuid(JORNAL, 'dcs')}]`);
+    const comLink = [
+      ...paginas,
+      {
+        id: 'x',
+        name: 'Cover',
+        level: 2,
+        sort: -600_000,
+        content: '<p>See @UUID[.fall]{Falling}.</p>',
+      },
+    ];
+    const cover = sectionPages(JORNAL, comLink).find((r) => r.name === 'Cover')?.content ?? '';
+    expect(cover).not.toContain('@UUID[.');
+    expect(cover).toContain(`@UUID[${pageUuid(JORNAL, 'fall')}]`);
   });
 
   it('o UUID é o canônico da página', () => {
