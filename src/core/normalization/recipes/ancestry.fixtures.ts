@@ -131,7 +131,7 @@ export const jornal = {
       sort: 100000,
       text: {
         content:
-          '<h2>You Might...</h2><p>Strive to […]</p><h2>Dwarf Heritages</h2><p>@UUID[Compendium.pf2e.heritages.Item.yL6944LrPo2HNdEJ]{Ancient-Blooded Dwarf}</p>',
+          '<h2>You Might...</h2><p>Strive to […]</p><h2 id="m">Dwarf Mechanics</h2><p>Hit Points 10</p><h2>Dwarf Heritages</h2><p>@UUID[Compendium.pf2e.heritages.Item.yL6944LrPo2HNdEJ]{Ancient-Blooded Dwarf}</p>',
       },
     },
   ],

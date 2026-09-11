@@ -58,8 +58,9 @@ describe('receita de ancestralidade', () => {
   });
 
   /* A página vem do jornal pelo nome; sem página, a descrição longa fica vazia. */
-  it('cola a página do jornal, e fica vazia quando não há', () => {
-    expect(achar('Dwarf').desc.page).toContain('<h2>Dwarf Heritages</h2>');
+  it('cola a prosa da página do jornal, até a mecânica; sem página, vazia', () => {
+    expect(achar('Dwarf').desc.page).toBe('<h2>You Might...</h2><p>Strive to […]</p>');
+    expect(achar('Dwarf').desc.page).not.toContain('Mechanics');
     expect(achar('Tengu').desc.page).toBe('');
   });
 

@@ -70,22 +70,42 @@
   margin-bottom: var(--space-1);
 }
 
+/*
+ * Os TÍTULOS dentro da prosa — "Society", "Alignment and Religion", "Sample Names".
+ *
+ * Até a Etapa 22 quase não havia: a descrição de um talento não tem seção. A página de
+ * uma ancestralidade tem sete, e num texto de 13 mil caracteres o título é o que deixa a
+ * pessoa achar "Names" sem ler o resto. Eram 15px em peso 600, quase o corpo.
+ *
+ * `h2`: 18px na fonte de exibição, peso 400 — é a mesma voz do nome da entrada no
+ * cabeçalho —, com um fio embaixo que fecha a seção anterior. `h3`: 15px, o mesmo peso,
+ * sem fio. O espaço ACIMA é maior que o abaixo: o título pertence ao que vem depois.
+ */
 .h2,
 .h3,
 .h4 {
-  margin: var(--space-4) 0 var(--space-2);
+  margin: var(--space-6) 0 var(--space-2);
   font-family: var(--font-display);
-  font-weight: 600;
+  font-weight: 400;
   color: var(--color-text);
 }
 
+.h2:first-child,
+.h3:first-child,
+.h4:first-child {
+  margin-top: 0;
+}
+
 .h2 {
-  font-size: var(--text-lg);
+  padding-bottom: var(--space-1);
+  border-bottom: 1px solid var(--color-hairline);
+  font-size: var(--text-xl);
+  letter-spacing: 0.01em;
 }
 
 .h3,
 .h4 {
-  font-size: var(--text-md);
+  font-size: var(--text-lg);
 }
 
 /* Tabela rola por dentro quando não couber: a página nunca ganha rolagem horizontal. */

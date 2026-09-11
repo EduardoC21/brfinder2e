@@ -76,7 +76,11 @@ export interface AncestryBase {
 export interface AncestryDesc {
   /** O resumo do pack, de 231 a 1.123 caracteres, sem o link de rodapé (ver `semRodape`). */
   readonly main: string;
-  /** A página do jornal `Ancestries`. Vazia quando o jornal não foi lido. */
+  /**
+   * A PROSA da página do jornal `Ancestries`: até o título "<Nome> Mechanics", exclusive.
+   * A mecânica que vem depois dele está nos campos (é o painel lateral), e a lista de
+   * heranças que fecha a página vira a aba Heranças. Vazia quando o jornal não foi lido.
+   */
   readonly page: string;
 }
 
@@ -137,6 +141,18 @@ function semRodape(texto: string): string {
   return texto.replace(RODAPE, '');
 }
 
+/**
+ * O `<h2>Dwarf Mechanics</h2>` que abre a mecânica — 50 de 50 o têm (8 com atributos na
+ * tag, por isso `[^>]*`), e em todos ele vem antes de "<Nome> Heritages". Dali para baixo
+ * a página repete os campos e lista as heranças por `@UUID`.
+ */
+const MECANICA = /<h2[^>]*>[^<]* Mechanics<\/h2>/;
+
+function soProsa(texto: string): string {
+  const corte = MECANICA.exec(texto);
+  return corte === null ? texto : texto.slice(0, corte.index);
+}
+
 export const ancestryRecipe = recipe<AncestryBase, AncestryDesc>({
   type: 'ancestry',
   packs: [{ name: 'ancestries' }],
@@ -160,7 +176,7 @@ export const ancestryRecipe = recipe<AncestryBase, AncestryDesc>({
 
   desc: {
     main: from('system.description.value', html).map(semRodape),
-    page: fromJournal('Ancestries', '{name}', html).withDefault(''),
+    page: fromJournal('Ancestries', '{name}', html).map(soProsa).withDefault(''),
   },
 
   ignore: {

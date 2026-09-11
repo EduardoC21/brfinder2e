@@ -76,12 +76,12 @@ describe('as 50 ancestralidades reais', () => {
     }
   });
 
-  /* 50 de 50 têm página com o mesmo nome, e a página é bem maior que o resumo. */
-  it('a página do jornal está em todas, e é maior que o resumo', () => {
+  /* 50 de 50 têm página com o mesmo nome; a prosa para antes da mecânica e é maior que o resumo. */
+  it('a prosa da página está em todas, sem a mecânica e maior que o resumo', () => {
     for (const entity of result.entities) {
-      expect(entity.desc.page.length, entity.base.name).toBeGreaterThanOrEqual(4693);
-      expect(entity.desc.page.length).toBeGreaterThan(entity.desc.main.length);
-      expect(entity.desc.page).toContain(`${entity.base.name} Heritages`);
+      expect(entity.desc.page.length, entity.base.name).toBeGreaterThan(entity.desc.main.length);
+      expect(entity.desc.page).not.toContain(' Mechanics</h2>');
+      expect(entity.desc.page).not.toContain(`${entity.base.name} Heritages`);
     }
   });
 });

@@ -87,6 +87,7 @@ export function BrowseScreen({ baseVersion }: BrowseScreenProps) {
    * morreria no instante em que a pessoa trocasse de fonte. Aqui em cima, nada remonta.
    */
   const [popouts, despacharPopout] = useReducer(popoutReducer, EMPTY_POPOUTS);
+  const [pedidosDeLista, setPedidosDeLista] = useState(0);
   const [paletaAberta, setPaletaAberta] = useState(false);
   const [buscaNaDescricao, setBuscaNaDescricao] = useState(false);
 
@@ -192,7 +193,15 @@ export function BrowseScreen({ baseVersion }: BrowseScreenProps) {
           currentCount={entities.length}
           collapsed={trilhoRecolhido}
           onToggle={alternarTrilho}
-          onSelect={setSourceId}
+          onSelect={(id) => {
+            /*
+             * Clicar na fonte que JÁ está aberta é "me leva para a lista dela": sai da
+             * tela completa. O `SourcePane` não remonta (mesma `key`), então o pedido vai
+             * por um contador que ele observa.
+             */
+            if (id === sourceId) setPedidosDeLista((n) => n + 1);
+            else setSourceId(id);
+          }}
         />
 
         {source === undefined ? (
@@ -205,6 +214,7 @@ export function BrowseScreen({ baseVersion }: BrowseScreenProps) {
             loading={base.status === 'loading'}
             onPopOut={abrirFlutuante}
             reference={ponte}
+            listRequest={pedidosDeLista}
           />
         )}
 
@@ -292,12 +302,15 @@ function SourcePane({
   loading,
   onPopOut,
   reference,
+  listRequest,
 }: {
   readonly source: SourceSpec;
   readonly entities: readonly BrowseEntity[];
   readonly loading: boolean;
   readonly onPopOut: (subject: PopoutSubject) => void;
   readonly reference: ReferenceBridge;
+  /** Sobe quando o trilho é clicado na fonte já aberta: "volta para a lista". */
+  readonly listRequest: number;
 }) {
   const [term, setTerm] = useState('');
   const { prefs, update, ready } = usePreferences();
@@ -355,6 +368,12 @@ function SourcePane({
    * fonte, clicar no trilho sai da tela completa sozinho: o pedido do autor.
    */
   const [telaCompleta, setTelaCompleta] = useState(false);
+  /* O pedido do trilho, ajustado durante o render — o idioma do React para prop que muda. */
+  const [pedidoVisto, setPedidoVisto] = useState(listRequest);
+  if (pedidoVisto !== listRequest) {
+    setPedidoVisto(listRequest);
+    setTelaCompleta(false);
+  }
 
   /*
    * `useDeferredValue` no termo: o React desenha o campo com a letra nova de imediato e
@@ -662,9 +681,13 @@ function SourcePane({
       <EntityScreen
         entity={opened}
         entityType={source.entityType ?? ''}
+        fields={source.detail}
         sourceLabel={strings.sources[source.id] ?? source.id}
         view={source.fullView}
         reference={reference}
+        onPopOut={() => {
+          onPopOut({ entity: opened, entityType: source.entityType ?? '', fields: source.detail });
+        }}
         onBack={() => {
           setTelaCompleta(false);
         }}
@@ -745,21 +768,18 @@ function SourcePane({
                 if (chosen) escolher(chosen.key);
                 input.current?.focus();
               }}
+              /*
+                O DUPLO CLIQUE abre a tela completa, onde ela existe. Foi o pedido: o
+                botão na linha ficou feio, e o gesto de "abrir de vez" já é o duplo clique
+                em toda lista de arquivos. Onde não há tela completa, ele só escolhe.
+              */
               onOpen={(index) => {
                 const chosen = results[index];
-                if (chosen) escolher(chosen.key);
+                if (chosen) {
+                  escolher(chosen.key);
+                  if (source.fullView !== undefined) setTelaCompleta(true);
+                }
               }}
-              onExpand={
-                source.fullView === undefined
-                  ? undefined
-                  : (index) => {
-                      const chosen = results[index];
-                      if (chosen) {
-                        escolher(chosen.key);
-                        setTelaCompleta(true);
-                      }
-                    }
-              }
             />
           )}
         </div>

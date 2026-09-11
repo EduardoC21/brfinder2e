@@ -3,6 +3,7 @@ import { createElement, Fragment, useMemo, type ReactNode } from 'react';
 import {
   actionGlyph,
   parseDescription,
+  pruneForReading,
   tokenText,
   type DocNode,
   type Token,
@@ -299,7 +300,7 @@ function Colada({
 }) {
   const description = useDescription(subject.type, subject.key);
   const nodes = useMemo(
-    () => (description === null ? null : parseDescription(description)),
+    () => (description === null ? null : pruneForReading(parseDescription(description))),
     [description],
   );
   const semEmbed = useMemo<RichTextLinks | undefined>(

@@ -2,43 +2,28 @@
  * A tela completa ocupa as colunas da lista E da lateral — `2 / 4` no grid de três
  * colunas de `.screen`. O trilho (coluna 1) não participa: é o pedido do autor, e é
  * também o que faz o Voltar ser barato — a coluna 1 nem soube que algo mudou.
+ *
+ * Por dentro, a MESMA forma da lista: a barra atravessa as duas colunas, e embaixo dela a
+ * prosa fica onde a lista ficava e o painel onde o painel ficava. A pessoa não muda de
+ * lugar na tela para ler — muda só o que está escrito.
  */
 .full {
   grid-column: 2 / 4;
   display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   grid-template-rows: auto minmax(0, 1fr);
   min-height: 0;
   min-width: 0;
 }
 
-/*
- * A barra: Voltar, nome, fonte, e as abas empurradas para a direita. Uma linha só, na
- * altura da linha de busca que ela substitui, para a troca lista ↔ entrada não pular.
- */
 .bar {
+  grid-column: 1 / 3;
   display: flex;
   align-items: center;
   gap: var(--space-3);
   min-width: 0;
   padding: var(--space-3) var(--space-4);
   border-bottom: 1px solid var(--color-hairline);
-}
-
-.voltar {
-  flex: none;
-  height: 26px;
-  border: 1px solid var(--color-hairline);
-  padding: 0 var(--space-2);
-  background: transparent;
-  color: var(--color-text-muted);
-  font: 400 var(--text-xs) / 1 var(--font-body);
-  white-space: nowrap;
-  cursor: pointer;
-}
-
-.voltar:hover {
-  border-color: var(--color-data);
-  color: var(--color-text);
 }
 
 .nome {
@@ -57,6 +42,24 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--color-text-muted);
+}
+
+/* O mesmo desenho do `.action` da lateral, e desabilitado pelo mesmo motivo. */
+.traduzir {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  border: 1px solid var(--color-hairline);
+  padding: 0 var(--space-2);
+  background: transparent;
+  color: var(--color-text-muted);
+  font: 400 var(--text-xs) / 1.6 var(--font-body);
+  white-space: nowrap;
+}
+
+.traduzir:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .abas {
@@ -93,16 +96,17 @@
 
 .corpo {
   min-height: 0;
+  min-width: 0;
   overflow-y: auto;
   padding: var(--space-4) var(--space-5) var(--space-6);
 }
 
 /*
- * A medida da prosa: 78 caracteres. A página de uma ancestralidade tem até 13.239
- * caracteres, e uma linha de tela inteira (170+ caracteres em 1.400px) é ilegível. O
- * texto fica à esquerda, não centrado — a barra e as abas estão à esquerda também.
+ * A prosa usa a largura que tem. O autor não quis a medida de coluna de livro — a linha
+ * acabava "muito antes do limite da tela" —, e com a lateral ao lado a área já é a de uma
+ * página. O que compensa a linha longa é a entrelinha: 1,65 em vez de 1,5.
  */
 .pagina {
-  max-width: 78ch;
   font-size: var(--text-md);
+  line-height: 1.65;
 }

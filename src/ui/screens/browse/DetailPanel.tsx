@@ -7,7 +7,7 @@ import {
   type DetailFieldSpec,
 } from '@core/browse/index';
 import { isRecord } from '@core/json';
-import { parseDescription } from '@core/markup/index';
+import { parseDescription, pruneForReading } from '@core/markup/index';
 import { strings } from '@i18n/index';
 import { ActionCost } from '@ui/components/ActionCost';
 import { CastCost } from '@ui/components/CastCost';
@@ -176,7 +176,7 @@ export function DetailPanel({
           },
         };
   const nodes = useMemo(
-    () => (description === null ? null : parseDescription(description)),
+    () => (description === null ? null : pruneForReading(parseDescription(description))),
     [description],
   );
 
