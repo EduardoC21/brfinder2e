@@ -422,6 +422,29 @@ export interface SourceSpec {
   readonly searchFields: readonly string[];
   /** O cabeçalho do detalhe. A descrição vem sempre, e não se declara. */
   readonly detail: readonly DetailFieldSpec[];
+  /**
+   * A TELA COMPLETA da entrada (Etapa 22b): a lista e a lateral saem, e a entrada ocupa
+   * as duas colunas com abas em cima, como o Archives of Nethys. Só as fontes grandes a
+   * têm — é onde uma entrada tem coisas subordinadas demais para um painel.
+   */
+  readonly fullView?: FullViewSpec;
+}
+
+export interface FullViewSpec {
+  /** As abas, na ordem da barra. A primeira abre por padrão. */
+  readonly tabs: readonly TabSpec[];
+}
+
+/**
+ * Uma aba da tela completa. Hoje só a de TEXTO: uma descrição inteira da entrada (a página
+ * do jornal, em `desc.<field>`). As de lista — os talentos da ancestralidade, com o filtro
+ * travado — vêm quando as fontes que elas listam existirem.
+ */
+export interface TabSpec {
+  readonly kind: 'page';
+  readonly id: string;
+  /** O campo de `desc/` que a aba desenha. */
+  readonly field: string;
 }
 
 /**
@@ -964,6 +987,8 @@ export const SOURCES: readonly SourceSpec[] = [
       { kind: 'references', field: 'features' },
       { kind: 'source' },
     ],
+    /* A página do livro, com heranças e tudo. Heranças e talentos viram abas depois. */
+    fullView: { tabs: [{ kind: 'page', id: 'details', field: 'page' }] },
   },
   {
     id: 'backgrounds',

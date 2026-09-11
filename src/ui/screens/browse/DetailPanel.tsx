@@ -44,6 +44,8 @@ export interface DetailPanelProps {
   readonly onCollapse?: () => void;
   /** Ausente quando já está flutuando: não se destaca o que já está destacado. */
   readonly onPopOut?: () => void;
+  /** Abre a TELA COMPLETA (22b). Só a lateral das fontes grandes passa. */
+  readonly onExpand?: () => void;
   /**
    * Como resolver um `@UUID`. Ausente: as referências viram texto morto.
    *
@@ -103,6 +105,7 @@ export function DetailPanel({
   fields,
   onCollapse,
   onPopOut,
+  onExpand,
   reference,
   onBack,
   embedded = false,
@@ -196,7 +199,7 @@ export function DetailPanel({
         separadas, o nome fica com a largura inteira e nada o disputa.
       */}
       <header className={styles['head']}>
-        <Actions onCollapse={onCollapse} onPopOut={onPopOut} onBack={onBack} />
+        <Actions onCollapse={onCollapse} onPopOut={onPopOut} onExpand={onExpand} onBack={onBack} />
 
         {/*
           Nome e raridade juntos, como na lista.
@@ -327,10 +330,12 @@ export function DetailPanel({
 function Actions({
   onCollapse,
   onPopOut,
+  onExpand,
   onBack,
 }: {
   readonly onCollapse?: (() => void) | undefined;
   readonly onPopOut?: (() => void) | undefined;
+  readonly onExpand?: (() => void) | undefined;
   readonly onBack?: (() => void) | undefined;
 }) {
   return (
@@ -390,6 +395,19 @@ function Actions({
           onClick={onPopOut}
         >
           ⤢
+        </button>
+      )}
+
+      {/* A TELA COMPLETA, ao lado do pop-out: os dois "tiram daqui", em direções opostas. */}
+      {onExpand && (
+        <button
+          type="button"
+          className={cx(styles['icon'], 'chamfer-sm')}
+          aria-label={strings.browse.fullView.open}
+          title={strings.browse.fullView.open}
+          onClick={onExpand}
+        >
+          ⛶
         </button>
       )}
     </div>

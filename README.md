@@ -81,9 +81,12 @@ Antes: **Etapa 20** — as tabelas das regras param de quebrar (célula compacta
 linha, `@Embed` cola a entrada apontada, e as duas vassouras em Configurações: apagar as
 entradas aposentadas e apagar a base inteira.
 
-Próxima: **a tela completa** (22b) — o botão na linha e no painel que troca a lista pela
-entidade com abas em cima (Detalhes, Heranças, Talentos), com Voltar. Depois as heranças
-(328) e as abas de lista com filtro travado; depois classe e arquétipo pelo mesmo desenho.
+Antes: **Etapa 22b** — a tela completa: o botão na linha ativa e no painel troca a lista e
+a lateral pela entrada com abas em cima (só Detalhes por ora, a página do jornal), com
+Voltar e Esc. É estado do painel da fonte, não rota: a lista volta como estava.
+
+Próxima: as **heranças** (328, 17 versáteis) como fonte, e a aba de lista com filtro
+travado — Heranças e Talentos do Dwarf. Depois classe e arquétipo pelo mesmo desenho.
 
 ⚠️ Correção: a linha anterior daqui dizia que a descrição de ancestralidade e de classe
 morava nos jornais. Está errado — os packs `ancestries` (50/50), `classes` (29/29) e

@@ -39,6 +39,8 @@ interface DetailPaneProps {
   readonly entityType: string;
   readonly fields: readonly DetailFieldSpec[];
   readonly onPopOut: () => void;
+  /** Repassado ao painel: abre a tela completa (22b). Ausente nas fontes sem ela. */
+  readonly onExpand?: () => void;
   /** Repassada ao painel: é ele que desenha as referências e a sub-tela. */
   readonly reference?: ReferenceBridge;
   /**
@@ -69,6 +71,7 @@ export function DetailPane({
   entityType,
   fields,
   onPopOut,
+  onExpand,
   overlay,
   collapsed,
   onToggleCollapsed,
@@ -171,6 +174,7 @@ export function DetailPane({
           fields={fields}
           onCollapse={onToggleCollapsed}
           onPopOut={onPopOut}
+          {...(onExpand === undefined ? {} : { onExpand })}
           {...(reference === undefined ? {} : { reference })}
         />
       )}

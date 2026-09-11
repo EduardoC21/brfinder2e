@@ -16,9 +16,10 @@ import { useEffect, useState } from 'react';
 
 const store = createIndexedDbStore();
 
-export function useDescription(type: string, key: string): string | null {
+/** `field` é o campo de `desc/`: `main` é a descrição; `page`, a página do jornal (22b). */
+export function useDescription(type: string, key: string, field = 'main'): string | null {
   const [loaded, setLoaded] = useState<{ token: string; text: string } | null>(null);
-  const token = `${type}/${key}`;
+  const token = `${type}/${key}/${field}`;
 
   useEffect(() => {
     let alive = true;
@@ -27,8 +28,8 @@ export function useDescription(type: string, key: string): string | null {
         if (!alive || all === null) return;
         const entry = all[key];
         if (!isRecord(entry)) return;
-        const main = entry['main'];
-        if (typeof main === 'string') setLoaded({ token, text: main });
+        const texto = entry[field];
+        if (typeof texto === 'string') setLoaded({ token, text: texto });
       })
       .catch(() => {
         // Sem descrição gravada, quem chamou mostra só o que tem.
@@ -36,7 +37,7 @@ export function useDescription(type: string, key: string): string | null {
     return () => {
       alive = false;
     };
-  }, [type, key, token]);
+  }, [type, key, field, token]);
 
   return loaded?.token === token ? loaded.text : null;
 }

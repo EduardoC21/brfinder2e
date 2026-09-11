@@ -206,6 +206,14 @@ export const ptBR = {
       or: 'ou',
       freeBoost: 'Livre',
     },
+    /** A tela completa da entrada (22b): o botão que abre, o que volta, e as abas. */
+    fullView: {
+      open: 'Tela completa',
+      back: 'Voltar à lista',
+      tabs: {
+        details: 'Detalhes',
+      } as Record<string, string>,
+    },
     /**
      * Os VALORES da ancestralidade que têm rótulo em português. São códigos do Foundry,
      * não dado de jogo em inglês — `med` não é palavra do livro —, e por isso traduzem.

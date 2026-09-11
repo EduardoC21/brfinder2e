@@ -42,6 +42,7 @@ import { FilterTopicPanel } from './FilterTopicPanel';
 import { ResultList } from './ResultList';
 import { SourceRail } from './SourceRail';
 import { DetailPanel, type ReferenceBridge } from './DetailPanel';
+import { EntityScreen } from './EntityScreen';
 import { EMPTY_POPOUTS, popoutReducer, type PopoutSubject } from './popouts';
 import styles from './BrowseScreen.module.css';
 
@@ -346,6 +347,16 @@ function SourcePane({
   const input = useRef<HTMLInputElement>(null);
 
   /*
+   * A TELA COMPLETA (22b) é um estado deste painel, e não uma rota nem outra tela.
+   *
+   * Enquanto ela está aberta, a lista, o filtro e a linha escolhida continuam montados —
+   * só deixam de ser desenhados. É o que faz o Voltar devolver exatamente o que estava,
+   * sem refazer nada. E como o estado mora no `SourcePane`, que remonta ao trocar de
+   * fonte, clicar no trilho sai da tela completa sozinho: o pedido do autor.
+   */
+  const [telaCompleta, setTelaCompleta] = useState(false);
+
+  /*
    * `useDeferredValue` no termo: o React desenha o campo com a letra nova de imediato e
    * refaz a lista quando puder. Sem isso, digitar rápido numa lista grande engasga a
    * digitação — e a lista vai a 6.283 talentos. Não é debounce: nada é adiado por tempo,
@@ -413,6 +424,7 @@ function SourcePane({
   }, [entities, index, deferredTerm]);
 
   const opened = results.find((entity) => entity.key === openedKey) ?? null;
+
   /**
    * Escolher uma entrada FECHA o que estiver por cima da lateral.
    *
@@ -637,6 +649,29 @@ function SourcePane({
       />
     );
 
+  /*
+   * Sem entrada aberta não há tela completa: se o filtro a tirou, a lista volta. E o
+   * desvio fica DEPOIS de todos os hooks — a lista continua montada por baixo, com o
+   * estado dela intacto, que é o que o Voltar devolve.
+   */
+  const cheia = telaCompleta && opened !== null && source.fullView !== undefined;
+  if (telaCompleta && !cheia) setTelaCompleta(false);
+
+  if (cheia) {
+    return (
+      <EntityScreen
+        entity={opened}
+        entityType={source.entityType ?? ''}
+        sourceLabel={strings.sources[source.id] ?? source.id}
+        view={source.fullView}
+        reference={reference}
+        onBack={() => {
+          setTelaCompleta(false);
+        }}
+      />
+    );
+  }
+
   return (
     <>
       {/*
@@ -714,6 +749,17 @@ function SourcePane({
                 const chosen = results[index];
                 if (chosen) escolher(chosen.key);
               }}
+              onExpand={
+                source.fullView === undefined
+                  ? undefined
+                  : (index) => {
+                      const chosen = results[index];
+                      if (chosen) {
+                        escolher(chosen.key);
+                        setTelaCompleta(true);
+                      }
+                    }
+              }
             />
           )}
         </div>
@@ -732,6 +778,13 @@ function SourcePane({
             });
           }
         }}
+        {...(source.fullView === undefined
+          ? {}
+          : {
+              onExpand: () => {
+                setTelaCompleta(true);
+              },
+            })}
         reference={reference}
         collapsed={fechadoAMao || (opened === null && overlay === null)}
         onToggleCollapsed={() => {

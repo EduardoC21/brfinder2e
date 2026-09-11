@@ -1,0 +1,108 @@
+/*
+ * A tela completa ocupa as colunas da lista E da lateral — `2 / 4` no grid de três
+ * colunas de `.screen`. O trilho (coluna 1) não participa: é o pedido do autor, e é
+ * também o que faz o Voltar ser barato — a coluna 1 nem soube que algo mudou.
+ */
+.full {
+  grid-column: 2 / 4;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 0;
+  min-width: 0;
+}
+
+/*
+ * A barra: Voltar, nome, fonte, e as abas empurradas para a direita. Uma linha só, na
+ * altura da linha de busca que ela substitui, para a troca lista ↔ entrada não pular.
+ */
+.bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-hairline);
+}
+
+.voltar {
+  flex: none;
+  height: 26px;
+  border: 1px solid var(--color-hairline);
+  padding: 0 var(--space-2);
+  background: transparent;
+  color: var(--color-text-muted);
+  font: 400 var(--text-xs) / 1 var(--font-body);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.voltar:hover {
+  border-color: var(--color-data);
+  color: var(--color-text);
+}
+
+.nome {
+  margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 400 var(--text-xl) / 1.1 var(--font-display);
+  color: var(--color-text);
+}
+
+.fonte {
+  flex: none;
+  font: 400 var(--text-xs) / 1.7 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.abas {
+  display: flex;
+  gap: var(--space-1);
+  margin-left: auto;
+  flex: none;
+}
+
+/*
+ * A aba ativa em BORDÔ — a cor de estado, "esta é a que estou vendo", a mesma da ação
+ * escolhida na sub-tela da perícia. As outras são discretas como os botões da lateral.
+ */
+.aba {
+  height: 26px;
+  border: 1px solid var(--color-hairline);
+  padding: 0 var(--space-3);
+  background: transparent;
+  color: var(--color-text-muted);
+  font: 400 var(--text-sm) / 1 var(--font-body);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.aba:hover {
+  color: var(--color-text);
+}
+
+.aba.ativa {
+  border-color: var(--color-state);
+  background: color-mix(in srgb, var(--color-state) 18%, transparent);
+  color: var(--color-text);
+}
+
+.corpo {
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--space-4) var(--space-5) var(--space-6);
+}
+
+/*
+ * A medida da prosa: 78 caracteres. A página de uma ancestralidade tem até 13.239
+ * caracteres, e uma linha de tela inteira (170+ caracteres em 1.400px) é ilegível. O
+ * texto fica à esquerda, não centrado — a barra e as abas estão à esquerda também.
+ */
+.pagina {
+  max-width: 78ch;
+  font-size: var(--text-md);
+}

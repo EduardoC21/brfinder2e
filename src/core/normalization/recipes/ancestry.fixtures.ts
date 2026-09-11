@@ -27,7 +27,7 @@ export const dwarf = {
     boosts: { '0': { value: ['con'] }, '1': { value: ['wis'] }, '2': { value: SEIS } },
     description: {
       value:
-        '<p>Dwarves have a well-earned reputation […]</p>\n<p>@UUID[Compendium.pf2e.journals.JournalEntry.j.JournalEntryPage.p]{Dwarf}</p>',
+        '<p>Dwarves have a well-earned reputation […]</p>\n<p>@UUID[Compendium.pf2e.journals.JournalEntry.45SK8rdbbxvEHfMn.JournalEntryPage.YGIwmuVOJI7uNhGM]{Dwarf}</p>',
     },
     flaws: { '0': { value: ['cha'] } },
     hands: 2,

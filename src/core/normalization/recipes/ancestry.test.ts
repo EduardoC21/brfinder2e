@@ -51,6 +51,12 @@ describe('receita de ancestralidade', () => {
     expect(achar('Human').base.boosts).toEqual(['free', 'free']);
   });
 
+  /* O "leia mais" do Foundry sai do resumo: a página já é `page`. */
+  it('tira o link de rodapé para a página do jornal', () => {
+    expect(achar('Dwarf').desc.main).toBe('<p>Dwarves have a well-earned reputation […]</p>');
+    expect(achar('Dwarf').desc.main).not.toContain('JournalEntryPage');
+  });
+
   /* A página vem do jornal pelo nome; sem página, a descrição longa fica vazia. */
   it('cola a página do jornal, e fica vazia quando não há', () => {
     expect(achar('Dwarf').desc.page).toContain('<h2>Dwarf Heritages</h2>');

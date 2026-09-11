@@ -149,6 +149,13 @@ Versão medida: **`pf2e-8.5.0`**.
   `boost`, `class`, `coatl`, `critical`, `deflecting`, `entrench`, `entu`, `integrated`,
   `monk-weapon`, `none`, `peachwood`, `professional`, `shield-throw`. Etapa 15b.
 
+### 2.5 `ancestries` — o link de rodapé sem rótulo em Tripkee e Kholo
+
+- O resumo dos 50 termina com `@UUID[…JournalEntryPage…]{Nome}` para a página do jornal.
+  Em `Tripkee` e `Kholo` o `{Nome}` falta (e em Kholo o link vem dentro de `<em>`): no
+  Foundry aparece o UUID cru. Etapa 22b.
+- **No app:** o rodapé sai do resumo nos 50 (`semRodape`), com ou sem rótulo.
+
 ### 2.4 `deities` — `system.traits` é objeto vazio em 473 e ausente em 7
 
 - Forma comum dos itens sem conteúdo nenhum. Não é erro — é ruído. Etapa 17.

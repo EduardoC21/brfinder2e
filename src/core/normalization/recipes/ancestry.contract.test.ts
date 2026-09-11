@@ -69,6 +69,13 @@ describe('as 50 ancestralidades reais', () => {
     expect(base().filter((b) => b.features.length === 0)).toHaveLength(14);
   });
 
+  /* Os 50 terminavam com o link para a página; nenhum termina mais. */
+  it('nenhum resumo termina com o link de rodapé', () => {
+    for (const entity of result.entities) {
+      expect(entity.desc.main, entity.base.name).not.toContain('JournalEntryPage');
+    }
+  });
+
   /* 50 de 50 têm página com o mesmo nome, e a página é bem maior que o resumo. */
   it('a página do jornal está em todas, e é maior que o resumo', () => {
     for (const entity of result.entities) {

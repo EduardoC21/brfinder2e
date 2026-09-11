@@ -74,7 +74,7 @@ export interface AncestryBase {
 }
 
 export interface AncestryDesc {
-  /** O resumo do pack, de 231 a 1.123 caracteres. Termina com um `@UUID` para a página. */
+  /** O resumo do pack, de 231 a 1.123 caracteres, sem o link de rodapé (ver `semRodape`). */
   readonly main: string;
   /** A página do jornal `Ancestries`. Vazia quando o jornal não foi lido. */
   readonly page: string;
@@ -122,6 +122,21 @@ function toFeatures(cru: unknown): readonly AncestryFeature[] {
     .filter((item) => item.uuid !== '' && item.name !== '');
 }
 
+/**
+ * O `<p>@UUID[…JournalEntryPage…]{Dwarf}</p>` no FIM do resumo, nos 50 de 50.
+ *
+ * É o "leia mais" do Foundry: aponta para a página do jornal, que aqui já é `page` e se
+ * abre pela tela completa. Na lateral ele saía como o nome da própria entrada em latão,
+ * pontilhado e inerte — o autor perguntou o que era. Sai. Em Tripkee e Kholo ele vem SEM
+ * rótulo (INCONSISTENCIAS-FOUNDRY 2.5), e aí saía o UUID cru.
+ */
+const RODAPE =
+  /\s*<p>(?:<em>)?@UUID\[Compendium\.pf2e\.journals\.JournalEntry\.[A-Za-z0-9]{16}\.JournalEntryPage\.[A-Za-z0-9]{16}\](?:\{[^}]*\})?(?:<\/em>)?<\/p>\s*$/;
+
+function semRodape(texto: string): string {
+  return texto.replace(RODAPE, '');
+}
+
 export const ancestryRecipe = recipe<AncestryBase, AncestryDesc>({
   type: 'ancestry',
   packs: [{ name: 'ancestries' }],
@@ -144,7 +159,7 @@ export const ancestryRecipe = recipe<AncestryBase, AncestryDesc>({
   },
 
   desc: {
-    main: from('system.description.value', html),
+    main: from('system.description.value', html).map(semRodape),
     page: fromJournal('Ancestries', '{name}', html).withDefault(''),
   },
 

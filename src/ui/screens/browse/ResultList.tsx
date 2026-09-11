@@ -51,6 +51,8 @@ interface ResultListProps {
   readonly activeIndex: number;
   readonly onActivate: (index: number) => void;
   readonly onOpen: (index: number) => void;
+  /** Abre a TELA COMPLETA da linha ativa. Só as fontes grandes passam; sem ele, sem botão. */
+  readonly onExpand?: ((index: number) => void) | undefined;
   readonly sort: Sort;
   readonly onSort: (sort: Sort) => void;
   /**
@@ -89,6 +91,7 @@ export function ResultList({
   activeIndex,
   onActivate,
   onOpen,
+  onExpand,
   sort,
   onSort,
   allEntities,
@@ -250,6 +253,7 @@ export function ResultList({
               ativa={index === activeIndex}
               onActivate={onActivate}
               onOpen={onOpen}
+              onExpand={onExpand}
             />
           );
         })}
@@ -277,6 +281,7 @@ function Linha({
   ativa,
   onActivate,
   onOpen,
+  onExpand,
 }: {
   readonly entity: BrowseEntity;
   readonly index: number;
@@ -286,6 +291,7 @@ function Linha({
   readonly ativa: boolean;
   readonly onActivate: (index: number) => void;
   readonly onOpen: (index: number) => void;
+  readonly onExpand?: ((index: number) => void) | undefined;
 }) {
   const nome = fieldValue(entity, 'name');
   const rotuloDeTraco = useTraitLabel();
@@ -338,6 +344,31 @@ function Linha({
           <span className={styles['retired']} title={entity.retiredIn}>
             {strings.browse.retired}
           </span>
+        )}
+
+        {/*
+          O botão de TELA COMPLETA, só na linha ativa e só nas fontes que a têm. Na linha
+          porque foi o pedido — "no canto da linha selecionada e/ou no painel" — e os dois
+          fazem a mesma coisa. `onMouseDown` com `stopPropagation`: a linha escuta o
+          mousedown para escolher, e o botão não deve escolher de novo.
+        */}
+        {ativa && onExpand !== undefined && (
+          <button
+            type="button"
+            className={cx(styles['expandir'], 'chamfer-sm')}
+            aria-label={strings.browse.fullView.open}
+            title={strings.browse.fullView.open}
+            onMouseDown={(event) => {
+              event.stopPropagation();
+              event.preventDefault();
+            }}
+            onClick={(event) => {
+              event.stopPropagation();
+              onExpand(index);
+            }}
+          >
+            ⛶
+          </button>
         )}
 
         {traços !== null && (traços.shown.length > 0 || traços.hidden > 0) && (

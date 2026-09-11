@@ -751,6 +751,37 @@ sincronizar — a versão da base, para a tela, é `syncedAt` + `revision`.
 
 ---
 
+## 6k. A tela completa da entrada
+
+**Decidido (Etapa 22b), pelo autor:** as três fontes grandes — ancestralidade, classe,
+arquétipo — têm uma tela própria. A lista continua a lista de sempre, com filtro e
+colunas; o painel lateral mostra o BÁSICO (a mecânica em campos e o resumo); e um botão —
+no canto da linha ativa E na barra do painel, os dois fazendo a mesma coisa — troca a
+lista e a lateral pela entrada inteira, com **abas em cima**, como o Archives of Nethys.
+
+As regras:
+
+- **O trilho de fontes não participa.** A tela completa ocupa as colunas da lista e da
+  lateral (`grid-column: 2 / 4`); o trilho fica onde está, e clicar numa fonte ali sai da
+  tela completa — é "vai para a lista de X".
+- **A barra de abas vai da área central até a lateral direita.** Voltar, nome, fonte à
+  esquerda; as abas à direita.
+- **A lateral direita, dentro da tela completa, só existe nas abas de LISTA** — e nelas é
+  a lateral de sempre, para a linha aberta. Numa aba de texto, o texto ocupa tudo.
+- **A aba de lista tem o filtro TRAVADO** (mostra que está travado, não deixa mexer) e as
+  colunas livres. É a nossa lista, com o recorte pré-aplicado.
+- **É estado, não rota.** A lista, o filtro e a linha escolhida continuam montados por
+  baixo (o `SourcePane` só troca o que desenha); o Voltar devolve exatamente o que
+  estava. Esc também volta.
+- **Só entidade com abas tem o botão.** Um talento aberto numa aba de lista não abre
+  tela completa: ele não tem abas.
+
+As abas vêm da `spec` (`fullView.tabs`), como colunas e filtros: dado, com um desenhista
+por espécie. Hoje só a de texto (`kind: 'page'`, a página do jornal). As de lista vêm com
+as fontes que elas listam.
+
+---
+
 ## 7. Preferências do usuário
 
 Tudo que o usuário configura na tela **sobrevive** ao fechamento do app e às atualizações
