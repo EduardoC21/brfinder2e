@@ -79,6 +79,9 @@ export function TopBar({ sync }: { readonly sync: UseSync }) {
             onSync={sync.start}
             onCheckUpdate={sync.checkUpdate}
             onApplyUpdate={sync.applyUpdate}
+            retired={sync.retired}
+            onPurgeRetired={sync.purgeRetired}
+            onClearData={sync.clearData}
           />
         )}
       </div>

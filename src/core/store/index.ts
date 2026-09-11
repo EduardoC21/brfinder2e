@@ -2,5 +2,6 @@
 
 export * from './diff';
 export * from './layers';
+export * from './maintenance';
 export * from './memory';
 export * from './ports';

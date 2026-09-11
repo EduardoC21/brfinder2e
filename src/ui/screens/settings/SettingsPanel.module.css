@@ -207,3 +207,42 @@
   color: var(--color-data);
   font: 400 var(--text-xs) / 1.6 var(--font-mono);
 }
+
+/*
+ * O botão destrutivo tem a forma do secundário, e a diferença é a cor ao passar o mouse:
+ * bordô, que é a cor de estado — "isto vai mudar alguma coisa". Em repouso ele é discreto
+ * de propósito: um botão vermelho permanente num painel de configuração grita o tempo todo
+ * por uma coisa que se faz uma vez por mês.
+ */
+.destrutivo {
+  display: block;
+  margin: var(--space-2) 0 0;
+}
+
+.destrutivo:hover:not(:disabled) {
+  border-color: var(--color-state);
+  color: var(--color-text);
+}
+
+/* A pergunta ocupa o lugar do botão. Borda em bordô: é o momento de parar e ler. */
+.pergunta {
+  margin: var(--space-2) 0 0;
+  padding: var(--space-2) var(--space-3);
+  border-left: 2px solid var(--color-state);
+  background: var(--color-bg);
+}
+
+.aviso {
+  margin: 0 0 var(--space-2);
+  font: 400 var(--text-sm) / 1.5 var(--font-body);
+  color: var(--color-text);
+}
+
+.resposta {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.resposta .secondary {
+  margin-left: 0;
+}

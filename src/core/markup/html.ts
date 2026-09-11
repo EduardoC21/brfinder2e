@@ -50,6 +50,12 @@ export const ALLOWED_TAGS = new Set([
   'td',
   'section',
   'div',
+  /*
+   * `sup` só aparece nas tabelas da tela do mestre: as letras E, G, D em sobrescrito ao
+   * lado de cada ação (Exploração, Geral, Downtime). 44 usos. Sem ela na lista, a letra
+   * caía no texto como se fosse parte do nome — "Squeeze E".
+   */
+  'sup',
 ]);
 
 /** Tags que não têm fechamento. */

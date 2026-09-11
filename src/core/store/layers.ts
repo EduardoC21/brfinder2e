@@ -36,6 +36,14 @@ export interface StoreMeta {
   readonly syncedAt: string;
   /** Soma das entidades gravadas — o número da barra de topo. */
   readonly total: number;
+  /**
+   * Sobe a cada mexida na base que NÃO é sincronização — apagar os aposentados, hoje.
+   *
+   * A tela relê a base pela versão dela (`syncedAt` + `revision`). Sem isto, apagar os
+   * aposentados deixaria a lista mostrando o que já não existe até a próxima
+   * sincronização. Zero numa base recém-sincronizada; ausente em meta antiga vale zero.
+   */
+  readonly revision: number;
 }
 
 export async function readMeta(store: StorePort): Promise<StoreMeta | null> {
@@ -53,6 +61,8 @@ export async function readMeta(store: StorePort): Promise<StoreMeta | null> {
       releaseTag: asString(record['releaseTag'], 'meta.releaseTag'),
       syncedAt: asString(record['syncedAt'], 'meta.syncedAt'),
       total: asNumber(record['total'], 'meta.total'),
+      // Meta gravada antes da Etapa 20 não tem revisão; vale zero, e nada quebra.
+      revision: typeof record['revision'] === 'number' ? record['revision'] : 0,
     };
   } catch {
     return null;

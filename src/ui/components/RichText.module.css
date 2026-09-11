@@ -106,10 +106,46 @@
   vertical-align: top;
 }
 
+/*
+ * O cabeçalho da tabela na MESMA voz dos rótulos do detalhe — mono, maiúsculas, apagado.
+ * Era "Action" em peso 500 e "AÇÕES" em mono a dez pixels de distância: duas vozes para a
+ * mesma coisa, um rótulo.
+ */
 .th {
+  font: 400 var(--text-xs) / 1.7 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: var(--color-text-muted);
-  font-weight: 500;
   white-space: nowrap;
+}
+
+/* A célula cujo maior trecho cabe em 40 caracteres é rótulo, e rótulo não quebra. */
+.compacta {
+  white-space: nowrap;
+}
+
+/*
+ * Uma célula que é LISTA — as ações de uma perícia, os traços de uma atividade — vem em
+ * `<p>` empilhados. Sem margem entre eles, e sem a margem de parágrafo de prosa, que aqui
+ * abriria um vão de meia linha entre "Balance" e "Tumble Through".
+ */
+.td .p {
+  margin: 0 0 2px;
+}
+
+.td .p:last-child {
+  margin-bottom: 0;
+}
+
+/*
+ * A letra em sobrescrito ao lado da ação — E de exploração, D de downtime, G de geral.
+ * Pequena e apagada: é uma anotação sobre a ação, não parte do nome dela.
+ */
+.sup {
+  margin-left: 2px;
+  font-size: 0.7em;
+  vertical-align: super;
+  color: var(--color-text-muted);
 }
 
 .section {
@@ -132,30 +168,36 @@
 }
 
 /*
- * A referência que ABRE, e o que a separa da que não abre.
+ * A referência que ABRE — e ela NÃO tem linha embaixo.
  *
- * Continua latão e continua pontilhada — o Anexo A pede que se destaquem "sem virar um mar
- * de links azuis", e são 16.598 delas: azul sublinhado transformaria toda descrição num
- * formulário. O que muda é a LINHA, que vira sólida, e o cursor, que vira mão. Passar o
- * mouse acende o fundo.
+ * Tinha, sólida, desde a Etapa 15a. Saiu na Etapa 20, quando a página de um domínio
+ * mostrou o que 40 nomes sublinhados numa lista fazem: o Anexo A pede que as referências
+ * se destaquem "sem virar um mar de links azuis", e um mar de links em latão sublinhado é
+ * o mesmo mar com outra cor. A COR já é o destaque — latão é dado de jogo em todo o
+ * sistema —, e a linha aparece ao passar o mouse, que é quando ela responde alguma coisa.
+ *
+ * A referência que NÃO abre fica com a pontilhada (`.xref`, acima): é a rara, e a linha
+ * pontilhada é a marca de "nota", como numa abreviação — o cursor de ajuda diz o resto.
  *
  * `button` traz consigo fonte, fundo, borda e recheio do navegador; os quatro são zerados
  * para ele fluir dentro do parágrafo como a palavra que era.
  */
 .clicavel {
   border: 0;
-  border-bottom: 1px solid color-mix(in srgb, var(--color-data) 70%, transparent);
   padding: 0;
   background: none;
   font: inherit;
   color: var(--color-data);
   cursor: pointer;
+  /* Um nome não quebra no meio: "Arrest a / Fall" era metade do problema das tabelas. */
+  white-space: nowrap;
 }
 
 .clicavel:hover,
 .clicavel:focus-visible {
-  background: color-mix(in srgb, var(--color-data) 18%, transparent);
-  border-bottom-color: var(--color-data);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  color: var(--color-data-strong);
   outline: none;
 }
 

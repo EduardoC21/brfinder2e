@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useReducer, useRef } from 'react';
+import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 
 import {
   actionRecipe,
@@ -20,7 +20,14 @@ import { decideSync } from '@core/sync/policy';
 import type { UnreadPack } from '@core/sync/unread-packs';
 import { runSync, type SyncPhase, type SyncResult } from '@core/sync/run-sync';
 import { checkForUpdate } from '@core/sync/update-check';
-import { readMeta, type EntityDiff, type StoreMeta } from '@core/store/index';
+import {
+  clearData,
+  countRetired,
+  purgeRetired,
+  readMeta,
+  type EntityDiff,
+  type StoreMeta,
+} from '@core/store/index';
 import { createFetchHttp, viteProxyRewrite } from '@platform/http-fetch';
 import { createIndexedDbStore } from '@platform/store-indexeddb';
 
@@ -201,6 +208,12 @@ export interface UseSync {
   readonly checkUpdate: () => void;
   /** Sobe para a versão indicada. Só grava se rodar com zero falhas. */
   readonly applyUpdate: (tag: string) => void;
+  /** Quantas entradas aposentadas há na base. Zero esconde o botão de limpar. */
+  readonly retired: number;
+  /** Apaga as aposentadas e faz a tela reler a base. */
+  readonly purgeRetired: () => void;
+  /** Apaga a base inteira, preservando as preferências. A tela volta a "sincronize". */
+  readonly clearData: () => void;
 }
 
 export function useSync(): UseSync {
@@ -401,5 +414,63 @@ export function useSync(): UseSync {
     })();
   }, []);
 
-  return { state, start, checkUpdate, applyUpdate };
+  /*
+   * A contagem de aposentados, relida a cada mudança da base.
+   *
+   * Estado próprio e não derivado do `meta`: o meta guarda o total de ATIVAS, e a
+   * aposentadoria só aparece percorrendo `base/<tipo>`. Custa uma leitura por tipo — nove
+   * hoje — e só quando a base muda.
+   */
+  const [retired, setRetired] = useState(0);
+  useEffect(() => {
+    let alive = true;
+    countRetired(store)
+      .then((total) => {
+        if (alive) setRetired(total);
+      })
+      .catch(() => {
+        // Sem leitura, o botão não aparece — o pior que acontece é não poder limpar.
+      });
+    return () => {
+      alive = false;
+    };
+  }, [state.stored]);
+
+  /** Relê o `meta` depois de uma mexida, para a tela acompanhar. */
+  const recarregarMeta = useCallback(async () => {
+    const meta = await readMeta(store);
+    dispatch({ kind: 'loaded', stored: meta });
+  }, []);
+
+  const purge = useCallback(() => {
+    void purgeRetired(store)
+      .then(recarregarMeta)
+      .catch((error: unknown) => {
+        dispatch({
+          kind: 'error',
+          message: error instanceof Error ? error.message : String(error),
+        });
+      });
+  }, [recarregarMeta]);
+
+  const clear = useCallback(() => {
+    void clearData(store)
+      .then(recarregarMeta)
+      .catch((error: unknown) => {
+        dispatch({
+          kind: 'error',
+          message: error instanceof Error ? error.message : String(error),
+        });
+      });
+  }, [recarregarMeta]);
+
+  return {
+    state,
+    start,
+    checkUpdate,
+    applyUpdate,
+    retired,
+    purgeRetired: purge,
+    clearData: clear,
+  };
 }

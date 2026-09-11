@@ -81,7 +81,12 @@ function renderNode(
    * dele, que não distribuímos — trocamos pelo nosso losango, que é o mesmo componente
    * do cabeçalho do detalhe.
    */
-  if (node.tag === 'span' && node.className === 'action-glyph') {
+  /*
+   * `pf2-icon` é a SEGUNDA classe de glifo do Foundry, com as mesmas letras. Aparece nas
+   * tabelas da tela do mestre — 24 vezes nas 60 páginas — e sem isto o "R" de reação e o
+   * "1" de uma ação saíam como letra solta ao lado do nome: "Aid R".
+   */
+  if (node.tag === 'span' && (node.className === 'action-glyph' || node.className === 'pf2-icon')) {
     const glyph = actionGlyph(plainText(node.children));
     if (glyph !== null) {
       const count = glyph === '1' || glyph === '2' || glyph === '3' ? Number(glyph) : null;
@@ -92,6 +97,25 @@ function renderNode(
   // Void: `hr` e `br` não aceitam filhos, e passá-los é erro de runtime no React.
   if (node.tag === 'hr' || node.tag === 'br') {
     return createElement(node.tag, { key, className: styles[node.tag] });
+  }
+
+  /*
+   * A CÉLULA COMPACTA não quebra linha. É o conserto das tabelas: sem isto o navegador
+   * repartia a largura pelo conteúdo, e "Arrest a Fall" virava duas linhas com o glifo
+   * caindo numa terceira, enquanto a descrição ao lado sobrava.
+   *
+   * O corte é MEDIDO, não escolhido. Nas 2.301 células que não são a última coluna das
+   * tabelas de regras, 2.282 têm o maior trecho com até 40 caracteres, 3 têm mais de 60,
+   * e NENHUMA fica entre 41 e 60. Um rótulo cabe em 40; prosa passa de 60; não há nada no
+   * meio para errar. O trecho é cada `<p>` da célula, e não a soma: uma lista de nove
+   * ações curtas continua curta.
+   */
+  if ((node.tag === 'td' || node.tag === 'th') && maiorTrecho(node.children) <= LIMITE_COMPACTO) {
+    return createElement(
+      node.tag,
+      { key, className: cx(styles[node.tag], styles['compacta']) },
+      ...children,
+    );
   }
 
   const classe =
@@ -184,6 +208,22 @@ function TokenPiece({
     case 'unknown':
       return <Fragment>{text}</Fragment>;
   }
+}
+
+/** Até aqui é rótulo; acima é prosa. Ver o comentário em `renderNode`. */
+const LIMITE_COMPACTO = 40;
+
+/**
+ * O maior trecho de uma célula: o maior `<p>` quando ela é uma lista, ou o texto inteiro
+ * quando não é. Um `@UUID` conta pelo rótulo, que é o que se vê.
+ */
+function maiorTrecho(children: readonly DocNode[]): number {
+  const paragrafos = children.filter((node) => node.kind !== 'token' && node.tag === 'p');
+  if (paragrafos.length === 0) return plainText(children).trim().length;
+  return Math.max(
+    0,
+    ...paragrafos.map((p) => (p.kind === 'token' ? 0 : plainText(p.children).trim().length)),
+  );
 }
 
 /** O texto puro de uma subárvore, para ler o conteúdo de um `action-glyph`. */

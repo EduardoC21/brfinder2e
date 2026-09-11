@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 
 import type { StoreMeta } from '@core/store/index';
 import type { SyncPhase } from '@core/sync/run-sync';
@@ -17,6 +17,10 @@ interface SettingsPanelProps {
   readonly onSync: () => void;
   readonly onCheckUpdate: () => void;
   readonly onApplyUpdate: (tag: string) => void;
+  /** Quantas entradas aposentadas há. Zero esconde o botão de limpá-las. */
+  readonly retired: number;
+  readonly onPurgeRetired: () => void;
+  readonly onClearData: () => void;
 }
 
 const t = strings.settings;
@@ -46,6 +50,9 @@ export function SettingsPanel({
   onSync,
   onCheckUpdate,
   onApplyUpdate,
+  retired,
+  onPurgeRetired,
+  onClearData,
 }: SettingsPanelProps) {
   const panel = useRef<HTMLDivElement>(null);
   useDismissable(true, panel, anchor, onClose);
@@ -109,6 +116,104 @@ export function SettingsPanel({
           <StoredMeta meta={stored} />
         )}
       </section>
+
+      {stored !== null && (
+        <section className={styles['section']}>
+          <h3 className={styles['sectionTitle']}>{t.maintenance.title}</h3>
+          {/*
+            Dois botões destrutivos, e nenhum age no primeiro clique: cada um vira uma
+            pergunta com o aviso, e só o segundo clique faz. Sem diálogo modal — o painel
+            já é a camada de configuração, e uma janela por cima dela seria a terceira.
+          */}
+          {retired > 0 && (
+            <Destructive
+              label={t.maintenance.purgeRetired(retired)}
+              warning={t.maintenance.purgeWarning}
+              confirm={t.maintenance.confirm}
+              cancel={t.maintenance.cancel}
+              disabled={busy}
+              onConfirm={onPurgeRetired}
+            />
+          )}
+          <Destructive
+            label={t.maintenance.clearAll}
+            warning={t.maintenance.clearWarning}
+            confirm={t.maintenance.confirm}
+            cancel={t.maintenance.cancel}
+            disabled={busy}
+            onConfirm={onClearData}
+          />
+          <p className={styles['hint']}>{t.maintenance.keepsPrefs}</p>
+        </section>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Um botão DESTRUTIVO em dois cliques.
+ *
+ * O primeiro clique troca o botão pelo aviso e pelo par confirmar/cancelar, no mesmo
+ * lugar — nada abre por cima, nada muda de altura fora deste bloco. O aviso é o motivo do
+ * segundo clique existir: hoje nada aponta para a base, mas a ficha, o monstro, o combate
+ * e o escudo do mestre vão apontar, e apagar o que eles usam é quebrá-los.
+ */
+function Destructive({
+  label,
+  warning,
+  confirm,
+  cancel,
+  disabled,
+  onConfirm,
+}: {
+  readonly label: string;
+  readonly warning: string;
+  readonly confirm: string;
+  readonly cancel: string;
+  readonly disabled: boolean;
+  readonly onConfirm: () => void;
+}) {
+  const [perguntando, setPerguntando] = useState(false);
+
+  if (!perguntando) {
+    return (
+      <button
+        type="button"
+        className={cx(styles['secondary'], styles['destrutivo'], 'chamfer-sm')}
+        disabled={disabled}
+        onClick={() => {
+          setPerguntando(true);
+        }}
+      >
+        {label}
+      </button>
+    );
+  }
+
+  return (
+    <div className={styles['pergunta']} role="alertdialog" aria-label={label}>
+      <p className={styles['aviso']}>{warning}</p>
+      <div className={styles['resposta']}>
+        <button
+          type="button"
+          className={cx(styles['action'], 'chamfer-sm')}
+          onClick={() => {
+            setPerguntando(false);
+            onConfirm();
+          }}
+        >
+          {confirm}
+        </button>
+        <button
+          type="button"
+          className={cx(styles['secondary'], 'chamfer-sm')}
+          onClick={() => {
+            setPerguntando(false);
+          }}
+        >
+          {cancel}
+        </button>
+      </div>
     </div>
   );
 }

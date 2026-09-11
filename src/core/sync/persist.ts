@@ -82,6 +82,7 @@ export async function persistSync(
     releaseTag: result.releaseTag,
     syncedAt: now().toISOString(),
     total: result.total,
+    revision: 0,
   };
   await writeMeta(store, meta);
 

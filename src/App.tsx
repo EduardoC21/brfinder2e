@@ -22,7 +22,13 @@ export function App() {
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
         <TopBar sync={sync} />
         <main style={{ flex: 1, minHeight: 0 }}>
-          <BrowseScreen baseVersion={sync.state.stored?.syncedAt ?? null} />
+          <BrowseScreen
+            baseVersion={
+              sync.state.stored === null
+                ? null
+                : `${sync.state.stored.syncedAt}#${String(sync.state.stored.revision)}`
+            }
+          />
         </main>
       </div>
     </PreferencesProvider>

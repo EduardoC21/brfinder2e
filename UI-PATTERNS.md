@@ -681,6 +681,50 @@ foi: nada muda para os 1,1% que a tabela do Foundry não explica.
 
 ---
 
+## 6i. Tabelas na descrição, e o link sem linha
+
+**Decidido (Etapa 20):** a referência clicável na prosa NÃO tem linha embaixo. Só a cor —
+latão, que é dado de jogo em todo o sistema — e a linha aparece ao passar o mouse. A
+referência que não abre continua com a pontilhada: é a rara, e a pontilhada é a marca de
+"nota".
+
+O motivo foi a página de um domínio: 40 nomes de divindade sublinhados numa lista. O Anexo
+A pede que as referências se destaquem "sem virar um mar de links azuis", e um mar de
+links em latão sublinhado é o mesmo mar com outra cor.
+
+**As tabelas** quebravam porque o navegador reparte a largura pelo conteúdo, e "Arrest a
+Fall" virava duas linhas com o glifo numa terceira. Três consertos, cada um com o número:
+
+- **A célula compacta não quebra.** Nas 2.301 células que não são a última coluna das
+  tabelas de regras, 2.282 têm o maior trecho com até 40 caracteres, 3 têm mais de 60, e
+  nenhuma entre 41 e 60. Rótulo cabe em 40; prosa passa de 60. O trecho é cada `<p>` da
+  célula, não a soma — uma lista de nove ações curtas continua curta.
+- **`pf2-icon` é glifo**, como `action-glyph`: 24 usos nas regras, e sem isto o "R" de
+  reação saía como letra ao lado do nome.
+- **`sup` entra na lista de tags**: as letras E, D, G em sobrescrito ao lado das ações (44
+  usos) caíam no texto como parte do nome.
+
+E o cabeçalho da tabela fala na mesma voz dos rótulos do detalhe — mono, maiúsculas,
+apagado — em vez de "Action" em peso 500 a dez pixels de "AÇÕES".
+
+---
+
+## 6j. As duas vassouras
+
+**Decidido (Etapa 20):** dois botões em Configurações, "Apagar N entradas aposentadas" e
+"Apagar a base inteira". Os dois em DOIS cliques: o primeiro troca o botão pelo aviso e
+pelo par confirmar/cancelar, no mesmo lugar — sem diálogo por cima do painel, que já é a
+camada de configuração. O aviso diz o que pode quebrar: hoje nada aponta para a base, mas
+a ficha, o monstro, o combate e o escudo do mestre vão apontar.
+
+Nenhuma das duas toca nas preferências: a base se refaz com uma sincronização; a largura
+da coluna que a pessoa arrastou, não.
+
+Apagar os aposentados sobe a **revisão** do `meta`, e é o que faz a lista reler a base sem
+sincronizar — a versão da base, para a tela, é `syncedAt` + `revision`.
+
+---
+
 ## 7. Preferências do usuário
 
 Tudo que o usuário configura na tela **sobrevive** ao fechamento do app e às atualizações

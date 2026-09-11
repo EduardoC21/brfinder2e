@@ -92,6 +92,7 @@ describe('persistSync', () => {
       releaseTag: 'pf2e-8.4.1',
       syncedAt: '2026-08-27T12:00:00.000Z',
       total: 2,
+      revision: 0,
     });
   });
 

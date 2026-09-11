@@ -405,6 +405,29 @@ export const ptBR = {
     skills: 'Perícias',
   } as Record<string, string>,
   settings: {
+    /**
+     * As duas vassouras. Destrutivas as duas, e por isso em dois cliques, com o aviso
+     * escrito no lugar do botão.
+     */
+    maintenance: {
+      title: 'Manutenção',
+      purgeRetired: (quantas: number) =>
+        quantas === 1
+          ? 'Apagar 1 entrada aposentada'
+          : `Apagar ${String(quantas)} entradas aposentadas`,
+      purgeWarning:
+        'As entradas aposentadas saíram da fonte, mas podem estar em uso numa ficha, num ' +
+        'monstro, num combate ou num escudo do mestre seu. Apagá-las pode quebrar o que as ' +
+        'usa. Quer apagar mesmo assim?',
+      clearAll: 'Apagar a base inteira',
+      clearWarning:
+        'Isto apaga todas as entradas sincronizadas. Fichas, monstros, combates e escudos ' +
+        'que apontem para elas deixam de encontrá-las até uma nova sincronização — e o que ' +
+        'apontava para uma entrada que não voltar fica quebrado. Quer apagar mesmo assim?',
+      confirm: 'Apagar',
+      cancel: 'Cancelar',
+      keepsPrefs: 'As preferências (colunas, filtros, largura dos painéis) não são apagadas.',
+    },
     open: 'Configurações',
     title: 'Configurações',
     database: {
