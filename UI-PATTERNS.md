@@ -232,6 +232,21 @@ alvo no `title` — mas **`@Localize` sozinho numa descrição é uma descriçã
 condição Sickened é exatamente isto, e na tela sai `PF2E.condition.sickened.rules`. A chave
 existe na tabela de idioma que a receita já lê.
 
+### A poda de leitura: o que é do VTT sai da tela
+
+**Decidido (Etapa 22c), pelo autor:** o que a descrição traz para a mesa virtual e não
+para quem lê sai da TELA — sem tocar no dado. Medido nas descrições das fontes
+importadas: 1.852 links para packs de efeito (`equipment-effects` 960, `spell-effects`
+502, `feat-effects` 355), o objeto que o Foundry arrasta para a ficha; **1.806 estão
+sozinhos num parágrafo** (`<p>@UUID[…]{Spell Effect: Aid}</p>`, fechando quase toda
+magia e talento) e 46 no meio de uma frase. `pruneForReading` tira o parágrafo que é só
+o link; o do meio da frase fica, porque tirá-lo deixaria a frase manca.
+
+É a terceira camada (o documento pronto para desenhar): `raw/` e `desc/` continuam com o
+texto inteiro, e a busca na descrição busca no inteiro. O "leia mais" da ancestralidade
+(o link para a própria página do jornal) sai na RECEITA, não na poda: só a receita sabe
+que aquela página é o `page` dela — e `raw/` continua com ele.
+
 ### `@Embed`: a entrada colada
 
 **Decidido (Etapa 20b):** `@Embed[<uuid> inline]` cola a descrição da entrada apontada no
@@ -759,22 +774,32 @@ colunas; o painel lateral mostra o BÁSICO (a mecânica em campos e o resumo); e
 no canto da linha ativa E na barra do painel, os dois fazendo a mesma coisa — troca a
 lista e a lateral pela entrada inteira, com **abas em cima**, como o Archives of Nethys.
 
-As regras:
+As regras (revistas na 22c, pelo autor):
 
+- **Abre pelo botão da lateral ou pelo DUPLO CLIQUE na linha.** O botão na linha foi
+  tentado e saiu: feio. O duplo clique já é "abrir de vez" em toda lista de arquivos.
 - **O trilho de fontes não participa.** A tela completa ocupa as colunas da lista e da
-  lateral (`grid-column: 2 / 4`); o trilho fica onde está, e clicar numa fonte ali sai da
-  tela completa — é "vai para a lista de X".
-- **A barra de abas vai da área central até a lateral direita.** Voltar, nome, fonte à
-  esquerda; as abas à direita.
-- **A lateral direita, dentro da tela completa, só existe nas abas de LISTA** — e nelas é
-  a lateral de sempre, para a linha aberta. Numa aba de texto, o texto ocupa tudo.
-- **A aba de lista tem o filtro TRAVADO** (mostra que está travado, não deixa mexer) e as
-  colunas livres. É a nossa lista, com o recorte pré-aplicado.
+  lateral (`grid-column: 2 / 4`); o trilho fica onde está. Clicar numa fonte ali sai da
+  tela completa — inclusive na fonte JÁ aberta, que é "me leva para a lista dela".
+- **A barra vai da área central até a lateral direita.** O Voltar tem a cara dos botões
+  de recolher (é o padrão de "isto sai daqui"); depois o nome, a fonte, o botão de
+  tradução; as abas à direita.
+- **Na aba de texto, a prosa fica onde a lista ficava e a lateral fica onde a lateral
+  ficava** — a mesma lateral da lista, com a mecânica em campos. A pessoa não muda de
+  lugar na tela para ler; muda só o que está escrito. A prosa usa a largura toda, com
+  entrelinha 1,65; a medida de coluna de livro foi tentada e saiu.
+- **Na aba de lista, a lateral é a da linha aberta** — a de sempre —, o filtro é TRAVADO
+  (mostra que está travado, não deixa mexer) e as colunas são livres.
 - **É estado, não rota.** A lista, o filtro e a linha escolhida continuam montados por
   baixo (o `SourcePane` só troca o que desenha); o Voltar devolve exatamente o que
   estava. Esc também volta.
-- **Só entidade com abas tem o botão.** Um talento aberto numa aba de lista não abre
-  tela completa: ele não tem abas.
+- **Só entidade com abas abre tela completa.** Um talento aberto numa aba de lista não:
+  ele não tem abas.
+
+**Os títulos dentro da prosa** ("Society", "Sample Names") ganharam voz na 22c: `h2` em
+18px na fonte de exibição, peso 400 — a voz do nome no cabeçalho —, com um fio embaixo;
+`h3` em 15px. O espaço acima é maior que o abaixo: o título pertence ao que vem depois.
+Até então quase não havia título em descrição; a página de ancestralidade tem sete.
 
 As abas vêm da `spec` (`fullView.tabs`), como colunas e filtros: dado, com um desenhista
 por espécie. Hoje só a de texto (`kind: 'page'`, a página do jornal). As de lista vêm com

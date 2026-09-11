@@ -81,9 +81,11 @@ Antes: **Etapa 20** — as tabelas das regras param de quebrar (célula compacta
 linha, `@Embed` cola a entrada apontada, e as duas vassouras em Configurações: apagar as
 entradas aposentadas e apagar a base inteira.
 
-Antes: **Etapa 22b** — a tela completa: o botão na linha ativa e no painel troca a lista e
-a lateral pela entrada com abas em cima (só Detalhes por ora, a página do jornal), com
-Voltar e Esc. É estado do painel da fonte, não rota: a lista volta como estava.
+Antes: **Etapas 22b e 22c** — a tela completa: o botão da lateral ou o duplo clique na
+linha trocam a lista pela entrada com abas em cima (só Detalhes por ora): a prosa da
+página do jornal no lugar da lista, a lateral de sempre ao lado. Voltar, Esc ou o trilho
+devolvem a lista como estava. E a poda de leitura: os 1.806 parágrafos que são só o link
+para um efeito de VTT saem da tela, sem tocar no dado.
 
 Próxima: as **heranças** (328, 17 versáteis) como fonte, e a aba de lista com filtro
 travado — Heranças e Talentos do Dwarf. Depois classe e arquétipo pelo mesmo desenho.
