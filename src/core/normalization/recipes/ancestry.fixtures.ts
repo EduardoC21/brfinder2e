@@ -142,6 +142,40 @@ export const nephilim = {
   effects: [],
 };
 
+/** O meio-elfo: versátil que CONTA COMO elfo, pelo `ActiveEffectLike` do Foundry. */
+export const aiuvarin = {
+  ...nephilim,
+  _id: 'AiuvarinAiuvarin1',
+  name: 'Aiuvarin',
+  system: {
+    ...nephilim.system,
+    rules: [
+      { key: 'Sense', selector: 'low-light-vision' },
+      { add: ['elf'], key: 'ActorTraits' },
+      {
+        key: 'ActiveEffectLike',
+        mode: 'override',
+        path: 'system.details.ancestry.versatile',
+        value: 'elf',
+      },
+      {
+        key: 'ActiveEffectLike',
+        mode: 'add',
+        path: 'system.details.ancestry.countsAs',
+        value: 'elf',
+      },
+      {
+        key: 'ActiveEffectLike',
+        mode: 'add',
+        path: 'system.details.ancestry.countsAs',
+        value: 'aiuvarin',
+      },
+    ],
+    traits: { rarity: 'common', value: ['aiuvarin'] },
+    slug: 'aiuvarin',
+  },
+};
+
 /** Uma herança PRÓPRIA, que a receita de ancestralidade deve DEIXAR PASSAR sem virar entrada. */
 export const forgeDwarf = {
   _id: '5CqsBKCZuGON53Hk',

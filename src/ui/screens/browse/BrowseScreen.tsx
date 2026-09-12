@@ -292,6 +292,7 @@ export function BrowseScreen({ baseVersion }: BrowseScreenProps) {
 
 const EMPTY: readonly BrowseEntity[] = [];
 const SEM_FILTROS: FilterState = {};
+const POR_NIVEL: Sort = { column: 'level', direction: 'asc' };
 const SEM_TOPICOS: readonly FilterSpec[] = [];
 const VAZIAS: readonly LoadedSource[] = [];
 
@@ -412,7 +413,13 @@ function SourcePane({
    * uma configuração. Guardá-la faria a lista abrir amanhã numa ordem que a pessoa não
    * lembra ter pedido. Volta ao padrão ao trocar de fonte, pelo mesmo motivo.
    */
-  const [sort, setSort] = useState<Sort>(DEFAULT_SORT);
+  /*
+   * A lista TRAVADA nasce por NÍVEL, do mais baixo ao mais alto — pedido do autor: quem
+   * abre os talentos do Dwarf quer ver os de 1º nível primeiro. Onde não há nível, é nome.
+   */
+  const ordemInicial: Sort =
+    lock !== undefined && source.special.level !== null ? POR_NIVEL : DEFAULT_SORT;
+  const [sort, setSort] = useState<Sort>(ordemInicial);
   /*
    * Trocar de fonte volta à ordem padrão — ajustado DURANTE o render, e não num efeito.
    *

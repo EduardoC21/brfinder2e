@@ -4,14 +4,14 @@ import { indexJournalPages } from '../journals';
 import { isClean } from '../report';
 import { run } from '../run';
 import { ancestryRecipe } from './ancestry';
-import { forgeDwarf, jornal, nephilim, todas } from './ancestry.fixtures';
+import { aiuvarin, forgeDwarf, jornal, nephilim, todas } from './ancestry.fixtures';
 
 const journals = indexJournalPages([jornal]);
 const result = run(
   ancestryRecipe,
   [
     { pack: 'ancestries', documents: todas },
-    { pack: 'heritages', documents: [nephilim, forgeDwarf] },
+    { pack: 'heritages', documents: [nephilim, aiuvarin, forgeDwarf] },
   ],
   { journals },
 );
@@ -25,7 +25,7 @@ const achar = (nome: string) => {
 describe('receita de ancestralidade', () => {
   it('normaliza as três ancestralidades e a versátil sem falha, com relatório limpo', () => {
     expect(result.failures).toEqual([]);
-    expect(result.entities).toHaveLength(4);
+    expect(result.entities).toHaveLength(5);
     expect(result.report.unmapped, JSON.stringify(result.report.unmapped)).toEqual([]);
     expect(isClean(result.report)).toBe(true);
   });
@@ -35,6 +35,7 @@ describe('receita de ancestralidade', () => {
       name: 'Dwarf',
       slug: 'dwarf',
       kind: 'ancestry',
+      countsAs: ['dwarf'],
       rarity: 'common',
       traits: ['dwarf', 'humanoid'],
       hp: 10,
@@ -65,6 +66,12 @@ describe('receita de ancestralidade', () => {
     expect(versatil.languages).toEqual([]);
     expect(versatil.traits).toEqual(['nephilim']);
     expect(achar('Nephilim').desc.page).toBe('');
+  });
+
+  /* O meio-elfo conta como elfo: é o que dá a ele os talentos de elfo. */
+  it('lê o "conta como" do Aiuvarin', () => {
+    expect(achar('Aiuvarin').base.countsAs).toEqual(['aiuvarin', 'elf']);
+    expect(achar('Nephilim').base.countsAs).toEqual(['nephilim']);
   });
 
   /* O GrantItem entra sem nome — o índice resolve — e o Human tem um idioma a mais. */

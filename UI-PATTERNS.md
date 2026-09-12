@@ -823,7 +823,13 @@ quando não há página) e a de LISTA (`kind: 'list'`, Etapa 23): outra fonte co
 traço `dwarf` nos `traits`). A aba de lista É o `SourcePane` com `lock`: mesma lista,
 mesmas colunas, mesma lateral; a barra de filtros vira a etiqueta da trava (chip em bordô,
 sem ×) mais Colunas, e os filtros gravados da fonte não entram. Aba com contagem, e aba
-vazia não é desenhada.
+vazia não é desenhada. **A lista travada nasce por nível**, do mais baixo ao mais alto
+(pedido do autor); onde não há nível, por nome.
+
+A trava tem quatro formas: `equals`, `contains` (que aceita uma lista de onde travar — o
+Aiuvarin conta como elfo, `countsAs: ['aiuvarin','elf']`, e leva os 50 talentos de elfo),
+`is` (valor fixo) e `none-of` (a lista não tem nenhum valor de outra fonte — é como os 41
+talentos universais se acham: de ancestralidade, sem traço de ancestralidade nenhuma).
 
 **Fonte fora do trilho** (`hidden`): a herança própria existe como fonte — carrega, indexa,
 abre em flutuante, aparece na busca global — mas não é uma lista que se abre pelo trilho:

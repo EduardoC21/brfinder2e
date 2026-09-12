@@ -467,14 +467,26 @@ export interface ListTabSpec {
 }
 
 /**
- * Uma condição da trava: o `field` da entrada listada, contra o valor do campo `from`
- * da entrada aberta (`equals`), ou contendo-o, quando o campo é lista (`contains`).
+ * Uma condição da trava, sobre o `field` da entrada listada:
+ *
+ *   `equals`    igual ao campo `from` da entrada aberta
+ *   `contains`  a lista contém o campo `from` da entrada aberta — e quando `from` é uma
+ *               LISTA, contém qualquer um deles: o Aiuvarin conta como elfo, e os
+ *               talentos dele são os de `aiuvarin` mais os de `elf`
+ *   `is`        igual a um valor FIXO — "categoria: ancestralidade"
+ *   `none-of`   a lista não contém NENHUM valor do campo `key` das entradas da fonte
+ *               `source` — o talento de ancestralidade sem traço de ancestralidade nenhuma
+ *               é o universal
  */
-export interface LockSpec {
-  readonly field: string;
-  readonly from: string;
-  readonly match: 'equals' | 'contains';
-}
+export type LockSpec =
+  | { readonly field: string; readonly from: string; readonly match: 'equals' | 'contains' }
+  | { readonly field: string; readonly value: string; readonly match: 'is' }
+  | {
+      readonly field: string;
+      readonly source: string;
+      readonly key: string;
+      readonly match: 'none-of';
+    };
 
 /**
  * O catálogo do mockup "Forja PF2e — Consulta": onze fontes, mais `actions`, que a escada
@@ -1054,7 +1066,23 @@ export const SOURCES: readonly SourceSpec[] = [
           kind: 'list',
           id: 'feats',
           source: 'feats',
-          lock: [{ field: 'traits', from: 'slug', match: 'contains' }],
+          /* `countsAs`, não `slug`: o Aiuvarin conta como elfo e pega os 50 do elfo. */
+          lock: [{ field: 'traits', from: 'countsAs', match: 'contains' }],
+        },
+        /*
+         * Os UNIVERSAIS: talentos de ancestralidade que não têm o traço de ancestralidade
+         * nenhuma (nem de versátil) — "characters of any ancestry can select". Medido: 41
+         * dos 1.586 (25 do grupo Reincarnated, 16 dos Shared Ancestry Feats). A mesma lista
+         * para toda ancestralidade, e é por isso que a trava é contra a fonte inteira.
+         */
+        {
+          kind: 'list',
+          id: 'universal',
+          source: 'feats',
+          lock: [
+            { field: 'category', value: 'ancestry', match: 'is' },
+            { field: 'traits', source: 'ancestries', key: 'slug', match: 'none-of' },
+          ],
         },
       ],
     },

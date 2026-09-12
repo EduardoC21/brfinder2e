@@ -20,5 +20,6 @@
  *      talento.
  *   3  Etapa 23 — as 17 heranças versáteis entram na ancestralidade como Tipo; a fonte
  *      de herança (as 311 próprias).
+ *   4  Etapa 23c — `countsAs` na ancestralidade (o meio-elfo conta como elfo).
  */
-export const RECIPES_REVISION = 3;
+export const RECIPES_REVISION = 4;

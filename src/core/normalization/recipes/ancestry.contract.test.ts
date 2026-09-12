@@ -82,6 +82,14 @@ describe('as 50 ancestralidades reais, e as 17 versáteis', () => {
     expect(new Set(concedidas.map((f) => f.uuid)).size).toBe(1);
   });
 
+  /* Só o meio-elfo e o meio-orc contam como outra: é o dado, não a nossa lista. */
+  it('conta como: Aiuvarin → elf e Dromaar → orc; os outros 65, só o próprio', () => {
+    const todas = result.entities.map((e) => e.base);
+    expect(todas.find((b) => b.slug === 'aiuvarin')?.countsAs).toEqual(['aiuvarin', 'elf']);
+    expect(todas.find((b) => b.slug === 'dromaar')?.countsAs).toEqual(['dromaar', 'orc']);
+    expect(todas.filter((b) => b.countsAs.length === 1)).toHaveLength(65);
+  });
+
   it('idiomas extras: int em 46, 1+int em Human, nulo nos 3 sem lista', () => {
     expect(contar((b) => b.extraLanguages ?? 'null')).toEqual({ int: 46, '1+int': 1, null: 3 });
   });

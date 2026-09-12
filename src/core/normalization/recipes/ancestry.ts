@@ -62,6 +62,14 @@ export interface AncestryBase {
   readonly slug: string;
   /** `ancestry` (50) ou `versatile` (17): o Tipo. Pelo `type` do documento. */
   readonly kind: string;
+  /**
+   * O que esta entrada CONTA COMO, para talentos: o próprio slug, e — na versátil que
+   * "conta como" outra ancestralidade — o slug dela. Aiuvarin `['aiuvarin', 'elf']`,
+   * Dromaar `['dromaar', 'orc']`; as outras 65, só o próprio. É o `ActiveEffectLike` em
+   * `system.details.ancestry.countsAs`, que é como o Foundry dá ao meio-elfo os talentos
+   * de elfo. A aba Talentos trava nisto.
+   */
+  readonly countsAs: readonly string[];
   readonly rarity: string;
   readonly traits: readonly string[];
   /** Nulo na herança versátil, que não tem mecânica de ancestralidade. Idem abaixo. */
@@ -218,6 +226,26 @@ function soProsa(texto: string): string {
   return corte === null ? texto : texto.slice(0, corte.index);
 }
 
+/**
+ * `[slug, ...countsAs]`: o próprio, mais o que os `ActiveEffectLike` em
+ * `system.details.ancestry.countsAs` acrescentam (Aiuvarin → elf, Dromaar → orc). Lê
+ * `system.rules`, que está em `defer`, de propósito e para uma chave só.
+ */
+function toCountsAs(document: unknown): readonly string[] {
+  if (!isRecord(document) || !isRecord(document['system'])) return [];
+  const slug = typeof document['system']['slug'] === 'string' ? document['system']['slug'] : '';
+  const out = slug === '' ? [] : [slug];
+  const rules = document['system']['rules'];
+  if (!Array.isArray(rules)) return out;
+  for (const rule of rules as unknown[]) {
+    if (!isRecord(rule) || rule['key'] !== 'ActiveEffectLike') continue;
+    if (rule['path'] !== 'system.details.ancestry.countsAs') continue;
+    const value = rule['value'];
+    if (typeof value === 'string' && value !== '' && !out.includes(value)) out.push(value);
+  }
+  return out;
+}
+
 /** `ancestry` para o pack de ancestralidades; `versatile` para a herança sem ancestralidade. */
 function toKind(document: unknown): string {
   return isRecord(document) && document['type'] === 'heritage' ? 'versatile' : 'ancestry';
@@ -237,6 +265,7 @@ export const ancestryRecipe = recipe<AncestryBase, AncestryDesc>({
     name: from('name', text),
     slug: from('system.slug', text),
     kind: fromDocument(toKind),
+    countsAs: fromDocument(toCountsAs),
     rarity: from('system.traits.rarity', text),
     traits: from('system.traits.value', textList),
     hp: from('system.hp', nullable(int)).withDefault(null),

@@ -88,7 +88,8 @@ export function EntityScreen({
         if (tab.kind === 'page') return [{ tab, entities: null, count: null }];
         const fonte = sources.find((loaded) => loaded.source.id === tab.source);
         if (fonte === undefined) return [];
-        const entities = lockedEntities(tab, entity, fonte.entities);
+        const lookup = (id: string) => sources.find((loaded) => loaded.source.id === id)?.entities;
+        const entities = lockedEntities(tab, entity, fonte.entities, lookup);
         return entities.length === 0 ? [] : [{ tab, entities, count: entities.length }];
       }),
     [view.tabs, sources, entity],

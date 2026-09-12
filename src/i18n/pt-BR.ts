@@ -217,6 +217,7 @@ export const ptBR = {
         details: 'Detalhes',
         heritages: 'Heranças',
         feats: 'Talentos',
+        universal: 'Universais',
       } as Record<string, string>,
     },
     /**
