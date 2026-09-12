@@ -81,13 +81,21 @@ Antes: **Etapa 20** — as tabelas das regras param de quebrar (célula compacta
 linha, `@Embed` cola a entrada apontada, e as duas vassouras em Configurações: apagar as
 entradas aposentadas e apagar a base inteira.
 
+Antes: **Etapa 25** — `archetype`: os 249 do jornal `Archetypes`, com o Tipo do livro
+(184 gerais, 29 multiclasse, 14 de classe, 13 destinos míticos, 6 mortos-vivos, 3
+artefatos), a dedicação, os talentos citados pela página (2.125 dos 2.142) e a tela
+completa com o livro inteiro colado. As 8 páginas de regra do jornal entram em Regras.
+
+Antes: **Etapa 24** — a chamada recolhida "Mecânicas" no fim da prosa da ancestralidade;
+as heranças com o que concedem e a visão; a versátil com a visão pelas regras.
+
 Antes: **Etapa 23** — `heritage` (311 próprias, fonte fora do trilho) e as 17 versáteis
 como Tipo da ancestralidade; as abas de lista da tela completa, com o filtro travado —
 Dwarf: Heranças 9, Talentos 48; Nephilim: Talentos 88.
 
 Próxima: **classe** — 29 do pack com proficiências e níveis de talento, a página do
-jornal `Classes` (16 mil caracteres, 10 `@Embed` que já colam), e `class-features` (874)
-entrando na fonte de habilidades como Tipo.
+jornal `Classes` (16 mil caracteres, 10 `@Embed`), `class-features` (874) entrando em
+Habilidades como Tipo, e as pontes que ficaram esperando (arquétipo multiclasse → classe).
 
 Antes: **Etapa 22e** — a descrição no contexto: o Change Shape aberto pelo Anadi tem o
 texto do Anadi (o `ItemAlteration` de descrição do Foundry, 91 estáticas no zip), com
@@ -103,9 +111,6 @@ linha trocam a lista pela entrada com abas em cima (só Detalhes por ora): a pro
 página do jornal no lugar da lista, a lateral de sempre ao lado. Voltar, Esc ou o trilho
 devolvem a lista como estava. E a poda de leitura: os 1.806 parágrafos que são só o link
 para um efeito de VTT saem da tela, sem tocar no dado.
-
-Próxima: as **heranças** (328, 17 versáteis) como fonte, e a aba de lista com filtro
-travado — Heranças e Talentos do Dwarf. Depois classe e arquétipo pelo mesmo desenho.
 
 ⚠️ Correção: a linha anterior daqui dizia que a descrição de ancestralidade e de classe
 morava nos jornais. Está errado — os packs `ancestries` (50/50), `classes` (29/29) e
