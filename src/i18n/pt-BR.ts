@@ -221,6 +221,7 @@ export const ptBR = {
       } as Record<string, string>,
       /** As sub-abas da lateral da aba de texto (26d): a classe. */
       side: {
+        details: 'Detalhes',
         progression: 'Progressão',
         proficiencies: 'Proficiências',
         spells: 'Magias',

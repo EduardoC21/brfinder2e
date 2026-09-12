@@ -81,6 +81,10 @@ Antes: **Etapa 20** — as tabelas das regras param de quebrar (célula compacta
 linha, `@Embed` cola a entrada apontada, e as duas vassouras em Configurações: apagar as
 entradas aposentadas e apagar a base inteira.
 
+Antes: **Etapa 26e** — a lateral com sub-abas também na lista (Detalhes · Progressão ·
+Proficiências · Magias; Detalhes some na tela completa); as abas de escolha na ordem em
+que a classe as ganha, não alfabética.
+
 Antes: **Etapa 26d** — a lateral rola inteira; a classe na tela completa tem a lateral
 própria: identidade em cima e sub-abas Progressão (a tabela da página, 29), Proficiências
 e Magias (12); a sigla do atributo também na coluna de perícia.

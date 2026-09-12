@@ -49,15 +49,28 @@ const CABECALHOS: Readonly<Record<string, string>> = {
   'Class Features': 'Features',
 };
 
+/**
+ * O nó com o texto trocado, ou `null` quando não é um texto só da tabela de cabeçalhos.
+ * Desce por invólucros de um filho só — 9 das 30 tabelas de progressão escrevem
+ * `<th><p>Your Level</p></th>`, e o `<p>` não pode esconder o texto.
+ */
+function renomeado(node: DocNode): DocNode | null {
+  if (node.kind === 'token') {
+    if (node.token.kind !== 'text') return null;
+    const novo = CABECALHOS[node.token.raw.trim()];
+    return novo === undefined ? null : { kind: 'token', token: { ...node.token, raw: novo } };
+  }
+  const cheios = node.children.filter((child) => !ehVazio(child));
+  const unico = cheios.length === 1 ? cheios[0] : undefined;
+  if (unico === undefined) return null;
+  const filho = renomeado(unico);
+  return filho === null ? null : { ...node, children: [filho] };
+}
+
 /** Um `<th>` cujo conteúdo é um texto só, e esse texto está na tabela de cabeçalhos. */
 function cabecalhoRenomeado(node: DocNode): DocNode | null {
   if (node.kind !== 'element' || node.tag !== 'th') return null;
-  const cheios = node.children.filter((child) => !ehVazio(child));
-  const unico = cheios.length === 1 ? cheios[0] : undefined;
-  if (unico?.kind !== 'token' || unico.token.kind !== 'text') return null;
-  const novo = CABECALHOS[unico.token.raw.trim()];
-  if (novo === undefined) return null;
-  return { ...node, children: [{ kind: 'token', token: { ...unico.token, raw: novo } }] };
+  return renomeado(node);
 }
 
 export function pruneForReading(nodes: readonly DocNode[]): DocNode[] {

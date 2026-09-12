@@ -118,7 +118,12 @@ export interface ClassDesc {
   readonly spellSlots: string;
 }
 
-/** `{a1b2c: {uuid, name, level, img}}` → `[{uuid, name, level}]`, por nível. */
+/**
+ * `{a1b2c: {uuid, name, level, img}}` → `[{uuid, name, level}]`, por nível — e, no mesmo
+ * nível, na ORDEM DO PACK, que é a do livro: o Wizard ganha "Arcane School, Arcane Bond,
+ * Arcane Thesis" nessa ordem, e é nela que as abas de escolha aparecem (o autor, 26e).
+ * Por nome era alfabético, que não é ordem nenhuma do jogo.
+ */
 function toFeatures(cru: unknown): readonly ClassFeature[] {
   if (!isRecord(cru)) return [];
   return Object.values(cru)
@@ -130,7 +135,7 @@ function toFeatures(cru: unknown): readonly ClassFeature[] {
         ? [{ uuid: item['uuid'], name: item['name'], level: item['level'] }]
         : [],
     )
-    .sort((a, b) => a.level - b.level || a.name.localeCompare(b.name));
+    .sort((a, b) => a.level - b.level);
 }
 
 /** A ordem da ficha, que é a ordem em que as opções saem. */

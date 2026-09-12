@@ -10,6 +10,7 @@ import {
   type FullViewSpec,
   type ListTabSpec,
   type PageTabSpec,
+  type SideSpec,
 } from '@core/browse/index';
 import { parseDescription, pruneForReading } from '@core/markup/index';
 import { strings } from '@i18n/index';
@@ -60,6 +61,7 @@ export function EntityScreen({
   entity,
   entityType,
   fields,
+  side,
   sourceLabel,
   view,
   reference,
@@ -71,6 +73,8 @@ export function EntityScreen({
   readonly entity: BrowseEntity;
   readonly entityType: string;
   readonly fields: readonly DetailFieldSpec[];
+  /** A lateral com sub-abas da fonte, quando há. Ver `SideSpec`. */
+  readonly side?: SideSpec;
   readonly sourceLabel: string;
   readonly view: FullViewSpec;
   readonly reference: ReferenceBridge;
@@ -125,6 +129,14 @@ export function EntityScreen({
    * tela começa do topo, porque o texto é outro.
    */
   const [rolagem] = useState(() => new Map<string, number>());
+  /* A lateral com sub-abas SEM a descrição: a página inteira está do lado (26e). */
+  const lateral = useMemo(
+    () =>
+      side === undefined
+        ? undefined
+        : { tabs: side.tabs.filter((tab) => tab.kind !== 'description') },
+    [side],
+  );
   /* A lateral recolhe como na lista — e volta ao trocar de aba, que é conteúdo novo. */
   const [lateralFechada, setLateralFechada] = useState(false);
 
@@ -189,8 +201,8 @@ export function EntityScreen({
             key={aba.tab.id}
             entity={entity}
             entityType={entityType}
-            fields={view.side?.fields ?? fields}
-            {...(view.side === undefined ? {} : { side: view.side })}
+            fields={fields}
+            {...(lateral === undefined ? {} : { side: lateral })}
             onPopOut={onPopOut}
             reference={reference}
             collapsed={lateralFechada}

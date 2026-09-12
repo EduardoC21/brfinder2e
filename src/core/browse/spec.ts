@@ -447,6 +447,8 @@ export interface SourceSpec {
   readonly searchFields: readonly string[];
   /** O cabeçalho do detalhe. A descrição vem sempre, e não se declara. */
   readonly detail: readonly DetailFieldSpec[];
+  /** A lateral com sub-abas, na lista e na tela completa. Ver `SideSpec`. */
+  readonly side?: SideSpec;
   /**
    * A TELA COMPLETA da entrada (Etapa 22b): a lista e a lateral saem, e a entrada ocupa
    * as duas colunas com abas em cima, como o Archives of Nethys. Só as fontes grandes a
@@ -458,28 +460,28 @@ export interface SourceSpec {
 export interface FullViewSpec {
   /** As abas, na ordem da barra. A primeira abre por padrão. */
   readonly tabs: readonly TabSpec[];
-  /**
-   * A LATERAL da aba de texto, quando não é a lateral da lista (26d, pelo autor): a
-   * classe mostra em cima só a identidade (atributo-chave, PV, conjura, livro), sem a
-   * descrição — a página já está do lado —, e embaixo SUB-ABAS: a progressão por nível,
-   * as proficiências iniciais e as magias por dia. Sem `side`, a lateral é a da lista.
-   */
-  readonly side?: SideSpec;
 }
 
+/**
+ * A lateral com SUB-ABAS (26d/26e, pelo autor): `detail` fica em cima como identidade
+ * (atributo-chave, PV, conjura, livro) e o resto vai para abas embaixo, com a barra das
+ * abas de cima em miniatura. Na lista, a primeira é a DESCRIÇÃO; na tela completa ela
+ * some, porque a página inteira está do lado, e sobram progressão, proficiências e
+ * magias. Sem `side`, a lateral é a de sempre: campos e descrição.
+ */
 export interface SideSpec {
-  /** Os campos em cima, no lugar dos da lateral da lista. */
-  readonly fields: readonly DetailFieldSpec[];
   /** As sub-abas, na ordem da barra. A primeira abre por padrão. */
   readonly tabs: readonly SideTabSpec[];
 }
 
 /**
- * Uma sub-aba da lateral: de CAMPOS (mais campos da base, com os mesmos desenhistas do
- * painel) ou de TABELA (um campo de `desc/` com uma tabela em HTML — a progressão da
- * classe). A de tabela some quando o campo é vazio: 17 classes não têm magias por dia.
+ * Uma sub-aba da lateral: a DESCRIÇÃO (o texto de sempre, com contexto e tudo), mais
+ * CAMPOS da base (com os mesmos desenhistas do painel) ou uma TABELA (um campo de
+ * `desc/` com uma tabela em HTML — a progressão da classe). A de tabela some quando o
+ * campo é vazio: 17 classes não têm magias por dia.
  */
 export type SideTabSpec =
+  | { readonly kind: 'description'; readonly id: string }
   | { readonly kind: 'fields'; readonly id: string; readonly fields: readonly DetailFieldSpec[] }
   | { readonly kind: 'table'; readonly id: string; readonly field: string };
 
@@ -1436,50 +1438,39 @@ export const SOURCES: readonly SourceSpec[] = [
     ],
     typeFilter: null,
     searchFields: ['name'],
-    /* A ordem do bloco "Initial Proficiencies" do livro. */
+    /* Em cima só a IDENTIDADE; o resto está nas sub-abas de `side`. */
     detail: [
       { kind: 'boosts', field: 'keyAbility', alternatives: 'keyAbilityOptions' },
       { kind: 'text', field: 'hp' },
-      { kind: 'ranks', field: 'perception' },
-      { kind: 'ranks', field: 'saves' },
-      { kind: 'chips', field: 'skills' },
-      { kind: 'text', field: 'extraSkills' },
-      { kind: 'ranks', field: 'attacks' },
-      { kind: 'ranks', field: 'defenses' },
       { kind: 'text', field: 'spellcasting' },
       { kind: 'source' },
     ],
+    /*
+     * A lateral com sub-abas (26d/26e, pelo autor): a descrição, a progressão do livro
+     * (a tabela da página), as proficiências iniciais (na ordem do bloco "Initial
+     * Proficiencies") e as magias por dia. Na tela completa a descrição some — a página
+     * inteira está do lado.
+     */
+    side: {
+      tabs: [
+        { kind: 'description', id: 'details' },
+        { kind: 'table', id: 'progression', field: 'progression' },
+        {
+          kind: 'fields',
+          id: 'proficiencies',
+          fields: [
+            { kind: 'ranks', field: 'perception' },
+            { kind: 'ranks', field: 'saves' },
+            { kind: 'chips', field: 'skills' },
+            { kind: 'text', field: 'extraSkills' },
+            { kind: 'ranks', field: 'attacks' },
+            { kind: 'ranks', field: 'defenses' },
+          ],
+        },
+        { kind: 'table', id: 'spells', field: 'spellSlots' },
+      ],
+    },
     fullView: {
-      /*
-       * A lateral da aba Detalhes (26d, pelo autor): identidade em cima; embaixo, a
-       * progressão do livro (a tabela da página, com as habilidades clicáveis), as
-       * proficiências iniciais e as magias por dia. A descrição não entra — a página
-       * inteira está do lado. As proficiências saem de cima para não se repetirem.
-       */
-      side: {
-        fields: [
-          { kind: 'boosts', field: 'keyAbility', alternatives: 'keyAbilityOptions' },
-          { kind: 'text', field: 'hp' },
-          { kind: 'text', field: 'spellcasting' },
-          { kind: 'source' },
-        ],
-        tabs: [
-          { kind: 'table', id: 'progression', field: 'progression' },
-          {
-            kind: 'fields',
-            id: 'proficiencies',
-            fields: [
-              { kind: 'ranks', field: 'perception' },
-              { kind: 'ranks', field: 'saves' },
-              { kind: 'ranks', field: 'attacks' },
-              { kind: 'ranks', field: 'defenses' },
-              { kind: 'chips', field: 'skills' },
-              { kind: 'text', field: 'extraSkills' },
-            ],
-          },
-          { kind: 'table', id: 'spells', field: 'spellSlots' },
-        ],
-      },
       tabs: [
         { kind: 'page', id: 'details', field: 'page', fallback: 'main' },
         {

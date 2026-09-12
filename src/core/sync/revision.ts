@@ -31,4 +31,4 @@
  *  10  Etapa 25c — a dedicação recuperada pela tabela de talentos (Guardian).
  *  11  Etapa 26 — a fonte de classe; as 874 habilidades de classe entram em Habilidades.
  */
-export const RECIPES_REVISION = 13;
+export const RECIPES_REVISION = 14;

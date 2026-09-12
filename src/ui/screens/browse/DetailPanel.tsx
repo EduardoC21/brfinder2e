@@ -222,6 +222,45 @@ export function DetailPanel({
 
   const letraDaRaridade = rarityLetter(fieldValue(entity, 'rarity'));
 
+  /* A descrição com o contexto: o corpo de sempre, ou a sub-aba Detalhes com `side`. */
+  const corpo = (
+    <div className={styles['body']}>
+      {context !== undefined && alteracao?.mode === 'override' && (
+        <p className={styles['contexto']}>
+          {verOriginal ? t.context.original : t.context.override(context.from)}
+          <button
+            type="button"
+            className={styles['contextoLink']}
+            onClick={() => {
+              setVerOriginal((estava) => !estava);
+            }}
+          >
+            {verOriginal ? t.context.seeFrom(context.from) : t.context.seeOriginal}
+          </button>
+        </p>
+      )}
+      {substitui ? (
+        blocos !== null && (
+          <div className={styles['prose']}>
+            <RichText nodes={blocos} {...(links === undefined ? {} : { links })} />
+          </div>
+        )
+      ) : nodes === null ? null : (
+        <div className={styles['prose']}>
+          <RichText nodes={nodes} {...(links === undefined ? {} : { links })} />
+        </div>
+      )}
+      {context !== undefined && alteracao?.mode === 'add' && blocos !== null && (
+        <>
+          <p className={styles['contexto']}>{t.context.added(context.from)}</p>
+          <div className={styles['prose']}>
+            <RichText nodes={blocos} {...(links === undefined ? {} : { links })} />
+          </div>
+        </>
+      )}
+    </div>
+  );
+
   return (
     <section
       className={cx(
@@ -294,59 +333,24 @@ export function DetailPanel({
         </dl>
       </header>
 
-      {side !== undefined && (
+      {/*
+       * O painel INTEIRO rola (26d, pelo autor): antes só o corpo rolava, com o cabeçalho
+       * fixo, e numa janela baixa a descrição ficava espremida em poucas linhas. Com
+       * `side`, o corpo é a sub-aba Detalhes — e some da tela completa (26e).
+       */}
+      {side === undefined ? (
+        corpo
+      ) : (
         <Lateral
           side={side}
           entity={entity}
           entityType={entityType}
+          description={corpo}
           {...(links === undefined ? {} : { links })}
           {...(reference === undefined
             ? {}
             : { onOpenReference: abrir, onOpenSlug: abrirSlug, nameOf: nomeDe })}
         />
-      )}
-
-      {/*
-       * O painel INTEIRO rola (26d, pelo autor): antes só o corpo rolava, com o cabeçalho
-       * fixo, e numa janela baixa a descrição ficava espremida em poucas linhas. Com
-       * `side` o corpo não existe: as sub-abas ocupam o lugar dele.
-       */}
-      {side === undefined && (
-        <div className={styles['body']}>
-          {context !== undefined && alteracao?.mode === 'override' && (
-            <p className={styles['contexto']}>
-              {verOriginal ? t.context.original : t.context.override(context.from)}
-              <button
-                type="button"
-                className={styles['contextoLink']}
-                onClick={() => {
-                  setVerOriginal((estava) => !estava);
-                }}
-              >
-                {verOriginal ? t.context.seeFrom(context.from) : t.context.seeOriginal}
-              </button>
-            </p>
-          )}
-          {substitui ? (
-            blocos !== null && (
-              <div className={styles['prose']}>
-                <RichText nodes={blocos} {...(links === undefined ? {} : { links })} />
-              </div>
-            )
-          ) : nodes === null ? null : (
-            <div className={styles['prose']}>
-              <RichText nodes={nodes} {...(links === undefined ? {} : { links })} />
-            </div>
-          )}
-          {context !== undefined && alteracao?.mode === 'add' && blocos !== null && (
-            <>
-              <p className={styles['contexto']}>{t.context.added(context.from)}</p>
-              <div className={styles['prose']}>
-                <RichText nodes={blocos} {...(links === undefined ? {} : { links })} />
-              </div>
-            </>
-          )}
-        </div>
       )}
 
       {/*
@@ -839,6 +843,7 @@ function Lateral({
   side,
   entity,
   entityType,
+  description,
   links,
   onOpenReference,
   onOpenSlug,
@@ -847,6 +852,8 @@ function Lateral({
   readonly side: SideSpec;
   readonly entity: BrowseEntity;
   readonly entityType: string;
+  /** O corpo da descrição, pronto: é o que a sub-aba `description` mostra. */
+  readonly description: React.ReactNode;
   readonly links?: RichTextLinks;
   readonly onOpenReference?: (uuid: string, novo: boolean) => void;
   readonly onOpenSlug?: (entityType: string, slug: string, novo: boolean) => void;
@@ -891,6 +898,7 @@ function Lateral({
           </button>
         ))}
       </nav>
+      {aba.kind === 'description' && description}
       {aba.kind === 'fields' && (
         <dl className={cx(styles['fields'], styles['lateralCampos'])}>
           {aba.fields.map((spec, index) => (

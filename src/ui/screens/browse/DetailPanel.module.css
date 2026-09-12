@@ -329,6 +329,11 @@
   padding: var(--space-3) var(--space-4) var(--space-4);
 }
 
+/* A descrição como sub-aba: o respiro já é o da lateral. */
+.lateral .body {
+  padding: 0;
+}
+
 .subAbas {
   display: flex;
   gap: var(--space-1);

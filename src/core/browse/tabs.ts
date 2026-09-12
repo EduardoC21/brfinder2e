@@ -22,10 +22,16 @@ export function expandChoiceTabs(
   readonly label: string;
   readonly entities: BrowseEntity[];
 }[] {
-  const uuids = new Set(valoresDoCampo(carrier, tab.from));
-  const escolhas = features
-    .filter((feature) => uuids.has(feature.uuid) && fieldValue(feature, 'choiceTag') !== '')
-    .sort((a, b) => Number(fieldValue(a, 'level')) - Number(fieldValue(b, 'level')));
+  /*
+   * Na ORDEM DA CLASSE (26e, pelo autor): a lista de UUIDs da entrada já vem por nível e,
+   * no mesmo nível, na ordem do livro — o Wizard escolhe escola antes de tese. Percorrer
+   * a fonte de habilidades (alfabética) e reordenar por nível perdia o desempate.
+   */
+  const porUuid = new Map(features.map((feature) => [feature.uuid, feature]));
+  const escolhas = valoresDoCampo(carrier, tab.from).flatMap((uuid) => {
+    const feature = porUuid.get(uuid);
+    return feature !== undefined && fieldValue(feature, 'choiceTag') !== '' ? [feature] : [];
+  });
   const vistas = new Set<string>();
   const out: { tab: ListTabSpec; label: string; entities: BrowseEntity[] }[] = [];
   for (const escolha of escolhas) {

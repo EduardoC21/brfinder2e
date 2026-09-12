@@ -41,9 +41,10 @@ describe('receita de classe', () => {
     expect(base?.skills).toEqual(['nature']);
     expect(base?.extraSkills).toBe(2);
     expect(base?.classFeatLevels).toEqual([2, 4, 6, 8, 10, 12, 14, 16, 18, 20]);
+    /* No mesmo nível, a ordem do pack (a1 antes de a3), não a alfabética. */
     expect(base?.features.map((f) => [f.level, f.name])).toEqual([
-      [1, 'Druid Spellcasting'],
       [1, 'Druidic Order'],
+      [1, 'Druid Spellcasting'],
       [3, 'Fortitude Expertise'],
     ]);
     expect(base?.featureUuids).toHaveLength(3);

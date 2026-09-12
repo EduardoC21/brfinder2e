@@ -42,6 +42,11 @@ describe('pruneForReading', () => {
     expect(texto(nodes)).toBe('LevelFeaturesLevels of LightYour Level1x');
   });
 
+  it('renomeia o cabeçalho também dentro do <p> que 9 tabelas escrevem', () => {
+    const html = '<table><tr><th><p>Your Level</p></th><th><p>Class Features</p></th></tr></table>';
+    expect(texto(pruneForReading(parseDescription(html)))).toBe('LevelFeatures');
+  });
+
   it('poda dentro de célula e de lista também', () => {
     const html =
       '<ul><li><p>@UUID[Compendium.pf2e.feat-effects.Item.abcdefghijklmnop]{Effect: X}</p></li></ul>';

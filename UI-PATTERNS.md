@@ -888,17 +888,25 @@ Con, Int, Sab, Car — a sigla da ficha. No detalhe, o nome por extenso continua
 como todo dado de jogo (OPEN-DECISIONS #4). Ver `attributeShort`; a perícia, cujo campo
 vem escrito "Strength" da tabela do jornal, passa por `attributeShortByName` (26d).
 
-**A lateral da classe na aba Detalhes** (26d, pelo autor): não é a lateral da lista. Em
-cima só a identidade — atributo-chave, PV, conjura, livro —, sem a descrição, porque a
-página inteira está do lado; embaixo SUB-ABAS, com a mesma barra das abas de cima em
-miniatura: **Progressão** (a tabela do livro, tirada da página do jornal pelo cabeçalho
-"Your Level | Class Features" — 29 de 29, 20 níveis), **Proficiências** (percepção,
-resistências, ataques, defesas, perícias — saíram de cima para não se repetirem) e
+**A lateral da classe com sub-abas** (26d/26e, pelo autor): na lista E na tela completa.
+Em cima só a identidade — atributo-chave, PV, conjura, livro —; embaixo SUB-ABAS, com a
+mesma barra das abas de cima em miniatura: **Detalhes** (a descrição de sempre, com
+contexto e tudo — só na lista: na tela completa ela some, porque a página inteira está do
+lado), **Progressão** (a tabela do livro, tirada da página do jornal pelo cabeçalho "Your
+Level | Class Features" — 29 de 29, 20 níveis), **Proficiências** (percepção,
+resistências, perícias, ataques, defesas — saíram de cima para não se repetirem) e
 **Magias** (a tabela de magias por dia, "Your Level | Cantrips…" — 12 classes; a aba some
 onde a tabela não existe, e por isso as tabelas são lidas antes de desenhar a barra). É
-`fullView.side` na spec: campos e sub-abas de duas espécies, `fields` e `table`; a tabela
+`side` na fonte: sub-abas de três espécies, `description`, `fields` e `table`; a tabela
 vai para `desc/` porque é texto da Paizo, e a lateral a desenha compacta (fonte menor,
-célula justa, rolagem lateral só se precisar — a de magias tem 12 colunas).
+célula justa, rolagem lateral só se precisar — a de magias tem 12 colunas). O flutuante
+de uma classe leva a mesma lateral. O autor viu a lateral da tela completa e a quis
+também na lista: "ficou tão boa que é melhor ela nos dois".
+
+**As abas de escolha na ordem da classe** (26e, pelo autor): não alfabéticas. A lista de
+habilidades da classe sai por nível e, no mesmo nível, na ordem do pack — que é a do
+livro: o Wizard ganha "arcane school, arcane bond, arcane thesis" nessa ordem, e o Psychic
+"subconscious mind, conscious mind". As abas de escolha seguem essa lista.
 
 **A rolagem da aba de texto é lembrada** (26c, pelo autor) enquanto a entrada está
 aberta: ir a Habilidades e voltar a Detalhes devolve a altura. É um mapa que vive com a

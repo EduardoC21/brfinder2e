@@ -305,6 +305,10 @@ export function BrowseScreen({ baseVersion }: BrowseScreenProps) {
               entityType={item.entityType}
               fields={item.fields}
               context={item.context}
+              {...(() => {
+                const lateral = SOURCES.find((entry) => entry.entityType === item.entityType)?.side;
+                return lateral === undefined ? {} : { side: lateral };
+              })()}
               {...(SOURCES.find((entry) => entry.entityType === item.entityType)?.fullView ===
               undefined
                 ? {}
@@ -827,6 +831,7 @@ function SourcePane({
         fields={source.detail}
         sourceLabel={strings.sources[source.id] ?? source.id}
         view={source.fullView}
+        {...(source.side === undefined ? {} : { side: source.side })}
         reference={reference}
         sources={sources}
         onPopOut={() => {
@@ -962,6 +967,7 @@ function SourcePane({
         entity={opened}
         entityType={source.entityType ?? ''}
         fields={source.detail}
+        {...(source.side === undefined ? {} : { side: source.side })}
         onPopOut={() => {
           if (opened !== null) {
             onPopOut({
