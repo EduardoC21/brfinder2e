@@ -111,14 +111,12 @@ export function EntityScreen({
         <CollapseToggle side="left" collapsed={false} label={t.back} onToggle={onBack} />
         <h2 className={styles['nome']}>{fieldValue(entity, 'name')}</h2>
         <span className={styles['fonte']}>{sourceLabel}</span>
-        <button
-          type="button"
-          className={cx(styles['traduzir'], 'chamfer-sm')}
-          disabled
-          title={d.translationPending}
-        >
-          {d.translate}
-        </button>
+        {/*
+          As abas logo depois da fonte, separadas por um fio vertical — pedido do autor:
+          "ao lado de ANCESTRALIDADE, com uma barrinha entre". No canto direito, só o
+          Traduzir. Estavam invertidos, e as abas no canto ficavam longe do nome.
+        */}
+        <span className={styles['fio']} aria-hidden="true" />
         <nav className={styles['abas']} role="tablist">
           {abas.map(({ tab, count }) => (
             <button
@@ -137,6 +135,14 @@ export function EntityScreen({
             </button>
           ))}
         </nav>
+        <button
+          type="button"
+          className={cx(styles['traduzir'], 'chamfer-sm')}
+          disabled
+          title={d.translationPending}
+        >
+          {d.translate}
+        </button>
       </header>
 
       {aba?.tab.kind === 'page' && (

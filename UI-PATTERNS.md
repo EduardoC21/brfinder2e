@@ -797,8 +797,9 @@ As regras (revistas na 22c, pelo autor):
   lateral (`grid-column: 2 / 4`); o trilho fica onde está. Clicar numa fonte ali sai da
   tela completa — inclusive na fonte JÁ aberta, que é "me leva para a lista dela".
 - **A barra vai da área central até a lateral direita.** O Voltar tem a cara dos botões
-  de recolher (é o padrão de "isto sai daqui"); depois o nome, a fonte, o botão de
-  tradução; as abas à direita.
+  de recolher (é o padrão de "isto sai daqui"); depois o nome, a fonte, um fio vertical, e
+  as ABAS logo ali (Etapa 24b, pelo autor: no canto elas ficavam longe do nome); o botão
+  de tradução sozinho no canto direito.
 - **Na aba de texto, a prosa fica onde a lista ficava e a lateral fica onde a lateral
   ficava** — a mesma lateral da lista, com a mecânica em campos. A pessoa não muda de
   lugar na tela para ler; muda só o que está escrito. A prosa usa a largura toda, com

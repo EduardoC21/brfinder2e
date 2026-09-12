@@ -44,8 +44,18 @@
   color: var(--color-text-muted);
 }
 
-/* O mesmo desenho do `.action` da lateral, e desabilitado pelo mesmo motivo. */
+/* O fio vertical entre a fonte e as abas: a mesma família de escolha, outro assunto. */
+.fio {
+  flex: none;
+  width: 1px;
+  height: 18px;
+  margin: 0 var(--space-1);
+  background: var(--color-hairline);
+}
+
+/* O mesmo desenho do `.action` da lateral, e desabilitado pelo mesmo motivo; no canto. */
 .traduzir {
+  margin-left: auto;
   display: inline-flex;
   align-items: center;
   height: 22px;
@@ -65,7 +75,6 @@
 .abas {
   display: flex;
   gap: var(--space-1);
-  margin-left: auto;
   flex: none;
 }
 
