@@ -220,6 +220,9 @@ export const ptBR = {
         mechanics: 'Mecânicas',
       } as Record<string, string>,
       /** As sub-abas da lateral da aba de texto (26d): a classe. */
+      /** Os rótulos dos trilhos de abas, para o leitor de tela das setas. */
+      tabsLabel: 'Abas',
+      sideTabsLabel: 'Abas da lateral',
       side: {
         details: 'Detalhes',
         progression: 'Progressão',

@@ -19,6 +19,15 @@
  * 29 e as de magias por dia) e 1 de `Archetypes`; "Class Features" nas 29. Só o texto
  * EXATO do `<th>`, e nada mais: "Creature's Level" e "Levels of Light" ficam.
  *
+ * E o RODAPÉ que aponta para o jornal (o autor, 26f): a descrição termina com um parágrafo
+ * que é só o link para a própria página — `<p><em>@UUID[…journals…]{Druid}</em></p>` —, o
+ * caminho do VTT para "abrir o livro". Aqui a página já está na tela completa, e o link no
+ * fim do texto era um nome apontando para lugar nenhum. Medido no `pf2e-8.5.0`: as 29
+ * classes (22 em `<em>`, 7 sem), 219 talentos (218 dedicações mais Benefactor's Strike),
+ * as 50 ancestralidades, 1 habilidade de classe, 3 equipamentos. Só o ÚLTIMO parágrafo do
+ * documento, e só quando ele é o link sozinho: um link para o jornal no meio do texto é
+ * referência, e fica.
+ *
  * ⚠️ É poda de LEITURA, na terceira camada (o documento pronto para desenhar): `raw/` e
  * `desc/` continuam com o texto inteiro. Quem busca na descrição busca no texto inteiro.
  */
@@ -73,7 +82,29 @@ function cabecalhoRenomeado(node: DocNode): DocNode | null {
   return renomeado(node);
 }
 
-export function pruneForReading(nodes: readonly DocNode[]): DocNode[] {
+/** O alvo de uma página de jornal: `Compendium.pf2e.journals.JournalEntry.…`. */
+const JORNAL = 'Compendium.pf2e.journals.JournalEntry.';
+
+/** Invólucros de linha que o rodapé usa: o link vem em `<em>` em 22 das 29 classes. */
+const INVOLUCROS: ReadonlySet<string> = new Set(['em', 'strong', 'span']);
+
+/** O nó é, descendo por invólucros de um filho só, um link para uma página de jornal. */
+function soLinkDeJornal(node: DocNode): boolean {
+  if (node.kind === 'token')
+    return node.token.kind === 'uuid' && node.token.target.startsWith(JORNAL);
+  if (!INVOLUCROS.has(node.tag)) return false;
+  const cheios = node.children.filter((child) => !ehVazio(child));
+  return cheios.length === 1 && cheios[0] !== undefined && soLinkDeJornal(cheios[0]);
+}
+
+/** Um parágrafo que é só o link de rodapé para o jornal. */
+function rodapeDeJornal(node: DocNode): boolean {
+  if (node.kind !== 'element' || node.tag !== 'p') return false;
+  const cheios = node.children.filter((child) => !ehVazio(child));
+  return cheios.length === 1 && cheios[0] !== undefined && soLinkDeJornal(cheios[0]);
+}
+
+function podar(nodes: readonly DocNode[]): DocNode[] {
   const out: DocNode[] = [];
   for (const node of nodes) {
     if (soEfeito(node)) continue;
@@ -82,9 +113,19 @@ export function pruneForReading(nodes: readonly DocNode[]): DocNode[] {
       out.push(cabecalho);
       continue;
     }
-    out.push(
-      node.kind === 'element' ? { ...node, children: pruneForReading(node.children) } : node,
-    );
+    out.push(node.kind === 'element' ? { ...node, children: podar(node.children) } : node);
+  }
+  return out;
+}
+
+export function pruneForReading(nodes: readonly DocNode[]): DocNode[] {
+  const out = podar(nodes);
+  /* O rodapé: só no fim do DOCUMENTO, não no fim de uma célula ou de um item de lista. */
+  while (out.length > 0) {
+    const ultimo = out[out.length - 1];
+    if (ultimo === undefined) break;
+    if (ehVazio(ultimo) || rodapeDeJornal(ultimo)) out.pop();
+    else break;
   }
   return out;
 }

@@ -15,6 +15,7 @@ import {
 import { parseDescription, pruneForReading } from '@core/markup/index';
 import { strings } from '@i18n/index';
 import { CollapseToggle } from '@ui/components/CollapseToggle';
+import { ScrollRail } from '@ui/components/ScrollRail';
 import { RichText, type RichTextLinks } from '@ui/components/RichText';
 import { cx } from '@ui/cx';
 import { useDescription } from '@ui/hooks/useDescription';
@@ -158,24 +159,35 @@ export function EntityScreen({
           Traduzir. Estavam invertidos, e as abas no canto ficavam longe do nome.
         */}
         <span className={styles['fio']} aria-hidden="true" />
-        <nav className={styles['abas']} role="tablist">
-          {abas.map(({ tab, count, label }) => (
-            <button
-              key={tab.id}
-              type="button"
-              role="tab"
-              aria-selected={tab.id === aba?.tab.id}
-              className={cx(styles['aba'], tab.id === aba?.tab.id && styles['ativa'], 'chamfer-sm')}
-              onClick={() => {
-                setAbaId(tab.id);
-                setLateralFechada(false);
-              }}
-            >
-              {label ?? t.tabs[tab.id] ?? tab.id}
-              {count !== null && <span className={styles['contagem']}>{count}</span>}
-            </button>
-          ))}
-        </nav>
+        {/*
+          As abas num TRILHO que rola com setas (26f, pelo autor): numa janela estreita
+          elas eram engolidas pela barra. O mesmo `ScrollRail` dos filtros — setas só
+          quando há o que rolar.
+        */}
+        <ScrollRail className={styles['abasTrilho']} label={t.tabsLabel}>
+          <nav className={styles['abas']} role="tablist">
+            {abas.map(({ tab, count, label }) => (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={tab.id === aba?.tab.id}
+                className={cx(
+                  styles['aba'],
+                  tab.id === aba?.tab.id && styles['ativa'],
+                  'chamfer-sm',
+                )}
+                onClick={() => {
+                  setAbaId(tab.id);
+                  setLateralFechada(false);
+                }}
+              >
+                {label ?? t.tabs[tab.id] ?? tab.id}
+                {count !== null && <span className={styles['contagem']}>{count}</span>}
+              </button>
+            ))}
+          </nav>
+        </ScrollRail>
         <button
           type="button"
           className={cx(styles['traduzir'], 'chamfer-sm')}

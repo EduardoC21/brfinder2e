@@ -334,10 +334,15 @@
   padding: 0;
 }
 
+/* As sub-abas num trilho que rola com setas quando a lateral é estreita (26f). */
+.subAbasTrilho {
+  margin-bottom: var(--space-3);
+}
+
 .subAbas {
   display: flex;
   gap: var(--space-1);
-  margin-bottom: var(--space-3);
+  flex: none;
 }
 
 .subAba {

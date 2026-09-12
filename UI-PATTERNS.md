@@ -247,6 +247,16 @@ texto inteiro, e a busca na descrição busca no inteiro. O "leia mais" da ances
 (o link para a própria página do jornal) sai na RECEITA, não na poda: só a receita sabe
 que aquela página é o `page` dela — e `raw/` continua com ele.
 
+**O rodapé para o jornal também sai na poda** (26f, pelo autor): a descrição da classe
+termina com um parágrafo que é só o link para a própria página (`<p><em>@UUID[…journals…]
+{Druid}</em></p>`), e a da dedicação com o link para a página do arquétipo — o caminho do
+VTT para "abrir o livro", que aqui era um nome apontando para lugar nenhum. Medido: as 29
+classes (22 em `<em>`), 219 talentos (218 dedicações mais Benefactor's Strike), as 50
+ancestralidades, 1 habilidade de classe, 3 equipamentos. Só o ÚLTIMO parágrafo do
+documento, e só quando é o link sozinho: um link para o jornal no meio do texto ("from
+the Harrower archetype") é referência, e fica — e continua abrindo o arquétipo. Na
+máscara, não no dado: o texto que volta para o Foundry na montagem de ficha é o inteiro.
+
 ### A descrição no contexto
 
 **Decidido (Etapa 22e), pelo autor:** uma entrada aberta A PARTIR de outra pode ter o
@@ -849,8 +859,9 @@ estado local, não gravado. A fonte listada não sabe de nada disso.
 ficam na lateral; a tela completa é só a lista dos talentos, próprios e adicionais. A
 origem (próprio/adicional) foi tentada como coluna e saiu: o Tipo do talento já diz.
 
-**O pop-out leva à tela completa** (Etapa 25c, pelo autor): o link "Harrower" embaixo da
-dedicação abre o arquétipo em flutuante, com a lateral de sempre; o botão de tela completa
+**O pop-out leva à tela completa** (Etapa 25c, pelo autor): o link "Harrower" na
+dedicação (o do meio do texto — o rodapé saiu na 26f) abre o arquétipo em flutuante, com
+a lateral de sempre; o botão de tela completa
 do flutuante troca a fonte, abre a entrada na tela completa dela — Talentos no arquétipo,
 Detalhes na ancestralidade — e fecha o flutuante. Vale para toda entrada cuja fonte tem
 tela completa. O pedido limpa o termo e os filtros da fonte de destino: entrada fora do
@@ -907,6 +918,12 @@ também na lista: "ficou tão boa que é melhor ela nos dois".
 habilidades da classe sai por nível e, no mesmo nível, na ordem do pack — que é a do
 livro: o Wizard ganha "arcane school, arcane bond, arcane thesis" nessa ordem, e o Psychic
 "subconscious mind, conscious mind". As abas de escolha seguem essa lista.
+
+**As barras de abas rolam com setas** (26f, pelo autor): as abas de cima e as sub-abas da
+lateral ficavam engolidas numa janela estreita. As duas vão num `ScrollRail` — o mesmo
+trilho dos filtros: degradê nas bordas e setas ‹ › só quando há o que rolar, cada uma
+sumindo na ponta. O trilho toma o espaço entre a fonte e o Traduzir (`flex: 1`, base 0):
+o nome não encolhe por ele.
 
 **A rolagem da aba de texto é lembrada** (26c, pelo autor) enquanto a entrada está
 aberta: ir a Habilidades e voltar a Detalhes devolve a altura. É um mapa que vive com a

@@ -81,6 +81,10 @@ Antes: **Etapa 20** — as tabelas das regras param de quebrar (célula compacta
 linha, `@Embed` cola a entrada apontada, e as duas vassouras em Configurações: apagar as
 entradas aposentadas e apagar a base inteira.
 
+Antes: **Etapa 26f** — o rodapé que aponta para o jornal sai na poda de leitura (29
+classes, 219 talentos, 50 ancestralidades, 1 habilidade, 3 equipamentos — o dado fica
+inteiro); as barras de abas, de cima e da lateral, rolam com setas quando não cabem.
+
 Antes: **Etapa 26e** — a lateral com sub-abas também na lista (Detalhes · Progressão ·
 Proficiências · Magias; Detalhes some na tela completa); as abas de escolha na ordem em
 que a classe as ganha, não alfabética.

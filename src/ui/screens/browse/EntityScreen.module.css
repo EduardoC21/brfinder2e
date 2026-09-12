@@ -72,6 +72,12 @@
   cursor: not-allowed;
 }
 
+/* O trilho toma o espaço que sobra entre a fonte e o Traduzir; o nome não encolhe por ele. */
+.abasTrilho {
+  flex: 1;
+  min-width: 0;
+}
+
 .abas {
   display: flex;
   gap: var(--space-1);

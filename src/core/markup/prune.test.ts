@@ -47,6 +47,23 @@ describe('pruneForReading', () => {
     expect(texto(pruneForReading(parseDescription(html)))).toBe('LevelFeatures');
   });
 
+  it('tira o rodapé que é só o link para a página do jornal, com ou sem <em>', () => {
+    const link =
+      '@UUID[Compendium.pf2e.journals.JournalEntry.kzxu2dI7tFxv6Ix6.JournalEntryPage.8ElntNAGahQka70r]{Druid}';
+    expect(texto(pruneForReading(parseDescription(`<p>Text.</p>\n<p>${link}</p>`)))).toBe('Text.');
+    expect(texto(pruneForReading(parseDescription(`<p>Text.</p><p><em>${link}</em></p>`)))).toBe(
+      'Text.',
+    );
+  });
+
+  it('deixa o link para o jornal que não é rodapé', () => {
+    const link =
+      '@UUID[Compendium.pf2e.journals.JournalEntry.kzxu2dI7tFxv6Ix6.JournalEntryPage.8ElntNAGahQka70r]{Druid}';
+    // No meio do texto, e num parágrafo com mais coisa no fim: os dois ficam inteiros.
+    expect(pruneForReading(parseDescription(`<p>${link}</p><p>Text.</p>`))).toHaveLength(2);
+    expect(texto(pruneForReading(parseDescription(`<p>See ${link}.</p>`)))).toContain('See ');
+  });
+
   it('poda dentro de célula e de lista também', () => {
     const html =
       '<ul><li><p>@UUID[Compendium.pf2e.feat-effects.Item.abcdefghijklmnop]{Effect: X}</p></li></ul>';

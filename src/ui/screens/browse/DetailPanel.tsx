@@ -19,6 +19,7 @@ import { CastCost } from '@ui/components/CastCost';
 import { Frequency } from '@ui/components/Frequency';
 import { RarityMark } from '@ui/components/RarityMark';
 import { RichText, type RichTextLinks } from '@ui/components/RichText';
+import { ScrollRail } from '@ui/components/ScrollRail';
 import { TraitChip } from '@ui/components/TraitChip';
 import { useTraitLabel } from '@ui/glossary/useTraitLabel';
 import { useDescription, useDescriptionFields } from '@ui/hooks/useDescription';
@@ -878,26 +879,28 @@ function Lateral({
 
   return (
     <div className={styles['lateral']}>
-      <nav className={styles['subAbas']} role="tablist">
-        {abas.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            role="tab"
-            aria-selected={tab.id === aba.id}
-            className={cx(
-              styles['subAba'],
-              tab.id === aba.id && styles['subAbaAtiva'],
-              'chamfer-sm',
-            )}
-            onClick={() => {
-              setAbaId(tab.id);
-            }}
-          >
-            {b.fullView.side[tab.id] ?? tab.id}
-          </button>
-        ))}
-      </nav>
+      <ScrollRail className={styles['subAbasTrilho']} label={b.fullView.sideTabsLabel}>
+        <nav className={styles['subAbas']} role="tablist">
+          {abas.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              role="tab"
+              aria-selected={tab.id === aba.id}
+              className={cx(
+                styles['subAba'],
+                tab.id === aba.id && styles['subAbaAtiva'],
+                'chamfer-sm',
+              )}
+              onClick={() => {
+                setAbaId(tab.id);
+              }}
+            >
+              {b.fullView.side[tab.id] ?? tab.id}
+            </button>
+          ))}
+        </nav>
+      </ScrollRail>
       {aba.kind === 'description' && description}
       {aba.kind === 'fields' && (
         <dl className={cx(styles['fields'], styles['lateralCampos'])}>
