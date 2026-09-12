@@ -10,12 +10,22 @@ import type { ListTabSpec, LockSpec } from './spec';
 /** As bases que a trava `none-of` consulta: as entradas de cada fonte, pelo `id`. */
 export type SourceLookup = (sourceId: string) => readonly BrowseEntity[] | undefined;
 
-/** Os valores do campo `from` da entrada aberta: um, ou a lista inteira quando é lista. */
-function valoresDe(carrier: BrowseEntity, from: string): readonly string[] {
+/** Os valores de UM campo da entrada aberta: um, ou a lista inteira quando é lista. */
+function valoresDoCampo(carrier: BrowseEntity, from: string): readonly string[] {
   const lista = fieldList(carrier, from);
   if (lista.length > 0) return lista;
   const um = fieldValue(carrier, from);
   return um === '' ? [] : [um];
+}
+
+/** Os valores de onde travar: o primeiro campo da lista que tem valor. */
+function valoresDe(carrier: BrowseEntity, from: string | readonly string[]): readonly string[] {
+  const campos = typeof from === 'string' ? [from] : from;
+  for (const campo of campos) {
+    const valores = valoresDoCampo(carrier, campo);
+    if (valores.length > 0) return valores;
+  }
+  return [];
 }
 
 function passa(

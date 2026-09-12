@@ -30,6 +30,14 @@ export type Align = 'start' | 'end';
  * atributo divino), e a linha some. Sem o sinal, a filosofia ganharia um "Livre" que o
  * livro não dá.
  */
+export interface ChipsFormat {
+  /**
+   * Os valores NÃO são traços: o rótulo vem de `fieldText` (tamanho `med` → "Médio"), e não
+   * do glossário. Sem isto, `sm` saía "Sm" com uma caixinha de traço que não existe.
+   */
+  readonly plain?: boolean;
+}
+
 export interface BoostsFormat {
   /** Lista vazia é "Livre" (antecedente). */
   readonly free?: boolean;
@@ -94,7 +102,7 @@ export type ColumnSpec =
   /** A frequência de uso, pelo mesmo desenhista do detalhe: "1× por dia". */
   | ({ readonly kind: 'frequency'; readonly field: string } & ColumnBase)
   /** Uma LISTA de valores curtos, cada um em sua caixinha. Tradições, por exemplo. */
-  | ({ readonly kind: 'chips'; readonly field: string } & ColumnBase)
+  | ({ readonly kind: 'chips'; readonly field: string } & ChipsFormat & ColumnBase)
   /**
    * O custo de CONJURAR, que não é o custo em ações das outras fontes: pode ser uma faixa
    * (`◆ a ◆◆◆`) ou um tempo (`10 minutos`). Ver `normalization/cast.ts`.
@@ -341,7 +349,7 @@ export type DetailFieldSpec =
   /** Quem mais precisa ajudar no ritual, e com que teste. */
   | { readonly kind: 'ritual'; readonly field: string }
   | { readonly kind: 'boolean'; readonly field: string }
-  | { readonly kind: 'chips'; readonly field: string }
+  | ({ readonly kind: 'chips'; readonly field: string } & ChipsFormat)
   | { readonly kind: 'frequency'; readonly field: string }
   | { readonly kind: 'cost' }
   | { readonly kind: 'source' };
@@ -479,7 +487,12 @@ export interface ListTabSpec {
  *               é o universal
  */
 export type LockSpec =
-  | { readonly field: string; readonly from: string; readonly match: 'equals' | 'contains' }
+  | {
+      readonly field: string;
+      /** O campo de onde travar — ou uma lista de campos: vale o PRIMEIRO que tem valor. */
+      readonly from: string | readonly string[];
+      readonly match: 'equals' | 'contains';
+    }
   | { readonly field: string; readonly value: string; readonly match: 'is' }
   | {
       readonly field: string;
@@ -1002,7 +1015,8 @@ export const SOURCES: readonly SourceSpec[] = [
     columns: [
       { kind: 'text', id: 'kind', field: 'kind' },
       { kind: 'text', id: 'hp', field: 'hp' },
-      { kind: 'text', id: 'size', field: 'size' },
+      /* Os tamanhos possíveis — quase sempre um; o Animal Desperto escolhe entre quatro. */
+      { kind: 'chips', id: 'size', field: 'sizes', plain: true },
       { kind: 'text', id: 'speed', field: 'speed' },
       { kind: 'boosts', id: 'boosts', field: 'boosts', all: true },
       { kind: 'boosts', id: 'flaws', field: 'flaws', all: true },
@@ -1016,7 +1030,7 @@ export const SOURCES: readonly SourceSpec[] = [
     filters: [
       { kind: 'options', id: 'kind', field: 'kind', values: ANCESTRY_KINDS },
       { kind: 'rarity', id: 'rarity', field: 'rarity' },
-      { kind: 'options', id: 'size', field: 'size', values: ANCESTRY_SIZES },
+      { kind: 'list', id: 'size', field: 'sizes', combine: 'any', values: ANCESTRY_SIZES },
       { kind: 'options', id: 'hp', field: 'hp' },
       /* Só os seis: `free` não é atributo, e o filtro é "quem aumenta Constituição". */
       { kind: 'list', id: 'boosts', field: 'boosts', combine: 'any', values: ATTRIBUTE_CODES },
@@ -1033,8 +1047,11 @@ export const SOURCES: readonly SourceSpec[] = [
     detail: [
       { kind: 'chips', field: 'traits' },
       { kind: 'text', field: 'hp' },
-      { kind: 'text', field: 'size' },
+      /* PV por tamanho: só o Animal Desperto. */
+      { kind: 'chips', field: 'hpOptions', plain: true },
+      { kind: 'chips', field: 'sizes', plain: true },
       { kind: 'text', field: 'speed' },
+      { kind: 'text', field: 'swim' },
       { kind: 'boosts', field: 'boosts', all: true },
       { kind: 'boosts', field: 'flaws', all: true },
       { kind: 'chips', field: 'languages' },
@@ -1066,8 +1083,12 @@ export const SOURCES: readonly SourceSpec[] = [
           kind: 'list',
           id: 'feats',
           source: 'feats',
-          /* `countsAs`, não `slug`: o Aiuvarin conta como elfo e pega os 50 do elfo. */
-          lock: [{ field: 'traits', from: 'countsAs', match: 'contains' }],
+          /*
+           * `countsAs`, não `slug`: o Aiuvarin conta como elfo e pega os 50 do elfo. O
+           * `slug` é a reserva, para uma base gravada antes de `countsAs` existir (23c)
+           * não ficar sem a aba — foi o que o autor viu.
+           */
+          lock: [{ field: 'traits', from: ['countsAs', 'slug'], match: 'contains' }],
         },
         /*
          * Os UNIVERSAIS: talentos de ancestralidade que não têm o traço de ancestralidade

@@ -66,7 +66,10 @@ export function fieldList(entity: BrowseEntity, field: string): readonly string[
   const read = readPath(entity.base, field);
   const value = read.value;
   if (!Array.isArray(value)) return [];
-  return value.filter((item): item is string => typeof item === 'string');
+  // Número vira texto: o PV por tamanho (`[6, 8, 10]`) é lista e se desenha como chips.
+  return value.flatMap((item) =>
+    typeof item === 'string' ? [item] : typeof item === 'number' ? [String(item)] : [],
+  );
 }
 
 /**

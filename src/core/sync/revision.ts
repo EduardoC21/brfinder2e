@@ -21,5 +21,7 @@
  *   3  Etapa 23 — as 17 heranças versáteis entram na ancestralidade como Tipo; a fonte
  *      de herança (as 311 próprias).
  *   4  Etapa 23c — `countsAs` na ancestralidade (o meio-elfo conta como elfo).
+ *   5  Etapa 23d — tamanhos, PV por tamanho e deslocamentos lidos das regras (o Animal
+ *      Desperto).
  */
-export const RECIPES_REVISION = 4;
+export const RECIPES_REVISION = 5;

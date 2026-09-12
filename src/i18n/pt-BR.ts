@@ -406,8 +406,11 @@ export const ptBR = {
       untrained: 'ações',
       /* Ancestralidade. Os rótulos da ficha: PV, tamanho, deslocamento, falha, visão. */
       hp: 'PV',
+      hpOptions: 'PV por tamanho',
       size: 'tamanho',
+      sizes: 'tamanho',
       speed: 'deslocamento',
+      swim: 'nado',
       flaws: 'falha',
       vision: 'visão',
       languages: 'idiomas',

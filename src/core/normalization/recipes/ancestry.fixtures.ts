@@ -122,6 +122,44 @@ export const human = {
   effects: [],
 };
 
+/**
+ * O Animal Desperto: `hp`, `size` e `speed` são MARCADORES, e a verdade está nas regras —
+ * um ChoiceSet de tamanho com PV por tamanho, e um BaseSpeed. O nado é inventado aqui
+ * (o real não tem) para a leitura de `swim` ter amostra.
+ */
+export const awakenedAnimal = {
+  ...human,
+  _id: 'AwakenedAnimal01',
+  name: 'Awakened Animal',
+  system: {
+    ...human.system,
+    hp: 6,
+    size: 'med',
+    speed: 5,
+    rules: [
+      {
+        key: 'ChoiceSet',
+        choices: [
+          { label: 'PF2E.ActorSizeLarge', value: { hitPoints: 10, size: 'large' } },
+          { label: 'PF2E.ActorSizeMedium', value: { hitPoints: 8, size: 'medium' } },
+          { label: 'PF2E.ActorSizeSmall', value: { hitPoints: 6, size: 'small' } },
+          { label: 'PF2E.ActorSizeTiny', value: { hitPoints: 6, size: 'tiny' } },
+        ],
+      },
+      { key: 'CreatureSize', value: '{item|flags.system.rulesSelections.choice.size}' },
+      {
+        key: 'BaseSpeed',
+        selector: 'land',
+        value: 20,
+        predicate: [{ not: 'heritage:swimming-animal' }],
+      },
+      { key: 'BaseSpeed', selector: 'swim', value: 25 },
+    ],
+    traits: { rarity: 'rare', value: ['animal', 'awakened-animal'] },
+    slug: 'awakened-animal',
+  },
+};
+
 /** Uma herança VERSÁTIL, do pack `heritages`: sem ancestralidade, sem mecânica. */
 export const nephilim = {
   _id: 'NephilimNephilim1',

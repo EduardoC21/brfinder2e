@@ -77,7 +77,9 @@ export const BOOK_FIELD = 'source.title';
 export function fieldText(field: string, value: string): string {
   if (field === BOOK_FIELD) return bookLabel(value);
   if (field === SANCTIFICATION_FIELD) return sanctificationLabel(value);
-  if (field === SIZE_FIELD) return strings.browse.ancestry.size[value] ?? capitalizar(value);
+  if (field === SIZE_FIELD || field === SIZES_FIELD)
+    return strings.browse.ancestry.size[value] ?? capitalizar(value);
+  if (field === SWIM_FIELD) return strings.browse.ancestry.feet(value);
   if (field === VISION_FIELD) return strings.browse.ancestry.vision[value] ?? capitalizar(value);
   if (field === SPEED_FIELD) return strings.browse.ancestry.feet(value);
   if (field === EXTRA_LANGUAGES_FIELD)
@@ -104,6 +106,8 @@ export const CATEGORY_FIELD = 'category';
  * `BOOK_FIELD`, pelo mesmo motivo — coluna, filtro e detalhe têm de escrever igual.
  */
 export const SIZE_FIELD = 'size';
+export const SIZES_FIELD = 'sizes';
+export const SWIM_FIELD = 'swim';
 export const VISION_FIELD = 'vision';
 export const SPEED_FIELD = 'speed';
 

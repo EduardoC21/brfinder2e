@@ -64,6 +64,19 @@ describe('lockedEntities', () => {
     expect(lockedEntities(tab, dwarf, talentos, lookup).map((e) => e.key)).toEqual(['u']);
   });
 
+  /* Base gravada antes de `countsAs`: a reserva `slug` segura a aba. */
+  it('a lista de campos de onde travar usa o primeiro que tem valor', () => {
+    const tab: ListTabSpec = {
+      kind: 'list',
+      id: 'f',
+      source: 'feats',
+      lock: [{ field: 'traits', from: ['countsAs', 'slug'], match: 'contains' }],
+    };
+    const semCountsAs = { key: 'd', uuid: 'd', base: { name: 'Dwarf', slug: 'dwarf' } };
+    expect(lockedEntities(tab, semCountsAs, talentos).map((e) => e.key)).toEqual(['a']);
+    expect(lockedEntities(tab, aiuvarin, talentos).map((e) => e.key)).toEqual(['b', 'c']);
+  });
+
   it('sem valor de onde travar, nada passa', () => {
     const tab: ListTabSpec = {
       kind: 'list',

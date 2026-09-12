@@ -4,13 +4,13 @@ import { indexJournalPages } from '../journals';
 import { isClean } from '../report';
 import { run } from '../run';
 import { ancestryRecipe } from './ancestry';
-import { aiuvarin, forgeDwarf, jornal, nephilim, todas } from './ancestry.fixtures';
+import { aiuvarin, awakenedAnimal, forgeDwarf, jornal, nephilim, todas } from './ancestry.fixtures';
 
 const journals = indexJournalPages([jornal]);
 const result = run(
   ancestryRecipe,
   [
-    { pack: 'ancestries', documents: todas },
+    { pack: 'ancestries', documents: [...todas, awakenedAnimal] },
     { pack: 'heritages', documents: [nephilim, aiuvarin, forgeDwarf] },
   ],
   { journals },
@@ -25,7 +25,7 @@ const achar = (nome: string) => {
 describe('receita de ancestralidade', () => {
   it('normaliza as três ancestralidades e a versátil sem falha, com relatório limpo', () => {
     expect(result.failures).toEqual([]);
-    expect(result.entities).toHaveLength(5);
+    expect(result.entities).toHaveLength(6);
     expect(result.report.unmapped, JSON.stringify(result.report.unmapped)).toEqual([]);
     expect(isClean(result.report)).toBe(true);
   });
@@ -39,8 +39,10 @@ describe('receita de ancestralidade', () => {
       rarity: 'common',
       traits: ['dwarf', 'humanoid'],
       hp: 10,
-      size: 'med',
+      hpOptions: [],
+      sizes: ['med'],
       speed: 20,
+      swim: null,
       vision: 'darkvision',
       boosts: ['con', 'wis', 'free'],
       flaws: ['cha'],
@@ -61,11 +63,21 @@ describe('receita de ancestralidade', () => {
     const versatil = achar('Nephilim').base;
     expect(versatil.kind).toBe('versatile');
     expect(versatil.hp).toBeNull();
-    expect(versatil.size).toBeNull();
+    expect(versatil.sizes).toEqual([]);
     expect(versatil.boosts).toEqual([]);
     expect(versatil.languages).toEqual([]);
     expect(versatil.traits).toEqual(['nephilim']);
     expect(achar('Nephilim').desc.page).toBe('');
+  });
+
+  /* O Animal Desperto: os campos são marcadores, e a verdade está nas regras. */
+  it('lê tamanho, PV por tamanho e deslocamento das regras quando elas mandam', () => {
+    const base = achar('Awakened Animal').base;
+    expect(base.sizes).toEqual(['tiny', 'sm', 'med', 'lg']);
+    expect(base.hp).toBeNull();
+    expect(base.hpOptions).toEqual([6, 8, 10]);
+    expect(base.speed).toBe(20);
+    expect(base.swim).toBe(25);
   });
 
   /* O meio-elfo conta como elfo: é o que dá a ele os talentos de elfo. */

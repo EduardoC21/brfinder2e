@@ -492,7 +492,9 @@ function textoDaColuna(spec: ColumnSpec, entity: BrowseEntity): string {
       return token === '' ? '' : frequencyLabel(token);
     }
     case 'chips':
-      return fieldList(entity, spec.field).map(capitalizar).join(' ');
+      return fieldList(entity, spec.field)
+        .map((item) => (spec.plain === true ? fieldText(spec.field, item) : capitalizar(item)))
+        .join(' ');
     case 'boosts':
       return boostsText(entity, spec.field, spec.free === true, spec.all === true);
     case 'references':
@@ -591,6 +593,17 @@ function Column({ spec, entity }: { readonly spec: ColumnSpec; readonly entity: 
     case 'chips': {
       const lista = fieldList(entity, spec.field);
       if (lista.length === 0) return null;
+      if (spec.plain === true) {
+        return (
+          <>
+            {lista.map((item) => (
+              <span key={item} className={styles['chip']}>
+                {fieldText(spec.field, item)}
+              </span>
+            ))}
+          </>
+        );
+      }
       return (
         <>
           {lista.map((item) => (

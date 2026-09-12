@@ -46,7 +46,7 @@
 
 import { isRecord } from '../../json';
 import { descriptionAlterations, type DescriptionAlteration } from '../alterations';
-import { bool, html, int, nullable, raw, shape, text, textList } from '../decoders';
+import { bool, html, nullable, raw, shape, text, textList } from '../decoders';
 import { from, fromDocument, fromJournal } from '../field';
 import { recipe } from '../recipe';
 import { isOwnHeritage } from './heritage';
@@ -72,12 +72,29 @@ export interface AncestryBase {
   readonly countsAs: readonly string[];
   readonly rarity: string;
   readonly traits: readonly string[];
-  /** Nulo na herança versátil, que não tem mecânica de ancestralidade. Idem abaixo. */
+  /**
+   * Nulo na herança versátil, que não tem mecânica de ancestralidade — e no Animal
+   * Desperto, cujo PV depende do tamanho escolhido (ver `hpBySize`).
+   */
   readonly hp: number | null;
-  /** `tiny`, `sm`, `med`, `lg` — os códigos do Foundry; o rótulo é da tela. */
-  readonly size: string | null;
-  /** Em pés, só em terra. */
+  /**
+   * O PV de cada tamanho, quando o PV depende dele: `[6, 8, 10]` no Animal Desperto (Tiny
+   * e Small dão 6 os dois; a lista não repete). Vazio nos outros 66.
+   */
+  readonly hpOptions: readonly number[];
+  /**
+   * Os tamanhos possíveis — `tiny`, `sm`, `med`, `lg`, os códigos do Foundry. UM na
+   * maioria; dois em Fleshwarp e Automaton, quatro no Animal Desperto, que escolhem por
+   * `ChoiceSet`. Vazio na versátil.
+   */
+  readonly sizes: readonly string[];
+  /**
+   * Em pés, em terra. O `system.speed` do pack, a não ser que um `BaseSpeed land` diga
+   * outra coisa — o Animal Desperto tem `speed: 5` de marcador e a regra diz 20.
+   */
   readonly speed: number | null;
+  /** O deslocamento de nado, quando um `BaseSpeed swim` o dá: Merfolk e Athamaru, 25. */
+  readonly swim: number | null;
   /** `normal`, `low-light-vision`, `darkvision`. */
   readonly vision: string | null;
   /**
@@ -246,6 +263,112 @@ function toCountsAs(document: unknown): readonly string[] {
   return out;
 }
 
+/*
+ * As REGRAS que corrigem os campos. Medido nos 50: o Animal Desperto tem `hp: 6`,
+ * `size: med` e `speed: 5` de MARCADOR, e a verdade num `ChoiceSet` de tamanho (Large 10
+ * PV, Medium 8, Small 6, Tiny 6), num `CreatureSize` e num `BaseSpeed land 20`; Fleshwarp
+ * (sm/med) e Automaton (medium/small) escolhem o tamanho pelo mesmo `ChoiceSet`; Merfolk e
+ * Athamaru nadam a 25 por `BaseSpeed swim`. O autor viu o Animal Desperto errado contra o
+ * livro, e é daqui que sai o certo. As leituras são de `system.rules`, que está em
+ * `defer`, cada uma de uma chave só. INCONSISTENCIAS-FOUNDRY 1.12.
+ */
+
+const TAMANHO: Readonly<Record<string, string>> = {
+  tiny: 'tiny',
+  sm: 'sm',
+  small: 'sm',
+  med: 'med',
+  medium: 'med',
+  lg: 'lg',
+  large: 'lg',
+};
+
+function regras(document: unknown): readonly Record<string, unknown>[] {
+  if (!isRecord(document) || !isRecord(document['system'])) return [];
+  const rules = document['system']['rules'];
+  if (!Array.isArray(rules)) return [];
+  return (rules as unknown[]).filter((rule): rule is Record<string, unknown> => isRecord(rule));
+}
+
+function campo(document: unknown, chave: string): unknown {
+  return isRecord(document) && isRecord(document['system']) ? document['system'][chave] : undefined;
+}
+
+/** As escolhas de tamanho de um `ChoiceSet`, como `{size, hp?}`; vazio se não há. */
+function escolhasDeTamanho(document: unknown): readonly { size: string; hp: number | null }[] {
+  for (const rule of regras(document)) {
+    if (rule['key'] !== 'ChoiceSet' || !Array.isArray(rule['choices'])) continue;
+    const escolhas = (rule['choices'] as unknown[]).flatMap((choice) => {
+      if (!isRecord(choice)) return [];
+      const value = choice['value'];
+      if (typeof value === 'string') {
+        const size = TAMANHO[value.toLowerCase()];
+        return size === undefined ? [] : [{ size, hp: null }];
+      }
+      if (isRecord(value) && typeof value['size'] === 'string') {
+        const size = TAMANHO[value['size'].toLowerCase()];
+        if (size === undefined) return [];
+        return [{ size, hp: typeof value['hitPoints'] === 'number' ? value['hitPoints'] : null }];
+      }
+      return [];
+    });
+    if (escolhas.length > 0) return escolhas;
+  }
+  return [];
+}
+
+/** Do menor ao maior, como o livro escreve: "Tiny, Small, Medium, or Large". */
+const ORDEM_DE_TAMANHO = ['tiny', 'sm', 'med', 'lg'];
+
+function toSizes(document: unknown): readonly string[] {
+  const escolhas = escolhasDeTamanho(document);
+  if (escolhas.length > 0) {
+    return [...new Set(escolhas.map((e) => e.size))].sort(
+      (a, b) => ORDEM_DE_TAMANHO.indexOf(a) - ORDEM_DE_TAMANHO.indexOf(b),
+    );
+  }
+  const size = campo(document, 'size');
+  return typeof size === 'string' ? [size] : [];
+}
+
+function toHpOptions(document: unknown): readonly number[] {
+  const pv = escolhasDeTamanho(document)
+    .map((e) => e.hp)
+    .filter((hp): hp is number => hp !== null);
+  return [...new Set(pv)].sort((a, b) => a - b);
+}
+
+/** O PV fixo — nulo quando depende do tamanho, e nulo na versátil. */
+function toHp(document: unknown): number | null {
+  if (toHpOptions(document).length > 0) return null;
+  const hp = campo(document, 'hp');
+  return typeof hp === 'number' ? hp : null;
+}
+
+function baseSpeed(document: unknown, selector: string): number | null {
+  for (const rule of regras(document)) {
+    if (
+      rule['key'] === 'BaseSpeed' &&
+      rule['selector'] === selector &&
+      typeof rule['value'] === 'number'
+    ) {
+      return rule['value'];
+    }
+  }
+  return null;
+}
+
+function toSpeed(document: unknown): number | null {
+  const terra = baseSpeed(document, 'land');
+  if (terra !== null) return terra;
+  const speed = campo(document, 'speed');
+  return typeof speed === 'number' ? speed : null;
+}
+
+function toSwim(document: unknown): number | null {
+  return baseSpeed(document, 'swim');
+}
+
 /** `ancestry` para o pack de ancestralidades; `versatile` para a herança sem ancestralidade. */
 function toKind(document: unknown): string {
   return isRecord(document) && document['type'] === 'heritage' ? 'versatile' : 'ancestry';
@@ -268,9 +391,11 @@ export const ancestryRecipe = recipe<AncestryBase, AncestryDesc>({
     countsAs: fromDocument(toCountsAs),
     rarity: from('system.traits.rarity', text),
     traits: from('system.traits.value', textList),
-    hp: from('system.hp', nullable(int)).withDefault(null),
-    size: from('system.size', nullable(text)).withDefault(null),
-    speed: from('system.speed', nullable(int)).withDefault(null),
+    hp: fromDocument(toHp),
+    hpOptions: fromDocument(toHpOptions),
+    sizes: fromDocument(toSizes),
+    speed: fromDocument(toSpeed),
+    swim: fromDocument(toSwim),
     vision: from('system.vision', nullable(text)).withDefault(null),
     boosts: from('system.boosts', raw).withDefault({}).map(toBoosts),
     flaws: from('system.flaws', raw).withDefault({}).map(toFlaws),
@@ -288,6 +413,12 @@ export const ancestryRecipe = recipe<AncestryBase, AncestryDesc>({
   },
 
   ignore: {
+    'system.hp':
+      'lido por `hp` (derivado): é o PV, a não ser que o PV dependa do tamanho, e aí é marcador.',
+    'system.size':
+      'lido por `sizes` (derivado): é o tamanho, a não ser que um ChoiceSet escolha, e aí é marcador.',
+    'system.speed':
+      'lido por `speed` (derivado): é o deslocamento, a não ser que um BaseSpeed land diga outro.',
     'system.ancestry':
       'nulo nas 17 versáteis, que são as únicas heranças que esta receita deixa passar — ' +
       'o `kind` já diz que são versáteis. A herança própria, com ancestralidade, é da ' +

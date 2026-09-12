@@ -55,8 +55,26 @@ describe('as 50 ancestralidades reais, e as 17 versáteis', () => {
   });
 
   it('PV, tamanho, visão e raridade, como medido', () => {
-    expect(contar((b) => b.hp)).toEqual({ 6: 13, 8: 29, 10: 8 });
-    expect(contar((b) => b.size)).toEqual({ tiny: 2, sm: 12, med: 33, lg: 3 });
+    /* 49 com PV fixo; o Animal Desperto tem PV por tamanho (6, 8, 10). */
+    expect(contar((b) => b.hp)).toEqual({ 6: 12, 8: 29, 10: 8, null: 1 });
+    expect(base().find((b) => b.slug === 'awakened-animal')?.hpOptions).toEqual([6, 8, 10]);
+    /* Um tamanho em 47; Fleshwarp e Automaton escolhem entre dois; o Animal Desperto, quatro. */
+    expect(contar((b) => b.sizes.join('/'))).toEqual({
+      tiny: 2,
+      sm: 12,
+      med: 30,
+      lg: 3,
+      'sm/med': 2,
+      'tiny/sm/med/lg': 1,
+    });
+    /* O `speed: 5` do Animal Desperto é marcador; a regra diz 20. Merfolk é 5 de verdade. */
+    expect(base().find((b) => b.slug === 'awakened-animal')?.speed).toBe(20);
+    expect(
+      base()
+        .filter((b) => b.swim !== null)
+        .map((b) => b.slug)
+        .sort(),
+    ).toEqual(['athamaru', 'merfolk']);
     expect(contar((b) => b.vision)).toEqual({ normal: 13, 'low-light-vision': 24, darkvision: 13 });
     expect(contar((b) => b.rarity)).toEqual({ common: 8, uncommon: 20, rare: 22 });
   });

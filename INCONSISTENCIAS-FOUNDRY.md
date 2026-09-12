@@ -130,6 +130,17 @@ Versão medida: **`pf2e-8.5.0`**.
 - **No app:** por ora nada; a tela de familiar não separa. Quando separar, a lista das 14
   terá de ser nossa.
 
+### 1.12 `ancestries` — `Awakened Animal`: `hp`, `size` e `speed` são marcadores
+
+- **Caminho:** `system.hp` (6), `system.size` (`med`), `system.speed` (5)
+- **O quê:** o livro diz PV pelo tamanho (6/6/8/10), tamanho à escolha e deslocamento 20
+  (ou pela herança). No pack os três campos têm valores fixos que não são os do livro; a
+  verdade está em `system.rules`: `ChoiceSet` de tamanho com `hitPoints`, `CreatureSize`
+  e `BaseSpeed land 20`. Fleshwarp e Automaton também escolhem o tamanho por `ChoiceSet`
+  com `size` fixo no campo. Merfolk e Athamaru têm `BaseSpeed swim 25` sem campo.
+- **Como foi visto:** o autor comparou a lateral com o livro. Etapa 23d.
+- **No app:** `sizes`, `hpOptions`, `speed` e `swim` derivados das regras.
+
 ---
 
 ## 2. Chaves mortas e erros de grafia

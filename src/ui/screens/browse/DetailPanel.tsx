@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 
 import {
   contextFor,
+  fieldList,
   fieldValue,
   rarityLetter,
   type BrowseEntity,
@@ -541,8 +542,22 @@ function Field({
     }
 
     case 'chips': {
-      const list = readList(entity, spec.field);
+      const list = fieldList(entity, spec.field);
       if (list.length === 0) return null;
+      /* Chips que não são traços: o rótulo é o do campo, sem caixinha de glossário. */
+      if (spec.plain === true) {
+        return (
+          <Row label={label(spec.field)}>
+            <span className={styles['chips']}>
+              {list.map((item) => (
+                <span key={item} className={cx(styles['chip'], 'chamfer-sm')}>
+                  {fieldText(spec.field, item)}
+                </span>
+              ))}
+            </span>
+          </Row>
+        );
+      }
       return (
         <Row label={label(spec.field)}>
           <span className={styles['chips']}>
