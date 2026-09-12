@@ -496,7 +496,7 @@ function textoDaColuna(spec: ColumnSpec, entity: BrowseEntity): string {
         .map((item) => (spec.plain === true ? fieldText(spec.field, item) : capitalizar(item)))
         .join(' ');
     case 'boosts':
-      return boostsText(entity, spec.field, spec.free === true, spec.all === true);
+      return boostsText(entity, spec.field, spec, true);
     case 'references':
       return referenceNames(entity, spec.field);
     case 'links':
@@ -654,7 +654,7 @@ function Column({ spec, entity }: { readonly spec: ColumnSpec; readonly entity: 
      * a lado se leem como "ganha os dois", e o que o antecedente dá é uma escolha.
      */
     case 'boosts': {
-      const valor = boostsText(entity, spec.field, spec.free === true, spec.all === true);
+      const valor = boostsText(entity, spec.field, spec, true);
       if (valor === '') return null;
       return <span className={styles['chip']}>{valor}</span>;
     }

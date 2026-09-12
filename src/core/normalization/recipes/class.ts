@@ -12,7 +12,10 @@
  *
  * Medido no `pf2e-8.5.0`:
  *
- *   atributo-chave  um só em 23 (Int 8, Car 5, Sab 3, Des 3, For 2); For OU Des em 6
+ *   atributo-chave  um só em 22 (Int 8, Car 5, Sab 3, Des 3, For 2); For OU Des em 6;
+                   VAZIO no psíquico. O que a subclasse abre está nas habilidades
+                   (`subfeatures.keyOptions`, 9: ladino 5, psíquico 4) — tabela
+                   `features-index.ts`. Ladino: Des + For/Int/Sab/Car; psíquico: Int/Car.
  *   PV              8 em 16, 10 em 7, 6 em 4, 12 em 2
  *   percepção       treinado 19, perito 10
  *   conjura         13 sim (rank 1), 16 não (0)
@@ -28,9 +31,20 @@
  */
 
 import { isRecord } from '../../json';
+import type { ClassFeaturesByTrait } from '../features-index';
 import { bool, html, int, listOf, shape, text, textList } from '../decoders';
 import { from, fromDocument, fromJournal } from '../field';
 import { recipe } from '../recipe';
+
+/**
+ * Um atributo-chave que uma SUBCLASSE abre, e por quais habilidades: o ladino é Destreza
+ * pelo pack, mas o Ruffian abre Força e o Scoundrel abre Carisma. É o "Dexterity or Other"
+ * do livro, com o "other" nomeado.
+ */
+export interface KeyAbilityOption {
+  readonly ability: string;
+  readonly features: readonly { readonly uuid: string; readonly name: string }[];
+}
 
 /** Uma habilidade de classe, com o nível em que se ganha. */
 export interface ClassFeature {
@@ -46,6 +60,12 @@ export interface ClassBase {
   readonly rarity: string;
   /** Códigos de atributo: um, ou dois entre os quais se escolhe (`['dex', 'str']`). */
   readonly keyAbility: readonly string[];
+  /**
+   * Os que a subclasse abre, fora de `keyAbility`: o ladino tem `['dex']` aqui em cima e
+   * For, Int, Sab e Car aqui; o psíquico tem NADA em cima (o pack deixa a lista vazia) e
+   * Int e Car aqui, pela mente consciente. Vazio nas outras 27.
+   */
+  readonly keyAbilityOptions: readonly KeyAbilityOption[];
   readonly hp: number;
   readonly perception: number;
   readonly saves: { readonly fortitude: number; readonly reflex: number; readonly will: number };
@@ -107,6 +127,33 @@ function toFeatures(cru: unknown): readonly ClassFeature[] {
     .sort((a, b) => a.level - b.level || a.name.localeCompare(b.name));
 }
 
+/** A ordem da ficha, que é a ordem em que as opções saem. */
+const ATTRIBUTE_ORDER: readonly string[] = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
+
+/**
+ * Os atributos-chave que as habilidades com o traço da classe abrem, fora dos que a
+ * classe já tem. Um por atributo, com as habilidades que o abrem, na ordem da ficha.
+ */
+function toKeyAbilityOptions(
+  slug: string,
+  keyAbility: readonly string[],
+  features: ClassFeaturesByTrait | undefined,
+): readonly KeyAbilityOption[] {
+  const porAtributo = new Map<string, { uuid: string; name: string }[]>();
+  for (const feature of features?.get(slug) ?? []) {
+    for (const ability of feature.keyOptions) {
+      if (keyAbility.includes(ability)) continue;
+      const lista = porAtributo.get(ability);
+      const entrada = { uuid: feature.uuid, name: feature.name };
+      if (lista === undefined) porAtributo.set(ability, [entrada]);
+      else lista.push(entrada);
+    }
+  }
+  return [...porAtributo.entries()]
+    .sort(([a], [b]) => ATTRIBUTE_ORDER.indexOf(a) - ATTRIBUTE_ORDER.indexOf(b))
+    .map(([ability, lista]) => ({ ability, features: lista }));
+}
+
 /** `{value: [2, 4, 6]}` — os níveis em que se ganha algo. */
 const levels = shape({ value: listOf(int) });
 
@@ -121,6 +168,18 @@ export const classRecipe = recipe<ClassBase, ClassDesc>({
     slug: from('system.slug', text),
     rarity: from('system.traits.rarity', text).withDefault('common'),
     keyAbility: from('system.keyAbility.value', textList),
+    keyAbilityOptions: fromDocument((document, tables) => {
+      if (!isRecord(document) || !isRecord(document['system'])) return [];
+      const system = document['system'];
+      const keyAbility = isRecord(system['keyAbility']) ? system['keyAbility']['value'] : [];
+      return toKeyAbilityOptions(
+        typeof system['slug'] === 'string' ? system['slug'] : '',
+        Array.isArray(keyAbility)
+          ? keyAbility.filter((item): item is string => typeof item === 'string')
+          : [],
+        tables.features,
+      );
+    }),
     hp: from('system.hp', int),
     perception: from('system.perception', rank),
     saves: from('system.savingThrows', shape({ fortitude: rank, reflex: rank, will: rank })),

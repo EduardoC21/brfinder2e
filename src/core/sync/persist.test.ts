@@ -13,6 +13,7 @@ import {
   type StorePort,
 } from '../store/index';
 import { persistSync } from './persist';
+import { RECIPES_REVISION } from './revision';
 import type { SyncResult, TypeResult } from './run-sync';
 
 function entity(uuid: string, base: unknown, desc: unknown): NormalizedEntity {
@@ -93,7 +94,7 @@ describe('persistSync', () => {
       syncedAt: '2026-08-27T12:00:00.000Z',
       total: 2,
       revision: 0,
-      recipes: 11,
+      recipes: RECIPES_REVISION,
     });
   });
 

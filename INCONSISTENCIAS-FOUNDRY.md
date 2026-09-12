@@ -191,6 +191,18 @@ Versão medida: **`pf2e-8.5.0`**.
   `actionCategory: {value: ""}`; nenhuma outra das 874 tem a chave. Etapa 26.
 - **No app:** ignorado.
 
+### 2.9 `classfeatures` — a habilidade compartilhada leva o livro de UMA classe
+
+- Das 373 habilidades que as 29 classes apontam em `system.items`, 27 são compartilhadas
+  por mais de uma classe (Weapon Specialization por 26, Weapon Expertise por 16,
+  Perception Expertise por 15…), e cada documento tem UM `publication.title`: o da
+  classe para a qual foi escrito primeiro. Resultado: em 161 pares classe→habilidade o
+  livro da habilidade não é o da classe — o Weapon Specialization do Rogue (Player Core)
+  diz "Guns & Gears"; a Perception Expertise do Sorcerer diz "Rage of Elements". E
+  "Assured Runic Crafter" (Runesmith) tem o título VAZIO. Etapa 26b.
+- **No app:** a coluna Livro da aba Habilidades da classe mostra o livro do DOCUMENTO,
+  que é o que existe. Não há de onde tirar o livro "no contexto da classe".
+
 ### 2.6 `journals` — página `Kashrishi`: "Emphathic Sense"
 
 - O bloco de mecânica escreve "Emphathic Sense" duas vezes; a habilidade em

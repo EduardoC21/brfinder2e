@@ -26,6 +26,7 @@ import {
 import { buildTraitGlossary, type TraitGlossary } from '../glossary/index';
 import { listRetiredRaw, type StorePort } from '../store/index';
 import { indexFeats, type FeatsByName } from '../normalization/feats-index';
+import { indexClassFeatures, type ClassFeaturesByTrait } from '../normalization/features-index';
 import { indexJournalPages, type JournalPages } from '../normalization/journals';
 import { mergeLanguageFiles } from '../normalization/language';
 import { run, type PackDocuments, type Failure, type NormalizedEntity } from '../normalization/run';
@@ -157,6 +158,8 @@ export async function runSync(
   const journals = indexJournalPages(readPackDocuments(loaded, 'journals') ?? []);
   /* A tabela de talentos por nome: a dedicação que a página do arquétipo não cita. */
   const feats = indexFeats(readPackDocuments(loaded, 'feats-srd') ?? []);
+  /* A tabela de habilidades de classe por traço: o atributo-chave que a subclasse abre. */
+  const features = indexClassFeatures(readPackDocuments(loaded, 'classfeatures') ?? []);
 
   const types: TypeResult[] = [];
 
@@ -204,7 +207,7 @@ export async function runSync(
       });
     }
 
-    const result = run(recipe, sources, { language, journals, feats });
+    const result = run(recipe, sources, { language, journals, feats, features });
 
     // Os aposentados passam pela MESMA receita, na mesma execução. É o que garante uma
     // forma só para o front desenhar.
@@ -214,7 +217,7 @@ export async function runSync(
         : renormalizeRetired(
             recipe,
             options.store,
-            { language, journals, feats },
+            { language, journals, feats, features },
             mergeFolders(sources),
           );
 
@@ -347,7 +350,12 @@ function mergeFolders(sources: readonly PackDocuments[]): ReadonlyMap<string, st
 async function renormalizeRetired(
   recipe: Recipe<never, never>,
   store: StorePort,
-  tables: { language: ReadonlyMap<string, string>; journals: JournalPages; feats: FeatsByName },
+  tables: {
+    language: ReadonlyMap<string, string>;
+    journals: JournalPages;
+    feats: FeatsByName;
+    features: ClassFeaturesByTrait;
+  },
   folders: ReadonlyMap<string, string>,
 ): Promise<{ entities: readonly NormalizedEntity[]; failures: readonly Failure[] }> {
   const stored = await listRetiredRaw(store, recipe.type);

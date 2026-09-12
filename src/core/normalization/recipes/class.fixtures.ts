@@ -62,6 +62,17 @@ export const druid = {
   effects: [],
 };
 
+/** Uma habilidade com o traço da classe que abre outro atributo-chave (o Ruffian do ladino). */
+export const racket = {
+  _id: 'rrrrrrrrrrrrrrrr',
+  name: 'Wild Ruffian',
+  type: 'feat',
+  system: {
+    traits: { rarity: 'common', value: ['druid'] },
+    subfeatures: { keyOptions: ['str'], proficiencies: {}, languages: {}, suppressedFeatures: [] },
+  },
+};
+
 export const jornal = {
   _id: 'ClassesJournal001',
   name: 'Classes',

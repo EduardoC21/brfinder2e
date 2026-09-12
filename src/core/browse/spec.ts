@@ -42,6 +42,13 @@ export interface BoostsFormat {
   /** Lista vazia é "Livre" (antecedente). */
   readonly free?: boolean;
   /**
+   * O campo com o que a SUBCLASSE abre — `[{ability, features: [{uuid, name}]}]`, o
+   * `keyAbilityOptions` da classe. Na coluna vira "Des ou outro" (ladino) ou, quando a
+   * lista principal é vazia, as próprias opções (psíquico: "Int ou Car"); no detalhe,
+   * cada opção com as habilidades que a abrem, clicáveis.
+   */
+  readonly alternatives?: string;
+  /**
    * Os códigos são TODOS ganhos, não uma escolha: `Constitution, Wisdom, Livre` em vez de
    * `Constitution ou Wisdom`. É a ancestralidade, cujo `free` vem como código na lista.
    */
@@ -514,6 +521,12 @@ export interface ListTabSpec {
   };
   /** Colunas SÓ desta aba, sempre visíveis e antes das outras: a origem. */
   readonly columns?: readonly ColumnSpec[];
+  /**
+   * As colunas LIGADAS por padrão na aba, no lugar das da fonte — e guardadas à parte
+   * delas. As habilidades da classe não precisam da coluna "de classe": tudo ali já é da
+   * classe (o autor, 26b). Sem isto, a aba herda o padrão e a escolha da fonte no trilho.
+   */
+  readonly defaultColumns?: readonly string[];
   /** Filtros SÓ desta aba — os únicos que a barra travada mostra. */
   readonly filters?: readonly FilterSpec[];
 }
@@ -1370,7 +1383,7 @@ export const SOURCES: readonly SourceSpec[] = [
      * (ordem do druida, escola do mago), lida do ChoiceSet das habilidades.
      */
     columns: [
-      { kind: 'boosts', id: 'keyAbility', field: 'keyAbility' },
+      { kind: 'boosts', id: 'keyAbility', field: 'keyAbility', alternatives: 'keyAbilityOptions' },
       { kind: 'text', id: 'hp', field: 'hp' },
       { kind: 'text', id: 'perception', field: 'perception' },
       { kind: 'text', id: 'spellcasting', field: 'spellcasting' },
@@ -1394,9 +1407,9 @@ export const SOURCES: readonly SourceSpec[] = [
     searchFields: ['name'],
     /* A ordem do bloco "Initial Proficiencies" do livro. */
     detail: [
-      { kind: 'boosts', field: 'keyAbility' },
+      { kind: 'boosts', field: 'keyAbility', alternatives: 'keyAbilityOptions' },
       { kind: 'text', field: 'hp' },
-      { kind: 'text', field: 'perception' },
+      { kind: 'ranks', field: 'perception' },
       { kind: 'ranks', field: 'saves' },
       { kind: 'chips', field: 'skills' },
       { kind: 'text', field: 'extraSkills' },
@@ -1414,6 +1427,9 @@ export const SOURCES: readonly SourceSpec[] = [
           source: 'features',
           lock: [{ field: 'uuid', from: 'featureUuids', match: 'equals' }],
           annotate: { levels: ['features'] },
+          /* Só o livro: tudo aqui é da classe, e nível e nome já são fixos. */
+          defaultColumns: ['source'],
+          filters: [{ kind: 'options', id: 'source', field: 'source.title' }],
         },
         {
           kind: 'list',

@@ -866,10 +866,31 @@ aba de lista, com a trava `contains-value`; o que muda é que o rótulo vem do d
 i18n — a habilidade já tem nome.
 
 **A classe é a lateral básica mais a página** (decisão do autor): lista com atributo-chave,
-PV, percepção e conjura; lateral com as proficiências iniciais em campos (rank por nome:
-"Fortitude Treinado · Reflexos Treinado · Vontade Perito"); tela completa com Detalhes (a
-página inteira do jornal, com as habilidades coladas), Habilidades por nível, Talentos,
+PV, percepção e conjura; lateral com as proficiências iniciais; tela completa com Detalhes
+(a página inteira do jornal, com as habilidades coladas), Habilidades por nível, Talentos,
 Foco (as magias de foco com o traço da classe) e as abas de escolha.
+
+**As proficiências, agrupadas pelo rank** (26b, pelo autor): uma linha por rank, do maior
+para o menor, a caixinha do rank na frente e o que se é nele depois — "Especialista:
+Vontade" em cima de "Treinado: Fortitude, Reflexos". É a ordem em que o livro escreve
+("Expert in Will") e a ordem em que se procura: o olho acha o rank, não o nome. A forma
+anterior ("Fortitude Treinado · Reflexos Treinado · Vontade Perito") lia ao contrário. Os
+ranks em português: Destreinado, Treinado, Especialista, Mestre, Lendário.
+
+**O atributo-chave que a subclasse abre** (26b): o pack diz `dex` para o ladino e nada
+para o psíquico; a facção e a mente consciente é que abrem o resto, em
+`subfeatures.keyOptions` das habilidades. A coluna diz "Des ou outro" (ladino) e "Int ou
+Car" (psíquico); a lateral nomeia o "outro" — cada atributo com as habilidades que o
+abrem, como caixinhas que abrem a habilidade em flutuante.
+
+**Atributos abreviados nas colunas** (26b, pelo autor, para todo o projeto): For, Des,
+Con, Int, Sab, Car — a sigla da ficha. No detalhe, o nome por extenso continua em inglês,
+como todo dado de jogo (OPEN-DECISIONS #4). Ver `attributeShort`.
+
+**A aba de lista tem colunas padrão próprias** (`defaultColumns`, 26b): as habilidades da
+classe não precisam de "de classe" — tudo ali é da classe — nem herdam o que a pessoa
+ligou no trilho de Habilidades. A escolha de colunas da aba grava à parte (`aba:<fonte>:
+<aba>`), com o padrão da aba; sem `defaultColumns`, o da fonte.
 
 **Fonte fora do trilho** (`hidden`): a herança própria existe como fonte — carrega, indexa,
 abre em flutuante, aparece na busca global — mas não é uma lista que se abre pelo trilho:

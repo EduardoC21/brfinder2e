@@ -1,13 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
+import { indexClassFeatures } from '../features-index';
 import { indexJournalPages } from '../journals';
 import { isClean } from '../report';
 import { run } from '../run';
 import { classRecipe } from './class';
-import { druid, jornal } from './class.fixtures';
+import { druid, jornal, racket } from './class.fixtures';
 
 const result = run(classRecipe, [{ pack: 'classes', documents: [druid] }], {
   journals: indexJournalPages([jornal]),
+  features: indexClassFeatures([racket]),
 });
 
 describe('receita de classe', () => {
@@ -21,6 +23,15 @@ describe('receita de classe', () => {
   it('projeta a ficha inicial, os níveis e as habilidades por nível', () => {
     const base = result.entities[0]?.base;
     expect(base?.keyAbility).toEqual(['wis']);
+    /* O que a subclasse abre vem da tabela de habilidades, pelo traço da classe. */
+    expect(base?.keyAbilityOptions).toEqual([
+      {
+        ability: 'str',
+        features: [
+          { uuid: 'Compendium.pf2e.classfeatures.Item.rrrrrrrrrrrrrrrr', name: 'Wild Ruffian' },
+        ],
+      },
+    ]);
     expect(base?.hp).toBe(8);
     expect(base?.perception).toBe(1);
     expect(base?.saves).toEqual({ fortitude: 1, reflex: 1, will: 2 });

@@ -8,6 +8,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 
 import { KNOWN_GOOD_TAG, loadInventory, readTextEntry } from '@core/source/index';
 import { createFetchHttp } from '@platform/http-fetch';
+import { indexClassFeatures } from '../features-index';
 import { indexJournalPages } from '../journals';
 import { isClean } from '../report';
 import { run, type RunResult } from '../run';
@@ -26,6 +27,7 @@ beforeAll(async () => {
   };
   result = run(classRecipe, [{ pack: 'classes', documents: ler('classes') }], {
     journals: indexJournalPages(ler('journals')),
+    features: indexClassFeatures(ler('classfeatures')),
   });
 }, 180_000);
 
@@ -56,7 +58,23 @@ describe('as 29 classes reais', () => {
     expect(contar((b) => b.perception)).toEqual({ 1: 19, 2: 10 });
     expect(contar((b) => b.spellcasting)).toEqual({ 0: 16, 1: 13 });
     expect(result.entities.filter((b) => b.base.keyAbility.length === 2)).toHaveLength(6);
+    /* O psíquico é a única com a lista vazia: o atributo vem da mente consciente. */
+    expect(
+      result.entities.filter((b) => b.base.keyAbility.length === 0).map((b) => b.base.slug),
+    ).toEqual(['psychic']);
     expect(result.entities.filter((b) => b.base.attacks.other.name !== '')).toHaveLength(3);
+  });
+
+  /* Só ladino e psíquico têm subclasse que abre o atributo-chave: 9 habilidades. */
+  it('o atributo-chave que a subclasse abre vem das habilidades', () => {
+    const com = result.entities.filter((b) => b.base.keyAbilityOptions.length > 0);
+    expect(com.map((b) => b.base.slug).sort()).toEqual(['psychic', 'rogue']);
+    const ladino = com.find((b) => b.base.slug === 'rogue')?.base.keyAbilityOptions ?? [];
+    expect(ladino.map((o) => o.ability)).toEqual(['str', 'int', 'wis', 'cha']);
+    expect(ladino[0]?.features.map((f) => f.name).sort()).toEqual(['Avenger', 'Ruffian']);
+    const psiquico = com.find((b) => b.base.slug === 'psychic')?.base.keyAbilityOptions ?? [];
+    expect(psiquico.map((o) => o.ability)).toEqual(['int', 'cha']);
+    expect(psiquico.flatMap((o) => o.features)).toHaveLength(4);
   });
 
   /* 556 habilidades apontadas, 15 a 26 por classe, todas em classfeatures. */

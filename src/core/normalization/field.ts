@@ -11,6 +11,7 @@
 
 import { raw, text, type Decoder } from './decoders';
 import type { FeatsByName } from './feats-index';
+import type { ClassFeaturesByTrait } from './features-index';
 
 export type FieldSource = 'document' | 'language' | 'journal' | 'sector' | 'derived';
 
@@ -25,6 +26,8 @@ export interface LookupTables {
   readonly journals?: ReadonlyMap<string, string>;
   /** Os talentos por nome — ver `feats-index.ts`. */
   readonly feats?: FeatsByName;
+  /** As habilidades de classe por traço — ver `features-index.ts`. */
+  readonly features?: ClassFeaturesByTrait;
 }
 
 export interface Field<T> {

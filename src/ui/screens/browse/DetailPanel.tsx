@@ -25,7 +25,7 @@ import { CollapseToggle } from '@ui/components/CollapseToggle';
 import { cx } from '@ui/cx';
 import { bookLabel, capitalizar, fieldText, rankLabel } from '@ui/text';
 
-import { boostsText } from './backgroundFields';
+import { attributeName, boostsText, keyAlternatives } from './backgroundFields';
 import { references as referenciasDe, type Reference } from './referenceFields';
 import { itemBulkText, itemDamageText, itemPriceText, statText } from './itemFields';
 import type { PopoutSubject } from './popouts';
@@ -691,22 +691,58 @@ function Field({
       );
     }
 
-    /* `Strength ou Dexterity`, ou `Livre` onde a fonte diz que é. Ver `boostsText`. */
+    /*
+     * `Strength ou Dexterity`, ou `Livre` onde a fonte diz que é. Ver `boostsText`. Com
+     * alternativas (a classe), o "outro" ganha nome embaixo: cada atributo que a subclasse
+     * abre, com as habilidades que o abrem como caixinhas que abrem a habilidade — o
+     * Ruffian é uma entrada de Habilidades, e o que se clica abre painel.
+     */
     case 'boosts': {
-      const valor = boostsText(entity, spec.field, spec.free === true, spec.all === true);
+      const valor = boostsText(entity, spec.field, spec);
       if (valor === '') return null;
-      return <Row label={label(spec.field)}>{valor}</Row>;
+      const alternativas =
+        spec.alternatives === undefined ? [] : keyAlternatives(entity, spec.alternatives);
+      return (
+        <Row label={label(spec.field)}>
+          {valor}
+          {alternativas.map((alternativa) => (
+            <span key={alternativa.ability} className={styles['alternativa']}>
+              <span className={styles['muted']}>{attributeName(alternativa.ability)}</span>
+              <Referencias
+                acoes={alternativa.features}
+                aberta={null}
+                onAbrir={onOpenReference}
+                {...(nameOf === undefined ? {} : { nameOf })}
+              />
+            </span>
+          ))}
+        </Row>
+      );
     }
 
     /*
-     * As PROFICIÊNCIAS numa linha: "Fortitude Treinado · Reflexos Treinado · Vontade
-     * Perito". Rank 0 não aparece: o livro só lista o que se é. O `other` dos ataques é
-     * um objeto com nome — vira "Deity's favored weapon Treinado" quando tem nome.
+     * As PROFICIÊNCIAS agrupadas pelo rank, do maior para o menor, uma linha por rank: a
+     * caixinha diz o rank e depois vem o que se é nele — "Especialista: Vontade" em cima
+     * de "Treinado: Fortitude, Reflexos". É como o livro escreve ("Trained in Fortitude…
+     * Expert in Will"), e não ao contrário, que era como saía antes (o autor, 26b).
+     * Rank 0 não aparece: o livro só lista o que se é. Um número solto (a percepção) é
+     * uma caixinha sem lista. O `other` dos ataques é um objeto com nome.
      */
     case 'ranks': {
-      const partes = ranks(entity, spec.field);
-      if (partes.length === 0) return null;
-      return <Row label={label(spec.field)}>{partes.join(' · ')}</Row>;
+      const grupos = ranks(entity, spec.field);
+      if (grupos.length === 0) return null;
+      return (
+        <Row label={label(spec.field)}>
+          {grupos.map((grupo) => (
+            <span key={grupo.rank} className={styles['rank']}>
+              <span className={cx(styles['chip'], 'chamfer-sm')}>
+                {rankLabel(String(grupo.rank))}
+              </span>
+              {grupo.names.length > 0 && <span>{grupo.names.join(', ')}</span>}
+            </span>
+          ))}
+        </Row>
+      );
     }
 
     /* Terra sozinho — é o padrão —, o resto com o tipo ao lado: "5 pés · 25 pés nado". */
@@ -802,23 +838,36 @@ function readList(entity: BrowseEntity, field: string): string[] {
 const s = strings.browse.skill;
 
 /** `{fortitude: 1, will: 2, other: {name, rank}}` → `['Fortitude Treinado', …]`, sem os zero. */
-function ranks(entity: BrowseEntity, field: string): readonly string[] {
+/**
+ * As proficiências de um campo AGRUPADAS por rank, do maior para o menor: `{fortitude: 1,
+ * reflex: 1, will: 2}` → `[{2, ['Vontade']}, {1, ['Fortitude', 'Reflexos']}]`. Um número
+ * solto (a percepção) vira um grupo sem nomes. Rank 0 fica de fora.
+ */
+function ranks(
+  entity: BrowseEntity,
+  field: string,
+): readonly { rank: number; names: readonly string[] }[] {
   const base = entity.base;
-  if (!isRecord(base) || !isRecord(base[field])) return [];
-  const out: string[] = [];
-  for (const [chave, valor] of Object.entries(base[field])) {
-    if (typeof valor === 'number') {
-      if (valor > 0)
-        out.push(
-          `${b.ancestry.proficiency[chave] ?? capitalizar(chave)} ${rankLabel(String(valor))}`,
-        );
-    } else if (isRecord(valor) && typeof valor['rank'] === 'number' && valor['rank'] > 0) {
-      const nome =
-        typeof valor['name'] === 'string' && valor['name'] !== '' ? valor['name'] : chave;
-      out.push(`${nome} ${rankLabel(String(valor['rank']))}`);
+  if (!isRecord(base)) return [];
+  const valor = base[field];
+  if (typeof valor === 'number') return valor > 0 ? [{ rank: valor, names: [] }] : [];
+  if (!isRecord(valor)) return [];
+  const porRank = new Map<number, string[]>();
+  const anotar = (rank: number, nome: string): void => {
+    if (rank <= 0) return;
+    const lista = porRank.get(rank);
+    if (lista === undefined) porRank.set(rank, [nome]);
+    else lista.push(nome);
+  };
+  for (const [chave, item] of Object.entries(valor)) {
+    if (typeof item === 'number') {
+      anotar(item, b.ancestry.proficiency[chave] ?? capitalizar(chave));
+    } else if (isRecord(item) && typeof item['rank'] === 'number') {
+      const nome = typeof item['name'] === 'string' && item['name'] !== '' ? item['name'] : chave;
+      anotar(item['rank'], nome);
     }
   }
-  return out;
+  return [...porRank.entries()].sort(([a], [c]) => c - a).map(([rank, names]) => ({ rank, names }));
 }
 
 /** `[{type, value}]` de um campo de deslocamentos, tolerando o que não tiver a forma. */

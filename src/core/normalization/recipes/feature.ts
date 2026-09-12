@@ -185,7 +185,9 @@ export const featureRecipe = recipe<FeatureBase, FeatureDesc>({
       'rule elements (35 dos 55 têm) — mecânica pura de VTT: o ataque de mordida, a ' +
       'imunidade do construto. A descrição já conta em texto. Continua em raw/.',
     'system.subfeatures':
-      'o que a habilidade CONCEDE em números: sentido (5), proficiência (4), idiomas (1), ' +
-      'e as features que suprime (4). A descrição já conta em texto. Vira essencial na ficha.',
+      'o que a habilidade CONCEDE em números: proficiência (195), idiomas (17), sentido (5), ' +
+      'as features que suprime (11), e o atributo-chave que a subclasse abre (`keyOptions`, ' +
+      '9: ladino 5, psíquico 4) — este a CLASSE lê, pela tabela `features-index.ts`. O resto ' +
+      'a descrição já conta em texto. Vira essencial na ficha.',
   },
 });

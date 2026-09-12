@@ -81,6 +81,11 @@ Antes: **Etapa 20** — as tabelas das regras param de quebrar (célula compacta
 linha, `@Embed` cola a entrada apontada, e as duas vassouras em Configurações: apagar as
 entradas aposentadas e apagar a base inteira.
 
+Antes: **Etapa 26b** — o atributo-chave que a subclasse abre (`subfeatures.keyOptions`,
+9 habilidades: o Rogue vira "Des ou outro", o Psychic "Int ou Car"), pela quarta tabela
+de consulta do motor; os atributos abreviados nas colunas (For, Des, Con, Int, Sab, Car);
+as proficiências agrupadas pelo rank; a aba Habilidades da classe só com Livro.
+
 Antes: **Etapa 26a** — `class`: as 29 do pack com a ficha inicial em campos
 (atributo-chave, PV, percepção, resistências, ataques, defesas, perícias, conjura) e a
 página do jornal `Classes` colada; as 556 habilidades por nível de `system.items` viram

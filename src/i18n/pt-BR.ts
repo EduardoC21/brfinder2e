@@ -207,6 +207,8 @@ export const ptBR = {
     background: {
       or: 'ou',
       freeBoost: 'Livre',
+      /** O "other" do "Dexterity or Other" do ladino: a subclasse decide. */
+      other: 'outro',
     },
     /** A tela completa da entrada (22b): o botão que abre, o que volta, e as abas. */
     fullView: {
@@ -276,7 +278,7 @@ export const ptBR = {
         calling: 'Chamado mítico',
       } as Record<string, string>,
       /** Os ranks de proficiência do Foundry, 0 a 4. */
-      rank: ['Destreinado', 'Treinado', 'Perito', 'Mestre', 'Lendário'],
+      rank: ['Destreinado', 'Treinado', 'Especialista', 'Mestre', 'Lendário'],
       /** As chaves das proficiências, como o livro as chama. */
       proficiency: {
         fortitude: 'Fortitude',

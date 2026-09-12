@@ -353,8 +353,11 @@ interface OpenRequest {
 
 /** A trava de uma aba de lista: a etiqueta, e as colunas e os filtros só dela. */
 interface LockedList {
+  /** O id da aba: é a chave da preferência de colunas dela, à parte da fonte. */
+  readonly id: string;
   readonly label: string;
   readonly columns: readonly ColumnSpec[];
+  readonly defaultColumns: readonly string[] | null;
   readonly filters: readonly FilterSpec[];
 }
 const POR_NIVEL: Sort = { column: 'level', direction: 'asc' };
@@ -596,7 +599,12 @@ function SourcePane({
     () => filtersInScope(source, tiposMarcados),
     [source, tiposMarcados],
   );
-  const escopo = scopeKey(tiposMarcados);
+  /*
+   * A aba travada tem escopo PRÓPRIO de colunas: as habilidades da classe não querem a
+   * coluna "de classe" que a fonte liga no trilho, e a escolha feita numa não deve mexer
+   * na outra.
+   */
+  const escopo = lock === undefined ? scopeKey(tiposMarcados) : `aba:${lock.id}`;
 
   /*
    * O SEGUNDO corte dos filtros, e ele é sobre o DADO, não sobre o descritor.
@@ -646,7 +654,9 @@ function SourcePane({
    */
   const gravadas = escopo === '' ? salvas.columns : (salvas.columnsByType[escopo] ?? null);
   const idsVisiveis =
-    (ready ? gravadas : null) ?? presetFor(source, tiposMarcados) ?? source.defaultColumns;
+    (ready ? gravadas : null) ??
+    (lock === undefined ? presetFor(source, tiposMarcados) : lock.defaultColumns) ??
+    source.defaultColumns;
   const colunasVisiveis = [
     /* As colunas da aba travada vêm PRIMEIRO e sempre: a origem do talento. */
     ...(lock?.columns ?? []),
@@ -843,7 +853,13 @@ function SourcePane({
               reference={reference}
               listRequest={0}
               sources={sources}
-              lock={{ label: etiqueta, columns: tab.columns ?? [], filters: tab.filters ?? [] }}
+              lock={{
+                id: `${source.id}:${tab.id}`,
+                label: etiqueta,
+                columns: tab.columns ?? [],
+                defaultColumns: tab.defaultColumns ?? null,
+                filters: tab.filters ?? [],
+              }}
             />
           );
         }}
