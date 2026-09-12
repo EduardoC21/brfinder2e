@@ -57,6 +57,12 @@ export interface AncestryFeature {
   readonly name: string;
 }
 
+export interface Speed {
+  /** `land`, `swim` — o `selector` do `BaseSpeed` do Foundry. */
+  readonly type: string;
+  readonly value: number;
+}
+
 export interface AncestryBase {
   readonly name: string;
   readonly slug: string;
@@ -95,6 +101,11 @@ export interface AncestryBase {
   readonly speed: number | null;
   /** O deslocamento de nado, quando um `BaseSpeed swim` o dá: Merfolk e Athamaru, 25. */
   readonly swim: number | null;
+  /**
+   * TODOS os deslocamentos numa lista, para a linha única do detalhe: `land` primeiro, e o
+   * que mais houver com o tipo — Merfolk `[{land, 5}, {swim, 25}]`. Vazio na versátil.
+   */
+  readonly speeds: readonly Speed[];
   /** `normal`, `low-light-vision`, `darkvision`. */
   readonly vision: string | null;
   /**
@@ -369,6 +380,15 @@ function toSwim(document: unknown): number | null {
   return baseSpeed(document, 'swim');
 }
 
+function toSpeeds(document: unknown): readonly Speed[] {
+  const out: Speed[] = [];
+  const land = toSpeed(document);
+  if (land !== null) out.push({ type: 'land', value: land });
+  const swim = toSwim(document);
+  if (swim !== null) out.push({ type: 'swim', value: swim });
+  return out;
+}
+
 /** `ancestry` para o pack de ancestralidades; `versatile` para a herança sem ancestralidade. */
 function toKind(document: unknown): string {
   return isRecord(document) && document['type'] === 'heritage' ? 'versatile' : 'ancestry';
@@ -396,6 +416,7 @@ export const ancestryRecipe = recipe<AncestryBase, AncestryDesc>({
     sizes: fromDocument(toSizes),
     speed: fromDocument(toSpeed),
     swim: fromDocument(toSwim),
+    speeds: fromDocument(toSpeeds),
     vision: from('system.vision', nullable(text)).withDefault(null),
     boosts: from('system.boosts', raw).withDefault({}).map(toBoosts),
     flaws: from('system.flaws', raw).withDefault({}).map(toFlaws),

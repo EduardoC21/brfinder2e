@@ -237,6 +237,13 @@ export const ptBR = {
         darkvision: 'Escuridão',
       } as Record<string, string>,
       feet: (valor: string) => `${valor} pés`,
+      /** O tipo do deslocamento que não é em terra, ao lado do valor: "25 pés nado". */
+      speedType: {
+        swim: 'nado',
+        fly: 'voo',
+        climb: 'escalada',
+        burrow: 'escavação',
+      } as Record<string, string>,
       /** Quantos idiomas adicionais — a regra da página, que o pack só tem como número. */
       extraLanguages: {
         int: 'tantos quanto o modificador de Inteligência (se positivo)',
@@ -411,11 +418,12 @@ export const ptBR = {
       sizes: 'tamanho',
       speed: 'deslocamento',
       swim: 'nado',
+      speeds: 'deslocamento',
       flaws: 'falha',
       vision: 'visão',
       languages: 'idiomas',
-      additionalLanguages: 'idiomas adicionais',
-      extraLanguages: 'quantos',
+      additionalLanguages: 'idiomas ad.',
+      extraLanguages: 'idiomas qnt.',
       features: 'habilidades',
       /* Habilidade: a ancestralidade (ou classe) dona. A categoria já é `category` (equipamento). */
       owner: 'de',

@@ -48,7 +48,7 @@ async function montar() {
     syncedAt: '2026-09-11T00:00:00.000Z',
     total: 2,
     revision: 0,
-    recipes: 5,
+    recipes: 6,
   });
   return store;
 }

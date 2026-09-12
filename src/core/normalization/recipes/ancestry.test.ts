@@ -43,6 +43,7 @@ describe('receita de ancestralidade', () => {
       sizes: ['med'],
       speed: 20,
       swim: null,
+      speeds: [{ type: 'land', value: 20 }],
       vision: 'darkvision',
       boosts: ['con', 'wis', 'free'],
       flaws: ['cha'],
@@ -78,6 +79,10 @@ describe('receita de ancestralidade', () => {
     expect(base.hpOptions).toEqual([6, 8, 10]);
     expect(base.speed).toBe(20);
     expect(base.swim).toBe(25);
+    expect(base.speeds).toEqual([
+      { type: 'land', value: 20 },
+      { type: 'swim', value: 25 },
+    ]);
   });
 
   /* O meio-elfo conta como elfo: é o que dá a ele os talentos de elfo. */

@@ -25,7 +25,7 @@ import { CollapseToggle } from '@ui/components/CollapseToggle';
 import { cx } from '@ui/cx';
 import { bookLabel, capitalizar, fieldText } from '@ui/text';
 
-import { boostsText } from './backgroundFields';
+import { attributeName, boostsText } from './backgroundFields';
 import { references as referenciasDe, type Reference } from './referenceFields';
 import { itemBulkText, itemDamageText, itemPriceText, statText } from './itemFields';
 import type { PopoutSubject } from './popouts';
@@ -542,7 +542,10 @@ function Field({
     }
 
     case 'chips': {
-      const list = fieldList(entity, spec.field);
+      const lista = fieldList(entity, spec.field);
+      /* Um campo de UM valor (PV, visão) também vira chip: é a mesma caixinha. */
+      const um = fieldValue(entity, spec.field);
+      const list = lista.length > 0 ? lista : um === '' ? [] : [um];
       if (list.length === 0) return null;
       /* Chips que não são traços: o rótulo é o do campo, sem caixinha de glossário. */
       if (spec.plain === true) {
@@ -691,11 +694,48 @@ function Field({
       );
     }
 
-    /* `Strength ou Dexterity`, ou `Livre` onde a fonte diz que é. Ver `boostsText`. */
+    /*
+     * `Strength ou Dexterity`, ou `Livre` onde a fonte diz que é. Ver `boostsText`. No modo
+     * `all` (todos ganhos) cada atributo é uma CAIXINHA — pedido do autor, e é o que
+     * separa "ganha os dois" de "escolhe um": a escolha continua sendo uma frase com "ou".
+     */
     case 'boosts': {
-      const valor = boostsText(entity, spec.field, spec.free === true, spec.all === true);
+      if (spec.all === true) {
+        const codigos = fieldList(entity, spec.field);
+        if (codigos.length === 0) return null;
+        return (
+          <Row label={label(spec.field)}>
+            <span className={styles['chips']}>
+              {codigos.map((codigo, i) => (
+                <span key={`${codigo}${String(i)}`} className={cx(styles['chip'], 'chamfer-sm')}>
+                  {codigo === 'free' ? b.background.freeBoost : attributeName(codigo)}
+                </span>
+              ))}
+            </span>
+          </Row>
+        );
+      }
+      const valor = boostsText(entity, spec.field, spec.free === true);
       if (valor === '') return null;
       return <Row label={label(spec.field)}>{valor}</Row>;
+    }
+
+    /* Terra sozinho — é o padrão —, o resto com o tipo ao lado: "5 pés", "25 pés nado". */
+    case 'speeds': {
+      const lista = speeds(entity, spec.field);
+      if (lista.length === 0) return null;
+      return (
+        <Row label={label(spec.field)}>
+          <span className={styles['chips']}>
+            {lista.map((s) => (
+              <span key={s.type} className={cx(styles['chip'], 'chamfer-sm')}>
+                {b.ancestry.feet(String(s.value))}
+                {s.type !== 'land' && ` ${b.ancestry.speedType[s.type] ?? s.type}`}
+              </span>
+            ))}
+          </span>
+        </Row>
+      );
     }
 
     case 'stat': {
@@ -775,6 +815,17 @@ function readList(entity: BrowseEntity, field: string): string[] {
 }
 
 const s = strings.browse.skill;
+
+/** `[{type, value}]` de um campo de deslocamentos, tolerando o que não tiver a forma. */
+function speeds(entity: BrowseEntity, field: string): readonly { type: string; value: number }[] {
+  const base = entity.base;
+  if (!isRecord(base) || !Array.isArray(base[field])) return [];
+  return (base[field] as unknown[]).flatMap((item) =>
+    isRecord(item) && typeof item['type'] === 'string' && typeof item['value'] === 'number'
+      ? [{ type: item['type'], value: item['value'] }]
+      : [],
+  );
+}
 
 /** Os blocos de uma alteração como UM HTML: título vira `<h3>`, divisor vira `<hr>`. */
 function alterationHtml(alteration: DescriptionAlteration): string {

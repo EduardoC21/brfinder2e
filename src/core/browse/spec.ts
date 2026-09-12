@@ -350,6 +350,11 @@ export type DetailFieldSpec =
   | { readonly kind: 'ritual'; readonly field: string }
   | { readonly kind: 'boolean'; readonly field: string }
   | ({ readonly kind: 'chips'; readonly field: string } & ChipsFormat)
+  /**
+   * Os DESLOCAMENTOS numa linha só: o valor em terra sozinho — é o padrão, e não precisa
+   * dizer que é terrestre — e os outros com o tipo ao lado ("25 pés nado"). Pedido do autor.
+   */
+  | { readonly kind: 'speeds'; readonly field: string }
   | { readonly kind: 'frequency'; readonly field: string }
   | { readonly kind: 'cost' }
   | { readonly kind: 'source' };
@@ -1046,19 +1051,23 @@ export const SOURCES: readonly SourceSpec[] = [
      */
     detail: [
       { kind: 'chips', field: 'traits' },
-      { kind: 'text', field: 'hp' },
+      /*
+       * A ficha em CAIXINHAS, pedido do autor: PV, tamanho, deslocamento, aumentos, falha,
+       * idiomas, visão — tudo chip. Um número solto ao lado de um chip parecia
+       * desalinhado; agora tudo começa no mesmo lugar.
+       */
+      { kind: 'chips', field: 'hp', plain: true },
       /* PV por tamanho: só o Animal Desperto. */
       { kind: 'chips', field: 'hpOptions', plain: true },
       { kind: 'chips', field: 'sizes', plain: true },
-      { kind: 'text', field: 'speed' },
-      { kind: 'text', field: 'swim' },
+      { kind: 'speeds', field: 'speeds' },
       { kind: 'boosts', field: 'boosts', all: true },
       { kind: 'boosts', field: 'flaws', all: true },
       { kind: 'chips', field: 'languages' },
       { kind: 'chips', field: 'additionalLanguages' },
       /* "Quantos": a regra que a página diz por extenso e o pack só tem como número. */
       { kind: 'text', field: 'extraLanguages' },
-      { kind: 'text', field: 'vision' },
+      { kind: 'chips', field: 'vision', plain: true },
       { kind: 'references', field: 'features' },
       { kind: 'text', field: 'kind' },
       { kind: 'source' },
