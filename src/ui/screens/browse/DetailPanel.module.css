@@ -1,16 +1,18 @@
 /*
  * O detalhe de uma entrada.
  *
- * Grid de duas linhas: cabeçalho fixo e corpo que rola. É o ponto do desenho — a descrição
- * de um talento longo passa da altura da janela, e sem esse teto o cabeçalho sairia de
- * vista junto com o texto. Assim nome, custo e traços ficam sempre à mão enquanto se lê.
+ * Coluna que rola INTEIRA (26d, pelo autor). Até então o cabeçalho ficava fixo e só o
+ * corpo rolava, para nome e traços ficarem à mão durante a leitura — mas numa janela
+ * baixa, com uma classe de dez campos em cima, sobravam três linhas para a descrição.
+ * Rolar tudo devolve a altura à leitura; o nome está a um gesto de rolagem.
  */
 .panel {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
+  display: flex;
+  flex-direction: column;
   height: 100%;
   min-height: 0;
   min-width: 0;
+  overflow-y: auto;
   background: var(--color-panel);
 }
 
@@ -204,8 +206,7 @@
 }
 
 .body {
-  min-height: 0;
-  overflow-y: auto;
+  flex: none;
   padding: var(--space-4);
 }
 
@@ -304,12 +305,10 @@
  * O teto em `vh` é para a fonte que um dia tiver as duas coisas: a descrição rola no lugar
  * dela em vez de espremer a ação contra o rodapé.
  */
-.comSub {
-  grid-template-rows: auto auto minmax(0, 1fr);
-}
-
-.comSub .body {
-  max-height: 40vh;
+/* Embutido, o painel é um trecho da coluna que já rola: sem altura nem rolagem próprias. */
+.embutido {
+  height: auto;
+  overflow: visible;
 }
 
 /*
@@ -317,8 +316,72 @@
  * parecer dois painéis empilhados, e ela é UM painel com uma entrada aberta dentro.
  */
 .sub {
-  min-height: 0;
+  flex: none;
   border-top: 1px solid var(--color-hairline);
+}
+
+/*
+ * As SUB-ABAS da lateral (26d): a mesma barra das abas de cima, em miniatura, logo
+ * abaixo do cabeçalho; embaixo, o conteúdo da aba escolhida.
+ */
+.lateral {
+  flex: none;
+  padding: var(--space-3) var(--space-4) var(--space-4);
+}
+
+.subAbas {
+  display: flex;
+  gap: var(--space-1);
+  margin-bottom: var(--space-3);
+}
+
+.subAba {
+  height: 24px;
+  border: 1px solid var(--color-hairline);
+  padding: 0 var(--space-3);
+  background: transparent;
+  color: var(--color-text-muted);
+  font: 400 var(--text-sm) / 1 var(--font-body);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.subAba:hover {
+  color: var(--color-text);
+}
+
+.subAbaAtiva {
+  border-color: var(--color-state);
+  background: color-mix(in srgb, var(--color-state) 18%, transparent);
+  color: var(--color-text);
+}
+
+.lateralCampos {
+  margin: 0;
+}
+
+/*
+ * A tabela na lateral é ESTREITA e comprida — 20 níveis, ou 11 colunas de magias. Fonte
+ * menor e célula justa para caber com pouca rolagem, que foi o pedido.
+ */
+.lateralTabela {
+  font-size: var(--text-sm);
+  line-height: 1.4;
+  /* A de magias tem 12 colunas: na lateral mais estreita, rola de lado em vez de cortar. */
+  overflow-x: auto;
+}
+
+.lateralTabela table {
+  width: 100%;
+}
+
+.lateralTabela td,
+.lateralTabela th {
+  padding: 2px 3px;
+}
+
+.lateralTabela th {
+  letter-spacing: 0;
 }
 
 /* Embutido, o painel não pinta fundo próprio nem repete o respiro do topo da coluna. */

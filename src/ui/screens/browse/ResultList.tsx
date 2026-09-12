@@ -31,11 +31,16 @@ import { useTrackWidth } from '@ui/hooks/useTrackWidth';
 import { useWindowedRows } from '@ui/hooks/useWindowedRows';
 
 import { columnLabel, frequencyLabel, specialColumnLabel } from './filterLabels';
-import { boostsText } from './backgroundFields';
+import { ATTRIBUTE_NAME_FIELDS, attributeShortByName, boostsText } from './backgroundFields';
 import { referenceNames } from './referenceFields';
 import { itemBulkText, itemDamageShort, itemPriceText, statText } from './itemFields';
 import { areaText, defenseText, durationText, spellCast } from './spellFields';
 import styles from './ResultList.module.css';
+
+/** O texto de uma célula de texto: o atributo por extenso vira a sigla da ficha (26b). */
+function textoDaCelula(field: string, value: string): string {
+  return ATTRIBUTE_NAME_FIELDS.has(field) ? attributeShortByName(value) : fieldText(field, value);
+}
 
 /** Quais dados fixos estão ligados nesta fonte, depois da escolha do usuário. */
 export interface ActiveSpecials {
@@ -479,7 +484,7 @@ function textoDaColuna(spec: ColumnSpec, entity: BrowseEntity): string {
   switch (spec.kind) {
     case 'chip':
     case 'text':
-      return fieldText(spec.field, fieldValue(entity, spec.field));
+      return textoDaCelula(spec.field, fieldValue(entity, spec.field));
     case 'frequency': {
       /*
        * Token vazio devolve vazio, e não a frase que `frequencyLabel` escreveria para ele.
@@ -555,7 +560,7 @@ function Column({ spec, entity }: { readonly spec: ColumnSpec; readonly entity: 
     case 'chip': {
       const value = fieldValue(entity, spec.field);
       if (value === '') return null;
-      return <span className={styles['chip']}>{fieldText(spec.field, value)}</span>;
+      return <span className={styles['chip']}>{textoDaCelula(spec.field, value)}</span>;
     }
 
     case 'text': {

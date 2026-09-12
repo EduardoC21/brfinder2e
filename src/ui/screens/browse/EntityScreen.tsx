@@ -189,7 +189,8 @@ export function EntityScreen({
             key={aba.tab.id}
             entity={entity}
             entityType={entityType}
-            fields={fields}
+            fields={view.side?.fields ?? fields}
+            {...(view.side === undefined ? {} : { side: view.side })}
             onPopOut={onPopOut}
             reference={reference}
             collapsed={lateralFechada}

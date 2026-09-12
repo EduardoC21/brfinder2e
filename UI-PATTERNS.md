@@ -885,7 +885,20 @@ abrem, como caixinhas que abrem a habilidade em flutuante.
 
 **Atributos abreviados nas colunas** (26b, pelo autor, para todo o projeto): For, Des,
 Con, Int, Sab, Car — a sigla da ficha. No detalhe, o nome por extenso continua em inglês,
-como todo dado de jogo (OPEN-DECISIONS #4). Ver `attributeShort`.
+como todo dado de jogo (OPEN-DECISIONS #4). Ver `attributeShort`; a perícia, cujo campo
+vem escrito "Strength" da tabela do jornal, passa por `attributeShortByName` (26d).
+
+**A lateral da classe na aba Detalhes** (26d, pelo autor): não é a lateral da lista. Em
+cima só a identidade — atributo-chave, PV, conjura, livro —, sem a descrição, porque a
+página inteira está do lado; embaixo SUB-ABAS, com a mesma barra das abas de cima em
+miniatura: **Progressão** (a tabela do livro, tirada da página do jornal pelo cabeçalho
+"Your Level | Class Features" — 29 de 29, 20 níveis), **Proficiências** (percepção,
+resistências, ataques, defesas, perícias — saíram de cima para não se repetirem) e
+**Magias** (a tabela de magias por dia, "Your Level | Cantrips…" — 12 classes; a aba some
+onde a tabela não existe, e por isso as tabelas são lidas antes de desenhar a barra). É
+`fullView.side` na spec: campos e sub-abas de duas espécies, `fields` e `table`; a tabela
+vai para `desc/` porque é texto da Paizo, e a lateral a desenha compacta (fonte menor,
+célula justa, rolagem lateral só se precisar — a de magias tem 12 colunas).
 
 **A rolagem da aba de texto é lembrada** (26c, pelo autor) enquanto a entrada está
 aberta: ir a Habilidades e voltar a Detalhes devolve a altura. É um mapa que vive com a

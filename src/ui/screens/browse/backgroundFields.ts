@@ -68,6 +68,18 @@ export function attributeShort(code: string): string {
   return ATTRIBUTE_SHORT[code] ?? code;
 }
 
+/**
+ * O campo cujo valor é o NOME do atributo por extenso, e não o código: a perícia, que
+ * vem da tabela do jornal escrita "Strength". Na coluna vira a sigla como os outros.
+ */
+export const ATTRIBUTE_NAME_FIELDS: ReadonlySet<string> = new Set(['attribute']);
+
+/** `Strength` → `For`; o que não é atributo volta como veio. */
+export function attributeShortByName(name: string): string {
+  const code = Object.keys(ATTRIBUTE_NAME).find((key) => ATTRIBUTE_NAME[key] === name);
+  return code === undefined ? name : attributeShort(code);
+}
+
 /** Um atributo que a subclasse abre, com as habilidades que o abrem. */
 export interface KeyAlternative {
   readonly ability: string;

@@ -458,7 +458,30 @@ export interface SourceSpec {
 export interface FullViewSpec {
   /** As abas, na ordem da barra. A primeira abre por padrão. */
   readonly tabs: readonly TabSpec[];
+  /**
+   * A LATERAL da aba de texto, quando não é a lateral da lista (26d, pelo autor): a
+   * classe mostra em cima só a identidade (atributo-chave, PV, conjura, livro), sem a
+   * descrição — a página já está do lado —, e embaixo SUB-ABAS: a progressão por nível,
+   * as proficiências iniciais e as magias por dia. Sem `side`, a lateral é a da lista.
+   */
+  readonly side?: SideSpec;
 }
+
+export interface SideSpec {
+  /** Os campos em cima, no lugar dos da lateral da lista. */
+  readonly fields: readonly DetailFieldSpec[];
+  /** As sub-abas, na ordem da barra. A primeira abre por padrão. */
+  readonly tabs: readonly SideTabSpec[];
+}
+
+/**
+ * Uma sub-aba da lateral: de CAMPOS (mais campos da base, com os mesmos desenhistas do
+ * painel) ou de TABELA (um campo de `desc/` com uma tabela em HTML — a progressão da
+ * classe). A de tabela some quando o campo é vazio: 17 classes não têm magias por dia.
+ */
+export type SideTabSpec =
+  | { readonly kind: 'fields'; readonly id: string; readonly fields: readonly DetailFieldSpec[] }
+  | { readonly kind: 'table'; readonly id: string; readonly field: string };
 
 /**
  * Uma aba da tela completa: de TEXTO (uma descrição inteira da entrada, a página do
@@ -1427,6 +1450,36 @@ export const SOURCES: readonly SourceSpec[] = [
       { kind: 'source' },
     ],
     fullView: {
+      /*
+       * A lateral da aba Detalhes (26d, pelo autor): identidade em cima; embaixo, a
+       * progressão do livro (a tabela da página, com as habilidades clicáveis), as
+       * proficiências iniciais e as magias por dia. A descrição não entra — a página
+       * inteira está do lado. As proficiências saem de cima para não se repetirem.
+       */
+      side: {
+        fields: [
+          { kind: 'boosts', field: 'keyAbility', alternatives: 'keyAbilityOptions' },
+          { kind: 'text', field: 'hp' },
+          { kind: 'text', field: 'spellcasting' },
+          { kind: 'source' },
+        ],
+        tabs: [
+          { kind: 'table', id: 'progression', field: 'progression' },
+          {
+            kind: 'fields',
+            id: 'proficiencies',
+            fields: [
+              { kind: 'ranks', field: 'perception' },
+              { kind: 'ranks', field: 'saves' },
+              { kind: 'ranks', field: 'attacks' },
+              { kind: 'ranks', field: 'defenses' },
+              { kind: 'chips', field: 'skills' },
+              { kind: 'text', field: 'extraSkills' },
+            ],
+          },
+          { kind: 'table', id: 'spells', field: 'spellSlots' },
+        ],
+      },
       tabs: [
         { kind: 'page', id: 'details', field: 'page', fallback: 'main' },
         {

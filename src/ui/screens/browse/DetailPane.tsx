@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import type { BrowseEntity, DetailFieldSpec } from '@core/browse/index';
+import type { BrowseEntity, DetailFieldSpec, SideSpec } from '@core/browse/index';
 import { withLayout } from '@core/prefs/index';
 import { strings } from '@i18n/index';
 import { CollapseToggle } from '@ui/components/CollapseToggle';
@@ -43,6 +43,8 @@ interface DetailPaneProps {
   readonly onExpand?: () => void;
   /** Repassada ao painel: é ele que desenha as referências e a sub-tela. */
   readonly reference?: ReferenceBridge;
+  /** Repassada ao painel: as sub-abas da lateral da tela completa (26d). */
+  readonly side?: SideSpec;
   /**
    * O painel de um tópico de filtro, quando há um aberto.
    *
@@ -76,6 +78,7 @@ export function DetailPane({
   collapsed,
   onToggleCollapsed,
   reference,
+  side,
 }: DetailPaneProps) {
   /*
    * A largura vem da preferência, não de um `useState` local: ela precisa sobreviver ao
@@ -176,6 +179,7 @@ export function DetailPane({
           onPopOut={onPopOut}
           {...(onExpand === undefined ? {} : { onExpand })}
           {...(reference === undefined ? {} : { reference })}
+          {...(side === undefined ? {} : { side })}
         />
       )}
 

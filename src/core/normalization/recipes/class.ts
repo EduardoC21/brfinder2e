@@ -31,7 +31,9 @@
  */
 
 import { isRecord } from '../../json';
+import { classTables } from '../class-tables';
 import type { ClassFeaturesByTrait } from '../features-index';
+import { journalKey } from '../journals';
 import { bool, html, int, listOf, shape, text, textList } from '../decoders';
 import { from, fromDocument, fromJournal } from '../field';
 import { recipe } from '../recipe';
@@ -110,6 +112,10 @@ export interface ClassDesc {
   readonly main: string;
   /** A página do jornal `Classes`, inteira. Vazia quando o jornal não foi lido. */
   readonly page: string;
+  /** A tabela de progressão da página (HTML), para a lateral. Ver `class-tables.ts`. */
+  readonly progression: string;
+  /** A tabela de magias por dia (HTML); vazia nas 17 que não a têm. */
+  readonly spellSlots: string;
 }
 
 /** `{a1b2c: {uuid, name, level, img}}` → `[{uuid, name, level}]`, por nível. */
@@ -152,6 +158,15 @@ function toKeyAbilityOptions(
   return [...porAtributo.entries()]
     .sort(([a], [b]) => ATTRIBUTE_ORDER.indexOf(a) - ATTRIBUTE_ORDER.indexOf(b))
     .map(([ability, lista]) => ({ ability, features: lista }));
+}
+
+/** As tabelas da página desta classe no jornal, ou vazias sem jornal. */
+function tabelas(
+  document: unknown,
+  tables: { readonly journals?: ReadonlyMap<string, string> },
+): ReturnType<typeof classTables> {
+  const name = isRecord(document) && typeof document['name'] === 'string' ? document['name'] : '';
+  return classTables(tables.journals?.get(journalKey('Classes', name)) ?? '');
 }
 
 /** `{value: [2, 4, 6]}` — os níveis em que se ganha algo. */
@@ -225,6 +240,12 @@ export const classRecipe = recipe<ClassBase, ClassDesc>({
   desc: {
     main: from('system.description.value', html),
     page: fromJournal('Classes', '{name}', html).withDefault(''),
+    /*
+     * As duas tabelas, tiradas da MESMA página: derivadas, e não `fromJournal` de novo —
+     * o motor recusa dois campos no mesmo caminho, e a página inteira já é `page`.
+     */
+    progression: fromDocument((document, tables) => tabelas(document, tables).progression),
+    spellSlots: fromDocument((document, tables) => tabelas(document, tables).spellSlots),
   },
 
   ignore: {

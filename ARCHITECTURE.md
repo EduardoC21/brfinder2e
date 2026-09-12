@@ -797,11 +797,14 @@ isso o foco fica no `<input>`, a lista é um `listbox` comandado por
 lista é recalculada com prioridade menor. Nada é adiado por tempo, e o resultado nunca
 fica atrasado — só cede a vez. Importa quando a lista for 6.283 talentos.
 
-### O detalhe da entrada, e por que a rolagem é interna
+### O detalhe da entrada, e por que a rolagem é da coluna inteira
 
-O painel de detalhe (`DetailPanel`) é um grid de duas linhas: cabeçalho fixo e corpo que
-rola. A descrição pode passar da altura da janela — e se a rolagem fosse da página, o nome
-e o custo sairiam de vista junto com o texto. Rolando por dentro, o cabeçalho fica.
+O painel de detalhe (`DetailPanel`) é uma coluna que rola inteira. Até a Etapa 26d era um
+grid de duas linhas — cabeçalho fixo, corpo rolando —, para nome e custo ficarem à vista
+durante a leitura. O autor a desfez: numa janela baixa, com uma classe de dez campos em
+cima, sobravam três linhas para a descrição. Rolar tudo devolve a altura à leitura; o nome
+está a um gesto de rolagem. A sub-tela da perícia (o painel embutido) virou um trecho da
+mesma coluna, sem altura nem rolagem próprias.
 
 O mesmo componente serve as **duas** molduras, lateral e flutuante. Ele não pergunta onde
 está: recebe `onPopOut` opcional, e a ausência do callback é o que apaga o botão. Um

@@ -82,7 +82,14 @@ export const jornal = {
       name: 'Druid',
       title: { level: 1 },
       sort: 100000,
-      text: { content: '<h1>Roleplaying the Druid</h1><p>…</p><h1>Class Features</h1><p>…</p>' },
+      text: {
+        content:
+          '<h1>Roleplaying the Druid</h1><p>…</p><h1>Class Features</h1><p>…</p>' +
+          '<table><thead><tr><th>Your Level</th><th>Class Features</th></tr></thead>' +
+          '<tbody><tr><td>1</td><td>Ancestry and background, @UUID[Compendium.pf2e.classfeatures.Item.aaaaaaaaaaaaaaaa]{Druidic Order}</td></tr></tbody></table>' +
+          '<table><thead><tr><th>Your Level</th><th>Cantrips</th><th>1st</th></tr></thead>' +
+          '<tbody><tr><td>1</td><td>5</td><td>2</td></tr></tbody></table>',
+      },
     },
   ],
 };

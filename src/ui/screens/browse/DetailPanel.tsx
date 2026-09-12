@@ -8,6 +8,7 @@ import {
   type BrowseEntity,
   type DescriptionContext,
   type DetailFieldSpec,
+  type SideSpec,
 } from '@core/browse/index';
 import type { DescriptionAlteration } from '@core/normalization/index';
 import { isRecord } from '@core/json';
@@ -20,7 +21,7 @@ import { RarityMark } from '@ui/components/RarityMark';
 import { RichText, type RichTextLinks } from '@ui/components/RichText';
 import { TraitChip } from '@ui/components/TraitChip';
 import { useTraitLabel } from '@ui/glossary/useTraitLabel';
-import { useDescription } from '@ui/hooks/useDescription';
+import { useDescription, useDescriptionFields } from '@ui/hooks/useDescription';
 import { CollapseToggle } from '@ui/components/CollapseToggle';
 import { cx } from '@ui/cx';
 import { bookLabel, capitalizar, fieldText, rankLabel } from '@ui/text';
@@ -69,6 +70,12 @@ export interface DetailPanelProps {
   readonly embedded?: boolean;
   /** De onde esta entrada foi aberta, quando isso muda o texto. Ver `contextFor`. */
   readonly context?: DescriptionContext | undefined;
+  /**
+   * As SUB-ABAS no lugar da descrição (26d): a lateral da aba de texto da classe mostra
+   * a progressão, as proficiências e as magias por dia, trocando entre elas como as abas
+   * de cima. Com `side`, a descrição não é desenhada — a página inteira está do lado.
+   */
+  readonly side?: SideSpec;
 }
 
 /**
@@ -116,6 +123,7 @@ export function DetailPanel({
   onBack,
   embedded = false,
   context,
+  side,
 }: DetailPanelProps) {
   const description = useDescription(entityType, entity.key);
 
@@ -286,46 +294,60 @@ export function DetailPanel({
         </dl>
       </header>
 
+      {side !== undefined && (
+        <Lateral
+          side={side}
+          entity={entity}
+          entityType={entityType}
+          {...(links === undefined ? {} : { links })}
+          {...(reference === undefined
+            ? {}
+            : { onOpenReference: abrir, onOpenSlug: abrirSlug, nameOf: nomeDe })}
+        />
+      )}
+
       {/*
-       * A rolagem é DAQUI, não da página: a descrição de um talento longo passa da altura
-       * da janela, e sem teto o cabeçalho sairia de vista junto. Assim nome, custo e
-       * traços ficam sempre à mão enquanto se lê o texto.
+       * O painel INTEIRO rola (26d, pelo autor): antes só o corpo rolava, com o cabeçalho
+       * fixo, e numa janela baixa a descrição ficava espremida em poucas linhas. Com
+       * `side` o corpo não existe: as sub-abas ocupam o lugar dele.
        */}
-      <div className={styles['body']}>
-        {context !== undefined && alteracao?.mode === 'override' && (
-          <p className={styles['contexto']}>
-            {verOriginal ? t.context.original : t.context.override(context.from)}
-            <button
-              type="button"
-              className={styles['contextoLink']}
-              onClick={() => {
-                setVerOriginal((estava) => !estava);
-              }}
-            >
-              {verOriginal ? t.context.seeFrom(context.from) : t.context.seeOriginal}
-            </button>
-          </p>
-        )}
-        {substitui ? (
-          blocos !== null && (
+      {side === undefined && (
+        <div className={styles['body']}>
+          {context !== undefined && alteracao?.mode === 'override' && (
+            <p className={styles['contexto']}>
+              {verOriginal ? t.context.original : t.context.override(context.from)}
+              <button
+                type="button"
+                className={styles['contextoLink']}
+                onClick={() => {
+                  setVerOriginal((estava) => !estava);
+                }}
+              >
+                {verOriginal ? t.context.seeFrom(context.from) : t.context.seeOriginal}
+              </button>
+            </p>
+          )}
+          {substitui ? (
+            blocos !== null && (
+              <div className={styles['prose']}>
+                <RichText nodes={blocos} {...(links === undefined ? {} : { links })} />
+              </div>
+            )
+          ) : nodes === null ? null : (
             <div className={styles['prose']}>
-              <RichText nodes={blocos} {...(links === undefined ? {} : { links })} />
+              <RichText nodes={nodes} {...(links === undefined ? {} : { links })} />
             </div>
-          )
-        ) : nodes === null ? null : (
-          <div className={styles['prose']}>
-            <RichText nodes={nodes} {...(links === undefined ? {} : { links })} />
-          </div>
-        )}
-        {context !== undefined && alteracao?.mode === 'add' && blocos !== null && (
-          <>
-            <p className={styles['contexto']}>{t.context.added(context.from)}</p>
-            <div className={styles['prose']}>
-              <RichText nodes={blocos} {...(links === undefined ? {} : { links })} />
-            </div>
-          </>
-        )}
-      </div>
+          )}
+          {context !== undefined && alteracao?.mode === 'add' && blocos !== null && (
+            <>
+              <p className={styles['contexto']}>{t.context.added(context.from)}</p>
+              <div className={styles['prose']}>
+                <RichText nodes={blocos} {...(links === undefined ? {} : { links })} />
+              </div>
+            </>
+          )}
+        </div>
+      )}
 
       {/*
         A SUB-TELA da ação escolhida — o mesmo painel, embutido.
@@ -804,6 +826,93 @@ function Field({
       return <Row label={label(spec.field)}>{desenho}</Row>;
     }
   }
+}
+
+/**
+ * As SUB-ABAS da lateral (26d): uma barra como a das abas de cima, e embaixo ou mais
+ * campos (`fields`, com os mesmos desenhistas do painel) ou uma tabela de `desc/`
+ * (`table`, a progressão da classe com as habilidades clicáveis). A de tabela some
+ * quando o campo é vazio — 17 classes não têm magias por dia — e por isso as tabelas
+ * são lidas ANTES de desenhar a barra, numa leitura só.
+ */
+function Lateral({
+  side,
+  entity,
+  entityType,
+  links,
+  onOpenReference,
+  onOpenSlug,
+  nameOf,
+}: {
+  readonly side: SideSpec;
+  readonly entity: BrowseEntity;
+  readonly entityType: string;
+  readonly links?: RichTextLinks;
+  readonly onOpenReference?: (uuid: string, novo: boolean) => void;
+  readonly onOpenSlug?: (entityType: string, slug: string, novo: boolean) => void;
+  readonly nameOf?: (uuid: string) => string | null;
+}) {
+  const camposDeTabela = useMemo(
+    () => side.tabs.flatMap((tab) => (tab.kind === 'table' ? [tab.field] : [])),
+    [side.tabs],
+  );
+  const tabelas = useDescriptionFields(entityType, entity.key, camposDeTabela);
+  const abas = side.tabs.filter(
+    (tab) => tab.kind !== 'table' || (tabelas !== null && tabelas[tab.field] !== ''),
+  );
+  const [abaId, setAbaId] = useState(side.tabs[0]?.id ?? '');
+  const aba = abas.find((tab) => tab.id === abaId) ?? abas[0];
+  const html = aba?.kind === 'table' ? (tabelas?.[aba.field] ?? '') : '';
+  const nodes = useMemo(
+    () => (html === '' ? null : pruneForReading(parseDescription(html))),
+    [html],
+  );
+  if (aba === undefined) return null;
+
+  return (
+    <div className={styles['lateral']}>
+      <nav className={styles['subAbas']} role="tablist">
+        {abas.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            role="tab"
+            aria-selected={tab.id === aba.id}
+            className={cx(
+              styles['subAba'],
+              tab.id === aba.id && styles['subAbaAtiva'],
+              'chamfer-sm',
+            )}
+            onClick={() => {
+              setAbaId(tab.id);
+            }}
+          >
+            {b.fullView.side[tab.id] ?? tab.id}
+          </button>
+        ))}
+      </nav>
+      {aba.kind === 'fields' && (
+        <dl className={cx(styles['fields'], styles['lateralCampos'])}>
+          {aba.fields.map((spec, index) => (
+            <Field
+              key={index}
+              spec={spec}
+              entity={entity}
+              selected={null}
+              {...(onOpenReference === undefined ? {} : { onOpenReference })}
+              {...(onOpenSlug === undefined ? {} : { onOpenSlug })}
+              {...(nameOf === undefined ? {} : { nameOf })}
+            />
+          ))}
+        </dl>
+      )}
+      {aba.kind === 'table' && nodes !== null && (
+        <div className={cx(styles['prose'], styles['lateralTabela'])}>
+          <RichText nodes={nodes} {...(links === undefined ? {} : { links })} />
+        </div>
+      )}
+    </div>
+  );
 }
 
 function Row({

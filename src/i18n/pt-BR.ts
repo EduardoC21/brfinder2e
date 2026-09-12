@@ -219,6 +219,12 @@ export const ptBR = {
       appendix: {
         mechanics: 'Mecânicas',
       } as Record<string, string>,
+      /** As sub-abas da lateral da aba de texto (26d): a classe. */
+      side: {
+        progression: 'Progressão',
+        proficiencies: 'Proficiências',
+        spells: 'Magias',
+      } as Record<string, string>,
       tabs: {
         details: 'Detalhes',
         heritages: 'Heranças',

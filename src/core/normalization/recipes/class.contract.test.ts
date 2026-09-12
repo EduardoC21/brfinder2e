@@ -88,6 +88,21 @@ describe('as 29 classes reais', () => {
     }
   });
 
+  /* 29 tabelas de progressão com 20 níveis; 12 de magias (os 13 conjuradores menos o Champion). */
+  it('as tabelas da página: progressão nas 29, magias em 12', () => {
+    for (const e of result.entities) {
+      expect((e.desc.progression.match(/<tr/g) ?? []).length, e.base.name).toBe(21);
+    }
+    const comMagias = result.entities.filter((e) => e.desc.spellSlots !== '');
+    expect(comMagias).toHaveLength(12);
+    expect(comMagias.every((e) => e.base.spellcasting === 1)).toBe(true);
+    expect(
+      result.entities
+        .filter((e) => e.base.spellcasting === 1 && e.desc.spellSlots === '')
+        .map((e) => e.base.slug),
+    ).toEqual(['champion']);
+  });
+
   it('a página do jornal está nas 29 e é maior que o resumo', () => {
     for (const e of result.entities) {
       expect(e.desc.page.length, e.base.name).toBeGreaterThan(e.desc.main.length);

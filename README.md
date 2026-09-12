@@ -81,6 +81,10 @@ Antes: **Etapa 20** — as tabelas das regras param de quebrar (célula compacta
 linha, `@Embed` cola a entrada apontada, e as duas vassouras em Configurações: apagar as
 entradas aposentadas e apagar a base inteira.
 
+Antes: **Etapa 26d** — a lateral rola inteira; a classe na tela completa tem a lateral
+própria: identidade em cima e sub-abas Progressão (a tabela da página, 29), Proficiências
+e Magias (12); a sigla do atributo também na coluna de perícia.
+
 Antes: **Etapa 26c** — a dona da habilidade só dentro do Tipo (Ancestralidade marcada →
 coluna e filtro "Ancestralidade"; Classe → "Classe"; visão geral → só o Tipo); as abas de
 escolha da classe só com Livro; a rolagem da aba Detalhes lembrada enquanto a entrada

@@ -53,4 +53,11 @@ describe('receita de classe', () => {
     expect(result.entities[0]?.desc.page).toContain('<h1>Class Features</h1>');
     expect(result.entities[0]?.desc.main).toContain('The power of nature');
   });
+
+  it('tira da página as tabelas de progressão e de magias, pelo cabeçalho', () => {
+    const desc = result.entities[0]?.desc;
+    expect(desc?.progression).toMatch(/^<table>.*Class Features.*Druidic Order.*<\/table>$/);
+    expect(desc?.spellSlots).toMatch(/^<table>.*Cantrips.*<\/table>$/);
+    expect(desc?.progression).not.toContain('Cantrips');
+  });
 });
