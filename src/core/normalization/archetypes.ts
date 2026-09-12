@@ -59,6 +59,13 @@ export interface ArchetypePage {
   readonly dedication: ArchetypeFeat | null;
   readonly prerequisites: string;
   readonly feats: readonly ArchetypeFeat[];
+  /**
+   * Os talentos ADICIONAIS: de outra classe, que o arquétipo deixa pegar como se fossem
+   * dele — o parágrafo "Additional Feats: 4th X; 6th Y" da abertura. 72 páginas o têm;
+   * 222 talentos distintos, 215 de classe e 7 de perícia. O parágrafo sai da prosa: é
+   * lista, e vai para a aba Talentos com a origem marcada.
+   */
+  readonly additionalFeats: readonly ArchetypeFeat[];
   /** O livro, como a página o escreve: "Pathfinder Player Core"; vazio na 1 sem linha. */
   readonly sourceTitle: string;
   /** A prosa de abertura, antes do primeiro `<h2>`. */
@@ -83,6 +90,14 @@ const FEAT_NO_H2 =
 const PREREQ = /<p><strong>Prerequisites<\/strong>\s*([\s\S]*?)<\/p>/;
 const SOURCE = /<em>Source: ([^<]*?)(?: pg\. [^<]*)?<\/em>/;
 const RELATIVA = /@UUID\[\.([A-Za-z0-9]+)\]/g;
+/*
+ * Duas formas na fonte: `<strong>Additional Feats:</strong> <strong>4th</strong> …` (60) e
+ * `<strong>Additional Feats: 4th</strong> …` (11), uma delas "(Charthagnion): 4th". O
+ * nível é o número com sufixo dentro de QUALQUER `<strong>`.
+ */
+const ADICIONAIS = /<p>(<strong>Additional Feats[^<]*<\/strong>[\s\S]*?)<\/p>/g;
+const NIVEL_OU_FEAT =
+  /<strong>[^<]*?(\d+)(?:st|nd|rd|th)\s*<\/strong>|@UUID\[(Compendium\.pf2e\.feats-srd\.Item\.[A-Za-z0-9]{16})\]\{([^}]*)\}/g;
 const ETIQUETA = /<[^>]*>/g;
 
 function absolutizar(html: string, jornal: string): string {
@@ -102,6 +117,21 @@ function talentosDosTitulos(content: string): ArchetypeFeat[] {
       name: name ?? '',
       level: level === undefined ? null : Number(level),
     });
+  }
+  return out;
+}
+
+/** "4th X, Y; 6th Z" → `[{X, 4}, {Y, 4}, {Z, 6}]`: cada nível vale até o próximo. */
+function talentosAdicionais(content: string): ArchetypeFeat[] {
+  const out: ArchetypeFeat[] = [];
+  // Pode haver mais de um parágrafo (Chelaxian Scion: um por linhagem).
+  for (const paragrafo of content.matchAll(ADICIONAIS)) {
+    let nivel: number | null = null;
+    for (const match of (paragrafo[1] ?? '').matchAll(NIVEL_OU_FEAT)) {
+      const [, n, uuid, name] = match;
+      if (n !== undefined) nivel = Number(n);
+      else if (uuid !== undefined) out.push({ uuid, name: name ?? '', level: nivel });
+    }
   }
   return out;
 }
@@ -141,7 +171,10 @@ export function archetypePages(
     const feats = talentosDosTitulos(content);
     const dedication = feats.find((feat) => feat.name.endsWith(' Dedication')) ?? null;
     const primeiroTitulo = content.search(/<h2/);
-    const intro = primeiroTitulo < 0 ? content : content.slice(0, primeiroTitulo);
+    const intro = (primeiroTitulo < 0 ? content : content.slice(0, primeiroTitulo)).replace(
+      ADICIONAIS,
+      '',
+    );
 
     saida.push({
       id: pagina.id,
@@ -152,6 +185,7 @@ export function archetypePages(
       dedication,
       prerequisites: prerequisitosDa(content, dedication),
       feats,
+      additionalFeats: talentosAdicionais(content),
       sourceTitle: SOURCE.exec(content)?.[1]?.replace(/&amp;/g, '&') ?? '',
       intro: intro.trim(),
       content,

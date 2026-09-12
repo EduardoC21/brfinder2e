@@ -20,6 +20,7 @@ import {
   type BrowseEntity,
   type FilterState,
   type SourceSpec,
+  type ColumnSpec,
   type FilterSpec,
   findSource,
 } from '@core/browse/index';
@@ -292,8 +293,14 @@ export function BrowseScreen({ baseVersion }: BrowseScreenProps) {
 
 const EMPTY: readonly BrowseEntity[] = [];
 const SEM_FILTROS: FilterState = {};
+
+/** A trava de uma aba de lista: a etiqueta, e as colunas e os filtros só dela. */
+interface LockedList {
+  readonly label: string;
+  readonly columns: readonly ColumnSpec[];
+  readonly filters: readonly FilterSpec[];
+}
 const POR_NIVEL: Sort = { column: 'level', direction: 'asc' };
-const SEM_TOPICOS: readonly FilterSpec[] = [];
 const VAZIAS: readonly LoadedSource[] = [];
 
 /**
@@ -327,7 +334,7 @@ function SourcePane({
    * filtros vira só a etiqueta da trava mais o botão de colunas. Os filtros gravados da
    * fonte não entram — a pessoa não os vê aqui, e um filtro invisível é o pior filtro.
    */
-  readonly lock?: string;
+  readonly lock?: LockedList;
 }) {
   const [term, setTerm] = useState('');
   const { prefs, update, ready } = usePreferences();
@@ -345,9 +352,15 @@ function SourcePane({
    * que era o comportamento certo enquanto ele não persistia. Agora ele volta: guardar por
    * fonte é o que faz "voltar em Ações" reencontrar o recorte de ontem sem refazer.
    */
-  const filters = lock === undefined ? salvas.filters : SEM_FILTROS;
+  /*
+   * Na aba travada, o filtro é ESTADO LOCAL — só os filtros da aba (a origem do talento)
+   * existem, e não se gravam: a aba nasce limpa toda vez, como a lista nasce por nível.
+   */
+  const [filtrosDaAba, setFiltrosDaAba] = useState<FilterState>(SEM_FILTROS);
+  const filters = lock === undefined ? salvas.filters : filtrosDaAba;
   const setFilters = (next: FilterState): void => {
-    update((atual) => withSource(atual, source.id, { filters: next }));
+    if (lock !== undefined) setFiltrosDaAba(next);
+    else update((atual) => withSource(atual, source.id, { filters: next }));
   };
 
   /** O que está aberto na lateral por cima do detalhe: um tópico, as colunas, ou nada. */
@@ -517,7 +530,9 @@ function SourcePane({
   );
 
   const openTopic = overlay?.kind === 'topic' ? overlay.id : null;
-  const topicoAberto = filtrosUteis.find((spec) => spec.id === openTopic);
+  const topicoAberto = (lock === undefined ? filtrosUteis : lock.filters).find(
+    (spec) => spec.id === openTopic,
+  );
 
   /*
    * A base do tópico ABERTO — os outros filtros já aplicados. É o que faz a contagem ao
@@ -546,9 +561,13 @@ function SourcePane({
   const gravadas = escopo === '' ? salvas.columns : (salvas.columnsByType[escopo] ?? null);
   const idsVisiveis =
     (ready ? gravadas : null) ?? presetFor(source, tiposMarcados) ?? source.defaultColumns;
-  const colunasVisiveis = idsVisiveis
-    .map((id) => colunasNoEscopo.find((column) => column.id === id))
-    .filter((column) => column !== undefined);
+  const colunasVisiveis = [
+    /* As colunas da aba travada vêm PRIMEIRO e sempre: a origem do talento. */
+    ...(lock?.columns ?? []),
+    ...idsVisiveis
+      .map((id) => colunasNoEscopo.find((column) => column.id === id))
+      .filter((column) => column !== undefined),
+  ];
 
   /** Grava a escolha de colunas no recorte em vigor, e não por cima do geral. */
   const gravarColunas = (columns: readonly string[] | null): void => {
@@ -733,7 +752,7 @@ function SourcePane({
               reference={reference}
               listRequest={0}
               sources={sources}
-              lock={etiqueta}
+              lock={{ label: etiqueta, columns: tab.columns ?? [], filters: tab.filters ?? [] }}
             />
           );
         }}
@@ -778,9 +797,9 @@ function SourcePane({
         </div>
 
         <FilterBar
-          specs={lock === undefined ? filtrosUteis : SEM_TOPICOS}
+          specs={lock === undefined ? filtrosUteis : lock.filters}
           state={filters}
-          {...(lock === undefined ? {} : { lock })}
+          {...(lock === undefined ? {} : { lock: lock.label })}
           openTopic={openTopic}
           onOpenTopic={(id) => {
             mostrarCamada(id === null ? null : { kind: 'topic', id });

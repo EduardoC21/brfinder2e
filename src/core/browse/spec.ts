@@ -483,6 +483,26 @@ export interface ListTabSpec {
   readonly source: string;
   /** A trava: fica quem satisfaz TODAS. Mostrada, não editável — decisão do autor. */
   readonly lock: readonly LockSpec[];
+  /**
+   * A ORIGEM de cada linha, escrita num campo que só existe nesta aba: o talento do
+   * arquétipo é "próprio" ou "adicional" conforme a lista da entrada aberta em que o seu
+   * `uuid` está. Vale o primeiro grupo que casa. É o que dá a coluna e o filtro de Tipo
+   * dentro da aba, sem a fonte listada saber de nada.
+   */
+  readonly annotate?: {
+    readonly field: string;
+    readonly groups: readonly { readonly from: string; readonly value: string }[];
+    /**
+     * O NÍVEL no contexto: listas `{uuid, level}` da entrada aberta que substituem o
+     * `level` da linha. O Crossbow Ace é de 1º nível como talento de ranger e de 4º como
+     * adicional do Archer — é o 4 que o livro lista, e é por ele que a aba ordena.
+     */
+    readonly levels?: readonly string[];
+  };
+  /** Colunas SÓ desta aba, sempre visíveis e antes das outras: a origem. */
+  readonly columns?: readonly ColumnSpec[];
+  /** Filtros SÓ desta aba — os únicos que a barra travada mostra. */
+  readonly filters?: readonly FilterSpec[];
 }
 
 /**
@@ -1303,15 +1323,30 @@ export const SOURCES: readonly SourceSpec[] = [
       { kind: 'text', field: 'kind' },
       { kind: 'source' },
     ],
+    /*
+     * Só a aba Talentos (decisão do autor): a prosa já está na lateral, e os talentos —
+     * os próprios, da página, e os ADICIONAIS de outra classe — são o que se vai ver. A
+     * origem de cada um vira coluna e filtro dentro da aba.
+     */
     fullView: {
       tabs: [
-        { kind: 'page', id: 'details', field: 'page', fallback: 'main' },
-        /* Os talentos da página — a dedicação inclusive —, pelo UUID. */
         {
           kind: 'list',
           id: 'feats',
           source: 'feats',
-          lock: [{ field: 'uuid', from: 'featUuids', match: 'equals' }],
+          lock: [{ field: 'uuid', from: 'allFeatUuids', match: 'equals' }],
+          annotate: {
+            field: 'origin',
+            groups: [
+              { from: 'featUuids', value: 'own' },
+              { from: 'additionalFeatUuids', value: 'additional' },
+            ],
+            levels: ['feats', 'additionalFeats'],
+          },
+          columns: [{ kind: 'text', id: 'origin', field: 'origin' }],
+          filters: [
+            { kind: 'options', id: 'origin', field: 'origin', values: ['own', 'additional'] },
+          ],
         },
       ],
     },

@@ -29,8 +29,14 @@ export interface ArchetypeBase {
   readonly prerequisites: string;
   /** Todos os talentos da página, na ordem — a dedicação inclusive. */
   readonly feats: readonly ArchetypeFeat[];
-  /** Só os UUIDs, para a aba Talentos travar (`uuid` do talento ∈ esta lista). */
+  /** Os talentos de OUTRA classe que o arquétipo deixa pegar — "Additional Feats". */
+  readonly additionalFeats: readonly ArchetypeFeat[];
+  /** Só os UUIDs dos próprios, para a aba Talentos marcar a origem. */
   readonly featUuids: readonly string[];
+  /** Só os UUIDs dos adicionais, idem. */
+  readonly additionalFeatUuids: readonly string[];
+  /** Próprios e adicionais juntos: é onde a aba Talentos trava. */
+  readonly allFeatUuids: readonly string[];
   /** A classe do arquétipo multiclasse, por slug; nulo nos outros. */
   readonly class: string | null;
   readonly source: {
@@ -76,7 +82,10 @@ function expandirArquetipos(document: unknown): readonly unknown[] {
     dedication: arquetipo.dedication,
     prerequisites: arquetipo.prerequisites,
     feats: arquetipo.feats,
+    additionalFeats: arquetipo.additionalFeats,
     featUuids: arquetipo.feats.map((feat) => feat.uuid),
+    additionalFeatUuids: arquetipo.additionalFeats.map((feat) => feat.uuid),
+    allFeatUuids: [...arquetipo.feats, ...arquetipo.additionalFeats].map((feat) => feat.uuid),
     class: arquetipo.kind === 'multiclass' ? arquetipo.slug : null,
     source: { title: arquetipo.sourceTitle },
     description: arquetipo.intro,
@@ -100,7 +109,10 @@ export const archetypeRecipe = recipe<ArchetypeBase, ArchetypeDesc>({
     dedication: from('dedication', nullable(feat)),
     prerequisites: from('prerequisites', text),
     feats: from('feats', listOf(feat)),
+    additionalFeats: from('additionalFeats', listOf(feat)),
     featUuids: from('featUuids', textList),
+    additionalFeatUuids: from('additionalFeatUuids', textList),
+    allFeatUuids: from('allFeatUuids', textList),
     class: from('class', nullable(text)),
     source: from('source', shape({ title: text })),
   },

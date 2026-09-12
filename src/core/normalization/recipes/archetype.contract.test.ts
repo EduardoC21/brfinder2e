@@ -61,6 +61,10 @@ describe('os 249 arquétipos reais', () => {
     expect(result.entities.filter((e) => e.base.dedication === null)).toHaveLength(5);
     const todos = result.entities.flatMap((e) => e.base.featUuids);
     expect(new Set(todos).size).toBeGreaterThanOrEqual(2100);
+    /* Os adicionais: 81 páginas com talento (72 na forma comum, mais as do nível no mesmo strong), 253 distintos. */
+    expect(result.entities.filter((e) => e.base.additionalFeats.length > 0)).toHaveLength(81);
+    expect(new Set(result.entities.flatMap((e) => e.base.additionalFeatUuids)).size).toBe(253);
+    expect(result.entities.every((e) => !e.desc.main.includes('Additional Feats'))).toBe(true);
     /* 205 páginas têm o bloco; em 1 ele está fora do trecho da dedicação. */
     expect(result.entities.filter((e) => e.base.prerequisites !== '')).toHaveLength(204);
   });

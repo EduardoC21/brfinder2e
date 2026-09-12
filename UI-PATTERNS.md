@@ -838,6 +838,16 @@ o que os campos dão; o bloco tem o resto — 5 das 50 ancestralidades têm uma 
 que só existe como texto. Fechado por padrão: a lateral já diz o essencial, e quem quer o
 livro abre. É `appendix` na aba de texto: um campo de `desc/` e um rótulo.
 
+**A aba de lista anota e recorta** (Etapa 25b): `annotate` escreve numa CÓPIA de cada
+linha um campo que só existe na aba — a origem do talento do arquétipo (próprio ou
+adicional) — e o nível NO CONTEXTO (o Crossbow Ace é 1º como talento de ranger e 4º como
+adicional do Archer; a aba ordena pelo 4). `columns` são colunas só da aba, sempre
+visíveis e antes das outras; `filters` são os únicos que a barra travada mostra, com
+estado local, não gravado. A fonte listada não sabe de nada disso.
+
+**O arquétipo é a lateral mais a aba Talentos** (decisão do autor): a prosa e a dedicação
+ficam na lateral; a tela completa é só a lista dos talentos, próprios e adicionais.
+
 **Fonte fora do trilho** (`hidden`): a herança própria existe como fonte — carrega, indexa,
 abre em flutuante, aparece na busca global — mas não é uma lista que se abre pelo trilho:
 só faz sentido como aba de uma ancestralidade. Decisão do autor. A herança VERSÁTIL, que

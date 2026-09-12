@@ -27,5 +27,6 @@
  *   7  Etapa 24 — `mechanics` da ancestralidade; visão da versátil pelas regras; a herança
  *      própria com `features` e `vision`.
  *   8  Etapa 25 — a fonte de arquétipo; as 8 páginas de regra do jornal Archetypes.
+ *   9  Etapa 25b — os talentos adicionais do arquétipo, e a prosa sem o parágrafo deles.
  */
-export const RECIPES_REVISION = 8;
+export const RECIPES_REVISION = 9;

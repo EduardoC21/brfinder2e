@@ -89,6 +89,45 @@ describe('lockedEntities', () => {
     expect(lockedEntities(tab, acrobat, talentos).map((e) => e.key)).toEqual(['a', 'u']);
   });
 
+  /* A origem: próprio ou adicional, pelo uuid; a entrada da fonte não muda. */
+  it('anota a origem numa cópia da entrada', () => {
+    const tab: ListTabSpec = {
+      kind: 'list',
+      id: 'f',
+      source: 'feats',
+      lock: [{ field: 'uuid', from: 'all', match: 'equals' }],
+      annotate: {
+        field: 'origin',
+        groups: [
+          { from: 'own', value: 'own' },
+          { from: 'extra', value: 'additional' },
+        ],
+      },
+    };
+    const acrobat = {
+      key: 'x',
+      uuid: 'x',
+      base: { name: 'Acrobat', all: ['a', 'u'], own: ['a'], extra: ['u'] },
+    };
+    const saida = lockedEntities(tab, acrobat, talentos);
+    expect(saida.map((e) => [e.key, (e.base as { origin?: string }).origin])).toEqual([
+      ['a', 'own'],
+      ['u', 'additional'],
+    ]);
+    /* O nível no contexto: o adicional 'u' é de 8º no arquétipo, seja o que for na fonte. */
+    const comNivel: ListTabSpec = {
+      ...tab,
+      annotate: { ...tab.annotate!, levels: ['lista'] },
+    };
+    const comListas = { ...acrobat, base: { ...acrobat.base, lista: [{ uuid: 'u', level: 8 }] } };
+    expect(
+      lockedEntities(comNivel, comListas, talentos).map(
+        (e) => (e.base as { level?: number }).level,
+      ),
+    ).toEqual([undefined, 8]);
+    expect((talentos[0]?.base as { origin?: string }).origin).toBeUndefined();
+  });
+
   it('sem valor de onde travar, nada passa', () => {
     const tab: ListTabSpec = {
       kind: 'list',

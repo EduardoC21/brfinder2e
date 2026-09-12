@@ -141,6 +141,16 @@ Versão medida: **`pf2e-8.5.0`**.
 - **Como foi visto:** o autor comparou a lateral com o livro. Etapa 23d.
 - **No app:** `sizes`, `hpOptions`, `speed` e `swim` derivados das regras.
 
+### 1.13 `journals` — página `Guardian` (Multiclass Archetypes) sem o título da dedicação
+
+- **Caminho:** `Archetypes` → `Multiclass Archetypes` → `Guardian`, `text.content`
+- **O quê:** as outras 28 páginas de multiclasse abrem com `<h2>@UUID{X Dedication} Feat
+2</h2>`; a do Guardian vai da prosa direto aos traços e ao texto da dedicação, sem o
+  `<h2>` — o talento `Guardian Dedication` existe em `feats-srd`, só não é citado.
+- **Como foi visto:** o autor viu o Guardian sem nível na lista de arquétipos. Etapa 25b.
+- **No app:** fica sem dedicação e sem nível; o talento aparece na aba Talentos pelos
+  outros `<h2>`? Não — só os citados; a dedicação do Guardian não entra.
+
 ---
 
 ## 2. Chaves mortas e erros de grafia

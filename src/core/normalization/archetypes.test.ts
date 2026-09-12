@@ -23,7 +23,7 @@ const paginas = [
     name: 'Acrobat',
     level: 2,
     sort: 5210,
-    content: `<p>You have trained your body.</p><p>See @UUID[.r1]{Dedication Details}.</p>${FEAT('bbbbbbbbbbbbbbbb', 'Acrobat Dedication', 2)}<p><strong>Prerequisites</strong> trained in <em>Acrobatics</em></p><hr />${FEAT('cccccccccccccccc', 'Contortionist', 4)}<h2>Benefits</h2><p><em>Source: Pathfinder Player Core 2 pg. 183</em></p>`,
+    content: `<p>You have trained your body.</p><p><strong>Additional Feats:</strong> <strong>4th</strong> @UUID[Compendium.pf2e.feats-srd.Item.dddddddddddddddd]{Cat Fall}, @UUID[Compendium.pf2e.feats-srd.Item.eeeeeeeeeeeeeeee]{Quick Jump}; <strong>8th</strong> @UUID[Compendium.pf2e.feats-srd.Item.ffffffffffffffff]{Kip Up}</p><p>See @UUID[.r1]{Dedication Details}.</p>${FEAT('bbbbbbbbbbbbbbbb', 'Acrobat Dedication', 2)}<p><strong>Prerequisites</strong> trained in <em>Acrobatics</em></p><hr />${FEAT('cccccccccccccccc', 'Contortionist', 4)}<h2>Benefits</h2><p><em>Source: Pathfinder Player Core 2 pg. 183</em></p>`,
   },
   { id: 'h', name: 'Hellknight (Uncommon)', level: 2, sort: 5220, content: '<p>x</p>' },
 ];
@@ -55,6 +55,37 @@ describe('archetypePages', () => {
     expect(acrobat?.intro).toBe(
       '<p>You have trained your body.</p><p>See @UUID[Compendium.pf2e.journals.JournalEntry.J.JournalEntryPage.r1]{Dedication Details}.</p>',
     );
+  });
+
+  /* "4th X, Y; 8th Z": cada nível vale até o próximo; o parágrafo sai da prosa. */
+  it('lê os talentos adicionais com nível, e tira o parágrafo da abertura', () => {
+    const acrobat = lidas[1];
+    expect(acrobat?.additionalFeats.map((f) => [f.name, f.level])).toEqual([
+      ['Cat Fall', 4],
+      ['Quick Jump', 4],
+      ['Kip Up', 8],
+    ]);
+    expect(acrobat?.intro).not.toContain('Additional Feats');
+    expect(lidas[0]?.additionalFeats).toEqual([]);
+    /* A outra forma da fonte: o nível dentro do mesmo <strong> do rótulo. */
+    const [outra] = archetypePages('J', [
+      { id: 'g', name: 'Archetypes', level: 1, sort: 1, content: '' },
+      {
+        id: 'x',
+        name: 'Hellknight',
+        level: 2,
+        sort: 2,
+        content:
+          '<p>Intro.</p><p><strong>Additional Feats: 8th</strong> @UUID[Compendium.pf2e.feats-srd.Item.gggggggggggggggg]{Shatter Defenses}</p>',
+      },
+    ]);
+    expect(outra?.additionalFeats).toEqual([
+      {
+        uuid: 'Compendium.pf2e.feats-srd.Item.gggggggggggggggg',
+        name: 'Shatter Defenses',
+        level: 8,
+      },
+    ]);
   });
 
   it('a raridade vem do sufixo do nome, que sai', () => {
