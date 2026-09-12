@@ -420,6 +420,14 @@ exportação para o Foundry (OPEN-DECISIONS, item 1).
 Gravar com `node:fs` é escolha do **comando**, não do domínio. A camada `core/store/` com
 porta própria entra na Etapa 4, junto com a tela de sincronização que vai precisar dela.
 
+### A tabela de talentos por nome
+
+A terceira tabela de consulta (`normalization/feats-index.ts`), ao lado da de idioma e da
+de jornais: nome → `{uuid, level, snippet}`. Nasceu para a dedicação que a página do
+arquétipo não cita (o Guardian): a receita acha "<Nome> Dedication" e aceita só se o
+começo da descrição do talento está no texto da página — a dupla verificação pedida pelo
+autor. O trecho guardado é curto de propósito: é chave de conferência, não conteúdo.
+
 ### O campo derivado lê as tabelas
 
 `fromDocument((document, tables) => …)`: o derivado recebe, além do documento, as tabelas

@@ -846,7 +846,15 @@ visíveis e antes das outras; `filters` são os únicos que a barra travada most
 estado local, não gravado. A fonte listada não sabe de nada disso.
 
 **O arquétipo é a lateral mais a aba Talentos** (decisão do autor): a prosa e a dedicação
-ficam na lateral; a tela completa é só a lista dos talentos, próprios e adicionais.
+ficam na lateral; a tela completa é só a lista dos talentos, próprios e adicionais. A
+origem (próprio/adicional) foi tentada como coluna e saiu: o Tipo do talento já diz.
+
+**O pop-out leva à tela completa** (Etapa 25c, pelo autor): o link "Harrower" embaixo da
+dedicação abre o arquétipo em flutuante, com a lateral de sempre; o botão de tela completa
+do flutuante troca a fonte, abre a entrada na tela completa dela — Talentos no arquétipo,
+Detalhes na ancestralidade — e fecha o flutuante. Vale para toda entrada cuja fonte tem
+tela completa. O pedido limpa o termo e os filtros da fonte de destino: entrada fora do
+recorte não tem como abrir.
 
 **Fonte fora do trilho** (`hidden`): a herança própria existe como fonte — carrega, indexa,
 abre em flutuante, aparece na busca global — mas não é uma lista que se abre pelo trilho:

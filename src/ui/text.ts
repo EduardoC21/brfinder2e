@@ -92,12 +92,8 @@ export function fieldText(field: string, value: string): string {
    * dado em inglês e continuam capitalizados — OPEN-DECISIONS #10.
    */
   if (field === KIND_FIELD) return strings.browse.ancestry.kind[value] ?? capitalizar(value);
-  if (field === ORIGIN_FIELD) return strings.browse.fullView.origin[value] ?? capitalizar(value);
   return capitalizar(value);
 }
-
-/** A origem do talento na aba do arquétipo: próprio ou adicional. */
-export const ORIGIN_FIELD = 'origin';
 
 export const KIND_FIELD = 'kind';
 

@@ -4,6 +4,7 @@ export * from './decoders';
 export * from './alterations';
 export * from './archetypes';
 export * from './cast';
+export * from './feats-index';
 export * from './field';
 export * from './journals';
 export * from './language';

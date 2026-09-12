@@ -8,6 +8,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 
 import { KNOWN_GOOD_TAG, loadInventory, readTextEntry } from '@core/source/index';
 import { createFetchHttp } from '@platform/http-fetch';
+import { indexFeats } from '../feats-index';
 import { isClean } from '../report';
 import { run, type RunResult } from '../run';
 import { archetypeRecipe, type ArchetypeBase, type ArchetypeDesc } from './archetype';
@@ -17,11 +18,14 @@ let result: RunResult<ArchetypeBase, ArchetypeDesc>;
 
 beforeAll(async () => {
   const loaded = await loadInventory(http, { tag: KNOWN_GOOD_TAG });
-  const pack = loaded.inventory.packs.find((entry) => entry.name === 'journals');
-  if (!pack) throw new Error('o pack journals sumiu do manifesto');
-  result = run(archetypeRecipe, [
-    { pack: 'journals', documents: JSON.parse(readTextEntry(loaded.zip, pack.file)) as unknown[] },
-  ]);
+  const ler = (nome: string): unknown[] => {
+    const pack = loaded.inventory.packs.find((entry) => entry.name === nome);
+    if (!pack) throw new Error(`o pack ${nome} sumiu do manifesto`);
+    return JSON.parse(readTextEntry(loaded.zip, pack.file)) as unknown[];
+  };
+  result = run(archetypeRecipe, [{ pack: 'journals', documents: ler('journals') }], {
+    feats: indexFeats(ler('feats-srd')),
+  });
 }, 180_000);
 
 const contar = (chave: (b: ArchetypeBase) => string) => {
@@ -52,13 +56,24 @@ describe('os 249 arquétipos reais', () => {
 
   /*
    * 232 dedicações com o traço `dedication`, mais os 12 destinos míticos cujo talento de
-   * entrada se chama "X Dedication" com os traços `destiny` e `mythic` — pelo nome, 244.
-   * Sem dedicação: os 3 artefatos, a abertura dos destinos e o Guardian.
+   * entrada se chama "X Dedication" com os traços `destiny` e `mythic`, mais o GUARDIAN
+   * recuperado pela tabela de talentos com o texto conferido — 245. Sem dedicação: os 3
+   * artefatos e a abertura dos destinos.
    */
-  it('244 dedicações pelo nome, e os talentos citados somam mais de 2.100', () => {
+  it('245 dedicações, com o Guardian recuperado, e os talentos citados somam mais de 2.100', () => {
     const comDedicacao = result.entities.filter((e) => e.base.dedication !== null);
-    expect(comDedicacao).toHaveLength(244);
-    expect(result.entities.filter((e) => e.base.dedication === null)).toHaveLength(5);
+    expect(comDedicacao).toHaveLength(245);
+    expect(result.entities.filter((e) => e.base.dedication === null)).toHaveLength(4);
+    const guardian = result.entities.find((e) => e.base.slug === 'guardian');
+    expect(guardian?.base.dedication).toEqual({
+      uuid: 'Compendium.pf2e.feats-srd.Item.zNInvTqZrDdNJAS7',
+      name: 'Guardian Dedication',
+      level: 2,
+    });
+    expect(guardian?.base.feats[0]?.name).toBe('Guardian Dedication');
+    expect(guardian?.base.allFeatUuids).toContain(
+      'Compendium.pf2e.feats-srd.Item.zNInvTqZrDdNJAS7',
+    );
     const todos = result.entities.flatMap((e) => e.base.featUuids);
     expect(new Set(todos).size).toBeGreaterThanOrEqual(2100);
     /* Os adicionais: 81 páginas com talento (72 na forma comum, mais as do nível no mesmo strong), 253 distintos. */

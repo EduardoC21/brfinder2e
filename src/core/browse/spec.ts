@@ -424,14 +424,6 @@ export interface SourceSpec {
    */
   readonly typeFilter: string | null;
   /**
-   * Esta fonte APONTA para entradas de outras — e por isso a tela precisa de todas as bases
-   * carregadas, e não só da dela.
-   *
-   * Só perícia hoje: as ações dela moram em Ações. Sem isto, o clique numa ação não abriria
-   * nada, porque a base de ações não estaria em memória.
-   */
-  readonly crossReferences?: boolean;
-  /**
    * Quais colunas ligam sozinhas quando UM Tipo está marcado, por valor de Tipo.
    *
    * O modelo é a tabela do Archives of Nethys: cada categoria tem suas colunas, e elas já
@@ -484,19 +476,18 @@ export interface ListTabSpec {
   /** A trava: fica quem satisfaz TODAS. Mostrada, não editável — decisão do autor. */
   readonly lock: readonly LockSpec[];
   /**
-   * A ORIGEM de cada linha, escrita num campo que só existe nesta aba: o talento do
-   * arquétipo é "próprio" ou "adicional" conforme a lista da entrada aberta em que o seu
-   * `uuid` está. Vale o primeiro grupo que casa. É o que dá a coluna e o filtro de Tipo
-   * dentro da aba, sem a fonte listada saber de nada.
+   * O que a aba ANOTA numa cópia de cada linha (a fonte não muda):
+   *
+   *   `field` + `groups`  um campo que só existe na aba, com o valor do primeiro grupo
+   *                       cuja lista (na entrada aberta) tem o `uuid` da linha
+   *   `levels`            o NÍVEL no contexto: listas `{uuid, level}` da entrada aberta
+   *                       que substituem o `level` da linha. O Crossbow Ace é de 1º
+   *                       nível como talento de ranger e de 4º como adicional do Archer —
+   *                       é o 4 que o livro lista, e é por ele que a aba ordena.
    */
   readonly annotate?: {
-    readonly field: string;
-    readonly groups: readonly { readonly from: string; readonly value: string }[];
-    /**
-     * O NÍVEL no contexto: listas `{uuid, level}` da entrada aberta que substituem o
-     * `level` da linha. O Crossbow Ace é de 1º nível como talento de ranger e de 4º como
-     * adicional do Archer — é o 4 que o livro lista, e é por ele que a aba ordena.
-     */
+    readonly field?: string;
+    readonly groups?: readonly { readonly from: string; readonly value: string }[];
     readonly levels?: readonly string[];
   };
   /** Colunas SÓ desta aba, sempre visíveis e antes das outras: a origem. */
@@ -1041,8 +1032,6 @@ export const SOURCES: readonly SourceSpec[] = [
     id: 'ancestries',
     entityType: 'ancestry',
     mode: 'list',
-    /* Aponta para habilidades e para a ação Change Shape: precisa das outras bases. */
-    crossReferences: true,
     /*
      * A primeira das três fontes GRANDES (Etapa 22). O painel lateral mostra o BÁSICO — a
      * mecânica em campos e o resumo do pack; a página do jornal, com heranças e tudo, é
@@ -1182,7 +1171,6 @@ export const SOURCES: readonly SourceSpec[] = [
       { kind: 'options', id: 'source', field: 'source.title' },
     ],
     typeFilter: null,
-    crossReferences: true,
     searchFields: ['name'],
     detail: [
       { kind: 'chips', field: 'traits' },
@@ -1235,7 +1223,6 @@ export const SOURCES: readonly SourceSpec[] = [
      * Sem TIPO: a pasta do compêndio existe em 188 dos 520 e responde a mesma pergunta que
      * o livro, que responde nos 520. Ver o `ignore` da receita.
      */
-    crossReferences: true,
     columns: [
       { kind: 'chips', id: 'skills', field: 'skills' },
       { kind: 'chips', id: 'lore', field: 'lore' },
@@ -1299,7 +1286,6 @@ export const SOURCES: readonly SourceSpec[] = [
      * Tipo, dedicação (clicável, com nível), pré-requisitos, classe, livro; a tela completa
      * tem a página inteira, com os talentos colados, e a aba Talentos travada nos citados.
      */
-    crossReferences: true,
     columns: [
       { kind: 'text', id: 'kind', field: 'kind' },
       { kind: 'text', id: 'level', field: 'dedication.level' },
@@ -1335,18 +1321,12 @@ export const SOURCES: readonly SourceSpec[] = [
           id: 'feats',
           source: 'feats',
           lock: [{ field: 'uuid', from: 'allFeatUuids', match: 'equals' }],
-          annotate: {
-            field: 'origin',
-            groups: [
-              { from: 'featUuids', value: 'own' },
-              { from: 'additionalFeatUuids', value: 'additional' },
-            ],
-            levels: ['feats', 'additionalFeats'],
-          },
-          columns: [{ kind: 'text', id: 'origin', field: 'origin' }],
-          filters: [
-            { kind: 'options', id: 'origin', field: 'origin', values: ['own', 'additional'] },
-          ],
+          /*
+           * Só o NÍVEL no contexto. A origem (próprio ou adicional) foi tentada como
+           * coluna e filtro e saiu: o Tipo do talento já diz — "Archetype" é próprio,
+           * "Fighter" é adicional (decisão do autor, 25c).
+           */
+          annotate: { levels: ['feats', 'additionalFeats'] },
         },
       ],
     },
@@ -1429,7 +1409,6 @@ export const SOURCES: readonly SourceSpec[] = [
      * Os campos de slug (`skills`, `weapons`, `domains`) são PONTES: abrem a perícia, o
      * equipamento e o domínio. Ver `links`.
      */
-    crossReferences: true,
     columns: [
       { kind: 'chip', id: 'kind', field: 'kind' },
       { kind: 'chip', id: 'group', field: 'group' },
@@ -1494,7 +1473,6 @@ export const SOURCES: readonly SourceSpec[] = [
      * concedem já está lá, cada nome um `@UUID` clicável. Tirá-la para o cabeçalho
      * repetiria 2.473 links que a descrição já tem. Sobram as duas magias, como coluna.
      */
-    crossReferences: true,
     columns: [
       { kind: 'references', id: 'spell', field: 'spell' },
       { kind: 'references', id: 'advancedSpell', field: 'advancedSpell' },
@@ -1523,7 +1501,6 @@ export const SOURCES: readonly SourceSpec[] = [
      * descrição é tudo. As 47 tabelas (DCs por nível, orçamento de encontro…) vêm na
      * descrição, pelo desenhista que já desenha a tabela dos escudos.
      */
-    crossReferences: true,
     columns: [{ kind: 'chip', id: 'section', field: 'section' }],
     defaultColumns: ['section'],
     special: NO_SPECIAL_COLUMNS,
@@ -1545,7 +1522,6 @@ export const SOURCES: readonly SourceSpec[] = [
      * pacote do Foundry (ver a receita). O que ela tem é o atributo-chave e as ações, e as
      * ações são o corpo da entrada, não uma coluna.
      */
-    crossReferences: true,
     columns: [{ kind: 'chip', id: 'attribute', field: 'attribute' }],
     defaultColumns: ['attribute'],
     special: NO_SPECIAL_COLUMNS,

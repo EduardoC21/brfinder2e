@@ -1,4 +1,12 @@
-import { useDeferredValue, useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import {
+  useCallback,
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+} from 'react';
 
 import {
   SOURCES,
@@ -91,6 +99,31 @@ export function BrowseScreen({ baseVersion }: BrowseScreenProps) {
    */
   const [popouts, despacharPopout] = useReducer(popoutReducer, EMPTY_POPOUTS);
   const [pedidosDeLista, setPedidosDeLista] = useState(0);
+  /*
+   * O pedido de ABRIR uma entrada na tela completa dela, vindo de um flutuante (25c, pelo
+   * autor): o Acrobat aberto em pop-out de dentro de um talento, e o botão de tela
+   * completa leva a tela para a lista de talentos do Acrobat — trocando de fonte se
+   * preciso, e fechando o flutuante que levou lá. Um contador, como o pedido de lista:
+   * o mesmo pedido duas vezes tem de valer duas vezes.
+   */
+  const [pedidoDeEntrada, setPedidoDeEntrada] = useState<OpenRequest | null>(null);
+  const contadorDePedidos = useRef(0);
+  const esquecerPedido = useCallback(() => {
+    setPedidoDeEntrada(null);
+  }, []);
+
+  const abrirNaTela = (subject: PopoutSubject, popoutId: number): void => {
+    const fonte = SOURCES.find((entry) => entry.entityType === subject.entityType);
+    if (fonte?.fullView === undefined) return;
+    setSourceId(fonte.id);
+    setPedidoDeEntrada({
+      sourceId: fonte.id,
+      key: subject.entity.key,
+      n: contadorDePedidos.current + 1,
+    });
+    contadorDePedidos.current += 1;
+    despacharPopout({ kind: 'close', id: popoutId });
+  };
   const [paletaAberta, setPaletaAberta] = useState(false);
   const [buscaNaDescricao, setBuscaNaDescricao] = useState(false);
 
@@ -109,8 +142,15 @@ export function BrowseScreen({ baseVersion }: BrowseScreenProps) {
    * a base de ações carregada o clique não abre nada. `useAllBases` já guarda o resultado,
    * então abrir a paleta depois não relê nada.
    */
-  const precisaDeTodas = paletaAberta || (source?.crossReferences ?? false);
-  const bases = useAllBases(precisaDeTodas, baseVersion);
+  /*
+   * TODAS as bases, sempre. Eram carregadas só na paleta e nas fontes marcadas
+   * `crossReferences`, e isso escondia um defeito (25c): abrindo o app em Talentos, o
+   * link "Harrower" da dedicação saía inerte, porque a base de arquétipos não estava em
+   * memória — e passava a funcionar depois de visitar qualquer fonte que a carregasse.
+   * Com 19 mil links entre fontes, não há fonte sem referência cruzada. O custo é uma
+   * leitura por tipo, uma vez por versão da base, que a paleta já pagava.
+   */
+  const bases = useAllBases(true, baseVersion);
 
   /*
    * O glossário de traços, lido UMA vez por versão da base e servido por contexto a todo
@@ -218,6 +258,8 @@ export function BrowseScreen({ baseVersion }: BrowseScreenProps) {
             onPopOut={abrirFlutuante}
             reference={ponte}
             listRequest={pedidosDeLista}
+            openRequest={pedidoDeEntrada}
+            onOpenHandled={esquecerPedido}
             sources={carregadas}
           />
         )}
@@ -263,6 +305,14 @@ export function BrowseScreen({ baseVersion }: BrowseScreenProps) {
               entityType={item.entityType}
               fields={item.fields}
               context={item.context}
+              {...(SOURCES.find((entry) => entry.entityType === item.entityType)?.fullView ===
+              undefined
+                ? {}
+                : {
+                    onExpand: () => {
+                      abrirNaTela(item, item.id);
+                    },
+                  })}
               /*
               A ponte do FLUTUANTE navega no lugar: clicar troca o que esta janela mostra e
               empilha de onde veio, como um navegador. O Ctrl+clique continua abrindo
@@ -294,6 +344,13 @@ export function BrowseScreen({ baseVersion }: BrowseScreenProps) {
 const EMPTY: readonly BrowseEntity[] = [];
 const SEM_FILTROS: FilterState = {};
 
+/** O pedido de abrir uma entrada na tela completa: a chave e um contador, para repetir valer. */
+interface OpenRequest {
+  readonly sourceId: string;
+  readonly key: string;
+  readonly n: number;
+}
+
 /** A trava de uma aba de lista: a etiqueta, e as colunas e os filtros só dela. */
 interface LockedList {
   readonly label: string;
@@ -317,6 +374,8 @@ function SourcePane({
   onPopOut,
   reference,
   listRequest,
+  openRequest = null,
+  onOpenHandled,
   sources,
   lock,
 }: {
@@ -327,6 +386,10 @@ function SourcePane({
   readonly reference: ReferenceBridge;
   /** Sobe quando o trilho é clicado na fonte já aberta: "volta para a lista". */
   readonly listRequest: number;
+  /** "Abre esta entrada na tela completa", vindo de um flutuante. Ver `abrirNaTela`. */
+  readonly openRequest?: OpenRequest | null;
+  /** Chamado quando o pedido foi atendido, para a tela o esquecer. */
+  readonly onOpenHandled?: () => void;
   /** Todas as bases carregadas, para as abas de lista da tela completa. */
   readonly sources: readonly LoadedSource[];
   /**
@@ -404,6 +467,29 @@ function SourcePane({
     setPedidoVisto(listRequest);
     setTelaCompleta(false);
   }
+  /*
+   * O pedido de ENTRADA, também no render. Ele escolhe a entrada e abre a tela completa —
+   * e limpa o termo e os filtros da fonte, porque uma entrada fora do recorte não tem
+   * como abrir: a lista lê `opened` de `results`. Limpar é o custo de "me leva lá".
+   */
+  const [entradaVista, setEntradaVista] = useState(0);
+  if (
+    openRequest !== null &&
+    openRequest.sourceId === source.id &&
+    entradaVista !== openRequest.n
+  ) {
+    setEntradaVista(openRequest.n);
+    setOpenedKey(openRequest.key);
+    setOverlay(null);
+    setFechadoAMao(false);
+    setTelaCompleta(true);
+    setTerm('');
+    if (Object.keys(filters).length > 0) setFilters({});
+  }
+  /* Consumido, o pedido é devolvido: senão um remonte da fonte o reabriria. */
+  useEffect(() => {
+    if (openRequest !== null && entradaVista === openRequest.n) onOpenHandled?.();
+  }, [openRequest, entradaVista, onOpenHandled]);
 
   /*
    * `useDeferredValue` no termo: o React desenha o campo com a letra nova de imediato e
@@ -716,7 +802,12 @@ function SourcePane({
    * estado dela intacto, que é o que o Voltar devolve.
    */
   const cheia = telaCompleta && opened !== null && source.fullView !== undefined;
-  if (telaCompleta && !cheia) setTelaCompleta(false);
+  /*
+   * `!loading`: um pedido de abertura chega junto da troca de fonte, antes de a base
+   * carregar — `opened` ainda é nulo, e sem esta guarda a tela completa se desfazia no
+   * mesmo render em que foi pedida.
+   */
+  if (telaCompleta && !cheia && !loading) setTelaCompleta(false);
 
   if (cheia) {
     return (

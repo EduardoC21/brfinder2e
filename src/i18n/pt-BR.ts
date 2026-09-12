@@ -213,11 +213,6 @@ export const ptBR = {
       open: 'Tela completa',
       back: 'Voltar à lista',
       locked: 'Filtro travado nesta entrada',
-      /** A origem de um talento na aba Talentos do arquétipo. */
-      origin: {
-        own: 'Do arquétipo',
-        additional: 'Adicional',
-      } as Record<string, string>,
       /** O apêndice recolhido no fim do texto: o bloco de mecânica como o livro escreve. */
       appendix: {
         mechanics: 'Mecânicas',
@@ -447,9 +442,8 @@ export const ptBR = {
       owner: 'de',
       /* Herança: a ancestralidade dona. */
       ancestry: 'de',
-      /* Arquétipo. `origin` é a coluna da aba Talentos: próprio ou adicional. */
+      /* Arquétipo. */
       dedication: 'dedicação',
-      origin: 'origem',
       'dedication.level': 'nível',
       class: 'classe',
       /* Antecedente. "Saber" é como o livro brasileiro chama a perícia Lore. */

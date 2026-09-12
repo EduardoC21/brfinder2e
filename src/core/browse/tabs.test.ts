@@ -117,7 +117,7 @@ describe('lockedEntities', () => {
     /* O nível no contexto: o adicional 'u' é de 8º no arquétipo, seja o que for na fonte. */
     const comNivel: ListTabSpec = {
       ...tab,
-      annotate: { ...tab.annotate!, levels: ['lista'] },
+      annotate: { ...tab.annotate, levels: ['lista'] },
     };
     const comListas = { ...acrobat, base: { ...acrobat.base, lista: [{ uuid: 'u', level: 8 }] } };
     expect(

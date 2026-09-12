@@ -13,8 +13,9 @@
 
 import { isRecord } from '../../json';
 import { archetypePages, type ArchetypeFeat } from '../archetypes';
-import { html, int, listOf, nullable, shape, text, textList } from '../decoders';
-import { from } from '../field';
+import { html, int, listOf, nullable, shape, text } from '../decoders';
+import { plainSnippet } from '../feats-index';
+import { from, fromDocument, type LookupTables } from '../field';
 import { recipe } from '../recipe';
 
 export interface ArchetypeBase {
@@ -79,19 +80,77 @@ function expandirArquetipos(document: unknown): readonly unknown[] {
     name: arquetipo.name,
     kind: arquetipo.kind,
     rarity: arquetipo.rarity,
-    dedication: arquetipo.dedication,
+    /* O que a PÁGINA cita; a dedicação e as listas finais são derivadas (ver abaixo). */
+    citedDedication: arquetipo.dedication,
+    citedFeats: arquetipo.feats,
     prerequisites: arquetipo.prerequisites,
-    feats: arquetipo.feats,
     additionalFeats: arquetipo.additionalFeats,
-    featUuids: arquetipo.feats.map((feat) => feat.uuid),
-    additionalFeatUuids: arquetipo.additionalFeats.map((feat) => feat.uuid),
-    allFeatUuids: [...arquetipo.feats, ...arquetipo.additionalFeats].map((feat) => feat.uuid),
     class: arquetipo.kind === 'multiclass' ? arquetipo.slug : null,
     source: { title: arquetipo.sourceTitle },
     description: arquetipo.intro,
     page: arquetipo.content,
     _stats: { compendiumSource: arquetipo.uuid },
   }));
+}
+
+/** O que o expansor deixou no documento, lido de volta com a forma certa. */
+function lidos(document: unknown): {
+  name: string;
+  dedication: ArchetypeFeat | null;
+  feats: readonly ArchetypeFeat[];
+  additional: readonly ArchetypeFeat[];
+  page: string;
+} {
+  const d = isRecord(document) ? document : {};
+  const feat = (item: unknown): ArchetypeFeat | null =>
+    isRecord(item) && typeof item['uuid'] === 'string' && typeof item['name'] === 'string'
+      ? {
+          uuid: item['uuid'],
+          name: item['name'],
+          level: typeof item['level'] === 'number' ? item['level'] : null,
+        }
+      : null;
+  const lista = (value: unknown): ArchetypeFeat[] =>
+    Array.isArray(value) ? (value as unknown[]).flatMap((item) => feat(item) ?? []) : [];
+  return {
+    name: typeof d['name'] === 'string' ? d['name'] : '',
+    dedication: feat(d['citedDedication']),
+    feats: lista(d['citedFeats']),
+    additional: lista(d['additionalFeats']),
+    page: typeof d['page'] === 'string' ? d['page'] : '',
+  };
+}
+
+/**
+ * A DEDICAÇÃO, com a dupla verificação pedida pelo autor: a que a página cita; se não
+ * cita nenhuma, "<Nome> Dedication" na tabela de talentos — aceita SÓ se o começo da
+ * descrição do talento está no texto da página (é o texto "quebrado" que a página
+ * embute sem o título). É o Guardian: a página não o cita, a tabela o tem, e o texto
+ * bate. Sem tabela, ou sem o texto, continua nula — melhor faltar que chutar.
+ */
+function toDedication(document: unknown, tables: LookupTables): ArchetypeFeat | null {
+  const { name, dedication, page } = lidos(document);
+  if (dedication !== null) return dedication;
+  const candidata = tables.feats?.get(`${name} Dedication`);
+  if (candidata === undefined || candidata.snippet === '') return null;
+  const pagina = plainSnippet(page, Number.MAX_SAFE_INTEGER);
+  if (!pagina.includes(candidata.snippet)) return null;
+  return { uuid: candidata.uuid, name: `${name} Dedication`, level: candidata.level };
+}
+
+/** Os talentos da página — com a dedicação recuperada na frente, quando a página não a cita. */
+function toFeats(document: unknown, tables: LookupTables): readonly ArchetypeFeat[] {
+  const { dedication, feats } = lidos(document);
+  const recuperada = dedication === null ? toDedication(document, tables) : null;
+  return recuperada === null ? feats : [recuperada, ...feats];
+}
+
+function toFeatUuids(document: unknown, tables: LookupTables): readonly string[] {
+  return toFeats(document, tables).map((feat) => feat.uuid);
+}
+
+function toAllFeatUuids(document: unknown, tables: LookupTables): readonly string[] {
+  return [...toFeats(document, tables), ...lidos(document).additional].map((feat) => feat.uuid);
 }
 
 const feat = shape({ uuid: text, name: text, level: nullable(int) });
@@ -106,13 +165,15 @@ export const archetypeRecipe = recipe<ArchetypeBase, ArchetypeDesc>({
     slug: from('_id', text),
     kind: from('kind', text),
     rarity: from('rarity', text),
-    dedication: from('dedication', nullable(feat)),
+    dedication: fromDocument(toDedication),
     prerequisites: from('prerequisites', text),
-    feats: from('feats', listOf(feat)),
+    feats: fromDocument(toFeats),
     additionalFeats: from('additionalFeats', listOf(feat)),
-    featUuids: from('featUuids', textList),
-    additionalFeatUuids: from('additionalFeatUuids', textList),
-    allFeatUuids: from('allFeatUuids', textList),
+    featUuids: fromDocument(toFeatUuids),
+    additionalFeatUuids: fromDocument((document) =>
+      lidos(document).additional.map((item) => item.uuid),
+    ),
+    allFeatUuids: fromDocument(toAllFeatUuids),
     class: from('class', nullable(text)),
     source: from('source', shape({ title: text })),
   },
@@ -120,5 +181,13 @@ export const archetypeRecipe = recipe<ArchetypeBase, ArchetypeDesc>({
   desc: {
     main: from('description', html),
     page: from('page', html),
+  },
+
+  ignore: {
+    /* Os dois são lidos pelos derivados (`toDedication`, `toFeats`), que não marcam cobertura. */
+    citedDedication:
+      'a dedicação que a página cita; `dedication` (derivado) a confirma ou recupera',
+    citedFeats:
+      'os talentos que a página cita; `feats` (derivado) põe a dedicação recuperada na frente',
   },
 });

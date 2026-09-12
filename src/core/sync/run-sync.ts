@@ -25,6 +25,7 @@ import {
 } from '../source/index';
 import { buildTraitGlossary, type TraitGlossary } from '../glossary/index';
 import { listRetiredRaw, type StorePort } from '../store/index';
+import { indexFeats, type FeatsByName } from '../normalization/feats-index';
 import { indexJournalPages, type JournalPages } from '../normalization/journals';
 import { mergeLanguageFiles } from '../normalization/language';
 import { run, type PackDocuments, type Failure, type NormalizedEntity } from '../normalization/run';
@@ -154,6 +155,8 @@ export async function runSync(
    * manifesto, o índice fica vazio e a página fica vazia; nada falha.
    */
   const journals = indexJournalPages(readPackDocuments(loaded, 'journals') ?? []);
+  /* A tabela de talentos por nome: a dedicação que a página do arquétipo não cita. */
+  const feats = indexFeats(readPackDocuments(loaded, 'feats-srd') ?? []);
 
   const types: TypeResult[] = [];
 
@@ -201,14 +204,19 @@ export async function runSync(
       });
     }
 
-    const result = run(recipe, sources, { language, journals });
+    const result = run(recipe, sources, { language, journals, feats });
 
     // Os aposentados passam pela MESMA receita, na mesma execução. É o que garante uma
     // forma só para o front desenhar.
     const retired =
       options.store === undefined
         ? { entities: [], failures: [] }
-        : renormalizeRetired(recipe, options.store, { language, journals }, mergeFolders(sources));
+        : renormalizeRetired(
+            recipe,
+            options.store,
+            { language, journals, feats },
+            mergeFolders(sources),
+          );
 
     const retiredResult = await retired;
 
@@ -339,7 +347,7 @@ function mergeFolders(sources: readonly PackDocuments[]): ReadonlyMap<string, st
 async function renormalizeRetired(
   recipe: Recipe<never, never>,
   store: StorePort,
-  tables: { language: ReadonlyMap<string, string>; journals: JournalPages },
+  tables: { language: ReadonlyMap<string, string>; journals: JournalPages; feats: FeatsByName },
   folders: ReadonlyMap<string, string>,
 ): Promise<{ entities: readonly NormalizedEntity[]; failures: readonly Failure[] }> {
   const stored = await listRetiredRaw(store, recipe.type);

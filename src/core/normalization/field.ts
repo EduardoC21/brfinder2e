@@ -10,6 +10,7 @@
  */
 
 import { raw, text, type Decoder } from './decoders';
+import type { FeatsByName } from './feats-index';
 
 export type FieldSource = 'document' | 'language' | 'journal' | 'sector' | 'derived';
 
@@ -22,6 +23,8 @@ export type FieldSource = 'document' | 'language' | 'journal' | 'sector' | 'deri
 export interface LookupTables {
   readonly language?: ReadonlyMap<string, string>;
   readonly journals?: ReadonlyMap<string, string>;
+  /** Os talentos por nome — ver `feats-index.ts`. */
+  readonly feats?: FeatsByName;
 }
 
 export interface Field<T> {

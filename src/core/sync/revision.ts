@@ -28,5 +28,6 @@
  *      própria com `features` e `vision`.
  *   8  Etapa 25 — a fonte de arquétipo; as 8 páginas de regra do jornal Archetypes.
  *   9  Etapa 25b — os talentos adicionais do arquétipo, e a prosa sem o parágrafo deles.
+ *  10  Etapa 25c — a dedicação recuperada pela tabela de talentos (Guardian).
  */
-export const RECIPES_REVISION = 9;
+export const RECIPES_REVISION = 10;

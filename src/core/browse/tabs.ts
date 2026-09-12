@@ -76,7 +76,8 @@ export function lockedEntities(
   );
   const anota = tab.annotate;
   if (anota === undefined) return travadas;
-  const grupos = anota.groups.map((group) => ({
+  const campo = anota.field;
+  const grupos = (anota.groups ?? []).map((group) => ({
     value: group.value,
     uuids: new Set(valoresDoCampo(carrier, group.from)),
   }));
@@ -90,7 +91,7 @@ export function lockedEntities(
       ...entity,
       base: {
         ...base,
-        ...(grupo === undefined ? {} : { [anota.field]: grupo.value }),
+        ...(grupo === undefined || campo === undefined ? {} : { [campo]: grupo.value }),
         ...(nivel === undefined ? {} : { level: nivel }),
       },
     };
