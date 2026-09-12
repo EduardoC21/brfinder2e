@@ -29,5 +29,6 @@
  *   8  Etapa 25 — a fonte de arquétipo; as 8 páginas de regra do jornal Archetypes.
  *   9  Etapa 25b — os talentos adicionais do arquétipo, e a prosa sem o parágrafo deles.
  *  10  Etapa 25c — a dedicação recuperada pela tabela de talentos (Guardian).
+ *  11  Etapa 26 — a fonte de classe; as 874 habilidades de classe entram em Habilidades.
  */
-export const RECIPES_REVISION = 10;
+export const RECIPES_REVISION = 11;

@@ -81,6 +81,13 @@ Antes: **Etapa 20** — as tabelas das regras param de quebrar (célula compacta
 linha, `@Embed` cola a entrada apontada, e as duas vassouras em Configurações: apagar as
 entradas aposentadas e apagar a base inteira.
 
+Antes: **Etapa 26a** — `class`: as 29 do pack com a ficha inicial em campos
+(atributo-chave, PV, percepção, resistências, ataques, defesas, perícias, conjura) e a
+página do jornal `Classes` colada; as 556 habilidades por nível de `system.items` viram
+a aba Habilidades, e as ESCOLHAS da classe (ordem do druida, escola do mago) viram uma
+aba cada, achadas pelo `ChoiceSet` da habilidade — `item:tag:druid-order` marca as 9
+ordens. `class-features` (856 + 18 chamados) entra em Habilidades como Tipo.
+
 Antes: **Etapa 25** — `archetype`: os 249 do jornal `Archetypes`, com o Tipo do livro
 (184 gerais, 29 multiclasse, 14 de classe, 13 destinos míticos, 6 mortos-vivos, 3
 artefatos), a dedicação, os talentos citados pela página (2.125 dos 2.142) e a tela
@@ -93,9 +100,10 @@ Antes: **Etapa 23** — `heritage` (311 próprias, fonte fora do trilho) e as 17
 como Tipo da ancestralidade; as abas de lista da tela completa, com o filtro travado —
 Dwarf: Heranças 9, Talentos 48; Nephilim: Talentos 88.
 
-Próxima: **classe** — 29 do pack com proficiências e níveis de talento, a página do
-jornal `Classes` (16 mil caracteres, 10 `@Embed`), `class-features` (874) entrando em
-Habilidades como Tipo, e as pontes que ficaram esperando (arquétipo multiclasse → classe).
+Próxima: **classe, a lateral da aba Detalhes** — a tabela de progressão por nível (o que
+se ganha em cada um, dos níveis de talento e das habilidades) e as proficiências
+iniciais, trocando entre as duas dentro da lateral; e as pontes que ficaram esperando
+(arquétipo multiclasse → classe).
 
 Antes: **Etapa 22e** — a descrição no contexto: o Change Shape aberto pelo Anadi tem o
 texto do Anadi (o `ItemAlteration` de descrição do Foundry, 91 estáticas no zip), com

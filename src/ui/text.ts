@@ -92,7 +92,17 @@ export function fieldText(field: string, value: string): string {
    * dado em inglês e continuam capitalizados — OPEN-DECISIONS #10.
    */
   if (field === KIND_FIELD) return strings.browse.ancestry.kind[value] ?? capitalizar(value);
+  /* A classe: percepção é rank (0–4), conjura é sim/não, perícias extras é "mais N". */
+  if (field === 'perception') return rankLabel(value);
+  if (field === 'spellcasting') return strings.browse.ancestry.spellcasting[value] ?? value;
+  if (field === 'extraSkills')
+    return value === '0' ? '' : strings.browse.ancestry.extraSkills(value);
   return capitalizar(value);
+}
+
+/** `2` → "Perito". Fora da escala, o número mesmo. */
+export function rankLabel(value: string): string {
+  return strings.browse.ancestry.rank[Number(value)] ?? value;
 }
 
 export const KIND_FIELD = 'kind';

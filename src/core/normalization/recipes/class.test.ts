@@ -1,0 +1,45 @@
+import { describe, expect, it } from 'vitest';
+
+import { indexJournalPages } from '../journals';
+import { isClean } from '../report';
+import { run } from '../run';
+import { classRecipe } from './class';
+import { druid, jornal } from './class.fixtures';
+
+const result = run(classRecipe, [{ pack: 'classes', documents: [druid] }], {
+  journals: indexJournalPages([jornal]),
+});
+
+describe('receita de classe', () => {
+  it('normaliza a amostra sem falha, com relatório limpo', () => {
+    expect(result.failures).toEqual([]);
+    expect(result.entities).toHaveLength(1);
+    expect(result.report.unmapped, JSON.stringify(result.report.unmapped)).toEqual([]);
+    expect(isClean(result.report)).toBe(true);
+  });
+
+  it('projeta a ficha inicial, os níveis e as habilidades por nível', () => {
+    const base = result.entities[0]?.base;
+    expect(base?.keyAbility).toEqual(['wis']);
+    expect(base?.hp).toBe(8);
+    expect(base?.perception).toBe(1);
+    expect(base?.saves).toEqual({ fortitude: 1, reflex: 1, will: 2 });
+    expect(base?.attacks.simple).toBe(1);
+    expect(base?.defenses.heavy).toBe(0);
+    expect(base?.spellcasting).toBe(1);
+    expect(base?.skills).toEqual(['nature']);
+    expect(base?.extraSkills).toBe(2);
+    expect(base?.classFeatLevels).toEqual([2, 4, 6, 8, 10, 12, 14, 16, 18, 20]);
+    expect(base?.features.map((f) => [f.level, f.name])).toEqual([
+      [1, 'Druid Spellcasting'],
+      [1, 'Druidic Order'],
+      [3, 'Fortitude Expertise'],
+    ]);
+    expect(base?.featureUuids).toHaveLength(3);
+  });
+
+  it('cola a página do jornal', () => {
+    expect(result.entities[0]?.desc.page).toContain('<h1>Class Features</h1>');
+    expect(result.entities[0]?.desc.main).toContain('The power of nature');
+  });
+});

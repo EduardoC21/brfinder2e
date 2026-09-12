@@ -222,6 +222,8 @@ export const ptBR = {
         heritages: 'Heranças',
         feats: 'Talentos',
         universal: 'Universais',
+        features: 'Habilidades',
+        focus: 'Foco',
       } as Record<string, string>,
     },
     /**
@@ -271,7 +273,27 @@ export const ptBR = {
       category: {
         ancestryfeature: 'Ancestralidade',
         classfeature: 'Classe',
+        calling: 'Chamado mítico',
       } as Record<string, string>,
+      /** Os ranks de proficiência do Foundry, 0 a 4. */
+      rank: ['Destreinado', 'Treinado', 'Perito', 'Mestre', 'Lendário'],
+      /** As chaves das proficiências, como o livro as chama. */
+      proficiency: {
+        fortitude: 'Fortitude',
+        reflex: 'Reflexos',
+        will: 'Vontade',
+        simple: 'Simples',
+        martial: 'Marciais',
+        advanced: 'Avançadas',
+        unarmed: 'Desarmado',
+        unarmored: 'Sem armadura',
+        light: 'Leve',
+        medium: 'Média',
+        heavy: 'Pesada',
+      } as Record<string, string>,
+      /** Conjura? O rank 1 é "sim, treinado"; 0 é "não". */
+      spellcasting: { '0': 'Não', '1': 'Sim' } as Record<string, string>,
+      extraSkills: (n: string) => `mais ${n} à escolha`,
     },
     /**
      * A SANTIFICAÇÃO da divindade: o que o clérigo pode (ou deve) ser.
@@ -444,6 +466,15 @@ export const ptBR = {
       ancestry: 'de',
       /* Arquétipo. */
       dedication: 'dedicação',
+      /* Classe. */
+      keyAbility: 'atributo-chave',
+      perception: 'percepção',
+      saves: 'resistências',
+      attacks: 'ataques',
+      defenses: 'defesas',
+      spellcasting: 'conjura',
+      extraSkills: 'perícias extras',
+      classOwner: 'classe',
       'dedication.level': 'nível',
       class: 'classe',
       /* Antecedente. "Saber" é como o livro brasileiro chama a perícia Lore. */

@@ -23,7 +23,7 @@ import { useTraitLabel } from '@ui/glossary/useTraitLabel';
 import { useDescription } from '@ui/hooks/useDescription';
 import { CollapseToggle } from '@ui/components/CollapseToggle';
 import { cx } from '@ui/cx';
-import { bookLabel, capitalizar, fieldText } from '@ui/text';
+import { bookLabel, capitalizar, fieldText, rankLabel } from '@ui/text';
 
 import { boostsText } from './backgroundFields';
 import { references as referenciasDe, type Reference } from './referenceFields';
@@ -698,6 +698,17 @@ function Field({
       return <Row label={label(spec.field)}>{valor}</Row>;
     }
 
+    /*
+     * As PROFICIÊNCIAS numa linha: "Fortitude Treinado · Reflexos Treinado · Vontade
+     * Perito". Rank 0 não aparece: o livro só lista o que se é. O `other` dos ataques é
+     * um objeto com nome — vira "Deity's favored weapon Treinado" quando tem nome.
+     */
+    case 'ranks': {
+      const partes = ranks(entity, spec.field);
+      if (partes.length === 0) return null;
+      return <Row label={label(spec.field)}>{partes.join(' · ')}</Row>;
+    }
+
     /* Terra sozinho — é o padrão —, o resto com o tipo ao lado: "5 pés · 25 pés nado". */
     case 'speeds': {
       const lista = speeds(entity, spec.field);
@@ -789,6 +800,26 @@ function readList(entity: BrowseEntity, field: string): string[] {
 }
 
 const s = strings.browse.skill;
+
+/** `{fortitude: 1, will: 2, other: {name, rank}}` → `['Fortitude Treinado', …]`, sem os zero. */
+function ranks(entity: BrowseEntity, field: string): readonly string[] {
+  const base = entity.base;
+  if (!isRecord(base) || !isRecord(base[field])) return [];
+  const out: string[] = [];
+  for (const [chave, valor] of Object.entries(base[field])) {
+    if (typeof valor === 'number') {
+      if (valor > 0)
+        out.push(
+          `${b.ancestry.proficiency[chave] ?? capitalizar(chave)} ${rankLabel(String(valor))}`,
+        );
+    } else if (isRecord(valor) && typeof valor['rank'] === 'number' && valor['rank'] > 0) {
+      const nome =
+        typeof valor['name'] === 'string' && valor['name'] !== '' ? valor['name'] : chave;
+      out.push(`${nome} ${rankLabel(String(valor['rank']))}`);
+    }
+  }
+  return out;
+}
 
 /** `[{type, value}]` de um campo de deslocamentos, tolerando o que não tiver a forma. */
 function speeds(entity: BrowseEntity, field: string): readonly { type: string; value: number }[] {

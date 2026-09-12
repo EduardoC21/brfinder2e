@@ -14,6 +14,7 @@ export * from './recipes/action';
 export * from './recipes/archetype';
 export * from './recipes/ancestry';
 export * from './recipes/background';
+export * from './recipes/class';
 export * from './recipes/condition';
 export * from './recipes/deity';
 export * from './recipes/domain';

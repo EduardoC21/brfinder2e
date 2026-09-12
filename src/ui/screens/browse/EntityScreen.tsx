@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 
 import {
   contextFor,
+  expandChoiceTabs,
   fieldValue,
   lockedEntities,
   type BrowseEntity,
@@ -28,11 +29,18 @@ const d = strings.browse.detail;
 
 /** Uma aba pronta para a barra: a de texto sem contagem, a de lista com as entradas travadas. */
 type Aba =
-  | { readonly tab: PageTabSpec; readonly entities: null; readonly count: null }
+  | {
+      readonly tab: PageTabSpec;
+      readonly entities: null;
+      readonly count: null;
+      readonly label: null;
+    }
   | {
       readonly tab: ListTabSpec;
       readonly entities: readonly BrowseEntity[];
       readonly count: number;
+      /** O rótulo vindo do DADO (a aba de escolha tem o nome da habilidade); nulo = i18n. */
+      readonly label: string | null;
     };
 
 /**
@@ -85,12 +93,23 @@ export function EntityScreen({
   const abas = useMemo<readonly Aba[]>(
     () =>
       view.tabs.flatMap((tab): Aba[] => {
-        if (tab.kind === 'page') return [{ tab, entities: null, count: null }];
+        if (tab.kind === 'page') return [{ tab, entities: null, count: null, label: null }];
         const fonte = sources.find((loaded) => loaded.source.id === tab.source);
         if (fonte === undefined) return [];
+        /* As abas de ESCOLHA: uma por habilidade-escolha da entrada, com o nome dela. */
+        if (tab.kind === 'choices') {
+          return expandChoiceTabs(tab, entity, fonte.entities).map((escolha) => ({
+            tab: escolha.tab,
+            entities: escolha.entities,
+            count: escolha.entities.length,
+            label: escolha.label,
+          }));
+        }
         const lookup = (id: string) => sources.find((loaded) => loaded.source.id === id)?.entities;
         const entities = lockedEntities(tab, entity, fonte.entities, lookup);
-        return entities.length === 0 ? [] : [{ tab, entities, count: entities.length }];
+        return entities.length === 0
+          ? []
+          : [{ tab, entities, count: entities.length, label: null }];
       }),
     [view.tabs, sources, entity],
   );
@@ -118,7 +137,7 @@ export function EntityScreen({
         */}
         <span className={styles['fio']} aria-hidden="true" />
         <nav className={styles['abas']} role="tablist">
-          {abas.map(({ tab, count }) => (
+          {abas.map(({ tab, count, label }) => (
             <button
               key={tab.id}
               type="button"
@@ -130,7 +149,7 @@ export function EntityScreen({
                 setLateralFechada(false);
               }}
             >
-              {t.tabs[tab.id] ?? tab.id}
+              {label ?? t.tabs[tab.id] ?? tab.id}
               {count !== null && <span className={styles['contagem']}>{count}</span>}
             </button>
           ))}

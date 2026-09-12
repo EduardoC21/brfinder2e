@@ -26,21 +26,22 @@ let result: RunResult<ActionBase, ActionDesc>;
 beforeAll(async () => {
   const loaded = await loadInventory(http, { tag: KNOWN_GOOD_TAG });
 
-  const documents: unknown[] = [];
-  for (const declared of actionRecipe.packs) {
-    const packName = declared.name;
-    const pack = loaded.inventory.packs.find((entry) => entry.name === packName);
-    if (!pack) throw new Error(`o pack ${packName} sumiu do manifesto`);
-    documents.push(...(JSON.parse(readTextEntry(loaded.zip, pack.file)) as unknown[]));
-  }
-
-  // Só o pack principal tem arquivo de pastas; o de aventura não tem, e é isso que marca
-  // as suas 192 entradas como `Adventure`.
-  const declaration = loaded.manifest.packs.find((entry) => entry.name === 'actionspf2e');
-  if (!declaration) throw new Error('o pack actionspf2e sumiu do manifesto');
-  const folders = parseFolderRoots(
-    JSON.parse(readTextEntry(loaded.zip, DEFAULT_CHANNEL.packFoldersFile(declaration))),
-  );
+  // Um input POR PACK, como o motor recebe na sincronização: o setor `Adventure` é
+  // declarado por pack na receita, e juntar os dois num só input o apagava (o teste
+  // ficou para trás quando o setor passou a vir do pack).
+  const inputs = actionRecipe.packs.map((declared) => {
+    const pack = loaded.inventory.packs.find((entry) => entry.name === declared.name);
+    if (!pack) throw new Error(`o pack ${declared.name} sumiu do manifesto`);
+    const documents = JSON.parse(readTextEntry(loaded.zip, pack.file)) as unknown[];
+    // Só o pack principal tem arquivo de pastas; o de aventura não tem.
+    if (declared.name !== 'actionspf2e') return { pack: declared.name, documents };
+    const declaration = loaded.manifest.packs.find((entry) => entry.name === declared.name);
+    if (!declaration) throw new Error('o pack actionspf2e sumiu do manifesto');
+    const folders = parseFolderRoots(
+      JSON.parse(readTextEntry(loaded.zip, DEFAULT_CHANNEL.packFoldersFile(declaration))),
+    );
+    return { pack: declared.name, documents, folders };
+  });
 
   const language = mergeLanguageFiles(
     languageFiles(loaded.manifest, 'en').map(
@@ -48,7 +49,7 @@ beforeAll(async () => {
     ),
   );
 
-  result = run(actionRecipe, [{ pack: 'actionspf2e', documents, folders }], { language });
+  result = run(actionRecipe, inputs, { language });
 }, 180_000);
 
 describe('as 766 ações reais, dos dois packs', () => {

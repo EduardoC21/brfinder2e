@@ -5,6 +5,7 @@ import {
   ancestryRecipe,
   archetypeRecipe,
   backgroundRecipe,
+  classRecipe,
   conditionRecipe,
   deityRecipe,
   domainRecipe,
@@ -200,6 +201,7 @@ const RECIPES: readonly Recipe<never, never>[] = [
   featureRecipe as Recipe<never, never>,
   heritageRecipe as Recipe<never, never>,
   archetypeRecipe as Recipe<never, never>,
+  classRecipe as Recipe<never, never>,
 ];
 
 const INITIAL: SyncState = { stored: null, run: { status: 'loading' }, update: NO_UPDATE };

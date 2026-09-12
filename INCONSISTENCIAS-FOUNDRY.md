@@ -177,6 +177,20 @@ Versão medida: **`pf2e-8.5.0`**.
   Foundry aparece o UUID cru. Etapa 22b.
 - **No app:** o rodapé sai do resumo nos 50 (`semRodape`), com ou sem rótulo.
 
+### 2.7 `classes` — `keyAbility.selected` nulo em 4, e `trainedSkills.custom` em 7
+
+- `system.keyAbility.selected: null` em Guardian, Runesmith, Commander e Necromancer (as
+  quatro mais novas): cache de escolha da ficha, como o `traits.selected` das ações.
+  `system.trainedSkills.custom` existe em 7 e vale `""` em 6; no Thaumaturge vale
+  "Esoteric Lore". Etapa 26.
+- **No app:** ignorados.
+
+### 2.8 `classfeatures` — `system.actionCategory.value` vazio em 10
+
+- As 10 modificações de inovação do Inventor (Razor Prongs, Hefty Composition…) trazem
+  `actionCategory: {value: ""}`; nenhuma outra das 874 tem a chave. Etapa 26.
+- **No app:** ignorado.
+
 ### 2.6 `journals` — página `Kashrishi`: "Emphathic Sense"
 
 - O bloco de mecânica escreve "Emphathic Sense" duas vezes; a habilidade em

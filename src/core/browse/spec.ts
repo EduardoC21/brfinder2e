@@ -356,6 +356,12 @@ export type DetailFieldSpec =
    * Pedido do autor.
    */
   | { readonly kind: 'speeds'; readonly field: string }
+  /**
+   * PROFICIÊNCIAS: um objeto `{nome: rank}` numa linha — "Fortitude Treinado · Reflexos
+   * Treinado · Vontade Perito". O rank do Foundry é 0 a 4; a tela escreve por extenso.
+   * `skip` diz que chaves não entram (o `other` dos ataques, que é objeto com nome).
+   */
+  | { readonly kind: 'ranks'; readonly field: string }
   | { readonly kind: 'frequency'; readonly field: string }
   | { readonly kind: 'cost' }
   | { readonly kind: 'source' };
@@ -452,7 +458,23 @@ export interface FullViewSpec {
  * jornal em `desc.<field>`) ou de LISTA (outra fonte, com o filtro TRAVADO nesta
  * entrada — as heranças do Dwarf, os talentos do Dwarf).
  */
-export type TabSpec = PageTabSpec | ListTabSpec;
+export type TabSpec = PageTabSpec | ListTabSpec | ChoicesTabSpec;
+
+/**
+ * As abas de ESCOLHA de uma classe (Etapa 26): uma aba por habilidade da entrada aberta
+ * que é uma escolha — "Druidic Order", "Arcane School" —, listando as opções: as
+ * habilidades cuja lista `tags` tem a etiqueta `choiceTag` da escolha. É o `ChoiceSet`
+ * do Foundry lido ao contrário. Cada aba nasce com o nome da habilidade; a fonte listada
+ * é a mesma das habilidades.
+ */
+export interface ChoicesTabSpec {
+  readonly kind: 'choices';
+  readonly id: string;
+  /** A fonte das habilidades (a que tem `choiceTag` e `tags`). */
+  readonly source: string;
+  /** O campo da entrada aberta com os UUIDs das habilidades dela. */
+  readonly from: string;
+}
 
 export interface PageTabSpec {
   readonly kind: 'page';
@@ -516,6 +538,8 @@ export type LockSpec =
       readonly match: 'equals' | 'contains';
     }
   | { readonly field: string; readonly value: string; readonly match: 'is' }
+  /** A lista contém um valor FIXO: as habilidades com a etiqueta `druid-order`. */
+  | { readonly field: string; readonly value: string; readonly match: 'contains-value' }
   | {
       readonly field: string;
       readonly source: string;
@@ -567,11 +591,11 @@ const DEFESA_DE_MAGIA: DefenseFields = {
  */
 const ATTRIBUTE_CODES: readonly string[] = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
 
-/** As categorias de habilidade: só a de ancestralidade hoje; a de classe entra com a classe. */
-const FEATURE_CATEGORIES: readonly string[] = ['ancestryfeature'];
-
 /** Ancestralidade (50) e herança versátil (17): o Tipo da fonte de ancestralidade. */
 const ANCESTRY_KINDS: readonly string[] = ['ancestry', 'versatile'];
+
+/** As categorias de habilidade: ancestralidade (55), classe (856), chamado mítico (18). */
+const FEATURE_KINDS: readonly string[] = ['ancestryfeature', 'classfeature', 'calling'];
 
 /** Os quatro tamanhos de ancestralidade, do menor ao maior: 2, 12, 33, 3. */
 const ANCESTRY_SIZES: readonly string[] = ['tiny', 'sm', 'med', 'lg'];
@@ -1191,14 +1215,16 @@ export const SOURCES: readonly SourceSpec[] = [
      */
     columns: [
       { kind: 'text', id: 'owner', field: 'owner' },
-      { kind: 'text', id: 'level', field: 'level' },
+      { kind: 'text', id: 'classOwner', field: 'classOwner' },
       { kind: 'text', id: 'source', field: 'source.title' },
     ],
-    defaultColumns: ['owner'],
-    special: { level: null, rarity: 'rarity', traits: 'traits' },
+    defaultColumns: ['owner', 'classOwner'],
+    /* O nível como calha: é o que ordena a aba Habilidades da classe (1, 3, 5…). */
+    special: { level: 'level', rarity: 'rarity', traits: 'traits' },
     filters: [
-      { kind: 'options', id: 'category', field: 'category', values: FEATURE_CATEGORIES },
+      { kind: 'options', id: 'category', field: 'category', values: FEATURE_KINDS },
       { kind: 'options', id: 'owner', field: 'owner' },
+      { kind: 'options', id: 'classOwner', field: 'classOwner' },
       { kind: 'list', id: 'traits', field: 'traits', combine: 'any' },
       { kind: 'options', id: 'source', field: 'source.title' },
     ],
@@ -1207,6 +1233,7 @@ export const SOURCES: readonly SourceSpec[] = [
     detail: [
       { kind: 'chips', field: 'traits' },
       { kind: 'text', field: 'owner' },
+      { kind: 'text', field: 'classOwner' },
       { kind: 'text', field: 'category' },
       { kind: 'source' },
     ],
@@ -1333,15 +1360,79 @@ export const SOURCES: readonly SourceSpec[] = [
   },
   {
     id: 'classes',
-    entityType: null,
-    mode: 'cards',
-    columns: [],
-    defaultColumns: [],
-    special: NO_SPECIAL_COLUMNS,
-    filters: [],
+    entityType: 'class',
+    mode: 'list',
+    /*
+     * A última das fontes grandes (Etapa 26). A lateral tem a FICHA INICIAL em campos:
+     * atributo-chave, PV, percepção, resistências, ataques, defesas, perícias, se conjura.
+     * A tela completa: a página do livro; Habilidades (as de classe, por nível);
+     * Talentos; Foco (as magias com o traço da classe); e uma aba por ESCOLHA da classe
+     * (ordem do druida, escola do mago), lida do ChoiceSet das habilidades.
+     */
+    columns: [
+      { kind: 'boosts', id: 'keyAbility', field: 'keyAbility' },
+      { kind: 'text', id: 'hp', field: 'hp' },
+      { kind: 'text', id: 'perception', field: 'perception' },
+      { kind: 'text', id: 'spellcasting', field: 'spellcasting' },
+      { kind: 'text', id: 'source', field: 'source.title' },
+    ],
+    defaultColumns: ['keyAbility', 'hp', 'spellcasting'],
+    special: { level: null, rarity: 'rarity', traits: null },
+    filters: [
+      {
+        kind: 'list',
+        id: 'keyAbility',
+        field: 'keyAbility',
+        combine: 'any',
+        values: ATTRIBUTE_CODES,
+      },
+      { kind: 'options', id: 'hp', field: 'hp' },
+      { kind: 'options', id: 'spellcasting', field: 'spellcasting' },
+      { kind: 'options', id: 'source', field: 'source.title' },
+    ],
     typeFilter: null,
-    searchFields: [],
-    detail: [],
+    searchFields: ['name'],
+    /* A ordem do bloco "Initial Proficiencies" do livro. */
+    detail: [
+      { kind: 'boosts', field: 'keyAbility' },
+      { kind: 'text', field: 'hp' },
+      { kind: 'text', field: 'perception' },
+      { kind: 'ranks', field: 'saves' },
+      { kind: 'chips', field: 'skills' },
+      { kind: 'text', field: 'extraSkills' },
+      { kind: 'ranks', field: 'attacks' },
+      { kind: 'ranks', field: 'defenses' },
+      { kind: 'text', field: 'spellcasting' },
+      { kind: 'source' },
+    ],
+    fullView: {
+      tabs: [
+        { kind: 'page', id: 'details', field: 'page', fallback: 'main' },
+        {
+          kind: 'list',
+          id: 'features',
+          source: 'features',
+          lock: [{ field: 'uuid', from: 'featureUuids', match: 'equals' }],
+          annotate: { levels: ['features'] },
+        },
+        {
+          kind: 'list',
+          id: 'feats',
+          source: 'feats',
+          lock: [
+            { field: 'category', value: 'class', match: 'is' },
+            { field: 'traits', from: 'slug', match: 'contains' },
+          ],
+        },
+        {
+          kind: 'list',
+          id: 'focus',
+          source: 'spells',
+          lock: [{ field: 'traits', from: 'slug', match: 'contains' }],
+        },
+        { kind: 'choices', id: 'choices', source: 'features', from: 'featureUuids' },
+      ],
+    },
   },
   {
     id: 'companions',

@@ -856,6 +856,21 @@ Detalhes na ancestralidade — e fecha o flutuante. Vale para toda entrada cuja 
 tela completa. O pedido limpa o termo e os filtros da fonte de destino: entrada fora do
 recorte não tem como abrir.
 
+**A aba de ESCOLHA** (`kind: 'choices'`, Etapa 26a): a classe tem escolhas com lista —
+a ordem do druida, a escola do mago, o instinto do bárbaro — e cada uma é uma aba com o
+nome da habilidade que escolhe ("Druidic Order 9"). A spec não lista as abas: diz de onde
+elas saem (`from: 'featureUuids'`, as habilidades da classe) e a tela EXPANDE — toda
+habilidade cujo `ChoiceSet` filtra por `item:tag:X` vira uma aba de lista travada em
+`tags ∋ X`. Uma aba por etiqueta, na ordem do nível da habilidade. É o mesmo desenhista da
+aba de lista, com a trava `contains-value`; o que muda é que o rótulo vem do dado, não do
+i18n — a habilidade já tem nome.
+
+**A classe é a lateral básica mais a página** (decisão do autor): lista com atributo-chave,
+PV, percepção e conjura; lateral com as proficiências iniciais em campos (rank por nome:
+"Fortitude Treinado · Reflexos Treinado · Vontade Perito"); tela completa com Detalhes (a
+página inteira do jornal, com as habilidades coladas), Habilidades por nível, Talentos,
+Foco (as magias de foco com o traço da classe) e as abas de escolha.
+
 **Fonte fora do trilho** (`hidden`): a herança própria existe como fonte — carrega, indexa,
 abre em flutuante, aparece na busca global — mas não é uma lista que se abre pelo trilho:
 só faz sentido como aba de uma ancestralidade. Decisão do autor. A herança VERSÁTIL, que

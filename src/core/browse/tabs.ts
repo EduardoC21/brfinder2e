@@ -5,7 +5,48 @@
  */
 
 import { fieldList, fieldValue, type BrowseEntity } from './query';
-import type { ListTabSpec, LockSpec } from './spec';
+import type { ChoicesTabSpec, ListTabSpec, LockSpec } from './spec';
+
+/**
+ * As abas de ESCOLHA de uma classe, expandidas: uma por habilidade da entrada aberta que
+ * tem `choiceTag`, listando as habilidades cuja `tags` tem essa etiqueta. Devolve abas de
+ * lista prontas — com a trava e o rótulo (o nome da habilidade), na ordem do nível da
+ * habilidade — para a barra desenhar como qualquer outra.
+ */
+export function expandChoiceTabs(
+  tab: ChoicesTabSpec,
+  carrier: BrowseEntity,
+  features: readonly BrowseEntity[],
+): readonly {
+  readonly tab: ListTabSpec;
+  readonly label: string;
+  readonly entities: BrowseEntity[];
+}[] {
+  const uuids = new Set(valoresDoCampo(carrier, tab.from));
+  const escolhas = features
+    .filter((feature) => uuids.has(feature.uuid) && fieldValue(feature, 'choiceTag') !== '')
+    .sort((a, b) => Number(fieldValue(a, 'level')) - Number(fieldValue(b, 'level')));
+  const vistas = new Set<string>();
+  const out: { tab: ListTabSpec; label: string; entities: BrowseEntity[] }[] = [];
+  for (const escolha of escolhas) {
+    const etiqueta = fieldValue(escolha, 'choiceTag');
+    if (vistas.has(etiqueta)) continue;
+    vistas.add(etiqueta);
+    const entities = features.filter((feature) => fieldList(feature, 'tags').includes(etiqueta));
+    if (entities.length === 0) continue;
+    out.push({
+      tab: {
+        kind: 'list',
+        id: `${tab.id}:${etiqueta}`,
+        source: tab.source,
+        lock: [{ field: 'tags', value: etiqueta, match: 'contains-value' }],
+      },
+      label: fieldValue(escolha, 'name'),
+      entities,
+    });
+  }
+  return out;
+}
 
 /** As bases que a trava `none-of` consulta: as entradas de cada fonte, pelo `id`. */
 export type SourceLookup = (sourceId: string) => readonly BrowseEntity[] | undefined;
@@ -51,6 +92,8 @@ function passa(
     }
     case 'is':
       return valorDaEntrada(entity, rule.field) === rule.value;
+    case 'contains-value':
+      return fieldList(entity, rule.field).includes(rule.value);
     case 'none-of': {
       const fonte = lookup(rule.source);
       if (fonte === undefined) return false;
