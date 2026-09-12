@@ -13,6 +13,17 @@ import { raw, text, type Decoder } from './decoders';
 
 export type FieldSource = 'document' | 'language' | 'journal' | 'sector' | 'derived';
 
+/**
+ * As tabelas de consulta que um campo DERIVADO pode ler além do documento: a de idioma e a
+ * de páginas de jornal. São as mesmas que `fromLang` e `fromJournal` leem — o derivado só
+ * as recebe porque há conta que precisa das duas coisas: o texto de uma alteração de
+ * descrição é uma CHAVE de idioma dentro de uma regra do documento.
+ */
+export interface LookupTables {
+  readonly language?: ReadonlyMap<string, string>;
+  readonly journals?: ReadonlyMap<string, string>;
+}
+
 export interface Field<T> {
   readonly source: FieldSource;
   /** Caminho no documento, ou modelo de chave da tabela de idioma. */
@@ -22,7 +33,7 @@ export interface Field<T> {
   readonly isOptional: boolean;
   /** Ausente vira este valor. Exclusivo com `isOptional`. */
   readonly fallback: { readonly value: unknown } | null;
-  readonly transform: ((value: unknown) => unknown) | null;
+  readonly transform: ((value: unknown, tables: LookupTables) => unknown) | null;
 
   optional(): Field<T | undefined>;
   withDefault(value: T): Field<T>;
@@ -42,7 +53,7 @@ function build<T>(base: Omit<Field<T>, 'optional' | 'withDefault' | 'map'>): Fie
       const previous = base.transform;
       return build<U>({
         ...base,
-        transform: (value) => transform((previous ? previous(value) : value) as T),
+        transform: (value, tables) => transform((previous ? previous(value, tables) : value) as T),
       });
     },
   };
@@ -152,14 +163,14 @@ export function fromSector(): Field<string> {
  *
  * Use com parcimônia: `from()` diz de onde o dado vem só de olhar a declaração, e isto não.
  */
-export function fromDocument<T>(compute: (document: unknown) => T): Field<T> {
+export function fromDocument<T>(compute: (document: unknown, tables: LookupTables) => T): Field<T> {
   return build<T>({
     source: 'derived',
     path: '(derivado)',
     decoder: raw,
     isOptional: false,
     fallback: null,
-    transform: (value) => compute(value),
+    transform: (value, tables) => compute(value, tables),
   });
 }
 

@@ -38,6 +38,7 @@ describe('receita de ancestralidade', () => {
       languages: ['common', 'dwarven'],
       additionalLanguages: ['gnomish', 'goblin', 'jotun'],
       extraLanguages: 'int',
+      alterations: [],
       features: [
         { uuid: 'Compendium.pf2e.ancestryfeatures.Item.Eyuqu6eIaoGCjnMv', name: 'Clan Dagger' },
       ],

@@ -247,6 +247,21 @@ texto inteiro, e a busca na descrição busca no inteiro. O "leia mais" da ances
 (o link para a própria página do jornal) sai na RECEITA, não na poda: só a receita sabe
 que aquela página é o `page` dela — e `raw/` continua com ele.
 
+### A descrição no contexto
+
+**Decidido (Etapa 22e), pelo autor:** uma entrada aberta A PARTIR de outra pode ter o
+texto daquela outra. O Change Shape é uma ação só, genérica; o Anadi, o Kitsune, o Tanuki
+e o Yaoguai o concedem cada um com o seu texto — é o `ItemAlteration` de descrição do
+Foundry, lido na receita (`alterations` na base de quem concede) e aplicado na abertura
+(`contextFor`). Só as alterações estáticas (91 no zip): as que dependem do estado da ficha
+ficam para a ficha.
+
+Na tela: `override` troca o texto e avisa — "Descrição de Anadi. Ver a original" —, com
+o caminho de volta; `add` deixa o original e acrescenta embaixo — "O que Anadi
+acrescenta:". O aviso é mono e apagado, na voz dos rótulos: é anotação sobre o texto. O
+original nunca some; é um clique. Aberta pela lista da própria fonte, a entrada é a
+genérica. Navegar no flutuante deixa o contexto para trás; o Voltar o traz.
+
 ### `@Embed`: a entrada colada
 
 **Decidido (Etapa 20b):** `@Embed[<uuid> inline]` cola a descrição da entrada apontada no

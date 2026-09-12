@@ -1,4 +1,4 @@
-import type { BrowseEntity, DetailFieldSpec } from '@core/browse/index';
+import type { BrowseEntity, DescriptionContext, DetailFieldSpec } from '@core/browse/index';
 
 /**
  * Os painéis flutuantes abertos.
@@ -22,6 +22,21 @@ export interface PopoutSubject {
   readonly entity: BrowseEntity;
   readonly entityType: string;
   readonly fields: readonly DetailFieldSpec[];
+  /**
+   * De onde a entrada foi aberta, quando isso muda o que ela diz: o Change Shape aberto
+   * pelo Anadi tem o texto do Anadi. Ausente na abertura comum. Ver `contextFor`.
+   */
+  readonly context?: DescriptionContext;
+}
+
+/** O assunto de um painel, sem o resto do painel — para empilhar e para trocar. */
+function assuntoDe(item: PopoutSubject): PopoutSubject {
+  return {
+    entity: item.entity,
+    entityType: item.entityType,
+    fields: item.fields,
+    ...(item.context === undefined ? {} : { context: item.context }),
+  };
 }
 
 export interface Popout extends PopoutSubject {
@@ -87,9 +102,7 @@ export function popoutReducer(state: PopoutState, action: PopoutAction): PopoutS
           ...state.items,
           {
             id: state.next,
-            entity: action.entity,
-            entityType: action.entityType,
-            fields: action.fields,
+            ...assuntoDe(action),
             x: ORIGEM.x + passo * CASCATA,
             y: ORIGEM.y + passo * CASCATA,
             z: state.next,
@@ -112,12 +125,17 @@ export function popoutReducer(state: PopoutState, action: PopoutAction): PopoutS
         items: state.items.map((item) =>
           item.id === id
             ? {
-                ...item,
-                ...assunto,
-                back: [
-                  ...item.back,
-                  { entity: item.entity, entityType: item.entityType, fields: item.fields },
-                ],
+                /*
+                 * O assunto novo INTEIRO, e não `...item, ...assunto`: o contexto do
+                 * anterior não pode vazar para o próximo. Aberto pelo Anadi e navegado
+                 * para outra coisa, o texto do Anadi fica para trás — com o Voltar.
+                 */
+                id: item.id,
+                x: item.x,
+                y: item.y,
+                z: item.z,
+                ...assuntoDe(assunto),
+                back: [...item.back, assuntoDe(item)],
               }
             : item,
         ),
@@ -133,7 +151,16 @@ export function popoutReducer(state: PopoutState, action: PopoutAction): PopoutS
       return {
         ...state,
         items: state.items.map((item) =>
-          item.id === action.id ? { ...item, ...anterior, back: item.back.slice(0, -1) } : item,
+          item.id === action.id
+            ? {
+                id: item.id,
+                x: item.x,
+                y: item.y,
+                z: item.z,
+                ...assuntoDe(anterior),
+                back: item.back.slice(0, -1),
+              }
+            : item,
         ),
       };
     }

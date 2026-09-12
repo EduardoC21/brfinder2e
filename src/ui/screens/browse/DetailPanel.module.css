@@ -302,3 +302,33 @@
 .embutido .head {
   padding-top: var(--space-2);
 }
+
+/*
+ * O aviso de contexto: "Descrição de Anadi. Ver a original". Mono e apagado, na voz dos
+ * rótulos — é anotação sobre o texto, não texto. O botão dentro dele é só o sublinhado
+ * pontilhado, como uma nota, porque é um caminho e não uma ação.
+ */
+.contexto {
+  margin: 0 0 var(--space-3);
+  font: 400 var(--text-xs) / 1.6 var(--font-mono);
+  letter-spacing: 0.03em;
+  color: var(--color-text-muted);
+}
+
+.prose + .contexto {
+  margin-top: var(--space-4);
+}
+
+.contextoLink {
+  border: 0;
+  border-bottom: 1px dotted var(--color-text-muted);
+  padding: 0;
+  background: none;
+  font: inherit;
+  color: var(--color-data);
+  cursor: pointer;
+}
+
+.contextoLink:hover {
+  color: var(--color-data-strong);
+}

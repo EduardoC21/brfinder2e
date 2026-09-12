@@ -1,6 +1,7 @@
 /** Porta de entrada da camada `normalization/`. Quem consome importa daqui. */
 
 export * from './decoders';
+export * from './alterations';
 export * from './cast';
 export * from './field';
 export * from './journals';

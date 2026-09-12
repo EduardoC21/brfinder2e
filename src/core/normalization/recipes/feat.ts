@@ -35,7 +35,8 @@
  */
 
 import { bool, html, int, listOf, nullable, shape, text, textList } from '../decoders';
-import { from, fromSector } from '../field';
+import { descriptionAlterations, type DescriptionAlteration } from '../alterations';
+import { from, fromSector, fromDocument } from '../field';
 import { recipe } from '../recipe';
 
 /**
@@ -123,6 +124,12 @@ export interface FeatBase {
    * disso resolvido; a consulta só precisa mostrar.
    */
   readonly prerequisites: readonly string[];
+  /**
+   * O que este talento diz sobre OUTRA entrada quando a altera — Monster Warden acrescenta
+   * o próprio texto ao Monster Hunter. 56 dos 6.284 têm alteração estática; as que
+   * dependem do estado da ficha (spellshape, amped) ficam de fora. Ver `alterations.ts`.
+   */
+  readonly alterations: readonly DescriptionAlteration[];
 
   readonly frequency: FeatFrequency | null;
 
@@ -173,6 +180,7 @@ export const featRecipe = recipe<FeatBase, FeatDesc>({
      * para a tela receber uma lista de frases — se ela recebesse os objetos, todo
      * consumidor teria que conhecer o formato do VTT.
      */
+    alterations: fromDocument(descriptionAlterations),
     prerequisites: from('system.prerequisites.value', listOf(shape({ value: text }))).map((items) =>
       items.map((item) => item.value),
     ),

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 
 import {
+  contextFor,
   fieldValue,
   type BrowseEntity,
   type DetailFieldSpec,
@@ -155,7 +156,10 @@ function PageTab({
     resolves: (target) => reference.resolve(target) !== null,
     open: (target) => {
       const destino = reference.resolve(target);
-      if (destino !== null) reference.onPopOut?.(destino);
+      if (destino === null) return;
+      // Aberto daqui, o alvo leva o que ESTA entrada diz sobre ele — ver `contextFor`.
+      const contexto = contextFor(entity, destino.entityType, destino.entity);
+      reference.onPopOut?.(contexto === null ? destino : { ...destino, context: contexto });
     },
     embed: (target) => {
       const alvo = reference.resolve(target);

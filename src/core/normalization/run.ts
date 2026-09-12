@@ -251,7 +251,7 @@ function readField(
   context: PackContext,
 ): unknown {
   // O derivado recebe o DOCUMENTO inteiro, e não um caminho. Ver `fromDocument`.
-  if (field.source === 'derived') return applyTransform(field, document);
+  if (field.source === 'derived') return applyTransform(field, document, options);
 
   const found =
     field.source === 'document'
@@ -263,16 +263,16 @@ function readField(
           : readFromTable(field, document, options.language);
 
   if (!found.present) {
-    if (field.fallback !== null) return applyTransform(field, field.fallback.value);
+    if (field.fallback !== null) return applyTransform(field, field.fallback.value, options);
     if (field.isOptional) return undefined;
     throw new MissingFieldError(field.path);
   }
 
-  return applyTransform(field, field.decoder.decode(found.value, field.path));
+  return applyTransform(field, field.decoder.decode(found.value, field.path), options);
 }
 
-function applyTransform(field: Field<unknown>, value: unknown): unknown {
-  return field.transform === null ? value : field.transform(value);
+function applyTransform(field: Field<unknown>, value: unknown, tables: RunOptions): unknown {
+  return field.transform === null ? value : field.transform(value, tables);
 }
 
 interface Found {

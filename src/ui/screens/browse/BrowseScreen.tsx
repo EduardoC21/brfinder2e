@@ -258,6 +258,7 @@ export function BrowseScreen({ baseVersion }: BrowseScreenProps) {
               entity={item.entity}
               entityType={item.entityType}
               fields={item.fields}
+              context={item.context}
               /*
               A ponte do FLUTUANTE navega no lugar: clicar troca o que esta janela mostra e
               empilha de onde veio, como um navegador. O Ctrl+clique continua abrindo

@@ -1,11 +1,14 @@
 import { useMemo, useState } from 'react';
 
 import {
+  contextFor,
   fieldValue,
   rarityLetter,
   type BrowseEntity,
+  type DescriptionContext,
   type DetailFieldSpec,
 } from '@core/browse/index';
+import type { DescriptionAlteration } from '@core/normalization/index';
 import { isRecord } from '@core/json';
 import { parseDescription, pruneForReading } from '@core/markup/index';
 import { strings } from '@i18n/index';
@@ -63,6 +66,8 @@ export interface DetailPanelProps {
    * entrada vista do mesmo jeito.
    */
   readonly embedded?: boolean;
+  /** De onde esta entrada foi aberta, quando isso muda o texto. Ver `contextFor`. */
+  readonly context?: DescriptionContext | undefined;
 }
 
 /**
@@ -109,6 +114,7 @@ export function DetailPanel({
   reference,
   onBack,
   embedded = false,
+  context,
 }: DetailPanelProps) {
   const description = useDescription(entityType, entity.key);
 
@@ -137,9 +143,19 @@ export function DetailPanel({
    * pede (Ctrl, clique do meio) ou quando não há para onde navegar — que é o caso da
    * lateral, onde `onNavigate` não existe.
    */
+  /**
+   * O destino leva o CONTEXTO desta entrada quando ela tem algo a dizer sobre ele: o
+   * Change Shape aberto daqui, se aqui é o Anadi, abre com o texto do Anadi.
+   */
+  const comContexto = (destino: PopoutSubject): PopoutSubject => {
+    const contexto = contextFor(entity, destino.entityType, destino.entity);
+    return contexto === null ? destino : { ...destino, context: contexto };
+  };
+
   const abrir = (uuid: string, novo: boolean): void => {
-    const destino = reference?.resolve(uuid);
-    if (destino === undefined || destino === null) return;
+    const alvo = reference?.resolve(uuid);
+    if (alvo === undefined || alvo === null) return;
+    const destino = comContexto(alvo);
     const navegar = reference?.onNavigate;
     if (!novo && navegar !== undefined) navegar(destino);
     else reference?.onPopOut?.(destino);
@@ -147,8 +163,9 @@ export function DetailPanel({
 
   /** O mesmo `abrir`, para quem aponta por slug. */
   const abrirSlug = (entityType: string, slug: string, novo: boolean): void => {
-    const destino = reference?.resolveSlug(entityType, slug);
-    if (destino === undefined || destino === null) return;
+    const alvo = reference?.resolveSlug(entityType, slug);
+    if (alvo === undefined || alvo === null) return;
+    const destino = comContexto(alvo);
     const navegar = reference?.onNavigate;
     if (!novo && navegar !== undefined) navegar(destino);
     else reference?.onPopOut?.(destino);
@@ -179,6 +196,20 @@ export function DetailPanel({
     () => (description === null ? null : pruneForReading(parseDescription(description))),
     [description],
   );
+
+  /*
+   * A DESCRIÇÃO NO CONTEXTO. `override` troca o texto pelo de quem concedeu, com um aviso
+   * e o caminho de volta para o original; `add` deixa o original e acrescenta o de quem
+   * concedeu embaixo, com o aviso. O original nunca some de verdade: é um clique.
+   */
+  const [verOriginal, setVerOriginal] = useState(false);
+  const alteracao = context?.alteration;
+  const blocos = useMemo(
+    () =>
+      alteracao === undefined ? null : pruneForReading(parseDescription(alterationHtml(alteracao))),
+    [alteracao],
+  );
+  const substitui = alteracao?.mode === 'override' && !verOriginal;
 
   const letraDaRaridade = rarityLetter(fieldValue(entity, 'rarity'));
 
@@ -260,10 +291,38 @@ export function DetailPanel({
        * traços ficam sempre à mão enquanto se lê o texto.
        */}
       <div className={styles['body']}>
-        {nodes === null ? null : (
+        {context !== undefined && alteracao?.mode === 'override' && (
+          <p className={styles['contexto']}>
+            {verOriginal ? t.context.original : t.context.override(context.from)}
+            <button
+              type="button"
+              className={styles['contextoLink']}
+              onClick={() => {
+                setVerOriginal((estava) => !estava);
+              }}
+            >
+              {verOriginal ? t.context.seeFrom(context.from) : t.context.seeOriginal}
+            </button>
+          </p>
+        )}
+        {substitui ? (
+          blocos !== null && (
+            <div className={styles['prose']}>
+              <RichText nodes={blocos} {...(links === undefined ? {} : { links })} />
+            </div>
+          )
+        ) : nodes === null ? null : (
           <div className={styles['prose']}>
             <RichText nodes={nodes} {...(links === undefined ? {} : { links })} />
           </div>
+        )}
+        {context !== undefined && alteracao?.mode === 'add' && blocos !== null && (
+          <>
+            <p className={styles['contexto']}>{t.context.added(context.from)}</p>
+            <div className={styles['prose']}>
+              <RichText nodes={blocos} {...(links === undefined ? {} : { links })} />
+            </div>
+          </>
         )}
       </div>
 
@@ -701,6 +760,18 @@ function readList(entity: BrowseEntity, field: string): string[] {
 }
 
 const s = strings.browse.skill;
+
+/** Os blocos de uma alteração como UM HTML: título vira `<h3>`, divisor vira `<hr>`. */
+function alterationHtml(alteration: DescriptionAlteration): string {
+  return alteration.blocks
+    .map(
+      (block) =>
+        `${block.divider === true ? '<hr />' : ''}${
+          block.title === undefined ? '' : `<h3>${block.title}</h3>`
+        }${block.text}`,
+    )
+    .join('');
+}
 
 /**
  * As ações como BOTÕES, e não como texto — e a escolhida em BORDÔ.

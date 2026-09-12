@@ -43,6 +43,7 @@ describe('Rupture Stomp — custo em ações, frequência e limite de uso', () =
       traits: ['archetype'],
       rarity: 'common',
       prerequisites: ['stalwart defender dedication'],
+      alterations: [],
       frequency: { max: 1, per: 'day' },
       maxTakable: 2,
       onlyLevel1: false,

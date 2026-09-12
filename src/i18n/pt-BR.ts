@@ -318,6 +318,17 @@ export const ptBR = {
     legacyHint: 'Publicado antes do Remaster: pode ter sido substituído por regra nova.',
     detail: {
       close: 'Fechar',
+      /**
+       * A descrição NO CONTEXTO: o Change Shape aberto pelo Anadi tem o texto do Anadi.
+       * `override` avisa e oferece o original; `add` avisa e acrescenta.
+       */
+      context: {
+        override: (de: string) => `Descrição de ${de}. `,
+        original: 'Descrição original. ',
+        added: (de: string) => `O que ${de} acrescenta:`,
+        seeOriginal: 'Ver a original',
+        seeFrom: (de: string) => `Ver a de ${de}`,
+      },
       popOut: 'Destacar em painel flutuante',
       /*
        * O voltar do painel, e a dica ensina o gesto que ninguém adivinha sozinho: o

@@ -16,5 +16,7 @@
  *
  *   1  Etapa 22d — ancestralidade: rodapé fora do resumo, página só a prosa,
  *      habilidades com GrantItem, `extraLanguages`; fonte de habilidades.
+ *   2  Etapa 22e — a descrição no contexto: `alterations` na ancestralidade e no
+ *      talento.
  */
-export const RECIPES_REVISION = 1;
+export const RECIPES_REVISION = 2;

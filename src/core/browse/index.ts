@@ -1,6 +1,7 @@
 /** Porta de entrada da camada `browse/`. Quem consome importa daqui. */
 
 export * from './columns';
+export * from './context';
 export * from './distance';
 export * from './duration';
 export * from './query';

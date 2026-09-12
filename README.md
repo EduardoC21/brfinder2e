@@ -81,6 +81,10 @@ Antes: **Etapa 20** — as tabelas das regras param de quebrar (célula compacta
 linha, `@Embed` cola a entrada apontada, e as duas vassouras em Configurações: apagar as
 entradas aposentadas e apagar a base inteira.
 
+Antes: **Etapa 22e** — a descrição no contexto: o Change Shape aberto pelo Anadi tem o
+texto do Anadi (o `ItemAlteration` de descrição do Foundry, 91 estáticas no zip), com
+"Ver a original". Serve a qualquer fonte que conceda algo.
+
 Antes: **Etapa 22d** — `feature`, as 55 habilidades de ancestralidade (o clique em
 "Fangs" abre); o Change Shape que vinha por `GrantItem`; a linha "quantos" dos idiomas
 adicionais; e `RECIPES_REVISION`: a base gravada por receitas antigas pede sincronização

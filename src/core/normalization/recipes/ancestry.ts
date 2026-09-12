@@ -36,6 +36,7 @@
  */
 
 import { isRecord } from '../../json';
+import { descriptionAlterations, type DescriptionAlteration } from '../alterations';
 import { bool, html, int, raw, shape, text, textList } from '../decoders';
 import { from, fromDocument, fromJournal } from '../field';
 import { recipe } from '../recipe';
@@ -79,6 +80,11 @@ export interface AncestryBase {
    * `system.rules` (só o UUID; o nome vem do índice, como as magias da divindade).
    */
   readonly features: readonly AncestryFeature[];
+  /**
+   * O que esta ancestralidade diz sobre o que concede — o Change Shape do Anadi tem o
+   * texto do Anadi. 4 das 50 (Anadi, Kitsune, Tanuki, Yaoguai). Ver `alterations.ts`.
+   */
+  readonly alterations: readonly DescriptionAlteration[];
   readonly source: {
     readonly license: string;
     readonly title: string;
@@ -218,6 +224,7 @@ export const ancestryRecipe = recipe<AncestryBase, AncestryDesc>({
     additionalLanguages: from('system.additionalLanguages.value', textList),
     extraLanguages: fromDocument(toExtraLanguages),
     features: fromDocument(toFeatures),
+    alterations: fromDocument(descriptionAlterations),
     source: from('system.publication', shape({ license: text, title: text, remaster: bool })),
   },
 

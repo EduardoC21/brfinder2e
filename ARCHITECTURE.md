@@ -420,6 +420,13 @@ exportação para o Foundry (OPEN-DECISIONS, item 1).
 Gravar com `node:fs` é escolha do **comando**, não do domínio. A camada `core/store/` com
 porta própria entra na Etapa 4, junto com a tela de sincronização que vai precisar dela.
 
+### O campo derivado lê as tabelas
+
+`fromDocument((document, tables) => …)`: o derivado recebe, além do documento, as tabelas
+de consulta (`language`, `journals`). A primeira conta que precisou das duas coisas foi a
+alteração de descrição (`normalization/alterations.ts`): o texto é uma chave de idioma
+dentro de uma regra do documento. Continua sem marcar cobertura, pelo motivo de sempre.
+
 ### A revisão das receitas
 
 A base é calculada na sincronização. Código novo com base velha mostra dado velho — e foi
