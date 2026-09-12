@@ -371,6 +371,12 @@ export interface SourceSpec {
   /** Identificador estável. É a chave do texto em `i18n` e da rota depois. */
   readonly id: string;
   /**
+   * Fora do TRILHO. A fonte existe — carrega, indexa, abre em pop-out e aparece na busca
+   * global — mas não é uma lista que se abre pelo trilho: a herança própria (Etapa 23)
+   * só faz sentido como aba de uma ancestralidade. Decisão do autor.
+   */
+  readonly hidden?: boolean;
+  /**
    * O tipo de entidade em `base/`. `null` enquanto não houver receita — a fonte aparece
    * no trilho, apagada, para a tela mostrar sua forma final desde já.
    */
@@ -436,15 +442,38 @@ export interface FullViewSpec {
 }
 
 /**
- * Uma aba da tela completa. Hoje só a de TEXTO: uma descrição inteira da entrada (a página
- * do jornal, em `desc.<field>`). As de lista — os talentos da ancestralidade, com o filtro
- * travado — vêm quando as fontes que elas listam existirem.
+ * Uma aba da tela completa: de TEXTO (uma descrição inteira da entrada, a página do
+ * jornal em `desc.<field>`) ou de LISTA (outra fonte, com o filtro TRAVADO nesta
+ * entrada — as heranças do Dwarf, os talentos do Dwarf).
  */
-export interface TabSpec {
+export type TabSpec = PageTabSpec | ListTabSpec;
+
+export interface PageTabSpec {
   readonly kind: 'page';
   readonly id: string;
   /** O campo de `desc/` que a aba desenha. */
   readonly field: string;
+  /** O campo que vale quando `field` está vazio: a versátil não tem página, tem resumo. */
+  readonly fallback?: string;
+}
+
+export interface ListTabSpec {
+  readonly kind: 'list';
+  readonly id: string;
+  /** A fonte listada, pelo `id`. */
+  readonly source: string;
+  /** A trava: fica quem satisfaz TODAS. Mostrada, não editável — decisão do autor. */
+  readonly lock: readonly LockSpec[];
+}
+
+/**
+ * Uma condição da trava: o `field` da entrada listada, contra o valor do campo `from`
+ * da entrada aberta (`equals`), ou contendo-o, quando o campo é lista (`contains`).
+ */
+export interface LockSpec {
+  readonly field: string;
+  readonly from: string;
+  readonly match: 'equals' | 'contains';
 }
 
 /**
@@ -493,6 +522,9 @@ const ATTRIBUTE_CODES: readonly string[] = ['str', 'dex', 'con', 'int', 'wis', '
 
 /** As categorias de habilidade: só a de ancestralidade hoje; a de classe entra com a classe. */
 const FEATURE_CATEGORIES: readonly string[] = ['ancestryfeature'];
+
+/** Ancestralidade (50) e herança versátil (17): o Tipo da fonte de ancestralidade. */
+const ANCESTRY_KINDS: readonly string[] = ['ancestry', 'versatile'];
 
 /** Os quatro tamanhos de ancestralidade, do menor ao maior: 2, 12, 33, 3. */
 const ANCESTRY_SIZES: readonly string[] = ['tiny', 'sm', 'med', 'lg'];
@@ -949,8 +981,14 @@ export const SOURCES: readonly SourceSpec[] = [
      * mecânica em campos e o resumo do pack; a página do jornal, com heranças e tudo, é
      * da tela completa (22b). Colunas são a ficha do livro: PV, tamanho, deslocamento,
      * aumentos, visão.
+     *
+     * Desde a Etapa 23 a lista tem TIPO: as 50 ancestralidades e as 17 heranças
+     * versáteis, que se escolhem no lugar da herança de uma ancestralidade e não pertencem
+     * a nenhuma. A versátil não tem PV nem tamanho — as células ficam vazias, e o Tipo é
+     * o que explica por quê.
      */
     columns: [
+      { kind: 'text', id: 'kind', field: 'kind' },
       { kind: 'text', id: 'hp', field: 'hp' },
       { kind: 'text', id: 'size', field: 'size' },
       { kind: 'text', id: 'speed', field: 'speed' },
@@ -959,11 +997,12 @@ export const SOURCES: readonly SourceSpec[] = [
       { kind: 'text', id: 'vision', field: 'vision' },
       { kind: 'text', id: 'source', field: 'source.title' },
     ],
-    /* PV, tamanho e aumentos: o que se compara ao escolher. */
-    defaultColumns: ['hp', 'size', 'boosts'],
+    /* Tipo, PV, tamanho e aumentos: o que se compara ao escolher — e o Tipo explica a linha vazia. */
+    defaultColumns: ['kind', 'hp', 'size', 'boosts'],
     /* A fonte mais RARA do projeto — 22 raras, 20 incomuns, 8 comuns — e a etiqueta importa. */
     special: { level: null, rarity: 'rarity', traits: 'traits' },
     filters: [
+      { kind: 'options', id: 'kind', field: 'kind', values: ANCESTRY_KINDS },
       { kind: 'rarity', id: 'rarity', field: 'rarity' },
       { kind: 'options', id: 'size', field: 'size', values: ANCESTRY_SIZES },
       { kind: 'options', id: 'hp', field: 'hp' },
@@ -973,7 +1012,7 @@ export const SOURCES: readonly SourceSpec[] = [
       { kind: 'list', id: 'traits', field: 'traits', combine: 'any' },
       { kind: 'options', id: 'source', field: 'source.title' },
     ],
-    typeFilter: null,
+    typeFilter: 'kind',
     searchFields: ['name'],
     /*
      * A ordem do bloco de mecânica do livro: PV, tamanho, deslocamento, aumentos, falha,
@@ -992,10 +1031,63 @@ export const SOURCES: readonly SourceSpec[] = [
       { kind: 'text', field: 'extraLanguages' },
       { kind: 'text', field: 'vision' },
       { kind: 'references', field: 'features' },
+      { kind: 'text', field: 'kind' },
       { kind: 'source' },
     ],
-    /* A página do livro, com heranças e tudo. Heranças e talentos viram abas depois. */
-    fullView: { tabs: [{ kind: 'page', id: 'details', field: 'page' }] },
+    /*
+     * A prosa do livro (a versátil não tem página e cai no resumo); as heranças próprias,
+     * travadas na ancestralidade; e os talentos, travados no traço — medido: os 48 da
+     * pasta Ancestry/Dwarf são exatamente os 48 com o traço `dwarf`, e os 88 do Nephilim
+     * idem, todos de categoria ancestralidade. A versátil não tem heranças: a aba fica
+     * vazia, e uma aba vazia não é desenhada.
+     */
+    fullView: {
+      tabs: [
+        { kind: 'page', id: 'details', field: 'page', fallback: 'main' },
+        {
+          kind: 'list',
+          id: 'heritages',
+          source: 'heritages',
+          lock: [{ field: 'ancestry.slug', from: 'slug', match: 'equals' }],
+        },
+        {
+          kind: 'list',
+          id: 'feats',
+          source: 'feats',
+          lock: [{ field: 'traits', from: 'slug', match: 'contains' }],
+        },
+      ],
+    },
+  },
+  {
+    id: 'heritages',
+    entityType: 'heritage',
+    mode: 'list',
+    /*
+     * As 311 heranças PRÓPRIAS — fora do trilho (`hidden`): é a aba Heranças de uma
+     * ancestralidade, com o filtro travado nela. A versátil está em Ancestralidade como
+     * Tipo. A coluna "de" é a ancestralidade dona, clicável.
+     */
+    hidden: true,
+    columns: [
+      { kind: 'references', id: 'ancestry', field: 'ancestry' },
+      { kind: 'text', id: 'source', field: 'source.title' },
+    ],
+    defaultColumns: ['ancestry'],
+    special: { level: null, rarity: 'rarity', traits: 'traits' },
+    filters: [
+      { kind: 'rarity', id: 'rarity', field: 'rarity' },
+      { kind: 'list', id: 'traits', field: 'traits', combine: 'any' },
+      { kind: 'options', id: 'source', field: 'source.title' },
+    ],
+    typeFilter: null,
+    crossReferences: true,
+    searchFields: ['name'],
+    detail: [
+      { kind: 'chips', field: 'traits' },
+      { kind: 'references', field: 'ancestry' },
+      { kind: 'source' },
+    ],
   },
   {
     id: 'features',

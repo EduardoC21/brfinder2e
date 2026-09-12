@@ -17,6 +17,8 @@ interface FilterBarProps {
   readonly columnsOpen: boolean;
   readonly onOpenColumns: () => void;
   readonly onChange: (state: FilterState) => void;
+  /** A etiqueta da trava de uma aba de lista — "Ancestralidade: Dwarf". Mostrada, não editável. */
+  readonly lock?: string;
 }
 
 const t = strings.browse;
@@ -40,6 +42,7 @@ export function FilterBar({
   columnsOpen,
   onOpenColumns,
   onChange,
+  lock,
 }: FilterBarProps) {
   const aplicados = specs.flatMap((spec) =>
     (state[spec.id]?.values ?? []).map((value) => ({ spec, value })),
@@ -60,12 +63,23 @@ export function FilterBar({
     });
   };
 
-  if (specs.length === 0) return null;
+  // Sem tópicos e sem trava não há barra; com trava, a barra é a etiqueta e as colunas.
+  if (specs.length === 0 && lock === undefined) return null;
 
   return (
     <div className={styles['bar']}>
       <ScrollRail className={styles['topics']} label={t.filters}>
         <span className={styles['legend']}>{t.filters}</span>
+        {/*
+          A TRAVA: um chip que não abre nem fecha — é o recorte da aba, e a pessoa vê que
+          ele existe sem poder mexer. Decisão do autor: "sem poder modificar o filtro".
+        */}
+        {lock !== undefined && (
+          <span className={cx(styles['lock'], 'chamfer-sm')} title={t.fullView.locked}>
+            <span aria-hidden="true">⌀ </span>
+            {lock}
+          </span>
+        )}
         {specs.map((spec) => {
           const marcados = state[spec.id]?.values.length ?? 0;
           return (

@@ -1,6 +1,15 @@
 /**
  * Receita de `ancestry` — as 50 ancestralidades do pack `ancestries`, com a página do
- * jornal `Ancestries` junto.
+ * jornal `Ancestries` junto — e, desde a Etapa 23, as 17 HERANÇAS VERSÁTEIS do pack
+ * `heritages`, como Tipo.
+ *
+ * A versátil (Nephilim, Dhampir, Aiuvarin…) é o que se escolhe no lugar da herança de
+ * uma ancestralidade: não pertence a nenhuma (`system.ancestry` nulo), tem traço e
+ * talentos próprios (Nephilim: 87), e o Archives of Nethys a lista ao lado das
+ * ancestralidades. O autor decidiu que herança não é fonte no trilho — é a aba de uma
+ * ancestralidade —, e a versátil precisava de um lugar onde os talentos dela apareçam.
+ * É aqui, com `kind: 'versatile'`. Os campos de mecânica (PV, tamanho, aumentos…) ficam
+ * NULOS nela: a versátil não os tem, e a tela esconde o que é nulo.
  *
  * A primeira das três fontes grandes, e a PRIMEIRA CUJA ENTRADA MORA EM DOIS LUGARES. O
  * pack tem a mecânica em campos — PV, tamanho, deslocamento, aumentos, visão, idiomas —
@@ -37,9 +46,10 @@
 
 import { isRecord } from '../../json';
 import { descriptionAlterations, type DescriptionAlteration } from '../alterations';
-import { bool, html, int, raw, shape, text, textList } from '../decoders';
+import { bool, html, int, nullable, raw, shape, text, textList } from '../decoders';
 import { from, fromDocument, fromJournal } from '../field';
 import { recipe } from '../recipe';
+import { isOwnHeritage } from './heritage';
 
 /** Uma habilidade da ancestralidade (Clan Dagger, Change Shape…), com o nome que a ponte precisa. */
 export interface AncestryFeature {
@@ -50,15 +60,18 @@ export interface AncestryFeature {
 export interface AncestryBase {
   readonly name: string;
   readonly slug: string;
+  /** `ancestry` (50) ou `versatile` (17): o Tipo. Pelo `type` do documento. */
+  readonly kind: string;
   readonly rarity: string;
   readonly traits: readonly string[];
-  readonly hp: number;
+  /** Nulo na herança versátil, que não tem mecânica de ancestralidade. Idem abaixo. */
+  readonly hp: number | null;
   /** `tiny`, `sm`, `med`, `lg` — os códigos do Foundry; o rótulo é da tela. */
-  readonly size: string;
+  readonly size: string | null;
   /** Em pés, só em terra. */
-  readonly speed: number;
+  readonly speed: number | null;
   /** `normal`, `low-light-vision`, `darkvision`. */
-  readonly vision: string;
+  readonly vision: string | null;
   /**
    * Os aumentos, na ordem dos slots: `['con', 'wis', 'free']`. `free` é o slot que a
    * fonte escreve com os seis atributos. Human e Orc: `['free', 'free']`.
@@ -205,23 +218,35 @@ function soProsa(texto: string): string {
   return corte === null ? texto : texto.slice(0, corte.index);
 }
 
+/** `ancestry` para o pack de ancestralidades; `versatile` para a herança sem ancestralidade. */
+function toKind(document: unknown): string {
+  return isRecord(document) && document['type'] === 'heritage' ? 'versatile' : 'ancestry';
+}
+
 export const ancestryRecipe = recipe<AncestryBase, AncestryDesc>({
   type: 'ancestry',
-  packs: [{ name: 'ancestries' }],
+  accepts: ['ancestry', 'heritage'],
+  packs: [{ name: 'ancestries' }, { name: 'heritages' }],
+  /* Do pack de heranças só passa a VERSÁTIL; a própria é da receita de herança. */
+  expand: (document) =>
+    isRecord(document) && document['type'] === 'heritage' && isOwnHeritage(document)
+      ? []
+      : [document],
 
   base: {
     name: from('name', text),
     slug: from('system.slug', text),
+    kind: fromDocument(toKind),
     rarity: from('system.traits.rarity', text),
     traits: from('system.traits.value', textList),
-    hp: from('system.hp', int),
-    size: from('system.size', text),
-    speed: from('system.speed', int),
-    vision: from('system.vision', text),
-    boosts: from('system.boosts', raw).map(toBoosts),
-    flaws: from('system.flaws', raw).map(toFlaws),
-    languages: from('system.languages.value', textList),
-    additionalLanguages: from('system.additionalLanguages.value', textList),
+    hp: from('system.hp', nullable(int)).withDefault(null),
+    size: from('system.size', nullable(text)).withDefault(null),
+    speed: from('system.speed', nullable(int)).withDefault(null),
+    vision: from('system.vision', nullable(text)).withDefault(null),
+    boosts: from('system.boosts', raw).withDefault({}).map(toBoosts),
+    flaws: from('system.flaws', raw).withDefault({}).map(toFlaws),
+    languages: from('system.languages.value', textList).withDefault([]),
+    additionalLanguages: from('system.additionalLanguages.value', textList).withDefault([]),
     extraLanguages: fromDocument(toExtraLanguages),
     features: fromDocument(toFeatures),
     alterations: fromDocument(descriptionAlterations),
@@ -234,8 +259,13 @@ export const ancestryRecipe = recipe<AncestryBase, AncestryDesc>({
   },
 
   ignore: {
+    'system.ancestry':
+      'nulo nas 17 versáteis, que são as únicas heranças que esta receita deixa passar — ' +
+      'o `kind` já diz que são versáteis. A herança própria, com ancestralidade, é da ' +
+      'receita de herança.',
+    folder: 'a pasta das versáteis no pack de heranças, uma só para as 17',
     img: 'ícone da ancestralidade; o zip não traz imagem',
-    effects: 'active effects do VTT; vazio nos 50',
+    effects: 'active effects do VTT; vazio nos 50 e nas 17',
     'system._migration': 'controle interno de migração do Foundry',
     'system.hands': 'vale 2 nos 50. O que é igual em toda entrada não separa nada.',
     'system.reach':

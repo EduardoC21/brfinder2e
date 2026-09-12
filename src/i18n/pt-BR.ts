@@ -212,8 +212,11 @@ export const ptBR = {
     fullView: {
       open: 'Tela completa',
       back: 'Voltar à lista',
+      locked: 'Filtro travado nesta entrada',
       tabs: {
         details: 'Detalhes',
+        heritages: 'Heranças',
+        feats: 'Talentos',
       } as Record<string, string>,
     },
     /**
@@ -237,6 +240,11 @@ export const ptBR = {
       extraLanguages: {
         int: 'tantos quanto o modificador de Inteligência (se positivo)',
         '1+int': '1 + o modificador de Inteligência (se positivo)',
+      } as Record<string, string>,
+      /** O Tipo da fonte de ancestralidade: as 50, e as 17 heranças versáteis. */
+      kind: {
+        ancestry: 'Ancestralidade',
+        versatile: 'Herança versátil',
       } as Record<string, string>,
       /** A categoria da habilidade, que é o Tipo da fonte de habilidades. */
       category: {
@@ -407,6 +415,8 @@ export const ptBR = {
       features: 'habilidades',
       /* Habilidade: a ancestralidade (ou classe) dona. A categoria já é `category` (equipamento). */
       owner: 'de',
+      /* Herança: a ancestralidade dona. */
+      ancestry: 'de',
       /* Antecedente. "Saber" é como o livro brasileiro chama a perícia Lore. */
       skills: 'perícia treinada',
       lore: 'Saber',
@@ -461,6 +471,7 @@ export const ptBR = {
     companions: 'Companheiro',
     familiars: 'Familiar',
     features: 'Habilidades',
+    heritages: 'Heranças',
     deities: 'Divindades',
     domains: 'Domínios',
     rules: 'Regras',

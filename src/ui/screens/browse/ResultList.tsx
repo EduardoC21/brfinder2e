@@ -8,6 +8,7 @@ import {
   traitSpace,
   columnWidth,
   exactColumnWidth,
+  LAST_CELL_EXTRA_PX,
   frequencyToken,
   CELL_PAD_PX,
   SYMBOL_PX,
@@ -184,7 +185,15 @@ export function ResultList({
      * Não custa nada no caso normal: trilha com teto cresce até ele ANTES de a sobra ser
      * distribuída para o `1fr` do nome.
      */
-    ...larguras.map((px) => `minmax(0, ${String(px)}px)`),
+    /*
+     * A ÚLTIMA célula tem 7px a mais de recheio à direita (a folga da ponta da linha), e a
+     * medida não sabia: "Dwarf" numa coluna de 61px saía "Dw…" quando era a última. Visto
+     * na aba Heranças, onde "de" é a única coluna.
+     */
+    ...larguras.map(
+      (px, i) =>
+        `minmax(0, ${String(px + (i === larguras.length - 1 ? LAST_CELL_EXTRA_PX : 0))}px)`,
+    ),
   ]
     .filter((trilha) => trilha !== null)
     .join(' ');

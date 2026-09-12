@@ -24,22 +24,32 @@ beforeAll(async () => {
     return JSON.parse(readTextEntry(loaded.zip, pack.file)) as unknown[];
   };
   const journals = indexJournalPages(ler('journals'));
-  result = run(ancestryRecipe, [{ pack: 'ancestries', documents: ler('ancestries') }], {
-    journals,
-  });
+  result = run(
+    ancestryRecipe,
+    [
+      { pack: 'ancestries', documents: ler('ancestries') },
+      { pack: 'heritages', documents: ler('heritages') },
+    ],
+    { journals },
+  );
 }, 180_000);
 
-const base = () => result.entities.map((entity) => entity.base);
-const contar = (chave: (b: AncestryBase) => string | number) => {
-  const por = new Map<string | number, number>();
-  for (const b of base()) por.set(chave(b), (por.get(chave(b)) ?? 0) + 1);
-  return Object.fromEntries(por);
+const base = () => result.entities.filter((e) => e.base.kind === 'ancestry').map((e) => e.base);
+const contar = (chave: (b: AncestryBase) => string | number | null, todas = false) => {
+  const por = new Map<string, number>();
+  const lista = todas ? result.entities.map((e) => e.base) : base();
+  for (const b of lista) {
+    const k = String(chave(b));
+    por.set(k, (por.get(k) ?? 0) + 1);
+  }
+  return Object.fromEntries(por) as Record<string, number>;
 };
 
-describe('as 50 ancestralidades reais', () => {
+describe('as 50 ancestralidades reais, e as 17 versáteis', () => {
   it('normalizam todas, sem falha e com relatório limpo', () => {
     expect(result.failures).toEqual([]);
-    expect(result.entities).toHaveLength(50);
+    expect(result.entities).toHaveLength(67);
+    expect(contar((b) => b.kind, true)).toEqual({ ancestry: 50, versatile: 17 });
     expect(result.report.unmapped, JSON.stringify(result.report.unmapped, null, 1)).toEqual([]);
     expect(isClean(result.report)).toBe(true);
   });
@@ -84,8 +94,11 @@ describe('as 50 ancestralidades reais', () => {
   });
 
   /* 50 de 50 têm página com o mesmo nome; a prosa para antes da mecânica e é maior que o resumo. */
-  it('a prosa da página está em todas, sem a mecânica e maior que o resumo', () => {
-    for (const entity of result.entities) {
+  it('a prosa da página está nas 50, sem a mecânica e maior que o resumo; vazia nas versáteis', () => {
+    for (const entity of result.entities.filter((e) => e.base.kind === 'versatile')) {
+      expect(entity.desc.page, entity.base.name).toBe('');
+    }
+    for (const entity of result.entities.filter((e) => e.base.kind === 'ancestry')) {
       expect(entity.desc.page.length, entity.base.name).toBeGreaterThan(entity.desc.main.length);
       expect(entity.desc.page).not.toContain(' Mechanics</h2>');
       expect(entity.desc.page).not.toContain(`${entity.base.name} Heritages`);

@@ -817,8 +817,18 @@ As regras (revistas na 22c, pelo autor):
 Até então quase não havia título em descrição; a página de ancestralidade tem sete.
 
 As abas vêm da `spec` (`fullView.tabs`), como colunas e filtros: dado, com um desenhista
-por espécie. Hoje só a de texto (`kind: 'page'`, a página do jornal). As de lista vêm com
-as fontes que elas listam.
+por espécie. A de texto (`kind: 'page'`, a página do jornal, com `fallback` para o resumo
+quando não há página) e a de LISTA (`kind: 'list'`, Etapa 23): outra fonte com a trava
+`{field, from, match}` — igualdade (`ancestry.slug` = o slug do Dwarf) ou pertencimento (o
+traço `dwarf` nos `traits`). A aba de lista É o `SourcePane` com `lock`: mesma lista,
+mesmas colunas, mesma lateral; a barra de filtros vira a etiqueta da trava (chip em bordô,
+sem ×) mais Colunas, e os filtros gravados da fonte não entram. Aba com contagem, e aba
+vazia não é desenhada.
+
+**Fonte fora do trilho** (`hidden`): a herança própria existe como fonte — carrega, indexa,
+abre em flutuante, aparece na busca global — mas não é uma lista que se abre pelo trilho:
+só faz sentido como aba de uma ancestralidade. Decisão do autor. A herança VERSÁTIL, que
+não pertence a ancestralidade nenhuma, é Tipo da fonte de ancestralidade.
 
 ---
 

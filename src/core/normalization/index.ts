@@ -18,6 +18,7 @@ export * from './recipes/equipment';
 export * from './recipes/familiar';
 export * from './recipes/feat';
 export * from './recipes/feature';
+export * from './recipes/heritage';
 export * from './recipes/rule';
 export * from './recipes/skill';
 export * from './recipes/spell';

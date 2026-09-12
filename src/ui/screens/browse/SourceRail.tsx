@@ -45,10 +45,12 @@ export function SourceRail({
 
   const { ready, pending } = useMemo(() => {
     const needle = foldTerm(term.trim());
+    /* A fonte `hidden` existe, mas não é uma lista do trilho — ver `SourceSpec.hidden`. */
+    const noTrilho = sources.filter((source) => source.hidden !== true);
     const visible =
       needle === ''
-        ? sources
-        : sources.filter((source) => foldTerm(sourceLabel(source)).includes(needle));
+        ? noTrilho
+        : noTrilho.filter((source) => foldTerm(sourceLabel(source)).includes(needle));
     return {
       ready: visible.filter((source) => source.entityType !== null),
       pending: visible.filter((source) => source.entityType === null),

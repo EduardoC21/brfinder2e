@@ -122,6 +122,50 @@ export const human = {
   effects: [],
 };
 
+/** Uma herança VERSÁTIL, do pack `heritages`: sem ancestralidade, sem mecânica. */
+export const nephilim = {
+  _id: 'NephilimNephilim1',
+  folder: 'khXMNyAoAoZ70PpT',
+  img: 'systems/pf2e/icons/default-icons/heritage.svg',
+  name: 'Nephilim',
+  system: {
+    ancestry: null,
+    description: { value: '<p>Your nature is influenced by celestials […]</p>' },
+    publication: { license: 'ORC', remaster: true, title: 'Pathfinder Player Core 2' },
+    rules: [],
+    traits: { rarity: 'uncommon', value: ['nephilim'] },
+    slug: 'nephilim',
+    _migration: { version: 0.959, previous: null },
+  },
+  type: 'heritage',
+  _stats: { ...ESTATISTICAS, compendiumSource: 'Compendium.pf2e.heritages.Item.x' },
+  effects: [],
+};
+
+/** Uma herança PRÓPRIA, que a receita de ancestralidade deve DEIXAR PASSAR sem virar entrada. */
+export const forgeDwarf = {
+  _id: '5CqsBKCZuGON53Hk',
+  folder: 'fDwarfDwarfDwarf1',
+  img: 'systems/pf2e/icons/default-icons/heritage.svg',
+  name: 'Forge Dwarf',
+  system: {
+    ancestry: {
+      name: 'Dwarf',
+      slug: 'dwarf',
+      uuid: 'Compendium.pf2e.ancestries.Item.BYj5ZvlXZdpaEgA6',
+    },
+    description: { value: '<p>You have a remarkable adaptation to hot environments […]</p>' },
+    publication: PLAYER_CORE,
+    rules: [{ key: 'Resistance', type: 'fire', value: 'max(1,floor(@actor.level/2))' }],
+    traits: { rarity: 'common', value: [] },
+    slug: 'forge-dwarf',
+    _migration: { version: 0.959, previous: null },
+  },
+  type: 'heritage',
+  _stats: { ...ESTATISTICAS, compendiumSource: 'Compendium.pf2e.heritages.Item.x' },
+  effects: [],
+};
+
 /** O jornal `Ancestries` reduzido: uma página para Dwarf, nenhuma para os outros dois. */
 export const jornal = {
   _id: '45SK8rdbbxvEHfMn',

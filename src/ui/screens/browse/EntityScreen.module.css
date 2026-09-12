@@ -110,3 +110,14 @@
   font-size: var(--text-md);
   line-height: 1.65;
 }
+
+/* A contagem da aba de lista, na voz dos números da tela: mono e apagada. */
+.contagem {
+  margin-left: var(--space-2);
+  font: 400 var(--text-xs) / 1 var(--font-mono);
+  color: var(--color-text-muted);
+}
+
+.aba.ativa .contagem {
+  color: var(--color-text);
+}

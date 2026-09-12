@@ -81,6 +81,14 @@ Antes: **Etapa 20** — as tabelas das regras param de quebrar (célula compacta
 linha, `@Embed` cola a entrada apontada, e as duas vassouras em Configurações: apagar as
 entradas aposentadas e apagar a base inteira.
 
+Antes: **Etapa 23** — `heritage` (311 próprias, fonte fora do trilho) e as 17 versáteis
+como Tipo da ancestralidade; as abas de lista da tela completa, com o filtro travado —
+Dwarf: Heranças 9, Talentos 48; Nephilim: Talentos 88.
+
+Próxima: **classe** — 29 do pack com proficiências e níveis de talento, a página do
+jornal `Classes` (16 mil caracteres, 10 `@Embed` que já colam), e `class-features` (874)
+entrando na fonte de habilidades como Tipo.
+
 Antes: **Etapa 22e** — a descrição no contexto: o Change Shape aberto pelo Anadi tem o
 texto do Anadi (o `ItemAlteration` de descrição do Foundry, 91 estáticas no zip), com
 "Ver a original". Serve a qualquer fonte que conceda algo.

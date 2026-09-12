@@ -162,6 +162,9 @@ export const HEADER_CHAR_PX = 7.48;
 /** Recheio da célula, somando os dois lados. */
 export const CELL_PAD_PX = 14;
 
+/** O que a última célula da linha tem a mais à direita: a folga da ponta (14px − 7px). */
+export const LAST_CELL_EXTRA_PX = 7;
+
 /**
  * O multiplicador da cerca de Tukey. 3 é o "atípico extremo"; o 1,5 de praxe é agressivo
  * demais para dados em espeto, e o porquê está em `columnWidth`.

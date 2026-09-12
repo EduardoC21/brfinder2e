@@ -3,10 +3,12 @@ import { useMemo, useState } from 'react';
 import {
   contextFor,
   fieldValue,
+  lockedEntities,
   type BrowseEntity,
   type DetailFieldSpec,
   type FullViewSpec,
-  type TabSpec,
+  type ListTabSpec,
+  type PageTabSpec,
 } from '@core/browse/index';
 import { parseDescription, pruneForReading } from '@core/markup/index';
 import { strings } from '@i18n/index';
@@ -14,29 +16,37 @@ import { CollapseToggle } from '@ui/components/CollapseToggle';
 import { RichText, type RichTextLinks } from '@ui/components/RichText';
 import { cx } from '@ui/cx';
 import { useDescription } from '@ui/hooks/useDescription';
+import type { LoadedSource } from '@ui/hooks/useAllBases';
 
 import { DetailPane } from './DetailPane';
 import type { ReferenceBridge } from './DetailPanel';
+import type { PopoutSubject } from './popouts';
 import styles from './EntityScreen.module.css';
 
 const t = strings.browse.fullView;
 const d = strings.browse.detail;
 
+/** Uma aba pronta para a barra: a de texto sem contagem, a de lista com as entradas travadas. */
+type Aba =
+  | { readonly tab: PageTabSpec; readonly entities: null; readonly count: null }
+  | {
+      readonly tab: ListTabSpec;
+      readonly entities: readonly BrowseEntity[];
+      readonly count: number;
+    };
+
 /**
- * A TELA COMPLETA de uma entrada (Etapa 22b, redesenhada na 22c).
+ * A TELA COMPLETA de uma entrada (Etapa 22b, redesenhada na 22c, com abas de lista na 23).
  *
  * A barra vai da área central até a lateral direita: Voltar, nome, fonte, e as abas à
- * direita. Debaixo dela, DUAS colunas: a prosa ocupa o lugar da lista, e o painel lateral
- * — o mesmo de sempre, com a mecânica em campos — fica onde sempre esteve. O trilho de
- * fontes não participa: clicar numa fonte ali é "vai para a lista de X", inclusive na
- * fonte já aberta.
+ * direita. Debaixo dela, DUAS colunas: na aba de texto, a prosa ocupa o lugar da lista e
+ * o painel lateral — o mesmo de sempre, com a mecânica em campos — fica onde sempre
+ * esteve; na aba de LISTA, a lista de outra fonte com o filtro travado nesta entrada, e
+ * a lateral é a da linha aberta. O trilho de fontes não participa.
  *
  * É ESTADO da tela de consulta, e não rota: a lista, o filtro e a linha escolhida
  * continuam montados por baixo (o `SourcePane` só troca o que desenha), e o Voltar
  * devolve exatamente o que estava.
- *
- * Só a aba de TEXTO existe hoje. A de lista — os talentos da ancestralidade com o filtro
- * travado — vem com as fontes que ela lista; nela a lateral é a da linha aberta.
  */
 export function EntityScreen({
   entity,
@@ -45,8 +55,10 @@ export function EntityScreen({
   sourceLabel,
   view,
   reference,
+  sources,
   onPopOut,
   onBack,
+  renderList,
 }: {
   readonly entity: BrowseEntity;
   readonly entityType: string;
@@ -54,11 +66,35 @@ export function EntityScreen({
   readonly sourceLabel: string;
   readonly view: FullViewSpec;
   readonly reference: ReferenceBridge;
+  /** Todas as bases carregadas: a aba de lista pega a dela daqui. */
+  readonly sources: readonly LoadedSource[];
   readonly onPopOut: () => void;
   readonly onBack: () => void;
+  /** Quem sabe desenhar uma lista travada é a tela de consulta; a aba só pede. */
+  readonly renderList: (
+    tab: ListTabSpec,
+    entities: readonly BrowseEntity[],
+    lock: string,
+  ) => React.ReactNode;
 }) {
-  const [abaId, setAbaId] = useState(view.tabs[0]?.id ?? '');
-  const aba = view.tabs.find((tab) => tab.id === abaId) ?? view.tabs[0];
+  /*
+   * As abas com CONTAGEM, e sem as vazias. A versátil não tem heranças; uma aba
+   * "Heranças 0" seria um botão que abre o nada. Calculado aqui porque a aba de texto e a
+   * de lista dividem a mesma barra, e é a barra que decide o que aparece.
+   */
+  const abas = useMemo<readonly Aba[]>(
+    () =>
+      view.tabs.flatMap((tab): Aba[] => {
+        if (tab.kind === 'page') return [{ tab, entities: null, count: null }];
+        const fonte = sources.find((loaded) => loaded.source.id === tab.source);
+        if (fonte === undefined) return [];
+        const entities = lockedEntities(tab, entity, fonte.entities);
+        return entities.length === 0 ? [] : [{ tab, entities, count: entities.length }];
+      }),
+    [view.tabs, sources, entity],
+  );
+  const [abaId, setAbaId] = useState(abas[0]?.tab.id ?? '');
+  const aba = abas.find((item) => item.tab.id === abaId) ?? abas[0];
   /* A lateral recolhe como na lista — e volta ao trocar de aba, que é conteúdo novo. */
   const [lateralFechada, setLateralFechada] = useState(false);
 
@@ -71,14 +107,9 @@ export function EntityScreen({
       }}
     >
       <header className={styles['bar']}>
-        {/*
-          O Voltar com a cara dos botões de recolher: é o padrão que a tela já tem para
-          "isto sai daqui", e um botão de texto ao lado do nome brigava com ele.
-        */}
         <CollapseToggle side="left" collapsed={false} label={t.back} onToggle={onBack} />
         <h2 className={styles['nome']}>{fieldValue(entity, 'name')}</h2>
         <span className={styles['fonte']}>{sourceLabel}</span>
-        {/* O mesmo botão de tradução da lateral, no mesmo estado: à espera da Etapa 15. */}
         <button
           type="button"
           className={cx(styles['traduzir'], 'chamfer-sm')}
@@ -88,44 +119,46 @@ export function EntityScreen({
           {d.translate}
         </button>
         <nav className={styles['abas']} role="tablist">
-          {view.tabs.map((tab) => (
+          {abas.map(({ tab, count }) => (
             <button
               key={tab.id}
               type="button"
               role="tab"
-              aria-selected={tab.id === aba?.id}
-              className={cx(styles['aba'], tab.id === aba?.id && styles['ativa'], 'chamfer-sm')}
+              aria-selected={tab.id === aba?.tab.id}
+              className={cx(styles['aba'], tab.id === aba?.tab.id && styles['ativa'], 'chamfer-sm')}
               onClick={() => {
                 setAbaId(tab.id);
                 setLateralFechada(false);
               }}
             >
               {t.tabs[tab.id] ?? tab.id}
+              {count !== null && <span className={styles['contagem']}>{count}</span>}
             </button>
           ))}
         </nav>
       </header>
 
-      {aba !== undefined && (
-        <PageTab entity={entity} entityType={entityType} tab={aba} reference={reference} />
+      {aba?.tab.kind === 'page' && (
+        <>
+          <PageTab entity={entity} entityType={entityType} tab={aba.tab} reference={reference} />
+          <DetailPane
+            key={aba.tab.id}
+            entity={entity}
+            entityType={entityType}
+            fields={fields}
+            onPopOut={onPopOut}
+            reference={reference}
+            collapsed={lateralFechada}
+            onToggleCollapsed={() => {
+              setLateralFechada((estava) => !estava);
+            }}
+          />
+        </>
       )}
 
-      {/*
-        A lateral de sempre, com a mecânica em campos — o que o painel mostra na lista. O
-        `key` na aba: trocar de aba é trocar de assunto, e a lateral acompanha.
-      */}
-      <DetailPane
-        key={aba?.id}
-        entity={entity}
-        entityType={entityType}
-        fields={fields}
-        onPopOut={onPopOut}
-        reference={reference}
-        collapsed={lateralFechada}
-        onToggleCollapsed={() => {
-          setLateralFechada((estava) => !estava);
-        }}
-      />
+      {aba?.tab.kind === 'list' &&
+        aba.entities !== null &&
+        renderList(aba.tab, aba.entities, `${sourceLabel}: ${fieldValue(entity, 'name')}`)}
     </section>
   );
 }
@@ -139,13 +172,16 @@ function PageTab({
 }: {
   readonly entity: BrowseEntity;
   readonly entityType: string;
-  readonly tab: TabSpec;
+  readonly tab: PageTabSpec;
   readonly reference: ReferenceBridge;
 }) {
   const texto = useDescription(entityType, entity.key, tab.field);
+  const reserva = useDescription(entityType, entity.key, tab.fallback ?? tab.field);
+  /* A versátil não tem página de jornal: a aba cai no resumo, que é o que ela tem. */
+  const escolhido = texto !== null && texto !== '' ? texto : reserva;
   const nodes = useMemo(
-    () => (texto === null ? null : pruneForReading(parseDescription(texto))),
-    [texto],
+    () => (escolhido === null ? null : pruneForReading(parseDescription(escolhido))),
+    [escolhido],
   );
 
   /*
@@ -159,7 +195,9 @@ function PageTab({
       if (destino === null) return;
       // Aberto daqui, o alvo leva o que ESTA entrada diz sobre ele — ver `contextFor`.
       const contexto = contextFor(entity, destino.entityType, destino.entity);
-      reference.onPopOut?.(contexto === null ? destino : { ...destino, context: contexto });
+      const assunto: PopoutSubject =
+        contexto === null ? destino : { ...destino, context: contexto };
+      reference.onPopOut?.(assunto);
     },
     embed: (target) => {
       const alvo = reference.resolve(target);

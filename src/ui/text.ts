@@ -84,8 +84,16 @@ export function fieldText(field: string, value: string): string {
     return strings.browse.ancestry.extraLanguages[value] ?? value;
   if (field === CATEGORY_FIELD)
     return strings.browse.ancestry.category[value] ?? capitalizar(value);
+  /*
+   * `kind` é o Tipo de várias fontes. Só o da ancestralidade tem rótulo em português
+   * (`ancestry`, `versatile` são códigos nossos); os das outras (`deity`, `master`) são
+   * dado em inglês e continuam capitalizados — OPEN-DECISIONS #10.
+   */
+  if (field === KIND_FIELD) return strings.browse.ancestry.kind[value] ?? capitalizar(value);
   return capitalizar(value);
 }
+
+export const KIND_FIELD = 'kind';
 
 export const EXTRA_LANGUAGES_FIELD = 'extraLanguages';
 export const CATEGORY_FIELD = 'category';

@@ -20,6 +20,8 @@ import {
   type BrowseEntity,
   type FilterState,
   type SourceSpec,
+  type FilterSpec,
+  findSource,
 } from '@core/browse/index';
 import { sourcePreferences, withLayout, withSource } from '@core/prefs/index';
 import { strings } from '@i18n/index';
@@ -215,6 +217,7 @@ export function BrowseScreen({ baseVersion }: BrowseScreenProps) {
             onPopOut={abrirFlutuante}
             reference={ponte}
             listRequest={pedidosDeLista}
+            sources={carregadas}
           />
         )}
 
@@ -288,6 +291,8 @@ export function BrowseScreen({ baseVersion }: BrowseScreenProps) {
 }
 
 const EMPTY: readonly BrowseEntity[] = [];
+const SEM_FILTROS: FilterState = {};
+const SEM_TOPICOS: readonly FilterSpec[] = [];
 const VAZIAS: readonly LoadedSource[] = [];
 
 /**
@@ -304,6 +309,8 @@ function SourcePane({
   onPopOut,
   reference,
   listRequest,
+  sources,
+  lock,
 }: {
   readonly source: SourceSpec;
   readonly entities: readonly BrowseEntity[];
@@ -312,6 +319,14 @@ function SourcePane({
   readonly reference: ReferenceBridge;
   /** Sobe quando o trilho é clicado na fonte já aberta: "volta para a lista". */
   readonly listRequest: number;
+  /** Todas as bases carregadas, para as abas de lista da tela completa. */
+  readonly sources: readonly LoadedSource[];
+  /**
+   * A TRAVA de uma aba de lista (Etapa 23): `entities` já vêm recortadas, e a barra de
+   * filtros vira só a etiqueta da trava mais o botão de colunas. Os filtros gravados da
+   * fonte não entram — a pessoa não os vê aqui, e um filtro invisível é o pior filtro.
+   */
+  readonly lock?: string;
 }) {
   const [term, setTerm] = useState('');
   const { prefs, update, ready } = usePreferences();
@@ -329,7 +344,7 @@ function SourcePane({
    * que era o comportamento certo enquanto ele não persistia. Agora ele volta: guardar por
    * fonte é o que faz "voltar em Ações" reencontrar o recorte de ontem sem refazer.
    */
-  const filters = salvas.filters;
+  const filters = lock === undefined ? salvas.filters : SEM_FILTROS;
   const setFilters = (next: FilterState): void => {
     update((atual) => withSource(atual, source.id, { filters: next }));
   };
@@ -686,11 +701,34 @@ function SourcePane({
         sourceLabel={strings.sources[source.id] ?? source.id}
         view={source.fullView}
         reference={reference}
+        sources={sources}
         onPopOut={() => {
           onPopOut({ entity: opened, entityType: source.entityType ?? '', fields: source.detail });
         }}
         onBack={() => {
           setTelaCompleta(false);
+        }}
+        renderList={(tab, travadas, etiqueta) => {
+          const fonte = findSource(tab.source);
+          if (fonte === undefined) return null;
+          /*
+           * A aba de lista É um SourcePane: mesma lista, mesmas colunas, mesma lateral
+           * — com `lock`, que troca a barra de filtros pela etiqueta. A `key` na aba
+           * remonta ao trocar, como o trilho remonta ao trocar de fonte.
+           */
+          return (
+            <SourcePane
+              key={`${opened.key}/${tab.id}`}
+              source={fonte}
+              entities={travadas}
+              loading={false}
+              onPopOut={onPopOut}
+              reference={reference}
+              listRequest={0}
+              sources={sources}
+              lock={etiqueta}
+            />
+          );
         }}
       />
     );
@@ -733,8 +771,9 @@ function SourcePane({
         </div>
 
         <FilterBar
-          specs={filtrosUteis}
+          specs={lock === undefined ? filtrosUteis : SEM_TOPICOS}
           state={filters}
+          {...(lock === undefined ? {} : { lock })}
           openTopic={openTopic}
           onOpenTopic={(id) => {
             mostrarCamada(id === null ? null : { kind: 'topic', id });

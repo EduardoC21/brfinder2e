@@ -4,10 +4,17 @@ import { indexJournalPages } from '../journals';
 import { isClean } from '../report';
 import { run } from '../run';
 import { ancestryRecipe } from './ancestry';
-import { jornal, todas } from './ancestry.fixtures';
+import { forgeDwarf, jornal, nephilim, todas } from './ancestry.fixtures';
 
 const journals = indexJournalPages([jornal]);
-const result = run(ancestryRecipe, [{ pack: 'ancestries', documents: todas }], { journals });
+const result = run(
+  ancestryRecipe,
+  [
+    { pack: 'ancestries', documents: todas },
+    { pack: 'heritages', documents: [nephilim, forgeDwarf] },
+  ],
+  { journals },
+);
 
 const achar = (nome: string) => {
   const achado = result.entities.find((entity) => entity.base.name === nome);
@@ -16,9 +23,9 @@ const achar = (nome: string) => {
 };
 
 describe('receita de ancestralidade', () => {
-  it('normaliza as três amostras sem falha, com relatório limpo', () => {
+  it('normaliza as três ancestralidades e a versátil sem falha, com relatório limpo', () => {
     expect(result.failures).toEqual([]);
-    expect(result.entities).toHaveLength(3);
+    expect(result.entities).toHaveLength(4);
     expect(result.report.unmapped, JSON.stringify(result.report.unmapped)).toEqual([]);
     expect(isClean(result.report)).toBe(true);
   });
@@ -27,6 +34,7 @@ describe('receita de ancestralidade', () => {
     expect(achar('Dwarf').base).toEqual({
       name: 'Dwarf',
       slug: 'dwarf',
+      kind: 'ancestry',
       rarity: 'common',
       traits: ['dwarf', 'humanoid'],
       hp: 10,
@@ -44,6 +52,19 @@ describe('receita de ancestralidade', () => {
       ],
       source: { license: 'ORC', title: 'Pathfinder Player Core', remaster: true },
     });
+  });
+
+  /* A versátil entra como Tipo, sem mecânica; a herança própria (Forge Dwarf) não entra. */
+  it('deixa passar só a herança versátil, com os campos de mecânica nulos', () => {
+    expect(result.entities.find((e) => e.base.name === 'Forge Dwarf')).toBeUndefined();
+    const versatil = achar('Nephilim').base;
+    expect(versatil.kind).toBe('versatile');
+    expect(versatil.hp).toBeNull();
+    expect(versatil.size).toBeNull();
+    expect(versatil.boosts).toEqual([]);
+    expect(versatil.languages).toEqual([]);
+    expect(versatil.traits).toEqual(['nephilim']);
+    expect(achar('Nephilim').desc.page).toBe('');
   });
 
   /* O GrantItem entra sem nome — o índice resolve — e o Human tem um idioma a mais. */

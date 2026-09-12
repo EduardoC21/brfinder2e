@@ -18,5 +18,7 @@
  *      habilidades com GrantItem, `extraLanguages`; fonte de habilidades.
  *   2  Etapa 22e — a descrição no contexto: `alterations` na ancestralidade e no
  *      talento.
+ *   3  Etapa 23 — as 17 heranças versáteis entram na ancestralidade como Tipo; a fonte
+ *      de herança (as 311 próprias).
  */
-export const RECIPES_REVISION = 2;
+export const RECIPES_REVISION = 3;
