@@ -25,7 +25,7 @@ import { CollapseToggle } from '@ui/components/CollapseToggle';
 import { cx } from '@ui/cx';
 import { bookLabel, capitalizar, fieldText } from '@ui/text';
 
-import { attributeName, boostsText } from './backgroundFields';
+import { boostsText } from './backgroundFields';
 import { references as referenciasDe, type Reference } from './referenceFields';
 import { itemBulkText, itemDamageText, itemPriceText, statText } from './itemFields';
 import type { PopoutSubject } from './popouts';
@@ -542,10 +542,7 @@ function Field({
     }
 
     case 'chips': {
-      const lista = fieldList(entity, spec.field);
-      /* Um campo de UM valor (PV, visão) também vira chip: é a mesma caixinha. */
-      const um = fieldValue(entity, spec.field);
-      const list = lista.length > 0 ? lista : um === '' ? [] : [um];
+      const list = fieldList(entity, spec.field);
       if (list.length === 0) return null;
       /* Chips que não são traços: o rótulo é o do campo, sem caixinha de glossário. */
       if (spec.plain === true) {
@@ -694,48 +691,25 @@ function Field({
       );
     }
 
-    /*
-     * `Strength ou Dexterity`, ou `Livre` onde a fonte diz que é. Ver `boostsText`. No modo
-     * `all` (todos ganhos) cada atributo é uma CAIXINHA — pedido do autor, e é o que
-     * separa "ganha os dois" de "escolhe um": a escolha continua sendo uma frase com "ou".
-     */
+    /* `Strength ou Dexterity`, ou `Livre` onde a fonte diz que é. Ver `boostsText`. */
     case 'boosts': {
-      if (spec.all === true) {
-        const codigos = fieldList(entity, spec.field);
-        if (codigos.length === 0) return null;
-        return (
-          <Row label={label(spec.field)}>
-            <span className={styles['chips']}>
-              {codigos.map((codigo, i) => (
-                <span key={`${codigo}${String(i)}`} className={cx(styles['chip'], 'chamfer-sm')}>
-                  {codigo === 'free' ? b.background.freeBoost : attributeName(codigo)}
-                </span>
-              ))}
-            </span>
-          </Row>
-        );
-      }
-      const valor = boostsText(entity, spec.field, spec.free === true);
+      const valor = boostsText(entity, spec.field, spec.free === true, spec.all === true);
       if (valor === '') return null;
       return <Row label={label(spec.field)}>{valor}</Row>;
     }
 
-    /* Terra sozinho — é o padrão —, o resto com o tipo ao lado: "5 pés", "25 pés nado". */
+    /* Terra sozinho — é o padrão —, o resto com o tipo ao lado: "5 pés · 25 pés nado". */
     case 'speeds': {
       const lista = speeds(entity, spec.field);
       if (lista.length === 0) return null;
-      return (
-        <Row label={label(spec.field)}>
-          <span className={styles['chips']}>
-            {lista.map((s) => (
-              <span key={s.type} className={cx(styles['chip'], 'chamfer-sm')}>
-                {b.ancestry.feet(String(s.value))}
-                {s.type !== 'land' && ` ${b.ancestry.speedType[s.type] ?? s.type}`}
-              </span>
-            ))}
-          </span>
-        </Row>
-      );
+      const texto = lista
+        .map(
+          (s) =>
+            b.ancestry.feet(String(s.value)) +
+            (s.type === 'land' ? '' : ` ${b.ancestry.speedType[s.type] ?? s.type}`),
+        )
+        .join(' · ');
+      return <Row label={label(spec.field)}>{texto}</Row>;
     }
 
     case 'stat': {

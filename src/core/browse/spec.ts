@@ -351,8 +351,9 @@ export type DetailFieldSpec =
   | { readonly kind: 'boolean'; readonly field: string }
   | ({ readonly kind: 'chips'; readonly field: string } & ChipsFormat)
   /**
-   * Os DESLOCAMENTOS numa linha só: o valor em terra sozinho — é o padrão, e não precisa
-   * dizer que é terrestre — e os outros com o tipo ao lado ("25 pés nado"). Pedido do autor.
+   * Os DESLOCAMENTOS numa linha só, como texto: o valor em terra sozinho — é o padrão, e não
+   * precisa dizer que é terrestre — e os outros com o tipo ao lado ("5 pés · 25 pés nado").
+   * Pedido do autor.
    */
   | { readonly kind: 'speeds'; readonly field: string }
   | { readonly kind: 'frequency'; readonly field: string }
@@ -1052,11 +1053,11 @@ export const SOURCES: readonly SourceSpec[] = [
     detail: [
       { kind: 'chips', field: 'traits' },
       /*
-       * A ficha em CAIXINHAS, pedido do autor: PV, tamanho, deslocamento, aumentos, falha,
-       * idiomas, visão — tudo chip. Um número solto ao lado de um chip parecia
-       * desalinhado; agora tudo começa no mesmo lugar.
+       * PV, aumentos, falha e visão como TEXTO; tamanho e PV por tamanho como chips. A
+       * ficha inteira em caixinha foi tentada (23e) e o autor pediu de volta: "ficou mais
+       * estranho ainda". O que ficou da tentativa é a linha única de deslocamento.
        */
-      { kind: 'chips', field: 'hp', plain: true },
+      { kind: 'text', field: 'hp' },
       /* PV por tamanho: só o Animal Desperto. */
       { kind: 'chips', field: 'hpOptions', plain: true },
       { kind: 'chips', field: 'sizes', plain: true },
@@ -1067,7 +1068,7 @@ export const SOURCES: readonly SourceSpec[] = [
       { kind: 'chips', field: 'additionalLanguages' },
       /* "Quantos": a regra que a página diz por extenso e o pack só tem como número. */
       { kind: 'text', field: 'extraLanguages' },
-      { kind: 'chips', field: 'vision', plain: true },
+      { kind: 'text', field: 'vision' },
       { kind: 'references', field: 'features' },
       { kind: 'text', field: 'kind' },
       { kind: 'source' },

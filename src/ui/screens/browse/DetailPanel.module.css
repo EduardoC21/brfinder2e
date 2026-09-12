@@ -182,16 +182,13 @@
 }
 
 /*
- * As caixinhas RECUAM o próprio recheio: o texto de dentro do chip começa onde o texto
- * solto começa. Antes cada chip começava na coluna e o texto dele 7px depois, e o autor
- * viu as linhas "começando em lugares diferentes". A caixa invade a calha entre rótulo e
- * valor (11px), que é mais larga que o recuo (7px).
+ * Sem recuo: o chip começa na coluna e o texto dele 7px depois. O recuo para alinhar o
+ * texto de dentro com o texto solto foi tentado (23e) e o autor o rejeitou.
  */
 .chips {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-1);
-  margin-left: calc(-1 * var(--space-2));
 }
 
 /*
