@@ -203,6 +203,13 @@ Versão medida: **`pf2e-8.5.0`**.
 - **No app:** a coluna Livro da aba Habilidades da classe mostra o livro do DOCUMENTO,
   que é o que existe. Não há de onde tirar o livro "no contexto da classe".
 
+### 2.10 `classes` — o Ranger sem Nature em `trainedSkills`
+
+- A página do jornal diz "Trained in Nature, Trained in Survival"; o pack traz
+  `trainedSkills.value: ['survival']`. Das 29, é a única em que o bloco "Skills" da página
+  e o campo divergem. Etapa 26g.
+- **No app:** a lateral mostra o campo (Survival). Não há de onde inferir sem ler a prosa.
+
 ### 2.6 `journals` — página `Kashrishi`: "Emphathic Sense"
 
 - O bloco de mecânica escreve "Emphathic Sense" duas vezes; a habilidade em

@@ -5,11 +5,11 @@ import { indexJournalPages } from '../journals';
 import { isClean } from '../report';
 import { run } from '../run';
 import { classRecipe } from './class';
-import { druid, jornal, racket } from './class.fixtures';
+import { druid, escolha, jornal, ordem, racket } from './class.fixtures';
 
 const result = run(classRecipe, [{ pack: 'classes', documents: [druid] }], {
   journals: indexJournalPages([jornal]),
-  features: indexClassFeatures([racket]),
+  features: indexClassFeatures([racket, escolha, ordem]),
 });
 
 describe('receita de classe', () => {
@@ -39,6 +39,8 @@ describe('receita de classe', () => {
     expect(base?.defenses.heavy).toBe(0);
     expect(base?.spellcasting).toBe(1);
     expect(base?.skills).toEqual(['nature']);
+    /* A Druidic Order (1º nível) tem uma opção que treina Acrobatics: "outro". */
+    expect(base?.subclassSkill).toBe(true);
     expect(base?.extraSkills).toBe(2);
     expect(base?.classFeatLevels).toEqual([2, 4, 6, 8, 10, 12, 14, 16, 18, 20]);
     /* No mesmo nível, a ordem do pack (a1 antes de a3), não a alfabética. */

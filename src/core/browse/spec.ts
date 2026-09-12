@@ -369,6 +369,17 @@ export type DetailFieldSpec =
    * `skip` diz que chaves não entram (o `other` dos ataques, que é objeto com nome).
    */
   | { readonly kind: 'ranks'; readonly field: string }
+  /**
+   * As PERÍCIAS da classe numa linha só (26g, pelo autor): as fixas em caixinha, "outro"
+   * quando a escolha de 1º nível treina uma (`other`, booleano), e "+N" para as à escolha
+   * (`extra`, número). "Stealth · outro · +7" é o bloco "Skills" do livro em três caixinhas.
+   */
+  | {
+      readonly kind: 'skills';
+      readonly field: string;
+      readonly extra: string;
+      readonly other: string;
+    }
   | { readonly kind: 'frequency'; readonly field: string }
   | { readonly kind: 'cost' }
   | { readonly kind: 'source' };
@@ -1461,8 +1472,7 @@ export const SOURCES: readonly SourceSpec[] = [
           fields: [
             { kind: 'ranks', field: 'perception' },
             { kind: 'ranks', field: 'saves' },
-            { kind: 'chips', field: 'skills' },
-            { kind: 'text', field: 'extraSkills' },
+            { kind: 'skills', field: 'skills', extra: 'extraSkills', other: 'subclassSkill' },
             { kind: 'ranks', field: 'attacks' },
             { kind: 'ranks', field: 'defenses' },
           ],

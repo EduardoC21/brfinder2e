@@ -891,8 +891,17 @@ ranks em português: Destreinado, Treinado, Especialista, Mestre, Lendário.
 **O atributo-chave que a subclasse abre** (26b): o pack diz `dex` para o ladino e nada
 para o psíquico; a facção e a mente consciente é que abrem o resto, em
 `subfeatures.keyOptions` das habilidades. A coluna diz "Des ou outro" (ladino) e "Int ou
-Car" (psíquico); a lateral nomeia o "outro" — cada atributo com as habilidades que o
-abrem, como caixinhas que abrem a habilidade em flutuante.
+Car" (psíquico). A lateral chegou a nomear o "outro" — cada atributo com as habilidades que
+o abrem — e o autor tirou (26g): a facção é escolha da ficha, e a consulta só precisa
+saber que existe. Fica a palavra; o dado continua em `keyAbilityOptions`.
+
+**As perícias da classe numa linha** (26g, pelo autor): "Stealth · outro · +7" — as fixas
+em caixinha, "outro" (apagado, em itálico) quando a escolha de 1º nível treina uma, e
+"+N" para as à escolha. É o bloco "Skills" do livro em três caixinhas. O "outro" vem de
+`subclassSkill`, derivado: alguma habilidade de 1º nível da classe é uma escolha e alguma
+opção dela (pela etiqueta) mexe no rank de uma perícia nas regras — 10 das 29, e 9 batem
+com o texto do livro ("trained in one skill determined by your druidic order"); o Ranger
+entra pelo Vindicator, a única aresta que treina. É `kind: 'skills'` no detalhe.
 
 **Atributos abreviados nas colunas** (26b, pelo autor, para todo o projeto): For, Des,
 Con, Int, Sab, Car — a sigla da ficha. No detalhe, o nome por extenso continua em inglês,

@@ -27,7 +27,7 @@ import { CollapseToggle } from '@ui/components/CollapseToggle';
 import { cx } from '@ui/cx';
 import { bookLabel, capitalizar, fieldText, rankLabel } from '@ui/text';
 
-import { attributeName, boostsText, keyAlternatives } from './backgroundFields';
+import { boostsText } from './backgroundFields';
 import { references as referenciasDe, type Reference } from './referenceFields';
 import { itemBulkText, itemDamageText, itemPriceText, statText } from './itemFields';
 import type { PopoutSubject } from './popouts';
@@ -724,25 +724,42 @@ function Field({
      * abre, com as habilidades que o abrem como caixinhas que abrem a habilidade — o
      * Ruffian é uma entrada de Habilidades, e o que se clica abre painel.
      */
+    /*
+     * O "outro" fica só como palavra (26g, pelo autor): a lista de quem abre cada atributo
+     * (Ruffian, Scoundrel…) foi tentada embaixo e saiu — a facção é escolha da ficha, e a
+     * consulta só precisa saber que existe. O dado continua em `keyAbilityOptions`.
+     */
     case 'boosts': {
       const valor = boostsText(entity, spec.field, spec);
       if (valor === '') return null;
-      const alternativas =
-        spec.alternatives === undefined ? [] : keyAlternatives(entity, spec.alternatives);
+      return <Row label={label(spec.field)}>{valor}</Row>;
+    }
+
+    /* "Stealth · outro · +7": as fixas, o que a subclasse treina, e as à escolha. */
+    case 'skills': {
+      const fixas = fieldList(entity, spec.field);
+      const outra = fieldValue(entity, spec.other) === 'true';
+      const extra = Number(fieldValue(entity, spec.extra));
+      if (fixas.length === 0 && !outra && !(extra > 0)) return null;
       return (
-        <Row label={label(spec.field)}>
-          {valor}
-          {alternativas.map((alternativa) => (
-            <span key={alternativa.ability} className={styles['alternativa']}>
-              <span className={styles['muted']}>{attributeName(alternativa.ability)}</span>
-              <Referencias
-                acoes={alternativa.features}
-                aberta={null}
-                onAbrir={onOpenReference}
-                {...(nameOf === undefined ? {} : { nameOf })}
-              />
-            </span>
-          ))}
+        <Row label={label('classSkills')}>
+          <span className={styles['chips']}>
+            {fixas.map((item) => (
+              <span key={item} className={cx(styles['chip'], 'chamfer-sm')}>
+                {capitalizar(item)}
+              </span>
+            ))}
+            {outra && (
+              <span className={cx(styles['chip'], styles['chipApagado'], 'chamfer-sm')}>
+                {b.background.other}
+              </span>
+            )}
+            {extra > 0 && (
+              <span className={cx(styles['chip'], 'chamfer-sm')}>
+                {b.background.moreSkills(String(extra))}
+              </span>
+            )}
+          </span>
         </Row>
       );
     }

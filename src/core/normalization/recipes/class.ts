@@ -32,7 +32,7 @@
 
 import { isRecord } from '../../json';
 import { classTables } from '../class-tables';
-import type { ClassFeaturesByTrait } from '../features-index';
+import type { ClassFeaturesIndex } from '../features-index';
 import { journalKey } from '../journals';
 import { bool, html, int, listOf, shape, text, textList } from '../decoders';
 import { from, fromDocument, fromJournal } from '../field';
@@ -90,6 +90,8 @@ export interface ClassBase {
   readonly skills: readonly string[];
   /** Quantas perícias a mais, à escolha. */
   readonly extraSkills: number;
+  /** A escolha de 1º nível (facção, ordem, linhagem…) treina uma perícia: 10 das 29. */
+  readonly subclassSkill: boolean;
   /** Os níveis em que se ganha cada coisa — a tabela de progressão vem daqui. */
   readonly classFeatLevels: readonly number[];
   readonly skillFeatLevels: readonly number[];
@@ -148,10 +150,10 @@ const ATTRIBUTE_ORDER: readonly string[] = ['str', 'dex', 'con', 'int', 'wis', '
 function toKeyAbilityOptions(
   slug: string,
   keyAbility: readonly string[],
-  features: ClassFeaturesByTrait | undefined,
+  features: ClassFeaturesIndex | undefined,
 ): readonly KeyAbilityOption[] {
   const porAtributo = new Map<string, { uuid: string; name: string }[]>();
-  for (const feature of features?.get(slug) ?? []) {
+  for (const feature of features?.byTrait.get(slug) ?? []) {
     for (const ability of feature.keyOptions) {
       if (keyAbility.includes(ability)) continue;
       const lista = porAtributo.get(ability);
@@ -163,6 +165,31 @@ function toKeyAbilityOptions(
   return [...porAtributo.entries()]
     .sort(([a], [b]) => ATTRIBUTE_ORDER.indexOf(a) - ATTRIBUTE_ORDER.indexOf(b))
     .map(([ability, lista]) => ({ ability, features: lista }));
+}
+
+/**
+ * A ESCOLHA de 1º nível treina uma perícia? O ladino é "Trained in Stealth; trained in one
+ * skill determined by your rogue's racket" — a segunda parte está nas regras das opções
+ * (Ruffian treina Intimidation), não na classe. Verdadeiro quando alguma habilidade de 1º
+ * nível da classe é uma escolha (`choiceTag`) e alguma opção dela (pela etiqueta, entre
+ * as habilidades com o traço da classe) mexe no rank de uma perícia.
+ */
+function toSubclassSkill(
+  slug: string,
+  items: unknown,
+  features: ClassFeaturesIndex | undefined,
+): boolean {
+  if (features === undefined || !isRecord(items)) return false;
+  const comTraco = features.byTrait.get(slug) ?? [];
+  for (const item of Object.values(items)) {
+    if (!isRecord(item) || item['level'] !== 1 || typeof item['uuid'] !== 'string') continue;
+    const etiqueta = features.byUuid.get(item['uuid'])?.choiceTag;
+    if (etiqueta === null || etiqueta === undefined) continue;
+    if (comTraco.some((opcao) => opcao.tags.includes(etiqueta) && opcao.skills.length > 0)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 /** As tabelas da página desta classe no jornal, ou vazias sem jornal. */
@@ -220,6 +247,15 @@ export const classRecipe = recipe<ClassBase, ClassDesc>({
     spellcasting: from('system.spellcasting', int),
     skills: from('system.trainedSkills.value', textList),
     extraSkills: from('system.trainedSkills.additional', int),
+    subclassSkill: fromDocument((document, tables) => {
+      if (!isRecord(document) || !isRecord(document['system'])) return false;
+      const system = document['system'];
+      return toSubclassSkill(
+        typeof system['slug'] === 'string' ? system['slug'] : '',
+        system['items'],
+        tables.features,
+      );
+    }),
     classFeatLevels: from('system.classFeatLevels', levels).map((v) => v.value),
     skillFeatLevels: from('system.skillFeatLevels', levels).map((v) => v.value),
     generalFeatLevels: from('system.generalFeatLevels', levels).map((v) => v.value),

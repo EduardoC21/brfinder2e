@@ -73,6 +73,29 @@ export const racket = {
   },
 };
 
+/** A habilidade que ESCOLHE (a Druidic Order, `a1` do druida) e uma ordem que treina perícia. */
+export const escolha = {
+  _id: 'aaaaaaaaaaaaaaaa',
+  name: 'Druidic Order',
+  type: 'feat',
+  system: {
+    traits: { rarity: 'common', value: ['druid'] },
+    rules: [{ key: 'ChoiceSet', choices: { filter: ['item:tag:druid-order'] }, flag: 'order' }],
+  },
+};
+
+export const ordem = {
+  _id: 'oooooooooooooooo',
+  name: 'Storm Order',
+  type: 'feat',
+  system: {
+    traits: { rarity: 'common', value: ['druid'], otherTags: ['druid-order'] },
+    rules: [
+      { key: 'ActiveEffectLike', mode: 'upgrade', path: 'system.skills.acrobatics.rank', value: 1 },
+    ],
+  },
+};
+
 export const jornal = {
   _id: 'ClassesJournal001',
   name: 'Classes',

@@ -65,6 +65,27 @@ describe('as 29 classes reais', () => {
     expect(result.entities.filter((b) => b.base.attacks.other.name !== '')).toHaveLength(3);
   });
 
+  /*
+   * A escolha de 1º nível treina uma perícia em 10 — 9 batem com o bloco "Skills" da
+   * página ("trained in one skill determined by your druidic order"…); o Ranger entra
+   * pelo Vindicator, a única aresta que treina (Religion), que o bloco não cita.
+   */
+  it('a perícia pela subclasse, como medido', () => {
+    const com = result.entities.filter((b) => b.base.subclassSkill).map((b) => b.base.slug);
+    expect(com.sort()).toEqual([
+      'druid',
+      'gunslinger',
+      'investigator',
+      'oracle',
+      'ranger',
+      'rogue',
+      'sorcerer',
+      'summoner',
+      'swashbuckler',
+      'witch',
+    ]);
+  });
+
   /* Só ladino e psíquico têm subclasse que abre o atributo-chave: 9 habilidades. */
   it('o atributo-chave que a subclasse abre vem das habilidades', () => {
     const com = result.entities.filter((b) => b.base.keyAbilityOptions.length > 0);

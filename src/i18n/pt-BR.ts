@@ -209,6 +209,8 @@ export const ptBR = {
       freeBoost: 'Livre',
       /** O "other" do "Dexterity or Other" do ladino: a subclasse decide. */
       other: 'outro',
+      /** As perícias a mais, à escolha: "+7". */
+      moreSkills: (n: string) => `+${n}`,
     },
     /** A tela completa da entrada (22b): o botão que abre, o que volta, e as abas. */
     fullView: {
@@ -486,6 +488,8 @@ export const ptBR = {
       defenses: 'defesas',
       spellcasting: 'conjura',
       extraSkills: 'perícias extras',
+      /* A linha única de perícias da classe (26g). */
+      classSkills: 'perícias',
       classOwner: 'classe',
       'dedication.level': 'nível',
       class: 'classe',

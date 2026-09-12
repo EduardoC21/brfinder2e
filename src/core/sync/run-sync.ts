@@ -26,7 +26,7 @@ import {
 import { buildTraitGlossary, type TraitGlossary } from '../glossary/index';
 import { listRetiredRaw, type StorePort } from '../store/index';
 import { indexFeats, type FeatsByName } from '../normalization/feats-index';
-import { indexClassFeatures, type ClassFeaturesByTrait } from '../normalization/features-index';
+import { indexClassFeatures, type ClassFeaturesIndex } from '../normalization/features-index';
 import { indexJournalPages, type JournalPages } from '../normalization/journals';
 import { mergeLanguageFiles } from '../normalization/language';
 import { run, type PackDocuments, type Failure, type NormalizedEntity } from '../normalization/run';
@@ -354,7 +354,7 @@ async function renormalizeRetired(
     language: ReadonlyMap<string, string>;
     journals: JournalPages;
     feats: FeatsByName;
-    features: ClassFeaturesByTrait;
+    features: ClassFeaturesIndex;
   },
   folders: ReadonlyMap<string, string>,
 ): Promise<{ entities: readonly NormalizedEntity[]; failures: readonly Failure[] }> {
