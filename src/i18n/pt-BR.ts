@@ -462,8 +462,8 @@ export const ptBR = {
       additionalLanguages: 'idiomas ad.',
       extraLanguages: 'idiomas qnt.',
       features: 'habilidades',
-      /* Habilidade: a ancestralidade (ou classe) dona. A categoria já é `category` (equipamento). */
-      owner: 'de',
+      /* Habilidade: a ancestralidade dona. Só aparece com o Tipo Ancestralidade marcado. */
+      owner: 'ancestralidade',
       /* Herança: a ancestralidade dona. */
       ancestry: 'de',
       /* Arquétipo. */

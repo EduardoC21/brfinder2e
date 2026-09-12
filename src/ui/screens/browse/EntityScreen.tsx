@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import {
   contextFor,
@@ -115,6 +115,16 @@ export function EntityScreen({
   );
   const [abaId, setAbaId] = useState(abas[0]?.tab.id ?? '');
   const aba = abas.find((item) => item.tab.id === abaId) ?? abas[0];
+  /*
+   * A ROLAGEM de cada aba de texto, lembrada enquanto a entrada está aberta (26c, pelo
+   * autor): ir a Habilidades e voltar a Detalhes devolve a altura em que se estava. Um
+   * mapa que vive com a tela — mudar a altura não redesenha nada, por isso não é estado
+   * que se troca, e não é ref porque render não lê ref: quem lê é o efeito da aba, e
+   * quem escreve é o evento de rolar. Morre com a tela (voltar à lista, trocar de
+   * fonte). A chave leva a ENTRADA: o pop-out que leva a outra entrada dentro da mesma
+   * tela começa do topo, porque o texto é outro.
+   */
+  const [rolagem] = useState(() => new Map<string, number>());
   /* A lateral recolhe como na lista — e volta ao trocar de aba, que é conteúdo novo. */
   const [lateralFechada, setLateralFechada] = useState(false);
 
@@ -166,7 +176,15 @@ export function EntityScreen({
 
       {aba?.tab.kind === 'page' && (
         <>
-          <PageTab entity={entity} entityType={entityType} tab={aba.tab} reference={reference} />
+          <PageTab
+            key={entity.key}
+            entity={entity}
+            entityType={entityType}
+            tab={aba.tab}
+            reference={reference}
+            memory={rolagem}
+            memoryKey={`${entity.key}/${aba.tab.id}`}
+          />
           <DetailPane
             key={aba.tab.id}
             entity={entity}
@@ -195,11 +213,16 @@ function PageTab({
   entityType,
   tab,
   reference,
+  memory,
+  memoryKey,
 }: {
   readonly entity: BrowseEntity;
   readonly entityType: string;
   readonly tab: PageTabSpec;
   readonly reference: ReferenceBridge;
+  /** A memória de rolagem da tela, e a chave desta aba nela. Ver `EntityScreen`. */
+  readonly memory: Map<string, number>;
+  readonly memoryKey: string;
 }) {
   const texto = useDescription(entityType, entity.key, tab.field);
   const reserva = useDescription(entityType, entity.key, tab.fallback ?? tab.field);
@@ -226,6 +249,19 @@ function PageTab({
   const [apendiceAberto, setApendiceAberto] = useState(false);
 
   /*
+   * Devolve a rolagem UMA vez, quando a prosa chega — a descrição vem do armazenamento,
+   * e no primeiro render o corpo ainda está vazio e não tem para onde rolar. Layout
+   * effect, e não effect: antes de pintar, para não mostrar o topo por um quadro.
+   */
+  const corpo = useRef<HTMLDivElement>(null);
+  const devolvida = useRef(false);
+  useLayoutEffect(() => {
+    if (devolvida.current || nodes === null || corpo.current === null) return;
+    devolvida.current = true;
+    corpo.current.scrollTop = memory.get(memoryKey) ?? 0;
+  }, [nodes, memory, memoryKey]);
+
+  /*
    * A mesma ponte do painel: só o que resolve vira botão, e cada clique abre um
    * flutuante — aqui não há "navegar no lugar", porque a tela É a entrada.
    */
@@ -247,7 +283,14 @@ function PageTab({
   };
 
   return (
-    <div className={styles['corpo']} role="tabpanel">
+    <div
+      className={styles['corpo']}
+      role="tabpanel"
+      ref={corpo}
+      onScroll={(event) => {
+        memory.set(memoryKey, event.currentTarget.scrollTop);
+      }}
+    >
       {nodes !== null && (
         <div className={styles['pagina']}>
           <RichText nodes={nodes} links={links} />

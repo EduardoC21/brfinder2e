@@ -81,6 +81,12 @@ Antes: **Etapa 20** — as tabelas das regras param de quebrar (célula compacta
 linha, `@Embed` cola a entrada apontada, e as duas vassouras em Configurações: apagar as
 entradas aposentadas e apagar a base inteira.
 
+Antes: **Etapa 26c** — a dona da habilidade só dentro do Tipo (Ancestralidade marcada →
+coluna e filtro "Ancestralidade"; Classe → "Classe"; visão geral → só o Tipo); as abas de
+escolha da classe só com Livro; a rolagem da aba Detalhes lembrada enquanto a entrada
+está aberta; "Your Level" → "Level" e "Class Features" → "Features" nas tabelas (41 + 29,
+poda de leitura).
+
 Antes: **Etapa 26b** — o atributo-chave que a subclasse abre (`subfeatures.keyOptions`,
 9 habilidades: o Rogue vira "Des ou outro", o Psychic "Int ou Car"), pela quarta tabela
 de consulta do motor; os atributos abreviados nas colunas (For, Des, Con, Int, Sab, Car);

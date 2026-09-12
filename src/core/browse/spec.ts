@@ -1227,17 +1227,25 @@ export const SOURCES: readonly SourceSpec[] = [
      * ancestralidade dona é a pasta do pack; o Tipo é a categoria.
      */
     columns: [
-      { kind: 'text', id: 'owner', field: 'owner' },
-      { kind: 'text', id: 'classOwner', field: 'classOwner' },
+      { kind: 'text', id: 'category', field: 'category' },
+      /*
+       * A dona só faz sentido DENTRO do Tipo (o autor, 26c): a ancestralidade dona é
+       * coluna e filtro quando só Ancestralidade está marcada; a classe dona, quando só
+       * Classe. Na visão geral nenhuma das duas — metade das linhas ficaria vazia.
+       */
+      { kind: 'text', id: 'owner', field: 'owner', kinds: ['ancestryfeature'] },
+      { kind: 'text', id: 'classOwner', field: 'classOwner', kinds: ['classfeature'] },
       { kind: 'text', id: 'source', field: 'source.title' },
     ],
-    defaultColumns: ['owner', 'classOwner'],
+    /* A visão geral mostra só o Tipo, como equipamento. */
+    defaultColumns: ['category'],
+    presets: { ancestryfeature: ['owner'], classfeature: ['classOwner'] },
     /* O nível como calha: é o que ordena a aba Habilidades da classe (1, 3, 5…). */
     special: { level: 'level', rarity: 'rarity', traits: 'traits' },
     filters: [
       { kind: 'options', id: 'category', field: 'category', values: FEATURE_KINDS },
-      { kind: 'options', id: 'owner', field: 'owner' },
-      { kind: 'options', id: 'classOwner', field: 'classOwner' },
+      { kind: 'options', id: 'owner', field: 'owner', kinds: ['ancestryfeature'] },
+      { kind: 'options', id: 'classOwner', field: 'classOwner', kinds: ['classfeature'] },
       { kind: 'list', id: 'traits', field: 'traits', combine: 'any' },
       { kind: 'options', id: 'source', field: 'source.title' },
     ],

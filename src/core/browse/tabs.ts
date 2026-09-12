@@ -40,6 +40,9 @@ export function expandChoiceTabs(
         id: `${tab.id}:${etiqueta}`,
         source: tab.source,
         lock: [{ field: 'tags', value: etiqueta, match: 'contains-value' }],
+        /* Só o livro, como a aba Habilidades: tudo aqui é da classe. */
+        defaultColumns: ['source'],
+        filters: [{ kind: 'options', id: 'source', field: 'source.title' }],
       },
       label: fieldValue(escolha, 'name'),
       entities,

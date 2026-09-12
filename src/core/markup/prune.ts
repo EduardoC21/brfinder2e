@@ -13,6 +13,12 @@
  * o parágrafo que é só o link; o que está no meio da frase fica, porque tirá-lo deixaria
  * a frase manca.
  *
+ * E os CABEÇALHOS de tabela que o livro escreve para a ficha e não para a consulta (o
+ * autor, 26c): "Your Level" vira "Level" e "Class Features" vira "Features". Medido nos
+ * jornais do `pf2e-8.5.0`: "Your Level" em 41 tabelas de `Classes` (a de progressão das
+ * 29 e as de magias por dia) e 1 de `Archetypes`; "Class Features" nas 29. Só o texto
+ * EXATO do `<th>`, e nada mais: "Creature's Level" e "Levels of Light" ficam.
+ *
  * ⚠️ É poda de LEITURA, na terceira camada (o documento pronto para desenhar): `raw/` e
  * `desc/` continuam com o texto inteiro. Quem busca na descrição busca no texto inteiro.
  */
@@ -37,10 +43,32 @@ function soEfeito(node: DocNode): boolean {
   return cheios.length > 0 && cheios.every(ehEfeito);
 }
 
+/** O cabeçalho como o livro escreve → como a consulta lê. Só o texto exato. */
+const CABECALHOS: Readonly<Record<string, string>> = {
+  'Your Level': 'Level',
+  'Class Features': 'Features',
+};
+
+/** Um `<th>` cujo conteúdo é um texto só, e esse texto está na tabela de cabeçalhos. */
+function cabecalhoRenomeado(node: DocNode): DocNode | null {
+  if (node.kind !== 'element' || node.tag !== 'th') return null;
+  const cheios = node.children.filter((child) => !ehVazio(child));
+  const unico = cheios.length === 1 ? cheios[0] : undefined;
+  if (unico?.kind !== 'token' || unico.token.kind !== 'text') return null;
+  const novo = CABECALHOS[unico.token.raw.trim()];
+  if (novo === undefined) return null;
+  return { ...node, children: [{ kind: 'token', token: { ...unico.token, raw: novo } }] };
+}
+
 export function pruneForReading(nodes: readonly DocNode[]): DocNode[] {
   const out: DocNode[] = [];
   for (const node of nodes) {
     if (soEfeito(node)) continue;
+    const cabecalho = cabecalhoRenomeado(node);
+    if (cabecalho !== null) {
+      out.push(cabecalho);
+      continue;
+    }
     out.push(
       node.kind === 'element' ? { ...node, children: pruneForReading(node.children) } : node,
     );

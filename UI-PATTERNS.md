@@ -887,6 +887,25 @@ abrem, como caixinhas que abrem a habilidade em flutuante.
 Con, Int, Sab, Car — a sigla da ficha. No detalhe, o nome por extenso continua em inglês,
 como todo dado de jogo (OPEN-DECISIONS #4). Ver `attributeShort`.
 
+**A rolagem da aba de texto é lembrada** (26c, pelo autor) enquanto a entrada está
+aberta: ir a Habilidades e voltar a Detalhes devolve a altura. É um mapa que vive com a
+tela (`useState(() => new Map())`, não ref — render não lê ref; quem lê é o efeito da
+aba e quem escreve é o evento de rolar), com a chave `entrada/aba`. Morre ao voltar à
+lista ou trocar de fonte; outra entrada na mesma tela (o pop-out que leva) começa do topo.
+A devolução é um `useLayoutEffect` que espera a prosa chegar — a descrição vem do
+armazenamento, e no primeiro render não há para onde rolar.
+
+**Os cabeçalhos de tabela escritos para a ficha** (26c, pelo autor): "Your Level" vira
+"Level" e "Class Features" vira "Features", na poda de leitura (`prune.ts`), só no texto
+exato do `<th>`. Medido: 41 + 1 e 29 tabelas nos jornais.
+
+**A dona da habilidade só dentro do Tipo** (26c, pelo autor): em Habilidades, a
+ancestralidade dona e a classe dona são coluna e filtro por `kinds` — a primeira aparece
+com só Ancestralidade marcada (rótulo "Ancestralidade"), a segunda com só Classe; na
+visão geral, nenhuma das duas, e a coluna padrão é o Tipo, como em equipamento. Os
+presets por Tipo ligam a dona sozinha. Numa aba travada não há Tipo marcado, e as duas
+somem por conta própria.
+
 **A aba de lista tem colunas padrão próprias** (`defaultColumns`, 26b): as habilidades da
 classe não precisam de "de classe" — tudo ali é da classe — nem herdam o que a pessoa
 ligou no trilho de Habilidades. A escolha de colunas da aba grava à parte (`aba:<fonte>:
