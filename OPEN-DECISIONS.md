@@ -344,3 +344,24 @@ específicos e companheiros esperam uma fonte: ou o módulo da comunidade tem JS
 aproveitável, ou é o AoN — e aí é a decisão do item 9.
 
 **Decidir quando:** depois das três fontes grandes, com a pesquisa de companheiros feita.
+
+## 14. As alterações de descrição que dependem da ficha `novo`
+
+Registrado na Etapa 22e, a pedido do autor.
+
+**O que é:** das 503 alterações de descrição (`ItemAlteration`, `property: description`)
+nas fontes que temos ou vamos ter, 91 são estáticas e já se aplicam na consulta (o Change
+Shape do Anadi). As outras **412** têm predicado sobre o ESTADO do personagem —
+`item:tag:amped`, `spellshape:*`, `class:witch` + `item:trait:hex`,
+`self:condition:sickened`, `{item|flags…}`, `item:granter:id:{item|id}` — e fora da ficha
+não têm resposta.
+
+**Decidido:** ficam para a ficha. A consulta mostra a entrada como o livro a imprime.
+
+**O que já existe:** o dado em `raw/` (`system.rules` está em `defer` em toda receita) e o
+leitor de blocos em `normalization/alterations.ts`, que resolve chave de idioma, título e
+divisor. O que falta é o avaliador de predicado contra a ficha — `item:*`, `self:*`,
+`class:*`, os `{…}` de interpolação — e rodar as alterações na abertura a partir da ficha,
+com o mesmo `contextFor`.
+
+**Decidir quando:** ao montar a validação da ficha.
