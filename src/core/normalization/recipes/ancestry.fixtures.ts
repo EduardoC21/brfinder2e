@@ -170,7 +170,10 @@ export const nephilim = {
     ancestry: null,
     description: { value: '<p>Your nature is influenced by celestials […]</p>' },
     publication: { license: 'ORC', remaster: true, title: 'Pathfinder Player Core 2' },
-    rules: [],
+    rules: [
+      { key: 'Sense', selector: 'low-light-vision' },
+      { key: 'Sense', predicate: ['self:low-light-vision:from-ancestry'], selector: 'darkvision' },
+    ],
     traits: { rarity: 'uncommon', value: ['nephilim'] },
     slug: 'nephilim',
     _migration: { version: 0.959, previous: null },

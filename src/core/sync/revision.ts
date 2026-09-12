@@ -24,5 +24,7 @@
  *   5  Etapa 23d — tamanhos, PV por tamanho e deslocamentos lidos das regras (o Animal
  *      Desperto).
  *   6  Etapa 23e — `speeds` na ancestralidade (a linha única de deslocamento).
+ *   7  Etapa 24 — `mechanics` da ancestralidade; visão da versátil pelas regras; a herança
+ *      própria com `features` e `vision`.
  */
-export const RECIPES_REVISION = 6;
+export const RECIPES_REVISION = 7;

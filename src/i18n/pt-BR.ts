@@ -213,6 +213,10 @@ export const ptBR = {
       open: 'Tela completa',
       back: 'Voltar à lista',
       locked: 'Filtro travado nesta entrada',
+      /** O apêndice recolhido no fim do texto: o bloco de mecânica como o livro escreve. */
+      appendix: {
+        mechanics: 'Mecânicas',
+      } as Record<string, string>,
       tabs: {
         details: 'Detalhes',
         heritages: 'Heranças',
@@ -235,6 +239,8 @@ export const ptBR = {
         normal: 'Normal',
         'low-light-vision': 'Penumbra',
         darkvision: 'Escuridão',
+        /* A versátil: penumbra, e escuridão se a ancestralidade já tem penumbra. */
+        'low-light-vision+darkvision': 'Penumbra (Escuridão se a ancestralidade já tiver Penumbra)',
       } as Record<string, string>,
       feet: (valor: string) => `${valor} pés`,
       /** O tipo do deslocamento que não é em terra, ao lado do valor: "25 pés nado". */

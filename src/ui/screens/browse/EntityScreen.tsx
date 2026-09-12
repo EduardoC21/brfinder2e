@@ -184,6 +184,21 @@ function PageTab({
     () => (escolhido === null ? null : pruneForReading(parseDescription(escolhido))),
     [escolhido],
   );
+  /*
+   * O APÊNDICE: o bloco de mecânica do livro, recolhido no fim. A lateral tem os campos,
+   * mas há mecânica que só existe como texto (5 das 50 ancestralidades têm uma
+   * habilidade que nenhum campo traz), e o autor quer o livro inteiro à mão sem que ele
+   * repita a lateral na cara de quem só quer ler a prosa. Nasce fechado; um clique abre.
+   */
+  const apendice = useDescription(entityType, entity.key, tab.appendix?.field ?? tab.field);
+  const apendiceNodes = useMemo(
+    () =>
+      tab.appendix === undefined || apendice === null || apendice === ''
+        ? null
+        : pruneForReading(parseDescription(apendice)),
+    [tab.appendix, apendice],
+  );
+  const [apendiceAberto, setApendiceAberto] = useState(false);
 
   /*
    * A mesma ponte do painel: só o que resolve vira botão, e cada clique abre um
@@ -212,6 +227,28 @@ function PageTab({
         <div className={styles['pagina']}>
           <RichText nodes={nodes} links={links} />
         </div>
+      )}
+      {apendiceNodes !== null && tab.appendix !== undefined && (
+        <section className={styles['apendice']}>
+          <button
+            type="button"
+            className={cx(styles['apendiceTitulo'], 'chamfer-sm')}
+            aria-expanded={apendiceAberto}
+            onClick={() => {
+              setApendiceAberto((estava) => !estava);
+            }}
+          >
+            <span className={styles['apendiceSeta']} aria-hidden="true">
+              {apendiceAberto ? '▾' : '▸'}
+            </span>
+            {t.appendix[tab.appendix.label] ?? tab.appendix.label}
+          </button>
+          {apendiceAberto && (
+            <div className={cx(styles['pagina'], styles['apendiceCorpo'])}>
+              <RichText nodes={apendiceNodes} links={links} />
+            </div>
+          )}
+        </section>
       )}
     </div>
   );

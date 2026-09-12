@@ -26,6 +26,8 @@ describe('receita de herança', () => {
         slug: 'dwarf',
         uuid: 'Compendium.pf2e.ancestries.Item.BYj5ZvlXZdpaEgA6',
       },
+      features: [],
+      vision: null,
       alterations: [],
       source: { license: 'ORC', title: 'Pathfinder Player Core', remaster: true },
     });

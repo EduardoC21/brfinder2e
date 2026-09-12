@@ -469,6 +469,11 @@ export interface PageTabSpec {
   readonly field: string;
   /** O campo que vale quando `field` está vazio: a versátil não tem página, tem resumo. */
   readonly fallback?: string;
+  /**
+   * Um campo de `desc/` desenhado no FIM, recolhido, com este rótulo (chave de i18n): o
+   * bloco de mecânica do livro, para quem quer ler como está escrito. Ausente, nada.
+   */
+  readonly appendix?: { readonly field: string; readonly label: string };
 }
 
 export interface ListTabSpec {
@@ -1082,7 +1087,13 @@ export const SOURCES: readonly SourceSpec[] = [
      */
     fullView: {
       tabs: [
-        { kind: 'page', id: 'details', field: 'page', fallback: 'main' },
+        {
+          kind: 'page',
+          id: 'details',
+          field: 'page',
+          fallback: 'main',
+          appendix: { field: 'mechanics', label: 'mechanics' },
+        },
         {
           kind: 'list',
           id: 'heritages',
@@ -1145,6 +1156,8 @@ export const SOURCES: readonly SourceSpec[] = [
     detail: [
       { kind: 'chips', field: 'traits' },
       { kind: 'references', field: 'ancestry' },
+      { kind: 'text', field: 'vision' },
+      { kind: 'references', field: 'features' },
       { kind: 'source' },
     ],
   },

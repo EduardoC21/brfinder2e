@@ -26,6 +26,7 @@ import { descriptionAlterations, type DescriptionAlteration } from '../alteratio
 import { bool, html, shape, text, textList } from '../decoders';
 import { from, fromDocument } from '../field';
 import { recipe } from '../recipe';
+import { toVision } from './ancestry';
 
 /** A ancestralidade dona, como o pack a escreve: nome, slug e o UUID que a ponte abre. */
 export interface HeritageAncestry {
@@ -34,12 +35,38 @@ export interface HeritageAncestry {
   readonly uuid: string;
 }
 
+export interface HeritageGrant {
+  readonly uuid: string;
+  readonly name: string;
+}
+
+/** Os `GrantItem` de `system.rules` com UUID concreto — sem os `{item|flags…}` de escolha. */
+export function grantedItems(document: unknown): readonly HeritageGrant[] {
+  if (!isRecord(document) || !isRecord(document['system'])) return [];
+  const rules = document['system']['rules'];
+  if (!Array.isArray(rules)) return [];
+  return (rules as unknown[])
+    .filter((rule): rule is Record<string, unknown> => isRecord(rule))
+    .filter((rule) => rule['key'] === 'GrantItem' && typeof rule['uuid'] === 'string')
+    .map((rule) => rule['uuid'] as string)
+    .filter((uuid) => !uuid.includes('{'))
+    .map((uuid) => ({ uuid, name: '' }));
+}
+
 export interface HeritageBase {
   readonly name: string;
   readonly slug: string;
   readonly rarity: string;
   readonly traits: readonly string[];
   readonly ancestry: HeritageAncestry;
+  /**
+   * O que a herança CONCEDE por `GrantItem`: talento (43), ação (30), habilidade (4), item
+   * (4) — só o UUID, o nome vem do índice. Os 5 com `{item|flags…}` no UUID são escolha
+   * de ficha e ficam de fora. A descrição diz por extenso; aqui é o que abre.
+   */
+  readonly features: readonly HeritageGrant[];
+  /** A visão que a herança dá por `Sense` sem predicado (20 das 311): `darkvision`… */
+  readonly vision: string | null;
   /** O que esta herança diz sobre o que concede. Ver `alterations.ts`. */
   readonly alterations: readonly DescriptionAlteration[];
   readonly source: {
@@ -71,6 +98,8 @@ export const heritageRecipe = recipe<HeritageBase, HeritageDesc>({
     rarity: from('system.traits.rarity', text).withDefault('common'),
     traits: from('system.traits.value', textList),
     ancestry: from('system.ancestry', shape({ name: text, slug: text, uuid: text })),
+    features: fromDocument(grantedItems),
+    vision: fromDocument(toVision),
     alterations: fromDocument(descriptionAlterations),
     source: from('system.publication', shape({ license: text, title: text, remaster: bool })),
   },

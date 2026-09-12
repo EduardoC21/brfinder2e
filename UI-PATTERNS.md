@@ -831,6 +831,12 @@ Aiuvarin conta como elfo, `countsAs: ['aiuvarin','elf']`, e leva os 50 talentos 
 `is` (valor fixo) e `none-of` (a lista não tem nenhum valor de outra fonte — é como os 41
 talentos universais se acham: de ancestralidade, sem traço de ancestralidade nenhuma).
 
+**O apêndice "Mecânicas"** (Etapa 24, pelo autor): no fim da prosa da aba de texto, uma
+chamada RECOLHIDA com o bloco de mecânica do livro como ele está escrito. A lateral mostra
+o que os campos dão; o bloco tem o resto — 5 das 50 ancestralidades têm uma habilidade
+que só existe como texto. Fechado por padrão: a lateral já diz o essencial, e quem quer o
+livro abre. É `appendix` na aba de texto: um campo de `desc/` e um rótulo.
+
 **Fonte fora do trilho** (`hidden`): a herança própria existe como fonte — carrega, indexa,
 abre em flutuante, aparece na busca global — mas não é uma lista que se abre pelo trilho:
 só faz sentido como aba de uma ancestralidade. Decisão do autor. A herança VERSÁTIL, que

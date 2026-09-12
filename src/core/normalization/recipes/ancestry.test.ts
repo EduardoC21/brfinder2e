@@ -68,6 +68,8 @@ describe('receita de ancestralidade', () => {
     expect(versatil.boosts).toEqual([]);
     expect(versatil.languages).toEqual([]);
     expect(versatil.traits).toEqual(['nephilim']);
+    /* Penumbra, e escuridão se a ancestralidade já tem penumbra: as duas regras Sense. */
+    expect(versatil.vision).toBe('low-light-vision+darkvision');
     expect(achar('Nephilim').desc.page).toBe('');
   });
 
@@ -118,6 +120,9 @@ describe('receita de ancestralidade', () => {
   it('cola a prosa da página do jornal, até a mecânica; sem página, vazia', () => {
     expect(achar('Dwarf').desc.page).toBe('<h2>You Might...</h2><p>Strive to […]</p>');
     expect(achar('Dwarf').desc.page).not.toContain('Mechanics');
+    /* O bloco de mecânica, à parte: do título até a lista de heranças. */
+    expect(achar('Dwarf').desc.mechanics).toBe('<p>Hit Points 10</p>');
+    expect(achar('Tengu').desc.mechanics).toBe('');
     expect(achar('Tengu').desc.page).toBe('');
   });
 

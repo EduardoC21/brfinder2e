@@ -32,6 +32,14 @@ describe('as 311 heranças próprias reais', () => {
     expect(isClean(result.report)).toBe(true);
   });
 
+  /* O que as heranças concedem, e a visão: só o que as regras dizem sem predicado. */
+  it('86 concessões com UUID concreto, e visão em 20', () => {
+    const todas = result.entities.flatMap((e) => e.base.features);
+    expect(todas.every((f) => !f.uuid.includes('{'))).toBe(true);
+    expect(todas.length).toBeGreaterThanOrEqual(80);
+    expect(result.entities.filter((e) => e.base.vision !== null)).toHaveLength(20);
+  });
+
   it('50 ancestralidades donas, e a raridade como medido', () => {
     expect(new Set(result.entities.map((e) => e.base.ancestry.slug)).size).toBe(50);
     const por = new Map<string, number>();

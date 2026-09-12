@@ -167,6 +167,11 @@ Versão medida: **`pf2e-8.5.0`**.
   Foundry aparece o UUID cru. Etapa 22b.
 - **No app:** o rodapé sai do resumo nos 50 (`semRodape`), com ou sem rótulo.
 
+### 2.6 `journals` — página `Kashrishi`: "Emphathic Sense"
+
+- O bloco de mecânica escreve "Emphathic Sense" duas vezes; a habilidade em
+  `ancestryfeatures` chama-se "Empathic Sense". Etapa 24.
+
 ### 2.4 `deities` — `system.traits` é objeto vazio em 473 e ausente em 7
 
 - Forma comum dos itens sem conteúdo nenhum. Não é erro — é ruído. Etapa 17.

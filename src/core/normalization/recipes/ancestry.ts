@@ -46,7 +46,7 @@
 
 import { isRecord } from '../../json';
 import { descriptionAlterations, type DescriptionAlteration } from '../alterations';
-import { bool, html, nullable, raw, shape, text, textList } from '../decoders';
+import { bool, html, raw, shape, text, textList } from '../decoders';
 import { from, fromDocument, fromJournal } from '../field';
 import { recipe } from '../recipe';
 import { isOwnHeritage } from './heritage';
@@ -106,7 +106,12 @@ export interface AncestryBase {
    * que mais houver com o tipo — Merfolk `[{land, 5}, {swim, 25}]`. Vazio na versátil.
    */
   readonly speeds: readonly Speed[];
-  /** `normal`, `low-light-vision`, `darkvision`. */
+  /**
+   * `normal`, `low-light-vision`, `darkvision` — do campo, na ancestralidade. Na versátil,
+   * das regras `Sense`: `low-light-vision` em 10 das 17, e em 8 delas com a segunda regra
+   * "darkvision se a ancestralidade já tem penumbra" — o código composto
+   * `low-light-vision+darkvision`, que a tela escreve por extenso. Nulo nas 7 sem `Sense`.
+   */
   readonly vision: string | null;
   /**
    * Os aumentos, na ordem dos slots: `['con', 'wis', 'free']`. `free` é o slot que a
@@ -150,6 +155,14 @@ export interface AncestryDesc {
    * heranças que fecha a página vira a aba Heranças. Vazia quando o jornal não foi lido.
    */
   readonly page: string;
+  /**
+   * O bloco "<Nome> Mechanics" da página, como o livro o escreve — de "Hit Points" até a
+   * última habilidade, sem a lista de heranças. É a chamada recolhida no fim do texto
+   * (Etapa 24): a lateral tem os campos, mas 5 das 50 têm habilidade que só existe aqui
+   * como texto (Undeath, Land on your Feet, Emphathic Sense, Jaws, Innate Envenom), e o
+   * autor quer o livro inteiro à mão. Vazio na versátil, que não tem página.
+   */
+  readonly mechanics: string;
 }
 
 /** Os seis atributos, como a fonte escreve o slot LIVRE. */
@@ -205,10 +218,15 @@ function toGranted(document: unknown): readonly AncestryFeature[] {
   if (!isRecord(document) || !isRecord(document['system'])) return [];
   const rules = document['system']['rules'];
   if (!Array.isArray(rules)) return [];
-  return rules
-    .filter((rule): rule is Record<string, unknown> => isRecord(rule))
-    .filter((rule) => rule['key'] === 'GrantItem' && typeof rule['uuid'] === 'string')
-    .map((rule) => ({ uuid: rule['uuid'] as string, name: '' }));
+  return (
+    rules
+      .filter((rule): rule is Record<string, unknown> => isRecord(rule))
+      .filter((rule) => rule['key'] === 'GrantItem' && typeof rule['uuid'] === 'string')
+      .map((rule) => rule['uuid'] as string)
+      // `{item|flags…}` é escolha de ficha, não uma entrada: a versátil Dragonblood tem uma.
+      .filter((uuid) => !uuid.includes('{'))
+      .map((uuid) => ({ uuid, name: '' }))
+  );
 }
 
 function toFeatures(document: unknown): readonly AncestryFeature[] {
@@ -252,6 +270,17 @@ const MECANICA = /<h2[^>]*>[^<]* Mechanics<\/h2>/;
 function soProsa(texto: string): string {
   const corte = MECANICA.exec(texto);
   return corte === null ? texto : texto.slice(0, corte.index);
+}
+
+const HERANCAS = /<h2[^>]*>[^<]* Heritages<\/h2>/;
+
+/** Do título "<Nome> Mechanics" (exclusive) até "<Nome> Heritages" (exclusive). */
+function soMecanica(texto: string): string {
+  const inicio = MECANICA.exec(texto);
+  if (inicio === null) return '';
+  const resto = texto.slice(inicio.index + inicio[0].length);
+  const fim = HERANCAS.exec(resto);
+  return (fim === null ? resto : resto.slice(0, fim.index)).trim();
 }
 
 /**
@@ -389,6 +418,25 @@ function toSpeeds(document: unknown): readonly Speed[] {
   return out;
 }
 
+/**
+ * A visão: o campo, quando há; senão as regras `Sense` — a sem predicado é a visão, e uma
+ * `darkvision` com predicado `self:low-light-vision:from-ancestry` é o "sobe para escuridão
+ * se a ancestralidade já tem penumbra" das versáteis (8 das 17).
+ */
+export function toVision(document: unknown): string | null {
+  const campo_ = campo(document, 'vision');
+  if (typeof campo_ === 'string' && campo_ !== '') return campo_;
+  let base: string | null = null;
+  let sobe = false;
+  for (const rule of regras(document)) {
+    if (rule['key'] !== 'Sense' || typeof rule['selector'] !== 'string') continue;
+    if (rule['predicate'] === undefined || rule['predicate'] === null) base = rule['selector'];
+    else if (rule['selector'] === 'darkvision') sobe = true;
+  }
+  if (base === null) return null;
+  return sobe ? `${base}+darkvision` : base;
+}
+
 /** `ancestry` para o pack de ancestralidades; `versatile` para a herança sem ancestralidade. */
 function toKind(document: unknown): string {
   return isRecord(document) && document['type'] === 'heritage' ? 'versatile' : 'ancestry';
@@ -417,7 +465,7 @@ export const ancestryRecipe = recipe<AncestryBase, AncestryDesc>({
     speed: fromDocument(toSpeed),
     swim: fromDocument(toSwim),
     speeds: fromDocument(toSpeeds),
-    vision: from('system.vision', nullable(text)).withDefault(null),
+    vision: fromDocument(toVision),
     boosts: from('system.boosts', raw).withDefault({}).map(toBoosts),
     flaws: from('system.flaws', raw).withDefault({}).map(toFlaws),
     languages: from('system.languages.value', textList).withDefault([]),
@@ -431,6 +479,7 @@ export const ancestryRecipe = recipe<AncestryBase, AncestryDesc>({
   desc: {
     main: from('system.description.value', html).map(semRodape),
     page: fromJournal('Ancestries', '{name}', html).map(soProsa).withDefault(''),
+    mechanics: fromJournal('Ancestries', '{name}', html).map(soMecanica).withDefault(''),
   },
 
   ignore: {
@@ -440,6 +489,7 @@ export const ancestryRecipe = recipe<AncestryBase, AncestryDesc>({
       'lido por `sizes` (derivado): é o tamanho, a não ser que um ChoiceSet escolha, e aí é marcador.',
     'system.speed':
       'lido por `speed` (derivado): é o deslocamento, a não ser que um BaseSpeed land diga outro.',
+    'system.vision': 'lido por `vision` (derivado): o campo, e na versátil as regras Sense.',
     'system.ancestry':
       'nulo nas 17 versáteis, que são as únicas heranças que esta receita deixa passar — ' +
       'o `kind` já diz que são versáteis. A herança própria, com ancestralidade, é da ' +

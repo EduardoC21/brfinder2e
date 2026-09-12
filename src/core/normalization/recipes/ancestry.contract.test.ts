@@ -76,6 +76,14 @@ describe('as 50 ancestralidades reais, e as 17 versáteis', () => {
         .sort(),
     ).toEqual(['athamaru', 'merfolk']);
     expect(contar((b) => b.vision)).toEqual({ normal: 13, 'low-light-vision': 24, darkvision: 13 });
+    /* As versáteis: penumbra em 10, com a subida para escuridão em 8; 7 sem regra de visão. */
+    expect(contar((b) => b.vision, true)).toEqual({
+      normal: 13,
+      'low-light-vision': 26,
+      darkvision: 13,
+      'low-light-vision+darkvision': 8,
+      null: 7,
+    });
     expect(contar((b) => b.rarity)).toEqual({ common: 8, uncommon: 20, rare: 22 });
   });
 
@@ -125,6 +133,8 @@ describe('as 50 ancestralidades reais, e as 17 versáteis', () => {
       expect(entity.desc.page, entity.base.name).toBe('');
     }
     for (const entity of result.entities.filter((e) => e.base.kind === 'ancestry')) {
+      expect(entity.desc.mechanics, entity.base.name).toContain('Hit Points');
+      expect(entity.desc.mechanics).not.toContain(' Heritages</h2>');
       expect(entity.desc.page.length, entity.base.name).toBeGreaterThan(entity.desc.main.length);
       expect(entity.desc.page).not.toContain(' Mechanics</h2>');
       expect(entity.desc.page).not.toContain(`${entity.base.name} Heritages`);
