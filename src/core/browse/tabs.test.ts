@@ -77,6 +77,18 @@ describe('lockedEntities', () => {
     expect(lockedEntities(tab, aiuvarin, talentos).map((e) => e.key)).toEqual(['b', 'c']);
   });
 
+  /* O arquétipo lista talentos por UUID, que é da entrada e não da base. */
+  it('trava pelo uuid da entrada listada', () => {
+    const tab: ListTabSpec = {
+      kind: 'list',
+      id: 'f',
+      source: 'feats',
+      lock: [{ field: 'uuid', from: 'featUuids', match: 'equals' }],
+    };
+    const acrobat = { key: 'x', uuid: 'x', base: { name: 'Acrobat', featUuids: ['a', 'u'] } };
+    expect(lockedEntities(tab, acrobat, talentos).map((e) => e.key)).toEqual(['a', 'u']);
+  });
+
   it('sem valor de onde travar, nada passa', () => {
     const tab: ListTabSpec = {
       kind: 'list',

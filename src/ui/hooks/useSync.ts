@@ -3,6 +3,7 @@ import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import {
   actionRecipe,
   ancestryRecipe,
+  archetypeRecipe,
   backgroundRecipe,
   conditionRecipe,
   deityRecipe,
@@ -198,6 +199,7 @@ const RECIPES: readonly Recipe<never, never>[] = [
   ancestryRecipe as Recipe<never, never>,
   featureRecipe as Recipe<never, never>,
   heritageRecipe as Recipe<never, never>,
+  archetypeRecipe as Recipe<never, never>,
 ];
 
 const INITIAL: SyncState = { stored: null, run: { status: 'loading' }, update: NO_UPDATE };

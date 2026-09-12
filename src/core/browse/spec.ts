@@ -578,6 +578,17 @@ const RULE_SECTIONS: readonly string[] = [
   'Running the Game',
   'Subsystems and Variant Rules',
   'Remaster Changes',
+  'Archetypes',
+];
+
+/** Os seis tipos de arquétipo, pela seção do jornal: 184, 29, 14, 13, 6, 3. */
+const ARCHETYPE_KINDS: readonly string[] = [
+  'general',
+  'multiclass',
+  'class',
+  'mythic',
+  'undead',
+  'artifact',
 ];
 
 /**
@@ -1260,15 +1271,50 @@ export const SOURCES: readonly SourceSpec[] = [
   },
   {
     id: 'archetypes',
-    entityType: null,
+    entityType: 'archetype',
     mode: 'list',
-    columns: [],
-    defaultColumns: [],
-    special: NO_SPECIAL_COLUMNS,
-    filters: [],
-    typeFilter: null,
-    searchFields: [],
-    detail: [],
+    /*
+     * A terceira fonte grande (Etapa 25). O Tipo é a seção do jornal — a divisão do
+     * livro, não a do Archives of Nethys, que não está no zip. A lateral mostra o básico:
+     * Tipo, dedicação (clicável, com nível), pré-requisitos, classe, livro; a tela completa
+     * tem a página inteira, com os talentos colados, e a aba Talentos travada nos citados.
+     */
+    crossReferences: true,
+    columns: [
+      { kind: 'text', id: 'kind', field: 'kind' },
+      { kind: 'text', id: 'level', field: 'dedication.level' },
+      { kind: 'text', id: 'prerequisites', field: 'prerequisites' },
+      { kind: 'text', id: 'source', field: 'source.title' },
+    ],
+    defaultColumns: ['kind', 'level'],
+    special: { level: null, rarity: 'rarity', traits: null },
+    filters: [
+      { kind: 'options', id: 'kind', field: 'kind', values: ARCHETYPE_KINDS },
+      { kind: 'rarity', id: 'rarity', field: 'rarity' },
+      { kind: 'options', id: 'level', field: 'dedication.level' },
+      { kind: 'options', id: 'source', field: 'source.title' },
+    ],
+    typeFilter: 'kind',
+    searchFields: ['name'],
+    detail: [
+      { kind: 'references', field: 'dedication' },
+      { kind: 'text', field: 'prerequisites' },
+      { kind: 'links', field: 'class', entityType: 'class' },
+      { kind: 'text', field: 'kind' },
+      { kind: 'source' },
+    ],
+    fullView: {
+      tabs: [
+        { kind: 'page', id: 'details', field: 'page', fallback: 'main' },
+        /* Os talentos da página — a dedicação inclusive —, pelo UUID. */
+        {
+          kind: 'list',
+          id: 'feats',
+          source: 'feats',
+          lock: [{ field: 'uuid', from: 'featUuids', match: 'equals' }],
+        },
+      ],
+    },
   },
   {
     id: 'classes',

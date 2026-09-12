@@ -28,9 +28,18 @@ import { html, text } from '../decoders';
 import { from } from '../field';
 import { recipe } from '../recipe';
 import { sectionPages } from '../rules';
+import { slugify } from '../slug';
 
 /** Os jornais que viram regra, pelo nome. Se um mudar de nome, o expansor devolve vazio. */
-const JORNAIS = new Set(['GM Screen', 'Remaster Changes']);
+const JORNAIS = new Set(['GM Screen', 'Remaster Changes', 'Archetypes']);
+
+/**
+ * Do jornal `Archetypes` só a seção `Rules` é regra — as 8 páginas de Dedication Details,
+ * Alchemical Archetypes, Spellcasting Archetypes… (Etapa 25). As outras seções são os
+ * arquétipos, da receita de arquétipo. A seção ganha o nome do jornal, porque "Rules" não
+ * diz de que.
+ */
+const SO_A_SECAO: Readonly<Record<string, string>> = { Archetypes: 'Rules' };
 
 export interface RuleBase {
   readonly name: string;
@@ -70,14 +79,22 @@ function expandirRegras(document: unknown): readonly unknown[] {
     ];
   });
 
-  return sectionPages(jornal, planas).map((regra) => ({
-    _id: regra.slug,
-    type: 'rule',
-    name: regra.name,
-    section: regra.section,
-    description: regra.content,
-    _stats: { compendiumSource: regra.uuid },
-  }));
+  const soSecao = SO_A_SECAO[document['name']];
+  const nomeDoJornal = document['name'];
+  return sectionPages(jornal, planas)
+    .filter((regra) => soSecao === undefined || regra.section === soSecao)
+    .map((regra) => ({
+      /*
+       * A abertura da seção `Rules` (915 caracteres de regra geral de arquétipo) entra
+       * com o nome do jornal: "Rules" sozinho não diz de quê.
+       */
+      _id: regra.name === soSecao ? slugify(nomeDoJornal) : regra.slug,
+      type: 'rule',
+      name: regra.name === soSecao ? nomeDoJornal : regra.name,
+      section: soSecao === undefined ? regra.section : nomeDoJornal,
+      description: regra.content,
+      _stats: { compendiumSource: regra.uuid },
+    }));
 }
 
 export const ruleRecipe = recipe<RuleBase, RuleDesc>({

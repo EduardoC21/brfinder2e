@@ -27,7 +27,7 @@ beforeAll(async () => {
 describe('as 64 regras reais', () => {
   it('normalizam todas, sem falha e com relatório limpo', () => {
     expect(result.failures).toEqual([]);
-    expect(result.entities).toHaveLength(62);
+    expect(result.entities).toHaveLength(71);
     expect(isClean(result.report)).toBe(true);
   });
 
@@ -43,6 +43,7 @@ describe('as 64 regras reais', () => {
       'Running the Game': 17,
       'Subsystems and Variant Rules': 17,
       'Remaster Changes': 7,
+      Archetypes: 9,
     });
   });
 

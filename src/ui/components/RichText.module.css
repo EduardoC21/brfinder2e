@@ -70,6 +70,24 @@
   margin-bottom: var(--space-1);
 }
 
+/* A lista de traços do Foundry, como chips — a mesma caixinha da lateral. */
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin: 0 0 var(--space-2);
+  padding: 0;
+  list-style: none;
+}
+
+.tag {
+  margin: 0;
+  padding: 2px var(--space-2);
+  background: var(--color-bg);
+  color: var(--color-text-muted);
+  font: 400 var(--text-xs) / 1.5 var(--font-mono);
+}
+
 /*
  * Os TÍTULOS dentro da prosa — "Society", "Alignment and Religion", "Sample Names".
  *

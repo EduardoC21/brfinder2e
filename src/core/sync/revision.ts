@@ -26,5 +26,6 @@
  *   6  Etapa 23e — `speeds` na ancestralidade (a linha única de deslocamento).
  *   7  Etapa 24 — `mechanics` da ancestralidade; visão da versátil pelas regras; a herança
  *      própria com `features` e `vision`.
+ *   8  Etapa 25 — a fonte de arquétipo; as 8 páginas de regra do jornal Archetypes.
  */
-export const RECIPES_REVISION = 7;
+export const RECIPES_REVISION = 8;

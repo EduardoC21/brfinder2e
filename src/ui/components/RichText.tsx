@@ -168,6 +168,19 @@ function renderNode(
     );
   }
 
+  /*
+   * A lista de TRAÇOS do Foundry — `<ul class="tags paizo-style"><li class="tag traits">` —
+   * é a linha de chips de um talento colado numa página (2.145 nos arquétipos). Como
+   * lista com bolinhas, "• archetype • dedication" lia como itens; como chips, lê como os
+   * traços da lateral, que é o que são.
+   */
+  if (node.tag === 'ul' && node.className?.split(' ').includes('tags') === true) {
+    return createElement('ul', { key, className: styles['tags'] }, ...children);
+  }
+  if (node.tag === 'li' && node.className?.split(' ').includes('tag') === true) {
+    return createElement('li', { key, className: styles['tag'] }, ...children);
+  }
+
   const classe =
     node.tag === 'strong' && abreBloco ? styles['blockLabel'] : (styles[node.tag] ?? undefined);
   return createElement(node.tag, { key, className: classe }, ...children);

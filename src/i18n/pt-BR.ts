@@ -259,6 +259,13 @@ export const ptBR = {
       kind: {
         ancestry: 'Ancestralidade',
         versatile: 'Herança versátil',
+        /* Arquétipo: a seção do jornal. */
+        general: 'Geral',
+        multiclass: 'Multiclasse',
+        class: 'De classe',
+        mythic: 'Destino mítico',
+        undead: 'Morto-vivo',
+        artifact: 'Artefato',
       } as Record<string, string>,
       /** A categoria da habilidade, que é o Tipo da fonte de habilidades. */
       category: {
@@ -435,6 +442,10 @@ export const ptBR = {
       owner: 'de',
       /* Herança: a ancestralidade dona. */
       ancestry: 'de',
+      /* Arquétipo. */
+      dedication: 'dedicação',
+      'dedication.level': 'nível',
+      class: 'classe',
       /* Antecedente. "Saber" é como o livro brasileiro chama a perícia Lore. */
       skills: 'perícia treinada',
       lore: 'Saber',

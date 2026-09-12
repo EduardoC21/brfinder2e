@@ -28,6 +28,11 @@ function valoresDe(carrier: BrowseEntity, from: string | readonly string[]): rea
   return [];
 }
 
+/** O valor do campo na entrada listada — e `uuid` é o da ENTRADA, que não mora na base. */
+function valorDaEntrada(entity: BrowseEntity, field: string): string {
+  return field === 'uuid' ? entity.uuid : fieldValue(entity, field);
+}
+
 function passa(
   rule: LockSpec,
   entity: BrowseEntity,
@@ -37,7 +42,7 @@ function passa(
   switch (rule.match) {
     case 'equals': {
       const alvos = valoresDe(carrier, rule.from);
-      return alvos.length > 0 && alvos.includes(fieldValue(entity, rule.field));
+      return alvos.length > 0 && alvos.includes(valorDaEntrada(entity, rule.field));
     }
     case 'contains': {
       const alvos = valoresDe(carrier, rule.from);
@@ -45,7 +50,7 @@ function passa(
       return alvos.some((alvo) => tem.includes(alvo));
     }
     case 'is':
-      return fieldValue(entity, rule.field) === rule.value;
+      return valorDaEntrada(entity, rule.field) === rule.value;
     case 'none-of': {
       const fonte = lookup(rule.source);
       if (fonte === undefined) return false;

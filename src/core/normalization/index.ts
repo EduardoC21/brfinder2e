@@ -2,6 +2,7 @@
 
 export * from './decoders';
 export * from './alterations';
+export * from './archetypes';
 export * from './cast';
 export * from './field';
 export * from './journals';
@@ -9,6 +10,7 @@ export * from './language';
 export * from './paths';
 export * from './recipe';
 export * from './recipes/action';
+export * from './recipes/archetype';
 export * from './recipes/ancestry';
 export * from './recipes/background';
 export * from './recipes/condition';
