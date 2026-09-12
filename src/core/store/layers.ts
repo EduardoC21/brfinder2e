@@ -44,6 +44,12 @@ export interface StoreMeta {
    * sincronização. Zero numa base recém-sincronizada; ausente em meta antiga vale zero.
    */
   readonly revision: number;
+  /**
+   * A revisão das receitas que gravou esta base (`RECIPES_REVISION`). Menor que a do app
+   * quer dizer "o que está gravado é de antes": a tela pede sincronização. Ausente em
+   * meta antiga vale zero.
+   */
+  readonly recipes: number;
 }
 
 export async function readMeta(store: StorePort): Promise<StoreMeta | null> {
@@ -63,6 +69,7 @@ export async function readMeta(store: StorePort): Promise<StoreMeta | null> {
       total: asNumber(record['total'], 'meta.total'),
       // Meta gravada antes da Etapa 20 não tem revisão; vale zero, e nada quebra.
       revision: typeof record['revision'] === 'number' ? record['revision'] : 0,
+      recipes: typeof record['recipes'] === 'number' ? record['recipes'] : 0,
     };
   } catch {
     return null;

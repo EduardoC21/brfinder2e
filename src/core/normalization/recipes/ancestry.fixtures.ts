@@ -78,7 +78,10 @@ export const tengu = {
     languages: { custom: '', value: ['common', 'tengu'] },
     publication: { license: 'ORC', remaster: true, title: 'Pathfinder Player Core 2' },
     reach: 5,
-    rules: [{ key: 'Strike', label: 'Beak' }],
+    rules: [
+      { key: 'Strike', label: 'Beak' },
+      { key: 'GrantItem', uuid: 'Compendium.pf2e.actionspf2e.Item.34E7k2YRcsOU5uyl' },
+    ],
     size: 'med',
     speed: 25,
     traits: { rarity: 'uncommon', value: ['humanoid', 'tengu'] },

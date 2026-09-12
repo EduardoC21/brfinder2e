@@ -23,7 +23,9 @@
  *   falha         um atributo em 34, nenhuma em 16
  *   idiomas       2 em 39, 1 em 8, 3 em 3; adicionais de 0 a 11 (6 é a moda)
  *   habilidades   `system.items`: 1 em 24, 2 em 12, nenhuma em 14 — todas apontam para
- *                 `ancestryfeatures`, pack que ainda não é fonte
+ *                 `ancestryfeatures` (fonte desde a 22d). Mais 3 por `GrantItem` em
+ *                 `system.rules` (Anadi, Tanuki, Yaoguai: o Change Shape, que é uma AÇÃO
+ *                 em `actionspf2e`) — a página do livro lista as duas, o pack as separa
  *   jornal        50 de 50 têm página com o mesmo nome
  *
  * `hands` vale 2 nos 50 e `reach` é função do tamanho (5 nos 48, 0 nos 2 minúsculos):
@@ -35,7 +37,7 @@
 
 import { isRecord } from '../../json';
 import { bool, html, int, raw, shape, text, textList } from '../decoders';
-import { from, fromJournal } from '../field';
+import { from, fromDocument, fromJournal } from '../field';
 import { recipe } from '../recipe';
 
 /** Uma habilidade da ancestralidade (Clan Dagger, Change Shape…), com o nome que a ponte precisa. */
@@ -65,6 +67,17 @@ export interface AncestryBase {
   readonly flaws: readonly string[];
   readonly languages: readonly string[];
   readonly additionalLanguages: readonly string[];
+  /**
+   * QUANTOS idiomas adicionais: `int` (o modificador de Inteligência, se positivo) em 49,
+   * `1+int` em Human (que não tem lista: é qualquer idioma). A regra está por extenso na
+   * página do livro em 38 das 50 e nos campos em nenhuma — é o que a lateral não dizia
+   * (Etapa 22d). Nulo nos 3 sem lista e sem contagem: a linha some.
+   */
+  readonly extraLanguages: string | null;
+  /**
+   * As habilidades concedidas: as de `system.items` (com nome) e as de `GrantItem` em
+   * `system.rules` (só o UUID; o nome vem do índice, como as magias da divindade).
+   */
   readonly features: readonly AncestryFeature[];
   readonly source: {
     readonly license: string;
@@ -115,7 +128,7 @@ function toFlaws(cru: unknown): readonly string[] {
 }
 
 /** `{5vjeq: {uuid, name, level, img}}` → `[{uuid, name}]`, como o talento do antecedente. */
-function toFeatures(cru: unknown): readonly AncestryFeature[] {
+function toItems(cru: unknown): readonly AncestryFeature[] {
   if (!isRecord(cru)) return [];
   return Object.values(cru)
     .filter((item): item is Record<string, unknown> => isRecord(item))
@@ -124,6 +137,39 @@ function toFeatures(cru: unknown): readonly AncestryFeature[] {
       name: typeof item['name'] === 'string' ? item['name'] : '',
     }))
     .filter((item) => item.uuid !== '' && item.name !== '');
+}
+
+/**
+ * Os `GrantItem` de `system.rules`: o que a ancestralidade dá além de `items`. São 3 —
+ * o Change Shape de Anadi, Tanuki e Yaoguai, uma ação. Sem nome: o índice resolve.
+ *
+ * Lê `system.rules` de propósito, que está em `defer`: é a única leitura, é de um campo
+ * só (`uuid` quando `key` é `GrantItem`), e o resto das regras continua adiado.
+ */
+function toGranted(document: unknown): readonly AncestryFeature[] {
+  if (!isRecord(document) || !isRecord(document['system'])) return [];
+  const rules = document['system']['rules'];
+  if (!Array.isArray(rules)) return [];
+  return rules
+    .filter((rule): rule is Record<string, unknown> => isRecord(rule))
+    .filter((rule) => rule['key'] === 'GrantItem' && typeof rule['uuid'] === 'string')
+    .map((rule) => ({ uuid: rule['uuid'] as string, name: '' }));
+}
+
+function toFeatures(document: unknown): readonly AncestryFeature[] {
+  const items =
+    isRecord(document) && isRecord(document['system']) ? document['system']['items'] : undefined;
+  return [...toItems(items), ...toGranted(document)];
+}
+
+/** `int` para os 49, `1+int` para Human — a regra da página, que o pack só tem como número. */
+function toExtraLanguages(document: unknown): string | null {
+  if (!isRecord(document) || !isRecord(document['system'])) return null;
+  const extra = document['system']['additionalLanguages'];
+  if (!isRecord(extra)) return null;
+  // Human: lista vazia E `count: 1` — "1 + Int, de qualquer idioma". A regra vale sem lista.
+  if (extra['count'] === 1) return '1+int';
+  return Array.isArray(extra['value']) && extra['value'].length > 0 ? 'int' : null;
 }
 
 /**
@@ -170,7 +216,8 @@ export const ancestryRecipe = recipe<AncestryBase, AncestryDesc>({
     flaws: from('system.flaws', raw).map(toFlaws),
     languages: from('system.languages.value', textList),
     additionalLanguages: from('system.additionalLanguages.value', textList),
-    features: from('system.items', raw).map(toFeatures),
+    extraLanguages: fromDocument(toExtraLanguages),
+    features: fromDocument(toFeatures),
     source: from('system.publication', shape({ license: text, title: text, remaster: bool })),
   },
 
@@ -189,8 +236,10 @@ export const ancestryRecipe = recipe<AncestryBase, AncestryDesc>({
     'system.languages.custom': 'string vazia nos 50',
     'system.additionalLanguages.custom': 'string vazia nos 50',
     'system.additionalLanguages.count':
-      'vale 1 só em Human e 0 nos outros 49: é o "um idioma a mais" do humano, que a ' +
-      'descrição diz por extenso.',
+      'vale 1 só em Human e 0 nos outros 49. Lido por `extraLanguages` (derivado, que não ' +
+      'marca cobertura); fica aqui para o relatório saber que foi visto.',
+    'system.items':
+      'as habilidades concedidas. Lidas por `features` (derivado); fica aqui pelo mesmo motivo.',
     '_stats.coreVersion': 'versão do Foundry que gerou; já sabemos pela tag do release',
     '_stats.systemId': 'sempre "pf2e"; já sabemos pelo canal',
     '_stats.systemVersion': 'já sabemos pela tag do release',

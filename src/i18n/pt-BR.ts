@@ -21,6 +21,8 @@ export const ptBR = {
     empty: 'base ausente',
     /** `entries` e `version` entram por interpolação em quem monta a linha. */
     label: 'base',
+    /** A base foi gravada por receitas mais antigas que as do app. */
+    stale: '· sincronize de novo',
   },
   browse: {
     sourcesLabel: 'Fontes',
@@ -231,6 +233,16 @@ export const ptBR = {
         darkvision: 'Escuridão',
       } as Record<string, string>,
       feet: (valor: string) => `${valor} pés`,
+      /** Quantos idiomas adicionais — a regra da página, que o pack só tem como número. */
+      extraLanguages: {
+        int: 'tantos quanto o modificador de Inteligência (se positivo)',
+        '1+int': '1 + o modificador de Inteligência (se positivo)',
+      } as Record<string, string>,
+      /** A categoria da habilidade, que é o Tipo da fonte de habilidades. */
+      category: {
+        ancestryfeature: 'Ancestralidade',
+        classfeature: 'Classe',
+      } as Record<string, string>,
     },
     /**
      * A SANTIFICAÇÃO da divindade: o que o clérigo pode (ou deve) ser.
@@ -380,7 +392,10 @@ export const ptBR = {
       vision: 'visão',
       languages: 'idiomas',
       additionalLanguages: 'idiomas adicionais',
+      extraLanguages: 'quantos',
       features: 'habilidades',
+      /* Habilidade: a ancestralidade (ou classe) dona. A categoria já é `category` (equipamento). */
+      owner: 'de',
       /* Antecedente. "Saber" é como o livro brasileiro chama a perícia Lore. */
       skills: 'perícia treinada',
       lore: 'Saber',
@@ -434,6 +449,7 @@ export const ptBR = {
     classes: 'Classe',
     companions: 'Companheiro',
     familiars: 'Familiar',
+    features: 'Habilidades',
     deities: 'Divindades',
     domains: 'Domínios',
     rules: 'Regras',
@@ -513,6 +529,9 @@ export const ptBR = {
         removed: 'sumiram',
         failed: 'falhas',
         none: 'Nenhuma base gravada ainda.',
+        stale:
+          'As receitas mudaram desde esta sincronização: o que está gravado é de antes. ' +
+          'Sincronize de novo para ver as mudanças.',
         syncedAt: 'sincronizado em',
       },
       error: {

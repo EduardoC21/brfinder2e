@@ -10,6 +10,7 @@ import {
   equipmentRecipe,
   familiarRecipe,
   featRecipe,
+  featureRecipe,
   ruleRecipe,
   skillRecipe,
   spellRecipe,
@@ -17,6 +18,7 @@ import {
 import type { Recipe } from '@core/normalization/index';
 import { KNOWN_GOOD_TAG } from '@core/source/index';
 import { persistSync } from '@core/sync/persist';
+import { RECIPES_REVISION } from '@core/sync/revision';
 import { decideSync } from '@core/sync/policy';
 import type { UnreadPack } from '@core/sync/unread-packs';
 import { runSync, type SyncPhase, type SyncResult } from '@core/sync/run-sync';
@@ -193,6 +195,7 @@ const RECIPES: readonly Recipe<never, never>[] = [
   domainRecipe as Recipe<never, never>,
   ruleRecipe as Recipe<never, never>,
   ancestryRecipe as Recipe<never, never>,
+  featureRecipe as Recipe<never, never>,
 ];
 
 const INITIAL: SyncState = { stored: null, run: { status: 'loading' }, update: NO_UPDATE };
@@ -212,6 +215,8 @@ export interface UseSync {
   readonly applyUpdate: (tag: string) => void;
   /** Quantas entradas aposentadas há na base. Zero esconde o botão de limpar. */
   readonly retired: number;
+  /** A base foi gravada por receitas mais antigas que as do app: sincronize de novo. */
+  readonly stale: boolean;
   /** Apaga as aposentadas e faz a tela reler a base. */
   readonly purgeRetired: () => void;
   /** Apaga a base inteira, preservando as preferências. A tela volta a "sincronize". */
@@ -466,12 +471,15 @@ export function useSync(): UseSync {
       });
   }, [recarregarMeta]);
 
+  const stale = state.stored !== null && state.stored.recipes < RECIPES_REVISION;
+
   return {
     state,
     start,
     checkUpdate,
     applyUpdate,
     retired,
+    stale,
     purgeRetired: purge,
     clearData: clear,
   };

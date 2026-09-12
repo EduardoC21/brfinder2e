@@ -81,6 +81,11 @@ Antes: **Etapa 20** — as tabelas das regras param de quebrar (célula compacta
 linha, `@Embed` cola a entrada apontada, e as duas vassouras em Configurações: apagar as
 entradas aposentadas e apagar a base inteira.
 
+Antes: **Etapa 22d** — `feature`, as 55 habilidades de ancestralidade (o clique em
+"Fangs" abre); o Change Shape que vinha por `GrantItem`; a linha "quantos" dos idiomas
+adicionais; e `RECIPES_REVISION`: a base gravada por receitas antigas pede sincronização
+na barra de topo.
+
 Antes: **Etapas 22b e 22c** — a tela completa: o botão da lateral ou o duplo clique na
 linha trocam a lista pela entrada com abas em cima (só Detalhes por ora): a prosa da
 página do jornal no lugar da lista, a lateral de sempre ao lado. Voltar, Esc ou o trilho

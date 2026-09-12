@@ -80,3 +80,8 @@
   color: var(--color-text-muted);
   white-space: nowrap;
 }
+
+/* "· sincronize de novo", em bordô — é estado, e é o único lugar onde ele grita de leve. */
+.stale {
+  color: var(--color-state);
+}

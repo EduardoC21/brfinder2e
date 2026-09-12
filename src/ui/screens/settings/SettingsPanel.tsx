@@ -19,6 +19,8 @@ interface SettingsPanelProps {
   readonly onApplyUpdate: (tag: string) => void;
   /** Quantas entradas aposentadas há. Zero esconde o botão de limpá-las. */
   readonly retired: number;
+  /** A base é de antes das receitas de hoje. Ver `RECIPES_REVISION`. */
+  readonly stale: boolean;
   readonly onPurgeRetired: () => void;
   readonly onClearData: () => void;
 }
@@ -51,6 +53,7 @@ export function SettingsPanel({
   onCheckUpdate,
   onApplyUpdate,
   retired,
+  stale,
   onPurgeRetired,
   onClearData,
 }: SettingsPanelProps) {
@@ -113,7 +116,10 @@ export function SettingsPanel({
         {stored === null ? (
           run.status === 'idle' && <p className={styles['hint']}>{t.database.report.none}</p>
         ) : (
-          <StoredMeta meta={stored} />
+          <>
+            <StoredMeta meta={stored} />
+            {stale && <p className={styles['aviso']}>{t.database.report.stale}</p>}
+          </>
         )}
       </section>
 

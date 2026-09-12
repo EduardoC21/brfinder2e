@@ -62,11 +62,18 @@ describe('as 50 ancestralidades reais', () => {
     expect(base().every((b) => b.flaws.length <= 1)).toBe(true);
   });
 
-  it('todas as habilidades apontam para ancestryfeatures', () => {
+  it('48 habilidades de items para ancestryfeatures, mais 3 GrantItem para uma ação', () => {
     const todas = base().flatMap((b) => b.features);
-    expect(todas).toHaveLength(48);
-    expect(todas.every((f) => f.uuid.startsWith('Compendium.pf2e.ancestryfeatures.'))).toBe(true);
-    expect(base().filter((b) => b.features.length === 0)).toHaveLength(14);
+    expect(
+      todas.filter((f) => f.uuid.startsWith('Compendium.pf2e.ancestryfeatures.')),
+    ).toHaveLength(48);
+    const concedidas = todas.filter((f) => f.name === '');
+    expect(concedidas).toHaveLength(3);
+    expect(new Set(concedidas.map((f) => f.uuid)).size).toBe(1);
+  });
+
+  it('idiomas extras: int em 46, 1+int em Human, nulo nos 3 sem lista', () => {
+    expect(contar((b) => b.extraLanguages ?? 'null')).toEqual({ int: 46, '1+int': 1, null: 3 });
   });
 
   /* Os 50 terminavam com o link para a página; nenhum termina mais. */

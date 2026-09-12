@@ -16,6 +16,7 @@
  */
 
 import { isRecord } from '../json';
+import { RECIPES_REVISION } from './revision';
 import {
   activeOnly,
   diffEntities,
@@ -83,6 +84,7 @@ export async function persistSync(
     syncedAt: now().toISOString(),
     total: result.total,
     revision: 0,
+    recipes: RECIPES_REVISION,
   };
   await writeMeta(store, meta);
 

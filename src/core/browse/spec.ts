@@ -491,6 +491,9 @@ const DEFESA_DE_MAGIA: DefenseFields = {
  */
 const ATTRIBUTE_CODES: readonly string[] = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
 
+/** As categorias de habilidade: só a de ancestralidade hoje; a de classe entra com a classe. */
+const FEATURE_CATEGORIES: readonly string[] = ['ancestryfeature'];
+
 /** Os quatro tamanhos de ancestralidade, do menor ao maior: 2, 12, 33, 3. */
 const ANCESTRY_SIZES: readonly string[] = ['tiny', 'sm', 'med', 'lg'];
 
@@ -939,6 +942,8 @@ export const SOURCES: readonly SourceSpec[] = [
     id: 'ancestries',
     entityType: 'ancestry',
     mode: 'list',
+    /* Aponta para habilidades e para a ação Change Shape: precisa das outras bases. */
+    crossReferences: true,
     /*
      * A primeira das três fontes GRANDES (Etapa 22). O painel lateral mostra o BÁSICO — a
      * mecânica em campos e o resumo do pack; a página do jornal, com heranças e tudo, é
@@ -983,12 +988,45 @@ export const SOURCES: readonly SourceSpec[] = [
       { kind: 'boosts', field: 'flaws', all: true },
       { kind: 'chips', field: 'languages' },
       { kind: 'chips', field: 'additionalLanguages' },
+      /* "Quantos": a regra que a página diz por extenso e o pack só tem como número. */
+      { kind: 'text', field: 'extraLanguages' },
       { kind: 'text', field: 'vision' },
       { kind: 'references', field: 'features' },
       { kind: 'source' },
     ],
     /* A página do livro, com heranças e tudo. Heranças e talentos viram abas depois. */
     fullView: { tabs: [{ kind: 'page', id: 'details', field: 'page' }] },
+  },
+  {
+    id: 'features',
+    entityType: 'feature',
+    mode: 'list',
+    /*
+     * As HABILIDADES concedidas — de ancestralidade hoje (55), de classe quando a classe
+     * for fonte (874). Nasceu para o clique em "Fangs" abrir alguma coisa (22d). A
+     * ancestralidade dona é a pasta do pack; o Tipo é a categoria.
+     */
+    columns: [
+      { kind: 'text', id: 'owner', field: 'owner' },
+      { kind: 'text', id: 'level', field: 'level' },
+      { kind: 'text', id: 'source', field: 'source.title' },
+    ],
+    defaultColumns: ['owner'],
+    special: { level: null, rarity: 'rarity', traits: 'traits' },
+    filters: [
+      { kind: 'options', id: 'category', field: 'category', values: FEATURE_CATEGORIES },
+      { kind: 'options', id: 'owner', field: 'owner' },
+      { kind: 'list', id: 'traits', field: 'traits', combine: 'any' },
+      { kind: 'options', id: 'source', field: 'source.title' },
+    ],
+    typeFilter: 'category',
+    searchFields: ['name'],
+    detail: [
+      { kind: 'chips', field: 'traits' },
+      { kind: 'text', field: 'owner' },
+      { kind: 'text', field: 'category' },
+      { kind: 'source' },
+    ],
   },
   {
     id: 'backgrounds',

@@ -80,8 +80,15 @@ export function fieldText(field: string, value: string): string {
   if (field === SIZE_FIELD) return strings.browse.ancestry.size[value] ?? capitalizar(value);
   if (field === VISION_FIELD) return strings.browse.ancestry.vision[value] ?? capitalizar(value);
   if (field === SPEED_FIELD) return strings.browse.ancestry.feet(value);
+  if (field === EXTRA_LANGUAGES_FIELD)
+    return strings.browse.ancestry.extraLanguages[value] ?? value;
+  if (field === CATEGORY_FIELD)
+    return strings.browse.ancestry.category[value] ?? capitalizar(value);
   return capitalizar(value);
 }
+
+export const EXTRA_LANGUAGES_FIELD = 'extraLanguages';
+export const CATEGORY_FIELD = 'category';
 
 /**
  * Os três campos da ancestralidade cujo VALOR tem rótulo próprio: `med` é "Médio", não

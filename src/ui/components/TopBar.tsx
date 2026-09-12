@@ -58,7 +58,11 @@ export function TopBar({ sync }: { readonly sync: UseSync }) {
       </nav>
 
       <div className={styles['right']}>
-        <span className={styles['status']}>{status}</span>
+        <span className={styles['status']}>
+          {status}
+          {/* Base de antes das receitas de hoje: o aviso fica onde o número fica. */}
+          {sync.stale && <span className={styles['stale']}> {strings.base.stale}</span>}
+        </span>
 
         <IconButton
           ref={gear}
@@ -80,6 +84,7 @@ export function TopBar({ sync }: { readonly sync: UseSync }) {
             onCheckUpdate={sync.checkUpdate}
             onApplyUpdate={sync.applyUpdate}
             retired={sync.retired}
+            stale={sync.stale}
             onPurgeRetired={sync.purgeRetired}
             onClearData={sync.clearData}
           />

@@ -37,11 +37,22 @@ describe('receita de ancestralidade', () => {
       flaws: ['cha'],
       languages: ['common', 'dwarven'],
       additionalLanguages: ['gnomish', 'goblin', 'jotun'],
+      extraLanguages: 'int',
       features: [
         { uuid: 'Compendium.pf2e.ancestryfeatures.Item.Eyuqu6eIaoGCjnMv', name: 'Clan Dagger' },
       ],
       source: { license: 'ORC', title: 'Pathfinder Player Core', remaster: true },
     });
+  });
+
+  /* O GrantItem entra sem nome — o índice resolve — e o Human tem um idioma a mais. */
+  it('junta as habilidades de items e de GrantItem, e conta os idiomas extras', () => {
+    expect(achar('Tengu').base.features).toEqual([
+      { uuid: 'Compendium.pf2e.ancestryfeatures.Item.abcdefghijklmnop', name: 'Sharp Beak' },
+      { uuid: 'Compendium.pf2e.actionspf2e.Item.34E7k2YRcsOU5uyl', name: '' },
+    ]);
+    expect(achar('Human').base.extraLanguages).toBe('1+int');
+    expect(achar('Tengu').base.extraLanguages).toBe('int');
   });
 
   /* O slot vazio não é aumento; os seis atributos são o livre. */

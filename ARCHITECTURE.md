@@ -420,6 +420,14 @@ exportação para o Foundry (OPEN-DECISIONS, item 1).
 Gravar com `node:fs` é escolha do **comando**, não do domínio. A camada `core/store/` com
 porta própria entra na Etapa 4, junto com a tela de sincronização que vai precisar dela.
 
+### A revisão das receitas
+
+A base é calculada na sincronização. Código novo com base velha mostra dado velho — e foi
+assim que uma mudança de receita pareceu não ter acontecido (Etapa 22c). `RECIPES_REVISION`
+(`core/sync/revision.ts`) sobe toda vez que uma receita muda o que grava; vai para o
+`meta`; quando o do app é maior que o gravado, a barra de topo pede sincronização. Sobe por
+mudança de `base`, `desc` ou `expand`; não sobe por mudança de tela.
+
 ### A quarta camada: o glossário (`core/glossary/`)
 
 Desde a Etapa 15b há uma chave que **não é por tipo de entidade**: `glossary/traits`. É o
