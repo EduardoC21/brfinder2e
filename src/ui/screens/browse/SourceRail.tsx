@@ -64,6 +64,9 @@ export function SourceRail({
       if (entry.all === true) return t.rail.all;
       return t.rail.sources[entry.source] ?? strings.sources[entry.source] ?? entry.source;
     }
+    /* O Tipo em português no trilho, quando há; senão o rótulo do filtro. */
+    const traduzido = t.rail.types[entry.source]?.[entry.value];
+    if (traduzido !== undefined) return traduzido;
     const source = fonte(entry.source);
     const spec = source?.filters.find((filter) => filter.id === source.typeFilter);
     return spec === undefined ? entry.value : valueLabel(spec, entry.value);

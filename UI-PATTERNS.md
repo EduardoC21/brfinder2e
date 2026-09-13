@@ -630,9 +630,10 @@ do trilho, toda pasta abre: recolhida, ela esconderia o que a busca achou — e 
 por entrada, não por pasta ("arma" acha Equipamentos › Weapon). Clicar na entrada aberta,
 ou trocar de Tipo dentro da mesma fonte, volta à lista se a tela completa estava aberta.
 
-Os rótulos dos Tipos são os do filtro (`valueLabel`): onde o dado ainda está em inglês
-(as pastas do pack de talentos e de magias, o `type` do equipamento), a entrada também está
-— um lugar só para traduzir, quando a tradução vier.
+Os Tipos saem em PORTUGUÊS no trilho (27b, pelo autor: "por hora só o trilho; os filtros
+depois"): uma tabela por fonte e valor em `browse.rail.types` — Talentos › Classe,
+Equipamentos › Armas, Magias › Rituais. O filtro e a coluna continuam com o dado como está
+até a tradução dos filtros; quando ela vier, a tabela do trilho é a semente.
 
 ---
 

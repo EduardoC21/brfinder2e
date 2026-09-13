@@ -36,6 +36,38 @@ export const ptBR = {
         rules: 'Regras',
       } as Record<string, string>,
       all: 'Todos',
+      /**
+       * Os Tipos em português SÓ no trilho, por enquanto (o autor): o filtro e a coluna
+       * continuam com o dado como está, até a tradução dos filtros. Por fonte e valor.
+       */
+      types: {
+        feats: {
+          Ancestry: 'Ancestralidade',
+          Class: 'Classe',
+          Archetype: 'Arquétipo',
+          Skill: 'Perícia',
+          General: 'Geral',
+          Mythic: 'Mítico',
+          Miscellaneous: 'Diversos',
+        },
+        equipment: {
+          weapon: 'Armas',
+          armor: 'Armaduras',
+          shield: 'Escudos',
+          consumable: 'Consumíveis',
+          ammo: 'Munições',
+          equipment: 'Equipamentos',
+          treasure: 'Tesouros',
+          backpack: 'Mochilas',
+          kit: 'Kits',
+        },
+        spells: {
+          Spells: 'Magias',
+          Focus: 'Foco',
+          Rituals: 'Rituais',
+          'Impossible Spells': 'Impossíveis',
+        },
+      } as Record<string, Record<string, string>>,
       sources: {
         ancestries: 'Ancestralidades',
         archetypes: 'Arquétipos',
