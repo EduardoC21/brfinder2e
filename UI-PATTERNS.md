@@ -598,6 +598,42 @@ Consequências que o código respeita:
   General tem 41 entradas e existe para ser lido ao lado de Skill e Class. O recorte entrega
   o mesmo ganho sem tirar isso de ninguém.
 
+## 6e-2. O trilho setorizado: pastas, e o Tipo como entrada
+
+**Decidido (Etapa 27), pelo autor** — a divisão é dele, item por item:
+
+    Personagem    Ancestralidades · Arquétipos · Biografias · Classes · Familiar · Companheiros
+    Talentos      Todos · Ancestry · Class · Archetype · Skill · General · Mythic · Miscellaneous
+    Habilidades   Todos · Ancestralidade · Classe · Chamado mítico
+    Equipamentos  Todos · Weapon · Armor · Shield · Consumable · Ammo · Equipment · Treasure · Backpack · Kit
+    Magias        Todos · Spells · Focus · Rituals · Impossible Spells
+    Regras        Ações · Condições · Perícias · Regras · Divindades · Domínios
+
+"Antecedente" virou **Biografia**. Os Tipos pequenos (Kit 2, Impossible Spells 5) entram
+como estão: são o dado, e esconder cria entradas que só a busca acha.
+
+**A entrada de Tipo não é fonte nova**: é a mesma fonte com o Tipo TRAVADO. "Talentos ›
+Class" abre a lista de talentos com `Class` fixo — a etiqueta em bordô sem ×, a mesma da
+trava das abas da tela completa; o tópico "Tipo" some da barra; e entram as colunas e os
+filtros daquele Tipo, que é o recorte da seção 6e (`presets` e `kinds`) funcionando sem
+ninguém marcar nada. "Todos" é a lista de sempre. É `RailEntry` em `core/browse/rail.ts`:
+`{kind: 'source'}` ou `{kind: 'type', value}`.
+
+**A trava não se grava.** O filtro gravado da fonte é um só, e "Todos" e as entradas de
+Tipo o compartilham: a entrada de Tipo o lê com o Tipo por cima, e ao escrever devolve ao
+lugar o Tipo que estava gravado. Assim "Todos" reencontra o recorte de ontem, e nenhuma
+entrada de Tipo o mexe. As colunas já eram por Tipo (`columnsByType`), e a entrada cai
+nelas sozinha.
+
+**As pastas recolhem**, e a escolha persiste (`layout.railClosedGroups`). Com termo na busca
+do trilho, toda pasta abre: recolhida, ela esconderia o que a busca achou — e a busca é
+por entrada, não por pasta ("arma" acha Equipamentos › Weapon). Clicar na entrada aberta,
+ou trocar de Tipo dentro da mesma fonte, volta à lista se a tela completa estava aberta.
+
+Os rótulos dos Tipos são os do filtro (`valueLabel`): onde o dado ainda está em inglês
+(as pastas do pack de talentos e de magias, o `type` do equipamento), a entrada também está
+— um lugar só para traduzir, quando a tradução vier.
+
 ---
 
 ## 6f. O filtro é CONTEXTUAL: opções, contagens e presença

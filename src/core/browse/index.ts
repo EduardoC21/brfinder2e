@@ -7,5 +7,6 @@ export * from './duration';
 export * from './query';
 export * from './scope';
 export * from './search';
+export * from './rail';
 export * from './spec';
 export * from './tabs';

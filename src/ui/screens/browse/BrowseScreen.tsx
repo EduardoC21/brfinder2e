@@ -31,6 +31,11 @@ import {
   type ColumnSpec,
   type FilterSpec,
   findSource,
+  RAIL,
+  railEntryKey,
+  type RailEntry,
+  firstRailEntry,
+  typeFilterOf,
 } from '@core/browse/index';
 import { sourcePreferences, withLayout, withSource } from '@core/prefs/index';
 import { strings } from '@i18n/index';
@@ -47,6 +52,7 @@ import { usePreferences } from '@ui/prefs/usePreferences';
 
 import { DetailPane } from './DetailPane';
 import { FilterBar } from './FilterBar';
+import { topicLabel, valueLabel } from './filterLabels';
 import { GlobalSearch } from './GlobalSearch';
 import { ColumnPicker } from './ColumnPicker';
 import { FilterTopicPanel } from './FilterTopicPanel';
@@ -65,11 +71,30 @@ interface BrowseScreenProps {
 const t = strings.browse;
 
 export function BrowseScreen({ baseVersion }: BrowseScreenProps) {
-  const [sourceId, setSourceId] = useState(() => firstReadySource()?.id ?? SOURCES[0]?.id ?? '');
+  /*
+   * A ENTRADA do trilho (Etapa 27): a fonte e, nas pastas de Tipos, o Tipo travado. A
+   * primeira aberta é a primeira do trilho que tem receita — Ancestralidades —, e não a
+   * primeira da spec.
+   */
+  const [entrada, setEntrada] = useState<RailEntry>(
+    () => firstRailEntry() ?? { kind: 'source', source: firstReadySource()?.id ?? '' },
+  );
+  const sourceId = entrada.source;
+  const setSourceId = (id: string): void => {
+    setEntrada({ kind: 'source', source: id });
+  };
+  const tipoTravado = entrada.kind === 'type' ? entrada.value : null;
   const source = SOURCES.find((entry) => entry.id === sourceId);
 
   const base = useBase(source?.entityType ?? null, baseVersion);
   const entities = base.status === 'ready' ? base.entities : EMPTY;
+  /* O número ao lado da entrada aberta: a fonte inteira, ou só o Tipo travado. */
+  const contagemDaEntrada = useMemo(() => {
+    const tipo = source === undefined ? undefined : typeFilterOf(source);
+    if (tipoTravado === null || tipo === undefined || !('field' in tipo)) return entities.length;
+    const campo = tipo.field;
+    return entities.filter((entity) => fieldValue(entity, campo) === tipoTravado).length;
+  }, [entities, source, tipoTravado]);
 
   const { prefs, update } = usePreferences();
 
@@ -231,19 +256,31 @@ export function BrowseScreen({ baseVersion }: BrowseScreenProps) {
     <TraitGlossaryContext.Provider value={glossario}>
       <div className={styles['screen']}>
         <SourceRail
+          groups={RAIL}
           sources={SOURCES}
-          currentId={sourceId}
-          currentCount={entities.length}
+          currentKey={railEntryKey(entrada)}
+          currentCount={contagemDaEntrada}
+          closedGroups={prefs.layout.railClosedGroups}
+          onToggleGroup={(id) => {
+            update((atual) =>
+              withLayout(atual, {
+                railClosedGroups: atual.layout.railClosedGroups.includes(id)
+                  ? atual.layout.railClosedGroups.filter((entry) => entry !== id)
+                  : [...atual.layout.railClosedGroups, id],
+              }),
+            );
+          }}
           collapsed={trilhoRecolhido}
           onToggle={alternarTrilho}
-          onSelect={(id) => {
+          onSelect={(proxima) => {
             /*
-             * Clicar na fonte que JÁ está aberta é "me leva para a lista dela": sai da
+             * Clicar na entrada que JÁ está aberta é "me leva para a lista dela": sai da
              * tela completa. O `SourcePane` não remonta (mesma `key`), então o pedido vai
-             * por um contador que ele observa.
+             * por um contador que ele observa. Trocar de Tipo dentro da mesma fonte
+             * também não remonta — e também deve voltar à lista.
              */
-            if (id === sourceId) setPedidosDeLista((n) => n + 1);
-            else setSourceId(id);
+            if (proxima.source === sourceId) setPedidosDeLista((n) => n + 1);
+            setEntrada(proxima);
           }}
         />
 
@@ -260,6 +297,7 @@ export function BrowseScreen({ baseVersion }: BrowseScreenProps) {
             listRequest={pedidosDeLista}
             openRequest={pedidoDeEntrada}
             onOpenHandled={esquecerPedido}
+            typeLock={tipoTravado}
             sources={carregadas}
           />
         )}
@@ -383,6 +421,7 @@ function SourcePane({
   listRequest,
   openRequest = null,
   onOpenHandled,
+  typeLock = null,
   sources,
   lock,
 }: {
@@ -395,6 +434,11 @@ function SourcePane({
   readonly listRequest: number;
   /** "Abre esta entrada na tela completa", vindo de um flutuante. Ver `abrirNaTela`. */
   readonly openRequest?: OpenRequest | null;
+  /**
+   * O TIPO travado pela entrada do trilho (Etapa 27): "Talentos › Classe" é a fonte de
+   * talentos com `Class` fixo no filtro de Tipo. Ver `RailEntry`.
+   */
+  readonly typeLock?: string | null;
   /** Chamado quando o pedido foi atendido, para a tela o esquecer. */
   readonly onOpenHandled?: () => void;
   /** Todas as bases carregadas, para as abas de lista da tela completa. */
@@ -427,11 +471,38 @@ function SourcePane({
    * existem, e não se gravam: a aba nasce limpa toda vez, como a lista nasce por nível.
    */
   const [filtrosDaAba, setFiltrosDaAba] = useState<FilterState>(SEM_FILTROS);
-  const filters = lock === undefined ? salvas.filters : filtrosDaAba;
+  /*
+   * O TIPO TRAVADO pela entrada do trilho entra POR CIMA do filtro gravado: "Talentos ›
+   * Classe" é a lista de talentos com `Class` fixo. A trava não se grava — ao escrever,
+   * o Tipo que estava gravado (o do "Todos") é devolvido ao lugar, e o resto vai como
+   * veio. Assim "Todos" reencontra o recorte de ontem, e a entrada de Tipo nunca o mexe.
+   */
+  const tipoSpec = typeLock === null ? undefined : typeFilterOf(source);
+  const filters = useMemo((): FilterState => {
+    const base = lock === undefined ? salvas.filters : filtrosDaAba;
+    if (tipoSpec === undefined || typeLock === null) return base;
+    return { ...base, [tipoSpec.id]: { values: [typeLock] } };
+  }, [lock, salvas.filters, filtrosDaAba, tipoSpec, typeLock]);
   const setFilters = (next: FilterState): void => {
-    if (lock !== undefined) setFiltrosDaAba(next);
-    else update((atual) => withSource(atual, source.id, { filters: next }));
+    if (lock !== undefined) {
+      setFiltrosDaAba(next);
+      return;
+    }
+    update((atual) => {
+      if (tipoSpec === undefined) return withSource(atual, source.id, { filters: next });
+      const gravado = sourcePreferences(atual, source.id).filters;
+      const resto = Object.fromEntries(Object.entries(next).filter(([id]) => id !== tipoSpec.id));
+      const anterior = gravado[tipoSpec.id];
+      return withSource(atual, source.id, {
+        filters: anterior === undefined ? resto : { ...resto, [tipoSpec.id]: anterior },
+      });
+    });
   };
+  /* A barra não mostra o tópico travado: ele é a etiqueta, não uma escolha. */
+  const etiquetaDoTipo =
+    tipoSpec === undefined || typeLock === null
+      ? undefined
+      : `${topicLabel(tipoSpec)}: ${valueLabel(tipoSpec, typeLock)}`;
 
   /** O que está aberto na lateral por cima do detalhe: um tópico, as colunas, ou nada. */
   const [overlay, setOverlay] = useState<
@@ -909,9 +980,17 @@ function SourcePane({
         </div>
 
         <FilterBar
-          specs={lock === undefined ? filtrosUteis : lock.filters}
+          specs={
+            lock === undefined
+              ? filtrosUteis.filter((spec) => spec.id !== tipoSpec?.id)
+              : lock.filters
+          }
           state={filters}
-          {...(lock === undefined ? {} : { lock: lock.label })}
+          {...(lock !== undefined
+            ? { lock: lock.label }
+            : etiquetaDoTipo === undefined
+              ? {}
+              : { lock: etiquetaDoTipo })}
           openTopic={openTopic}
           onOpenTopic={(id) => {
             mostrarCamada(id === null ? null : { kind: 'topic', id });

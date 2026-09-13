@@ -25,6 +25,25 @@ export const ptBR = {
     stale: '· sincronize de novo',
   },
   browse: {
+    /** O trilho setorizado (Etapa 27): as pastas, o "Todos", e a fonte no plural. */
+    rail: {
+      groups: {
+        character: 'Personagem',
+        feats: 'Talentos',
+        features: 'Habilidades',
+        equipment: 'Equipamentos',
+        spells: 'Magias',
+        rules: 'Regras',
+      } as Record<string, string>,
+      all: 'Todos',
+      sources: {
+        ancestries: 'Ancestralidades',
+        archetypes: 'Arquétipos',
+        backgrounds: 'Biografias',
+        classes: 'Classes',
+        companions: 'Companheiros',
+      } as Record<string, string>,
+    },
     sourcesLabel: 'Fontes',
     searchPlaceholder: 'Filtrar',
     searchLabel: 'Filtrar a lista',
@@ -541,7 +560,7 @@ export const ptBR = {
     spells: 'Magias',
     equipment: 'Equipamentos',
     ancestries: 'Ancestralidade',
-    backgrounds: 'Antecedente',
+    backgrounds: 'Biografia',
     archetypes: 'Arquétipo',
     classes: 'Classe',
     companions: 'Companheiro',

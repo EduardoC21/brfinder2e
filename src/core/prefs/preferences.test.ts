@@ -30,7 +30,13 @@ describe('readPreferences', () => {
           filters: { traits: { values: ['attack'], combine: 'all' } },
         },
       },
-      layout: { detailWidth: 500, railCollapsed: false, popoutWidth: 600, popoutHeight: 700 },
+      layout: {
+        detailWidth: 500,
+        railCollapsed: false,
+        railClosedGroups: ['feats'],
+        popoutWidth: 600,
+        popoutHeight: 700,
+      },
     });
     expect(lido.sources['actions']?.columns).toEqual(['cost', 'sector']);
     expect(lido.sources['actions']?.filters['traits']).toEqual({
@@ -40,6 +46,7 @@ describe('readPreferences', () => {
     expect(lido.layout).toEqual({
       detailWidth: 500,
       railCollapsed: false,
+      railClosedGroups: ['feats'],
       popoutWidth: 600,
       popoutHeight: 700,
     });

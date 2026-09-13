@@ -95,15 +95,53 @@
 }
 
 /*
- * As que ainda não têm receita ficam abaixo de uma divisória, e não misturadas: assim o
- * olho encontra as utilizáveis sem ler a lista inteira.
+ * As PASTAS (Etapa 27): o título é um botão que recolhe, na voz dos rótulos (mono,
+ * caixa alta, apagado); as entradas ficam recuadas embaixo, e as de Tipo um pouco mais.
  */
-.divider {
-  margin: var(--space-2) var(--space-2) var(--space-1);
-  padding-top: var(--space-2);
-  border-top: 1px solid var(--color-hairline);
-  font: 400 var(--text-xs) / 1 var(--font-mono);
-  color: #453a3d;
+.pasta {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: none;
+}
+
+.pasta + .pasta {
+  margin-top: var(--space-2);
+}
+
+.pastaTitulo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  width: 100%;
+  border: 0;
+  padding: var(--space-1) var(--space-2);
+  background: transparent;
+  font: 400 var(--text-xs) / 1.6 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  text-align: left;
+  cursor: pointer;
+}
+
+.pastaTitulo:hover {
+  color: var(--color-text);
+}
+
+.pastaSeta {
+  width: 10px;
+  font-size: 9px;
+}
+
+.pasta .source {
+  padding-left: calc(var(--space-3) + var(--space-2));
+}
+
+/* A entrada de Tipo é subordinada ao "Todos": mais recuada e um pouco menor. */
+.tipo {
+  padding-left: calc(var(--space-3) + var(--space-4));
+  font-size: var(--text-sm);
 }
 
 .empty {

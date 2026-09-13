@@ -644,7 +644,7 @@ const ATTRIBUTE_CODES: readonly string[] = ['str', 'dex', 'con', 'int', 'wis', '
 const ANCESTRY_KINDS: readonly string[] = ['ancestry', 'versatile'];
 
 /** As categorias de habilidade: ancestralidade (55), classe (856), chamado mítico (18). */
-const FEATURE_KINDS: readonly string[] = ['ancestryfeature', 'classfeature', 'calling'];
+export const FEATURE_KINDS: readonly string[] = ['ancestryfeature', 'classfeature', 'calling'];
 
 /** Os quatro tamanhos de ancestralidade, do menor ao maior: 2, 12, 33, 3. */
 const ANCESTRY_SIZES: readonly string[] = ['tiny', 'sm', 'med', 'lg'];

@@ -73,6 +73,8 @@ export interface LayoutPreferences {
    * vazio, porque a escolha sobrevivia ao recarregamento e a seleção não.
    */
   readonly railCollapsed: boolean;
+  /** As pastas do trilho recolhidas, por id (Etapa 27). Vazio: todas abertas. */
+  readonly railClosedGroups: readonly string[];
   readonly popoutWidth: number | null;
   readonly popoutHeight: number | null;
 }
@@ -94,6 +96,7 @@ export const DEFAULT_PREFERENCES: Preferences = {
   layout: {
     detailWidth: null,
     railCollapsed: false,
+    railClosedGroups: [],
     popoutWidth: null,
     popoutHeight: null,
   },
@@ -168,6 +171,7 @@ export function readPreferences(stored: unknown): Preferences {
     layout: {
       detailWidth: positive(layout['detailWidth']),
       railCollapsed: layout['railCollapsed'] === true,
+      railClosedGroups: textList(layout['railClosedGroups']),
       popoutWidth: positive(layout['popoutWidth']),
       popoutHeight: positive(layout['popoutHeight']),
     },

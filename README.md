@@ -81,6 +81,11 @@ Antes: **Etapa 20** — as tabelas das regras param de quebrar (célula compacta
 linha, `@Embed` cola a entrada apontada, e as duas vassouras em Configurações: apagar as
 entradas aposentadas e apagar a base inteira.
 
+Antes: **Etapa 27** — o trilho setorizado, pelo autor: seis pastas que recolhem
+(Personagem, Talentos, Habilidades, Equipamentos, Magias, Regras), e nas fontes grandes
+"Todos" mais uma entrada por Tipo — a mesma fonte com o Tipo travado, colunas e filtros
+do Tipo ligados sozinhos. "Antecedente" virou "Biografia".
+
 Antes: **Etapa 26g** — as perícias da classe numa linha ("Stealth · outro · +7"), com o
 "outro" derivado das regras das opções de subclasse (10 das 29); o "outro" do
 atributo-chave fica só como palavra. INCONSISTENCIAS 2.10: o Ranger sem Nature no pack.
