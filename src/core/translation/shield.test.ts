@@ -53,6 +53,35 @@ describe('a blindagem', () => {
     ).toBe('<p class="Strike">Faça um Golpe. Um golpe acerta. <em>Fortitude</em> salvamento.</p>');
   });
 
+  it('original em minúscula → termo em minúscula, mesmo que o pacote capitalize', () => {
+    const s = shield('<p>the same AC and saves as you; a reactive strike</p>', {
+      phrases: [
+        { en: 'AC', pt: 'CA', exact: true },
+        { en: 'saves', pt: 'Salvamentos' },
+        { en: 'Reactive Strike', pt: 'Golpe Reativo' },
+      ],
+    });
+    expect(s.restore(s.text)).toBe('<p>the same CA and salvamentos as you; a golpe reativo</p>');
+  });
+
+  it('capitaliza só quando a maiúscula é da frase, não do termo', () => {
+    const s = shield('<p>Saving throw. Your Reflex saves improve.</p>', {
+      phrases: [
+        { en: 'saving throw', pt: 'salvamento' },
+        { en: 'Reflex saves', pt: 'salvamentos de Reflexos' },
+      ],
+    });
+    expect(s.restore(s.text)).toBe('<p>Salvamento. Your salvamentos de Reflexos improve.</p>');
+  });
+
+  it('o ordinal inglês vai protegido e volta com º', () => {
+    const s = shield('<p>a 5th-rank spell at 17th level, 1st and 2nd</p>');
+    expect(s.text).toBe(
+      '<p>a <span translate="no" i="1">5th</span>-rank spell at <span translate="no" i="2">17th</span> level, <span translate="no" i="3">1st</span> and <span translate="no" i="4">2nd</span></p>',
+    );
+    expect(s.restore(s.text)).toBe('<p>a 5º-rank spell at 17º level, 1º and 2º</p>');
+  });
+
   it('em caixa alta, o termo volta em caixa alta — e o exato aceita', () => {
     const s = shield('<p><strong>Key Attribute: STRENGTH OR DEXTERITY</strong></p>', {
       phrases: [

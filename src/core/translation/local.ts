@@ -33,6 +33,21 @@ export interface LocalGlossary {
   readonly nameOf?: (label: string) => string | null;
 }
 
+/**
+ * O POLIMENTO do português que sai do motor (Etapa 38): o que é regra da língua, não
+ * escolha de tradução. Medido na amostra: os ordinais saem "9o nível", "4a:" — o motor
+ * não tem o "º" — e o gênero varia entre "3o" e "4a" para o mesmo "3rd/4th". Nível e
+ * círculo são masculinos: "º". Só em texto, nunca dentro de uma marca ou tag.
+ */
+export function polishPortuguese(html: string): string {
+  return html
+    .split(/(<[^>]+>|@\w+\[[^\]]*\](?:\{[^}]*\})?|\[\[[^\]]*\]\](?:\{[^}]*\})?)/)
+    .map((parte, indice) =>
+      indice % 2 === 1 ? parte : parte.replace(/\b(\d+)[oa]\b(?=[\s:;,.)]|$)/g, '$1º'),
+    )
+    .join('');
+}
+
 /** `pt-BR` → `pt`: o motor conhece o par `enpt`, não a variante. */
 export function machineLanguage(language: string): string {
   return language.split('-')[0]?.toLowerCase() ?? language;
@@ -55,7 +70,7 @@ export function createLocalProvider(
         'en',
         machineLanguage(request.language),
       );
-      return blindado.restore(traduzido);
+      return polishPortuguese(blindado.restore(traduzido));
     },
   };
 }

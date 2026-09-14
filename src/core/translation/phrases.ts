@@ -129,6 +129,24 @@ export const CORE_PHRASES: readonly Phrase[] = [
   /* O resto do vocabulário de mesa. */
   { en: 'hit points', pt: 'pontos de vida' },
   { en: 'armor class', pt: 'classe de armadura' },
+  /*
+   * As SIGLAS (Etapa 38): medido na amostra, o motor deixa AC, DC, HP, GM e PC em
+   * inglês — 26 "DC" e 26 "PC" em 120 entradas. As do módulo: CA (PF2E.ArmorClassShortLabel),
+   * CD (PF2E.Check.DC.Unspecific), PV (PF2E.HitPointsShortLabel); Mestre e PJ são as do
+   * Livro Básico em português. Exatas: "ac" e "dc" minúsculos não são siglas.
+   */
+  { en: 'class DC', pt: 'CD de classe', exact: true },
+  { en: 'spell DC', pt: 'CD de magia', exact: true },
+  { en: 'AC', pt: 'CA', exact: true },
+  { en: 'DC', pt: 'CD', exact: true },
+  { en: 'DCs', pt: 'CDs', exact: true },
+  { en: 'HP', pt: 'PV', exact: true },
+  { en: 'GM', pt: 'Mestre', exact: true },
+  { en: 'GMs', pt: 'Mestres', exact: true },
+  { en: 'PC', pt: 'PJ', exact: true },
+  { en: 'PCs', pt: 'PJs', exact: true },
+  { en: 'NPC', pt: 'PdM', exact: true },
+  { en: 'NPCs', pt: 'PdMs', exact: true },
   { en: 'status bonus', pt: 'bônus de estado' },
   { en: 'circumstance bonus', pt: 'bônus de circunstância' },
   { en: 'item bonus', pt: 'bônus de item' },
@@ -139,4 +157,53 @@ export const CORE_PHRASES: readonly Phrase[] = [
   { en: 'flat check', pt: 'teste simples' },
   { en: 'reaction', pt: 'reação' },
   { en: 'free action', pt: 'ação livre' },
+  /*
+   * Testes, jogadas e salvamentos por nome (Etapa 38): medido, "Reflex saves" saía
+   * "Reflexos salvamentos", "ranged attack rolls" saía "intervalos de ataques", "skill
+   * checks" saía "verificações de habilidade". Os termos são os do módulo
+   * (PF2E.Check.Label "Teste", PF2E.Familiar.AttackRoll, PF2E.SavingThrow).
+   */
+  { en: 'Fortitude saves', pt: 'salvamentos de Fortitude' },
+  { en: 'Reflex saves', pt: 'salvamentos de Reflexos' },
+  { en: 'Will saves', pt: 'salvamentos de Vontade' },
+  { en: 'Fortitude save', pt: 'salvamento de Fortitude' },
+  { en: 'Reflex save', pt: 'salvamento de Reflexos' },
+  { en: 'Will save', pt: 'salvamento de Vontade' },
+  { en: 'basic Fortitude save', pt: 'salvamento básico de Fortitude' },
+  { en: 'basic Reflex save', pt: 'salvamento básico de Reflexos' },
+  { en: 'basic Will save', pt: 'salvamento básico de Vontade' },
+  { en: 'ranged attack rolls', pt: 'jogadas de ataque à distância' },
+  { en: 'melee attack rolls', pt: 'jogadas de ataque corpo a corpo' },
+  { en: 'spell attack rolls', pt: 'jogadas de ataque de magia' },
+  { en: 'spell attack roll', pt: 'jogada de ataque de magia' },
+  { en: 'attack rolls', pt: 'jogadas de ataque' },
+  { en: 'attack roll', pt: 'jogada de ataque' },
+  { en: 'skill checks', pt: 'testes de perícia' },
+  { en: 'skill check', pt: 'teste de perícia' },
+  { en: 'Perception checks', pt: 'testes de Percepção' },
+  { en: 'Perception check', pt: 'teste de Percepção' },
+  { en: 'counteract check', pt: 'teste de neutralização' },
+  { en: 'persistent damage', pt: 'dano persistente' },
+  { en: 'Dismiss', pt: 'Dispensar', exact: true },
+  /*
+   * Os rótulos de bloco da DIVINDADE (PF2E.Item.Deity.*, PF2E.Biography*): são 8 por
+   * divindade, em 500 divindades, e sozinhos o motor fazia "Editas" de "Edicts".
+   */
+  { en: 'Edicts', pt: 'Éditos', exact: true },
+  { en: 'Anathema', pt: 'Anátema', exact: true },
+  { en: 'Areas of Concern', pt: 'Áreas de Interesse', exact: true },
+  { en: 'Divine Attribute', pt: 'Atributo Divino', exact: true },
+  { en: 'Divine Font', pt: 'Fonte Divina', exact: true },
+  { en: 'Divine Skill', pt: 'Perícia Divina', exact: true },
+  { en: 'Divine Sanctification', pt: 'Santificação Divina', exact: true },
+  { en: 'Favored Weapon', pt: 'Arma Favorita', exact: true },
+  { en: 'Favored Weapons', pt: 'Armas Favoritas', exact: true },
+  { en: 'Domains', pt: 'Domínios', exact: true },
+  { en: 'Alternate Domains', pt: 'Domínios Alternativos', exact: true },
+  { en: 'Cleric Spells', pt: 'Magias de Clérigo', exact: true },
+  { en: 'Religious Symbol', pt: 'Símbolo Religioso', exact: true },
+  { en: 'Sacred Animal', pt: 'Animal Sagrado', exact: true },
+  { en: 'Sacred Colors', pt: 'Cores Sagradas', exact: true },
+  { en: 'Pantheons', pt: 'Panteões', exact: true },
+  { en: 'Pantheon Members', pt: 'Membros do Panteão', exact: true },
 ];

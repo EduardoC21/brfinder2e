@@ -81,6 +81,10 @@ Antes: **Etapa 20** — as tabelas das regras param de quebrar (célula compacta
 linha, `@Embed` cola a entrada apontada, e as duas vassouras em Configurações: apagar as
 entradas aposentadas e apagar a base inteira.
 
+Antes: **Etapa 38** — a segunda bateria (120 entradas novas): siglas do módulo (CD, CA,
+PV, Mestre, PJ), ordinais com º, a caixa do termo pela caixa do original, e 40 frases
+fixas a mais (salvamentos, jogadas, testes, rótulos da divindade).
+
 Antes: **Etapa 37** — a amostra da tradução: 105 entradas de 15 tipos, 1.762 marcas do
 Foundry, nenhuma perdida — e o que ela ensinou sobre o motor mudou a blindagem: termo do
 glossário inline com o inglês dentro, referência sempre em bloco (inline duplicava o

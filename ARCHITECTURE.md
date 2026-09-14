@@ -1025,6 +1025,19 @@ Animal</strong> fox`): um negrito curto no começo de bloco, item ou frase, segu
   sagrada</strong>") ou duplicava a tag. Rótulo que sumiu é texto perdido: falha.
 - O ". ." que o motor deixa depois de um bloco (30 de 105 entradas) vira ".".
 
+**A segunda bateria (Etapa 38)** — 120 entradas novas, 8 por tipo — procurou o que NÃO é
+do motor e dá para prever: as SIGLAS ficavam em inglês (26 "DC", 26 "PC", 7 "AC", 8 "GM",
+6 "HP" em 120 entradas) → glossário exato com as do módulo (CD, CA, PV, Mestre, PJ, PdM);
+os ORDINAIS saíam "9o nível", "4a:" e "5th-rank" perdia o número → o ordinal inglês vai
+protegido e volta "5º", e `polishPortuguese` (em `local.ts`) põe o "º" no que o motor
+escreve com "o"/"a"; a CAIXA: "o mesmo CA e Salvamentos" e "Salvamentos de Reflexos" no
+meio da frase — original todo em minúscula → termo em minúscula, e capitaliza só quando a
+maiúscula é da frase (não do "Reflex" dentro de "Reflex saves"); e as FRASES que o motor
+errava de forma estável: "Reflex saves" → "Reflexos salvamentos", "ranged attack rolls" →
+"intervalos de ataques", "skill checks" → "verificações de habilidade", os rótulos da
+divindade ("Edicts" → "Editas") — 40 frases fixas a mais (pelo módulo: Teste, Jogada de
+Salvamento, Éditos, Anátema…). Depois: zero siglas em inglês, zero ordinais sem º.
+
 **A amostra (Etapa 37):** 105 entradas de 15 tipos (as 4 com mais marcas de cada tipo e
 3 a passos fixos), 273 mil caracteres, 1.762 marcas do Foundry: zero falhas, zero marcas
 perdidas ou com alvo trocado, zero ". .", 3 entradas com um `<em>`/`<strong>` a mais que

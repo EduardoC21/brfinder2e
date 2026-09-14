@@ -89,6 +89,8 @@ const ROTULO_EM_NEGRITO =
  * mesmo texto na volta. Medido: "a –4 status penalty" virou "de de 4 euros".
  */
 const NUMERO_COM_SINAL = /[+\u2013\u2212-]\d+(?:\/\d+)?/g;
+/** "5th-rank", "17th level": o ordinal inglês vai como "5º" — medido, o motor perdia o número. */
+const ORDINAL = /\b(\d+)(?:st|nd|rd|th)\b/g;
 
 function escapeRegex(text: string): string {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -99,12 +101,29 @@ function ehCaixaAlta(texto: string): boolean {
   return texto.length > 1 && texto === texto.toUpperCase() && texto !== texto.toLowerCase();
 }
 
-function comCaixaDe(modelo: string, termo: string): string {
+function comCaixaDe(modelo: string, termo: string, en = ''): string {
   if (ehCaixaAlta(modelo)) return termo.toUpperCase();
   const primeira = modelo.charAt(0);
-  if (primeira === primeira.toUpperCase() && primeira !== primeira.toLowerCase()) {
+  const enPrimeira = en.charAt(0);
+  /*
+   * Capitaliza só quando a maiúscula é da FRASE ("Saving throw" no começo), e não do
+   * termo ("Reflex saves" começa com maiúscula por Reflexos, e "Salvamentos de Reflexos"
+   * no meio da frase estava errado — Etapa 38).
+   */
+  if (
+    primeira === primeira.toUpperCase() &&
+    primeira !== primeira.toLowerCase() &&
+    enPrimeira === enPrimeira.toLowerCase()
+  ) {
     return termo.charAt(0).toUpperCase() + termo.slice(1);
   }
+  /*
+   * Original todo em minúscula → termo todo em minúscula (Etapa 38): a tabela do pacote
+   * capitaliza ("Salvamentos", "Golpe Reativo"), e "o mesmo CA e Salvamentos que você"
+   * ficava com maiúscula no meio da frase. Só chega aqui o termo não exato, que casa em
+   * qualquer caixa — o nome (exato) já vem na caixa certa.
+   */
+  if (modelo === modelo.toLowerCase()) return termo.toLowerCase();
   return termo;
 }
 
@@ -115,10 +134,15 @@ function comCaixaDe(modelo: string, termo: string): string {
  * um termo casar dentro do que outro já protegeu.
  */
 function comNumeros(texto: string, termos: string[]): string {
-  return texto.replace(NUMERO_COM_SINAL, (numero) => {
-    termos.push(numero);
-    return `<span translate="no" i="${String(termos.length)}">${numero}</span>`;
-  });
+  return texto
+    .replace(NUMERO_COM_SINAL, (numero) => {
+      termos.push(numero);
+      return `<span translate="no" i="${String(termos.length)}">${numero}</span>`;
+    })
+    .replace(ORDINAL, (ordinal, numero: string) => {
+      termos.push(`${numero}º`);
+      return `<span translate="no" i="${String(termos.length)}">${ordinal}</span>`;
+    });
 }
 
 function comGlossario(texto: string, phrases: readonly Phrase[], termos: string[]): string {
@@ -134,7 +158,7 @@ function comGlossario(texto: string, phrases: readonly Phrase[], termos: string[
     if (phrase === undefined) return match;
     /* O exato aceita a caixa alta: "STRENGTH" num título é o atributo, não outra coisa. */
     if (phrase.exact === true && match !== phrase.en && !ehCaixaAlta(match)) return match;
-    termos.push(comCaixaDe(match, phrase.pt));
+    termos.push(comCaixaDe(match, phrase.pt, phrase.en));
     return `<span translate="no" i="${String(termos.length)}">${match}</span>`;
   });
 }
@@ -169,7 +193,7 @@ export function shield(html: string, options: ShieldOptions = {}): Shielded {
     const phrase = porTermo.get(label.toLowerCase());
     if (phrase === undefined) return null;
     if (phrase.exact === true && label !== phrase.en) return null;
-    return comCaixaDe(label, phrase.pt);
+    return comCaixaDe(label, phrase.pt, phrase.en);
   };
 
   /* "Enfeebled 1", "Stunned 2": o nome com o valor atrás — o nome resolve, o valor fica. */
