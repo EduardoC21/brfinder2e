@@ -76,6 +76,7 @@ export async function persistSync(
    * dependa dele além do mouse parado em cima.
    */
   await writeGlossary(store, 'traits', result.traitGlossary);
+  await writeGlossary(store, 'terms-en', result.termsEn);
 
   const meta: StoreMeta = {
     systemId: result.systemId,

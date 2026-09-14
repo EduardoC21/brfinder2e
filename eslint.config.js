@@ -7,7 +7,15 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 export default defineConfig([
-  globalIgnores(['dist', 'coverage', 'node_modules', 'src-tauri']),
+  // `public/bergamot` é dependência copiada (não é fonte); o script de cópia é Node puro.
+  globalIgnores([
+    'dist',
+    'coverage',
+    'node_modules',
+    'src-tauri',
+    'public/bergamot',
+    'scripts/copy-bergamot.mjs',
+  ]),
 
   js.configs.recommended,
 

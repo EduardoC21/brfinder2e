@@ -14,6 +14,7 @@ import { expandLocalize } from '../markup/localize';
 import { DecodeError } from './decoders';
 import { resolveTemplate, type Field } from './field';
 import type { FeatsByName } from './feats-index';
+import type { ClassFeaturesIndex } from './features-index';
 import type { JournalPages } from './journals';
 import { collectPaths, emptyCoverage, isCovered, readPath, type Coverage } from './paths';
 import { IDENTITY_PATHS, type FieldMap, type Recipe } from './recipe';
@@ -56,6 +57,8 @@ export interface RunOptions {
   readonly journals?: JournalPages;
   /** Os talentos por nome, para a conferência de dedicação do arquétipo. */
   readonly feats?: FeatsByName;
+  /** As habilidades de classe por traço, para as escolhas da classe (26a). */
+  readonly features?: ClassFeaturesIndex;
 }
 
 /**

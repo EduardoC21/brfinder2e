@@ -993,20 +993,59 @@ Três peças, e a fronteira entre elas:
   "Ataque Furtivo").
 - **`core/translation/phrases.ts`** é o GLOSSÁRIO FIXO: termos que o tradutor genérico
   erra — medido: "Strike" virou "greve", "Cast" virou "elenco", "saving throw" virou
-  "salvar joga", "Fortitude" virou "fortaleza" — trocados antes pelo termo da comunidade
-  dentro de `<span translate="no">`, que o Bergamot deixa em paz. Uma passada só, do termo
-  mais longo ao mais curto, só em texto (nunca dentro de uma tag); `exact` nos nomes
-  capitalizados ("Strike" é o golpe, "strike" é o verbo). Um termo não pode existir duas
+  "salvar joga", "Fortitude" virou "fortaleza". Uma passada só, do termo mais longo ao
+  mais curto, só em texto (nunca dentro de uma tag); `exact` nos nomes capitalizados de
+  uma palavra ("Strike" é o golpe, "strike" é o verbo). Um termo não pode existir duas
   vezes em caixas diferentes — há teste.
 
 `core/translation/local.ts` compõe as três: blinda, traduz pela porta, refaz.
 
-**O botão Traduzir** (na lateral e no flutuante) percorre as formas ligadas na ordem das
-preferências; a primeira que não está indisponível traduz o `main` e grava em
-`trans/<língua>/<tipo>` com a forma e a impressão digital. Com tradução gravada o mesmo
-botão alterna "Ver original" / "Ver tradução", nascendo na preferência; acima do texto,
-"Tradução: modelo local", e "o original mudou desde a tradução" quando a impressão
-digital não bate mais.
+**Como o termo viaja (mudou na Etapa 35).** Na 34 o termo ia já em português, dentro de
+`<span translate="no">`. Medido na 35: o Bergamot não traduz o que está ali, mas
+**realinha as palavras** — "talento de perícia" voltou "de talento perícia". Agora o
+termo vai em INGLÊS, dentro de `<x-g i="n">skill feat</x-g>`: o motor vê a frase inteira
+(e acerta a ordem do resto), e `restore` joga fora o que ele fez com o termo e põe o da
+comunidade, na caixa do original (caixa alta inclusive: "STRENGTH" → "FORÇA"). O rótulo
+de referência que o pacote conhece pelo nome segue a mesma regra — vai em inglês, volta
+pelo nome. Um termo que o motor engoliu não é erro: fica o que ele escreveu.
+
+**O glossário aprendido do pacote (Etapa 35).** O glossário fixo tem 90 termos; o pacote
+da comunidade tem os outros. Três fontes, todas em `core/translation/terms.ts`:
+
+- **As famílias de termos.** A tabela de idioma do sistema (`lang/en.json`) e a da
+  comunidade (`pt-BR.json`) têm as MESMAS chaves — `PF2E.ConditionTypeFrightened` é
+  "Frightened" numa e "Amedrontado" na outra. `pickTerms` guarda só as famílias que são
+  vocabulário do jogo (condições, traços, grupos de arma e armadura, perícias,
+  salvamentos, graus, atributos, tipos de dano, categorias de talento, domínios,
+  durações, áreas…; a lista é fechada por prefixo, porque "Save" → "Salvar" numa
+  descrição seria um estrago). O lado inglês vai com a base na sincronização
+  (`glossary/terms-en`, revisão 16; medido: 1.239 chaves); o lado português, no download
+  do pacote (`trans/<língua>/glossary/terms`; medido: 998). `pairTerms` junta pela chave —
+  medido: **899 pares** diferentes, 97 iguais dos dois lados (fora) — e descarta o que é
+  curto demais sem ser nome ("air", "day", "Cha").
+- **O dicionário do pacote** (`dictionary.json`: duração 75, alcance 56, fonte 112, tempo
+  19), sem caixa.
+- **Os nomes**: condição e ação, exatos quando são uma palavra e em qualquer caixa quando
+  são duas ou mais ("reactive strike" na tabela de progressão); as habilidades de classe
+  com duas ou mais palavras (as de uma ficam fora: "Battle" é "Mistério de Batalha"); e
+  "<classe> feat" → "talento de <Classe>", porque o motor separava a classe do talento.
+
+Os fixos do app vêm antes e vencem no empate. Conferido na tabela de progressão do
+Guerreiro: "Golpe Reativo, talento de Guerreiro, bloqueio com escudo" onde antes saía
+"greve reativa, Guerreiro talento, bloco Escudo".
+
+**O botão Traduzir, e o escopo dele (Etapa 35, pelo autor: "cada botão respeitando todo o
+seu escopo").** O botão da lateral (e do flutuante) traduz o que a lateral mostra: o
+`main` E as tabelas das sub-abas (a progressão da classe). O botão da tela completa, no
+canto, traduz o centro E a lateral: a página (ou a reserva dela), o apêndice e as
+tabelas — e a lateral ali NÃO tem botão próprio (`translationShowing` vem da tela). Os
+campos vão juntos ao provedor (`useTranslate().translate(tipo, chave, campos[])`), e um
+campo já traduzido do mesmo original é pulado — a lateral pode ter traduzido a tabela
+antes. As traduções gravadas se leem por entrada (`useStoredTranslations`), campo a
+campo. Quem clica em Traduzir vê a tradução, seja qual for a preferência; com tradução
+gravada o mesmo botão alterna "Ver original" / "Ver tradução", nascendo na preferência a
+cada entrada; acima do texto, "Tradução: modelo local", e "o original mudou desde a
+tradução" quando a impressão digital não bate mais.
 
 ### Onde a tradução mora: a quinta camada
 

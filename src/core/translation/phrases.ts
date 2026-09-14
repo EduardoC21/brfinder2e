@@ -63,6 +63,19 @@ export const CORE_PHRASES: readonly Phrase[] = [
   { en: 'general feat', pt: 'talento geral' },
   { en: 'feats', pt: 'talentos' },
   { en: 'feat', pt: 'talento' },
+  /*
+   * A tabela de progressão da classe (Etapa 35): medido, "attribute boosts" virou
+   * "atributo impulsiona", "skill increase" virou "aumento de habilidade", "shield block"
+   * virou "bloco escudo". Os termos são os do módulo (PF2E.AbilityBoost,
+   * PF2E.SkillIncreaseLevels, PF2E.DamageButton.ShieldBlockContext).
+   */
+  { en: 'attribute boosts', pt: 'melhorias de atributo' },
+  { en: 'attribute boost', pt: 'melhoria de atributo' },
+  { en: 'skill increases', pt: 'incrementos de perícia' },
+  { en: 'skill increase', pt: 'incremento de perícia' },
+  { en: 'initial proficiencies', pt: 'proficiências iniciais' },
+  { en: 'ancestry and background', pt: 'ancestralidade e biografia' },
+  { en: 'shield block', pt: 'bloqueio com escudo' },
   { en: 'critical success', pt: 'sucesso crítico' },
   { en: 'critical failure', pt: 'falha crítica' },
   { en: 'critical hit', pt: 'acerto crítico' },

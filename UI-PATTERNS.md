@@ -168,9 +168,16 @@ Duas peças fazem isso funcionar:
 **Ligada na Etapa 34.** Um botão só, que diz o que vai fazer: sem tradução gravada,
 "Traduzir" (a primeira forma disponível na ordem das preferências — o modelo local, hoje);
 enquanto traduz, "Traduzindo…"; com tradução gravada, "Ver original" / "Ver tradução",
-nascendo na preferência de visualização a cada entrada nova. Acima do texto traduzido, a
-forma que o traduziu, e o aviso quando o original mudou desde então. O erro, quando há, vai
-para o `title` do botão, que volta a oferecer.
+nascendo na preferência de visualização a cada entrada nova — e quem acabou de clicar em
+Traduzir vê a tradução. Acima do texto traduzido, a forma que o traduziu, e o aviso quando
+o original mudou desde então. O erro, quando há, vai para o `title` do botão, que volta a
+oferecer.
+
+**O escopo é o do lugar onde o botão está (Etapa 35, pelo autor).** O botão da lateral
+traduz tudo o que a lateral mostra — a descrição e as tabelas das sub-abas. Na tela
+completa há UM botão, no canto da barra, e ele traduz o centro e a lateral (página,
+apêndice, tabelas); a lateral ali não tem botão, porque dois botões com escopos que se
+cruzam deixariam a pessoa sem saber qual cobre o quê.
 
 **Um** botão, rotulado pelo **destino**: `Traduzir` quando se está vendo o original,
 `Ver original` quando se está vendo a tradução. A roda de regerar (`⟳`) aparece **só** no

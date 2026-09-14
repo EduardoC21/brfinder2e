@@ -24,6 +24,7 @@
 import { buildTraitGlossary, type TraitGlossary } from '../glossary/index';
 import { isRecord } from '../json';
 import { mergeLanguageFiles } from '../normalization/language';
+import { pickTerms } from './terms';
 import type { HttpPort } from '../source/ports';
 import type { StorePort } from '../store/ports';
 
@@ -50,6 +51,8 @@ const PACKS_DE_NOMES: readonly (readonly [string, string])[] = [
 export interface CommunityPack {
   readonly tag: string;
   readonly traits: TraitGlossary;
+  /** As famílias de termos da tabela do pacote, em português — ver `terms.ts`. */
+  readonly terms: Readonly<Record<string, string>>;
   /** `{ feat: { 'Power Attack': 'Ataque Poderoso' }, … }` — o nome em português por tipo. */
   readonly names: Readonly<Record<string, Readonly<Record<string, string>>>>;
   /** `{ duration: { '1 minute': '1 minuto' }, … }` — as frases fixas por campo. */
@@ -109,7 +112,9 @@ function frasesDoDicionario(payload: unknown): Record<string, Record<string, str
 export async function fetchCommunityPack(http: HttpPort, tag: string): Promise<CommunityPack> {
   const base = `${RAW}/${COMMUNITY_REPO}/${tag}/translation/pt-BR`;
   const tabela = await http.getJson(`${base}/pt-BR.json`);
-  const traits = buildTraitGlossary(mergeLanguageFiles([tabela]));
+  const fundida = mergeLanguageFiles([tabela]);
+  const traits = buildTraitGlossary(fundida);
+  const terms = pickTerms(fundida);
   let dictionary: CommunityPack['dictionary'] = {};
   try {
     dictionary = frasesDoDicionario(await http.getJson(`${base}/dictionary.json`));
@@ -125,7 +130,7 @@ export async function fetchCommunityPack(http: HttpPort, tag: string): Promise<C
       // Pack que o repositório não tem (ou renomeou): segue sem os nomes dele.
     }
   }
-  return { tag, traits, names, dictionary };
+  return { tag, traits, terms, names, dictionary };
 }
 
 export async function writeCommunityPack(
@@ -135,6 +140,7 @@ export async function writeCommunityPack(
   at: string,
 ): Promise<CommunityMeta> {
   await store.put(keyCommunity(language, 'traits'), pack.traits);
+  await store.put(keyCommunity(language, 'terms'), pack.terms);
   await store.put(keyCommunity(language, 'names'), pack.names);
   await store.put(keyCommunity(language, 'dictionary'), pack.dictionary);
   const meta: CommunityMeta = {
@@ -180,6 +186,40 @@ export async function readCommunityTraits(
     if (typeof label === 'string' && typeof description === 'string') {
       out[slug] = { label, description };
     }
+  }
+  return out;
+}
+
+/** Uma tabela `chave → texto` guardada, ou vazia. */
+async function lerTabela(store: StorePort, key: string): Promise<Record<string, string>> {
+  const value = await store.get(key);
+  if (!isRecord(value)) return {};
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(value)) if (typeof v === 'string') out[k] = v;
+  return out;
+}
+
+/** Os termos em português do pacote (`terms.ts`); vazio sem pacote. */
+export async function readCommunityTerms(
+  store: StorePort,
+  language: string,
+): Promise<Record<string, string>> {
+  return lerTabela(store, keyCommunity(language, 'terms'));
+}
+
+/** O dicionário de frases fixas do pacote; vazio sem pacote. */
+export async function readCommunityDictionary(
+  store: StorePort,
+  language: string,
+): Promise<Record<string, Record<string, string>>> {
+  const value = await store.get(keyCommunity(language, 'dictionary'));
+  if (!isRecord(value)) return {};
+  const out: Record<string, Record<string, string>> = {};
+  for (const [campo, frases] of Object.entries(value)) {
+    if (!isRecord(frases)) continue;
+    const porFrase: Record<string, string> = {};
+    for (const [en, pt] of Object.entries(frases)) if (typeof pt === 'string') porFrase[en] = pt;
+    out[campo] = porFrase;
   }
   return out;
 }

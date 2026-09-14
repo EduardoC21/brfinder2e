@@ -3,3 +3,4 @@ export * from './local';
 export * from './methods';
 export * from './phrases';
 export * from './shield';
+export * from './terms';

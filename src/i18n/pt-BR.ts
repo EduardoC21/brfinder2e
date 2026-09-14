@@ -575,9 +575,6 @@ export const ptBR = {
       /** O aviso acima da tradução (Etapa 34). */
       translatedBy: (forma: string) => `Tradução: ${forma.toLowerCase()}`,
       originalChanged: 'o original mudou desde a tradução',
-      /** A tradução é a Etapa 14. Os botões existem, e dizem por que não funcionam ainda. */
-      translationPending:
-        'A tradução sob demanda é a Etapa 15 do plano. Os botões já estão no lugar para o desenho ser avaliado.',
       description: 'Descrição',
       empty: 'Escolha uma entrada na lista.',
     },

@@ -18,8 +18,11 @@ import { CollapseToggle } from '@ui/components/CollapseToggle';
 import { ScrollRail } from '@ui/components/ScrollRail';
 import { RichText, type RichTextLinks } from '@ui/components/RichText';
 import { cx } from '@ui/cx';
-import { useDescription } from '@ui/hooks/useDescription';
+import { sourceHash, type Translation } from '@core/store/index';
+import { useDescriptionFields } from '@ui/hooks/useDescription';
 import type { LoadedSource } from '@ui/hooks/useAllBases';
+import { useStoredTranslations, useTranslate } from '@ui/hooks/useTranslation';
+import { usePreferences } from '@ui/prefs/usePreferences';
 
 import { DetailPane } from './DetailPane';
 import type { ReferenceBridge } from './DetailPanel';
@@ -141,6 +144,61 @@ export function EntityScreen({
   /* A lateral recolhe como na lista — e volta ao trocar de aba, que é conteúdo novo. */
   const [lateralFechada, setLateralFechada] = useState(false);
 
+  /*
+   * A TRADUÇÃO da tela (Etapa 35, pelo autor: "o central e a lateral traduzidos quando
+   * clicado no botão da tela inteira"). O botão do canto é o único: cobre a página (ou a
+   * reserva dela), o apêndice e as tabelas da lateral — a lateral não tem botão próprio
+   * aqui. Os textos vêm de `desc/` numa leitura só; a tradução gravada, por campo.
+   */
+  const abaDePagina = aba?.tab.kind === 'page' ? aba.tab : null;
+  const camposDaTela = useMemo(() => {
+    const campos: string[] = [];
+    if (abaDePagina !== null) {
+      campos.push(abaDePagina.field);
+      if (abaDePagina.fallback !== undefined) campos.push(abaDePagina.fallback);
+      if (abaDePagina.appendix !== undefined) campos.push(abaDePagina.appendix.field);
+    }
+    for (const tab of lateral?.tabs ?? []) if (tab.kind === 'table') campos.push(tab.field);
+    return [...new Set(campos)];
+  }, [abaDePagina, lateral]);
+  const textos = useDescriptionFields(entityType, entity.key, camposDaTela);
+  const gravadas = useStoredTranslations(entityType, entity.key);
+  const { prefs } = usePreferences();
+  const tradutor = useTranslate();
+  const [verTraducao, setVerTraducao] = useState(prefs.translation.display === 'translated');
+  const [entradaDaTraducao, setEntradaDaTraducao] = useState(entity.key);
+  if (entradaDaTraducao !== entity.key) {
+    setEntradaDaTraducao(entity.key);
+    setVerTraducao(prefs.translation.display === 'translated');
+  }
+  /* A versátil não tem página de jornal: a aba cai no resumo, que é o que ela tem. */
+  const campoDaPagina =
+    abaDePagina === null
+      ? null
+      : textos !== null && textos[abaDePagina.field] !== ''
+        ? abaDePagina.field
+        : (abaDePagina.fallback ?? abaDePagina.field);
+  const traducaoDaPagina = campoDaPagina === null ? null : (gravadas[campoDaPagina] ?? null);
+  const mostrando = traducaoDaPagina !== null && verTraducao;
+  const vista = (campo: string | null | undefined): string | null =>
+    campo === undefined || campo === null || textos === null
+      ? null
+      : mostrando
+        ? (gravadas[campo]?.html ?? textos[campo] ?? null)
+        : (textos[campo] ?? null);
+  const traduzirTela = (): void => {
+    if (textos === null) return;
+    /* Quem pediu para traduzir quer VER a tradução, seja qual for a preferência. */
+    setVerTraducao(true);
+    tradutor.translate(
+      entityType,
+      entity.key,
+      camposDaTela
+        .filter((campo) => campo !== abaDePagina?.fallback || campo === campoDaPagina)
+        .map((campo) => ({ field: campo, html: textos[campo] ?? '' })),
+    );
+  };
+
   return (
     <section
       className={styles['full']}
@@ -188,14 +246,29 @@ export function EntityScreen({
             ))}
           </nav>
         </ScrollRail>
-        <button
-          type="button"
-          className={cx(styles['traduzir'], 'chamfer-sm')}
-          disabled
-          title={d.translationPending}
-        >
-          {d.translate}
-        </button>
+        {abaDePagina !== null && (
+          <button
+            type="button"
+            className={cx(styles['traduzir'], 'chamfer-sm')}
+            disabled={tradutor.state.status === 'busy' || textos === null}
+            title={tradutor.state.status === 'error' ? tradutor.state.message : undefined}
+            onClick={
+              traducaoDaPagina !== null
+                ? () => {
+                    setVerTraducao((estava) => !estava);
+                  }
+                : traduzirTela
+            }
+          >
+            {tradutor.state.status === 'busy'
+              ? d.translating
+              : traducaoDaPagina !== null
+                ? mostrando
+                  ? d.toggleOriginal
+                  : d.toggleTranslated
+                : d.translate}
+          </button>
+        )}
       </header>
 
       {aba?.tab.kind === 'page' && (
@@ -203,8 +276,18 @@ export function EntityScreen({
           <PageTab
             key={entity.key}
             entity={entity}
-            entityType={entityType}
             tab={aba.tab}
+            page={vista(campoDaPagina)}
+            appendix={vista(aba.tab.appendix?.field)}
+            translation={
+              mostrando && campoDaPagina !== null
+                ? {
+                    stored: traducaoDaPagina,
+                    originalChanged:
+                      traducaoDaPagina.sourceHash !== sourceHash(textos?.[campoDaPagina] ?? ''),
+                  }
+                : null
+            }
             reference={reference}
             memory={rolagem}
             memoryKey={`${entity.key}/${aba.tab.id}`}
@@ -215,6 +298,7 @@ export function EntityScreen({
             entityType={entityType}
             fields={fields}
             {...(lateral === undefined ? {} : { side: lateral })}
+            translationShowing={mostrando}
             onPopOut={onPopOut}
             reference={reference}
             collapsed={lateralFechada}
@@ -235,27 +319,29 @@ export function EntityScreen({
 /** A aba de texto: uma descrição inteira de `desc/`, com a prosa clicável como no painel. */
 function PageTab({
   entity,
-  entityType,
   tab,
+  page,
+  appendix,
+  translation,
   reference,
   memory,
   memoryKey,
 }: {
   readonly entity: BrowseEntity;
-  readonly entityType: string;
   readonly tab: PageTabSpec;
+  /** A página (ou a reserva), já na língua vista; `null` até chegar. A tela é quem lê. */
+  readonly page: string | null;
+  readonly appendix: string | null;
+  /** A tradução à vista, para o aviso acima da prosa: de que forma veio, e se o original mudou. */
+  readonly translation: { readonly stored: Translation; readonly originalChanged: boolean } | null;
   readonly reference: ReferenceBridge;
   /** A memória de rolagem da tela, e a chave desta aba nela. Ver `EntityScreen`. */
   readonly memory: Map<string, number>;
   readonly memoryKey: string;
 }) {
-  const texto = useDescription(entityType, entity.key, tab.field);
-  const reserva = useDescription(entityType, entity.key, tab.fallback ?? tab.field);
-  /* A versátil não tem página de jornal: a aba cai no resumo, que é o que ela tem. */
-  const escolhido = texto !== null && texto !== '' ? texto : reserva;
   const nodes = useMemo(
-    () => (escolhido === null ? null : pruneForReading(parseDescription(escolhido))),
-    [escolhido],
+    () => (page === null || page === '' ? null : pruneForReading(parseDescription(page))),
+    [page],
   );
   /*
    * O APÊNDICE: o bloco de mecânica do livro, recolhido no fim. A lateral tem os campos,
@@ -263,13 +349,12 @@ function PageTab({
    * habilidade que nenhum campo traz), e o autor quer o livro inteiro à mão sem que ele
    * repita a lateral na cara de quem só quer ler a prosa. Nasce fechado; um clique abre.
    */
-  const apendice = useDescription(entityType, entity.key, tab.appendix?.field ?? tab.field);
   const apendiceNodes = useMemo(
     () =>
-      tab.appendix === undefined || apendice === null || apendice === ''
+      tab.appendix === undefined || appendix === null || appendix === ''
         ? null
-        : pruneForReading(parseDescription(apendice)),
-    [tab.appendix, apendice],
+        : pruneForReading(parseDescription(appendix)),
+    [tab.appendix, appendix],
   );
 
   /*
@@ -315,6 +400,16 @@ function PageTab({
         memory.set(memoryKey, event.currentTarget.scrollTop);
       }}
     >
+      {/* O aviso de tradução, como na lateral: a forma, e se o original mudou desde então. */}
+      {translation !== null && (
+        <p className={styles['avisoTraducao']}>
+          {d.translatedBy(
+            strings.settings.translation.methods[translation.stored.method]?.name ??
+              translation.stored.method,
+          )}
+          {translation.originalChanged && ` · ${d.originalChanged}`}
+        </p>
+      )}
       {nodes !== null && (
         <div className={styles['pagina']}>
           <RichText nodes={nodes} links={links} />

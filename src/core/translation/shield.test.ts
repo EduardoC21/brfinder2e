@@ -43,12 +43,31 @@ describe('a blindagem', () => {
       },
     );
     expect(s.text).toBe(
-      '<p class="Strike">Make a <span translate="no">Golpe</span>. A strike hits. <em><span translate="no">Fortitude</span></em> save.</p>',
+      '<p class="Strike">Make a <x-g i="1">Strike</x-g>. A strike hits. <em><x-g i="2">Fortitude</x-g></em> save.</p>',
     );
-    /* Ao refazer, o invólucro some e o termo fica. */
-    expect(s.restore(s.text)).toBe(
-      '<p class="Strike">Make a Golpe. A strike hits. <em>Fortitude</em> save.</p>',
-    );
+    /* Ao refazer, o que o tradutor fez com o termo sai, e o da comunidade entra. */
+    expect(
+      s.restore(
+        '<p class="Strike">Faça um <x-g i="1">greve</x-g>. Um golpe acerta. <em><x-g i="2">fortaleza</x-g></em> salvamento.</p>',
+      ),
+    ).toBe('<p class="Strike">Faça um Golpe. Um golpe acerta. <em>Fortitude</em> salvamento.</p>');
+  });
+
+  it('em caixa alta, o termo volta em caixa alta — e o exato aceita', () => {
+    const s = shield('<p><strong>Key Attribute: STRENGTH OR DEXTERITY</strong></p>', {
+      phrases: [
+        { en: 'Strength', pt: 'Força', exact: true },
+        { en: 'Dexterity', pt: 'Destreza' },
+      ],
+    });
+    expect(s.restore(s.text)).toBe('<p><strong>Key Attribute: FORÇA OR DESTREZA</strong></p>');
+  });
+
+  it('um termo que o tradutor engoliu não é erro: fica o que ele escreveu', () => {
+    const s = shield('<p>Make a Strike now.</p>', {
+      phrases: [{ en: 'Strike', pt: 'Golpe', exact: true }],
+    });
+    expect(s.restore('<p>Faça uma greve agora.</p>')).toBe('<p>Faça uma greve agora.</p>');
   });
 
   it('o termo mais longo vence o mais curto', () => {
@@ -58,17 +77,20 @@ describe('a blindagem', () => {
         { en: 'saving throw', pt: 'salvamento' },
       ],
     });
-    expect(s.text).toBe(
-      '<p>a <span translate="no">salvamento</span> and a <span translate="no">arremesso</span></p>',
+    expect(s.text).toBe('<p>a <x-g i="1">saving throw</x-g> and a <x-g i="2">throw</x-g></p>');
+    expect(s.restore('<p>um <x-g i="1">x</x-g> e um <x-g i="2">y</x-g></p>')).toBe(
+      '<p>um salvamento e um arremesso</p>',
     );
   });
 
-  it('o rótulo que o pacote conhece entra pronto e protegido', () => {
+  it('o rótulo que o pacote conhece vai em inglês e volta pelo nome', () => {
     const s = shield(`<p>${uuid}</p>`, {
       nameOf: (label) => (label === 'Fireball' ? 'Bola de Fogo' : null),
     });
-    expect(s.text).toBe('<p><x-ref i="1"><span translate="no">Bola de Fogo</span></x-ref></p>');
-    expect(s.restore(s.text)).toContain('{Bola de Fogo}');
+    expect(s.text).toBe('<p><x-ref i="1">Fireball</x-ref></p>');
+    expect(s.restore('<p><x-ref i="1">Bola de fogo qualquer</x-ref></p>')).toContain(
+      '{Bola de Fogo}',
+    );
   });
 });
 

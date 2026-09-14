@@ -5,8 +5,10 @@ import { createMemoryStore } from '../store/memory';
 import {
   fetchCommunityPack,
   latestCommunityTag,
+  readCommunityDictionary,
   readCommunityMeta,
   readCommunityNames,
+  readCommunityTerms,
   readCommunityTraits,
   writeCommunityPack,
 } from './community';
@@ -29,6 +31,8 @@ const tabela = {
     TraitAgile: 'Ágil',
     TraitDescriptionAgile: '<p>A penalidade de ataques múltiplos é menor.</p>',
     TraitHumanoid: 'Humanoide',
+    ConditionTypeFrightened: 'Amedrontado',
+    Cancel: 'Cancelar',
   },
 };
 
@@ -58,6 +62,12 @@ describe('o pacote da comunidade', () => {
     expect(pack.names['feat']).toEqual({ 'Power Attack': 'Ataque Poderoso' });
     expect(pack.names['spell']).toBeUndefined();
     expect(pack.dictionary).toEqual({ duration: { '1 minute': '1 minuto' } });
+    /* Os termos: só as famílias de vocabulário do jogo — "Cancel" é interface e fica fora. */
+    expect(pack.terms).toEqual({
+      'PF2E.TraitAgile': 'Ágil',
+      'PF2E.TraitHumanoid': 'Humanoide',
+      'PF2E.ConditionTypeFrightened': 'Amedrontado',
+    });
   });
 
   it('grava sob trans/<língua>/glossary e lê de volta com a meta', async () => {
@@ -68,8 +78,9 @@ describe('o pacote da comunidade', () => {
       {
         tag: 'v1',
         traits: { agile: { label: 'Ágil', description: 'x' } },
+        terms: { 'PF2E.TraitAgile': 'Ágil' },
         names: { feat: { A: 'B' }, spell: { C: 'D', E: 'F' } },
-        dictionary: {},
+        dictionary: { range: { touch: 'toque' } },
       },
       '2026-09-14T12:00:00.000Z',
     );
@@ -78,11 +89,14 @@ describe('o pacote da comunidade', () => {
     expect(await readCommunityTraits(store, 'pt-BR')).toEqual({
       agile: { label: 'Ágil', description: 'x' },
     });
+    expect(await readCommunityTerms(store, 'pt-BR')).toEqual({ 'PF2E.TraitAgile': 'Ágil' });
+    expect(await readCommunityDictionary(store, 'pt-BR')).toEqual({ range: { touch: 'toque' } });
     expect((await readCommunityNames(store, 'pt-BR'))['spell']).toEqual({ C: 'D', E: 'F' });
     expect([...(await store.keys('trans/'))].sort()).toEqual([
       'trans/pt-BR/glossary/dictionary',
       'trans/pt-BR/glossary/meta',
       'trans/pt-BR/glossary/names',
+      'trans/pt-BR/glossary/terms',
       'trans/pt-BR/glossary/traits',
     ]);
   });

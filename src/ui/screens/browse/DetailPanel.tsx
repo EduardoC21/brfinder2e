@@ -23,7 +23,7 @@ import { ScrollRail } from '@ui/components/ScrollRail';
 import { TraitChip } from '@ui/components/TraitChip';
 import { useTraitLabel } from '@ui/glossary/useTraitLabel';
 import { useDescription, useDescriptionFields } from '@ui/hooks/useDescription';
-import { useStoredTranslation, useTranslate } from '@ui/hooks/useTranslation';
+import { useStoredTranslations, useTranslate } from '@ui/hooks/useTranslation';
 import { usePreferences } from '@ui/prefs/usePreferences';
 import { CollapseToggle } from '@ui/components/CollapseToggle';
 import { cx } from '@ui/cx';
@@ -80,6 +80,13 @@ export interface DetailPanelProps {
    * de cima. Com `side`, a descrição não é desenhada — a página inteira está do lado.
    */
   readonly side?: SideSpec;
+  /**
+   * A tradução é da TELA, não do painel (Etapa 35): na tela completa o botão Traduzir do
+   * canto cobre o centro E a lateral, então o painel não tem botão próprio, e este valor
+   * diz se as tabelas da lateral mostram a tradução gravada. Ausente, o painel tem o
+   * seu botão, que traduz o `main` e as tabelas — o escopo inteiro da lateral.
+   */
+  readonly translationShowing?: boolean;
 }
 
 /**
@@ -128,15 +135,28 @@ export function DetailPanel({
   embedded = false,
   context,
   side,
+  translationShowing,
 }: DetailPanelProps) {
   const original = useDescription(entityType, entity.key);
   /*
-   * A TRADUÇÃO GRAVADA do texto principal (Etapa 34). Existindo, a preferência decide o
-   * que aparece primeiro ("Original" ou "Traduzido"), e o botão troca; não existindo, o
-   * botão TRADUZ — pela primeira forma disponível na ordem das preferências. `verTraducao`
-   * nasce da preferência a cada entrada nova, e a pessoa pode virar nesta.
+   * As TABELAS da lateral (26d) vêm de `desc/` como a descrição: lidas aqui, e não na
+   * `Lateral`, porque o botão Traduzir do painel cobre o escopo inteiro — o `main` e as
+   * tabelas — e o painel é quem tem o botão.
    */
-  const traducao = useStoredTranslation(entityType, entity.key, 'main');
+  const camposDeTabela = useMemo(
+    () => side?.tabs.flatMap((tab) => (tab.kind === 'table' ? [tab.field] : [])) ?? [],
+    [side],
+  );
+  const tabelas = useDescriptionFields(entityType, entity.key, camposDeTabela);
+  /*
+   * As TRADUÇÕES GRAVADAS da entrada (Etapa 34, por campo na 35). Existindo a do `main`,
+   * a preferência decide o que aparece primeiro ("Original" ou "Traduzido"), e o botão
+   * troca; não existindo, o botão TRADUZ — pela primeira forma disponível na ordem das
+   * preferências. `verTraducao` nasce da preferência a cada entrada nova, e a pessoa pode
+   * virar nesta. Com `translationShowing`, quem decide é a tela.
+   */
+  const gravadas = useStoredTranslations(entityType, entity.key);
+  const traducao = gravadas['main'] ?? null;
   const { prefs } = usePreferences();
   const tradutor = useTranslate();
   const [verTraducao, setVerTraducao] = useState(prefs.translation.display === 'translated');
@@ -145,10 +165,20 @@ export function DetailPanel({
     setEntradaDaTraducao(entity.key);
     setVerTraducao(prefs.translation.display === 'translated');
   }
-  const mostrandoTraducao = traducao !== null && verTraducao;
+  const mostrando = translationShowing ?? verTraducao;
+  const mostrandoTraducao = traducao !== null && mostrando;
   const description = mostrandoTraducao ? traducao.html : original;
   const originalMudou =
     traducao !== null && original !== null && traducao.sourceHash !== sourceHash(original);
+  /* Cada tabela na tradução gravada quando se está vendo a tradução — ou no original. */
+  const tabelasVistas = useMemo(() => {
+    if (tabelas === null) return null;
+    const vistas: Record<string, string> = {};
+    for (const [campo, texto] of Object.entries(tabelas)) {
+      vistas[campo] = mostrando ? (gravadas[campo]?.html ?? texto) : texto;
+    }
+    return vistas;
+  }, [tabelas, gravadas, mostrando]);
 
   /*
    * A SUB-TELA: qual referência está aberta debaixo desta entrada.
@@ -306,18 +336,29 @@ export function DetailPanel({
           onPopOut={onPopOut}
           onExpand={onExpand}
           onBack={onBack}
-          translation={{
-            has: traducao !== null,
-            showing: mostrandoTraducao,
-            busy: tradutor.state.status === 'busy',
-            error: tradutor.state.status === 'error' ? tradutor.state.message : null,
-            onTranslate: () => {
-              if (original !== null) tradutor.translate(entityType, entity.key, 'main', original);
-            },
-            onToggle: () => {
-              setVerTraducao((estava) => !estava);
-            },
-          }}
+          translation={
+            translationShowing !== undefined
+              ? undefined
+              : {
+                  has: traducao !== null,
+                  showing: mostrandoTraducao,
+                  busy: tradutor.state.status === 'busy',
+                  error: tradutor.state.status === 'error' ? tradutor.state.message : null,
+                  onTranslate: () => {
+                    if (original === null) return;
+                    /* Quem pediu para traduzir quer VER a tradução, seja qual for a preferência. */
+                    setVerTraducao(true);
+                    /* O escopo da lateral: a descrição e as tabelas que ela mostra. */
+                    tradutor.translate(entityType, entity.key, [
+                      { field: 'main', html: original },
+                      ...camposDeTabela.map((field) => ({ field, html: tabelas?.[field] ?? '' })),
+                    ]);
+                  },
+                  onToggle: () => {
+                    setVerTraducao((estava) => !estava);
+                  },
+                }
+          }
         />
 
         {/*
@@ -377,7 +418,7 @@ export function DetailPanel({
         O aviso de tradução (Etapa 34): de que forma veio, e se o original mudou desde
         então — a impressão digital gravada não bate com a do texto de hoje.
       */}
-      {traducao !== null && verTraducao && (
+      {mostrandoTraducao && translationShowing === undefined && (
         <p className={styles['contexto']}>
           {t.translatedBy(
             strings.settings.translation.methods[traducao.method]?.name ?? traducao.method,
@@ -399,6 +440,7 @@ export function DetailPanel({
           entity={entity}
           entityType={entityType}
           description={corpo}
+          tables={tabelasVistas}
           {...(links === undefined ? {} : { links })}
           {...(reference === undefined
             ? {}
@@ -533,16 +575,7 @@ function Actions({
         fazer. Sem tradução gravada, traduz; com ela, alterna. Enquanto traduz, diz que
         está traduzindo; se falhou, o erro vai para o `title` e o botão volta a oferecer.
       */}
-      {translation === undefined ? (
-        <button
-          type="button"
-          className={cx(styles['action'], 'chamfer-sm')}
-          disabled
-          title={t.translationPending}
-        >
-          {t.translate}
-        </button>
-      ) : (
+      {translation !== undefined && (
         <button
           type="button"
           className={cx(styles['action'], 'chamfer-sm')}
@@ -961,6 +994,7 @@ function Lateral({
   entity,
   entityType,
   description,
+  tables,
   links,
   onOpenReference,
   onOpenSlug,
@@ -971,23 +1005,20 @@ function Lateral({
   readonly entityType: string;
   /** O corpo da descrição, pronto: é o que a sub-aba `description` mostra. */
   readonly description: React.ReactNode;
+  /** O texto de cada sub-aba de tabela, já na língua vista; `null` até chegar. */
+  readonly tables: Readonly<Record<string, string>> | null;
   readonly links?: RichTextLinks;
   readonly onOpenReference?: (uuid: string, novo: boolean) => void;
   readonly onOpenSlug?: (entityType: string, slug: string, novo: boolean) => void;
   readonly nameOf?: (uuid: string) => string | null;
 }) {
-  const camposDeTabela = useMemo(
-    () => side.tabs.flatMap((tab) => (tab.kind === 'table' ? [tab.field] : [])),
-    [side.tabs],
-  );
-  const tabelas = useDescriptionFields(entityType, entity.key, camposDeTabela);
   const abas = side.tabs.filter(
-    (tab) => tab.kind !== 'table' || (tabelas !== null && tabelas[tab.field] !== ''),
+    (tab) => tab.kind !== 'table' || (tables !== null && tables[tab.field] !== ''),
   );
   const [abaId, setAbaId] = useState(() => ultimaSubAba.get(entityType) ?? side.tabs[0]?.id ?? '');
   /* A lembrada pode não existir aqui (Detalhes some na tela completa; Magias, em 17): cai na primeira. */
   const aba = abas.find((tab) => tab.id === abaId) ?? abas[0];
-  const html = aba?.kind === 'table' ? (tabelas?.[aba.field] ?? '') : '';
+  const html = aba?.kind === 'table' ? (tables?.[aba.field] ?? '') : '';
   const nodes = useMemo(
     () => (html === '' ? null : pruneForReading(parseDescription(html))),
     [html],

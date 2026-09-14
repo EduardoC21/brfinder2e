@@ -8,12 +8,18 @@ import {
 } from '@core/store/index';
 import {
   createLocalProvider,
+  dictionaryPhrases,
   machineLanguage,
+  namePhrases,
+  pairTerms,
+  readCommunityDictionary,
   readCommunityNames,
+  readCommunityTerms,
   type ProviderAvailability,
   type TranslationMethodId,
   type TranslationProvider,
 } from '@core/translation/index';
+import { readGlossary } from '@core/store/index';
 import { createIndexedDbStore } from '@platform/store-indexeddb';
 import { createBergamotTranslator } from '@platform/translator-bergamot';
 import { usePreferences } from '@ui/prefs/usePreferences';
@@ -42,39 +48,51 @@ export function useTranslationsVersion(): number {
   return useSyncExternalStore(subscribe, () => versao);
 }
 
+const NENHUMA: Readonly<Record<string, Translation>> = {};
+
 /**
- * A tradução GRAVADA de um campo de uma entrada, na língua da preferência — ou nula. Relê
+ * As traduções GRAVADAS de uma entrada, por campo, na língua da preferência — vazio sem
+ * nenhuma. Por entrada e não por campo (Etapa 35): a lateral mostra o `main` E as tabelas,
+ * a tela completa mostra a página, o apêndice E as tabelas — e é uma leitura só. Relê
  * quando uma tradução nova é gravada (a versão sobe) ou a língua muda.
  */
-export function useStoredTranslation(
+export function useStoredTranslations(
   entityType: string,
   key: string,
-  field: string,
-): Translation | null {
+): Readonly<Record<string, Translation>> {
   const { prefs } = usePreferences();
   const language = prefs.translation.language;
   const version = useTranslationsVersion();
-  const token = `${language}/${entityType}/${key}/${field}#${String(version)}`;
-  const [loaded, setLoaded] = useState<{ token: string; translation: Translation | null }>({
-    token: '',
-    translation: null,
-  });
+  const token = `${language}/${entityType}/${key}#${String(version)}`;
+  const [loaded, setLoaded] = useState<{
+    token: string;
+    translations: Readonly<Record<string, Translation>>;
+  }>({ token: '', translations: NENHUMA });
 
   useEffect(() => {
     let alive = true;
     readTranslations(store, language, entityType)
       .then((todas) => {
-        if (alive) setLoaded({ token, translation: todas[key]?.[field] ?? null });
+        if (alive) setLoaded({ token, translations: todas[key] ?? NENHUMA });
       })
       .catch(() => {
-        if (alive) setLoaded({ token, translation: null });
+        if (alive) setLoaded({ token, translations: NENHUMA });
       });
     return () => {
       alive = false;
     };
-  }, [language, entityType, key, field, token]);
+  }, [language, entityType, key, token]);
 
-  return loaded.token === token ? loaded.translation : null;
+  return loaded.token === token ? loaded.translations : NENHUMA;
+}
+
+/** A tradução gravada de UM campo, ou nula. */
+export function useStoredTranslation(
+  entityType: string,
+  key: string,
+  field: string,
+): Translation | null {
+  return useStoredTranslations(entityType, key)[field] ?? null;
 }
 
 /*
@@ -96,8 +114,23 @@ async function provedores(
     }
     return null;
   };
+  /*
+   * O GLOSSÁRIO do pacote (Etapa 35): os termos emparelhados pela chave (inglês da base,
+   * português do pacote), as frases fixas do dicionário, e os nomes de condição e ação.
+   * Os fixos do app (`CORE_PHRASES`) vêm antes e vencem no empate.
+   */
+  const termosEn = await readGlossary(store, 'terms-en');
+  const termosPt = await readCommunityTerms(store, language);
+  const dicionario = await readCommunityDictionary(store, language);
+  const en: Record<string, string> = {};
+  for (const [k, v] of Object.entries(termosEn ?? {})) if (typeof v === 'string') en[k] = v;
+  const frases = [
+    ...pairTerms(en, termosPt),
+    ...dictionaryPhrases(dicionario),
+    ...namePhrases(nomes),
+  ];
   const todos: Partial<Record<TranslationMethodId, TranslationProvider>> = {
-    local: createLocalProvider(maquina, { nameOf: nomeDe }),
+    local: createLocalProvider(maquina, { nameOf: nomeDe, phrases: frases }),
   };
   return ids.flatMap((id) => {
     const provedor = todos[id];
@@ -110,35 +143,56 @@ export type TranslateState =
   | { readonly status: 'busy' }
   | { readonly status: 'error'; readonly message: string };
 
+/** Um campo a traduzir: o nome dele em `desc/` e o texto original. */
+export interface TranslateField {
+  readonly field: string;
+  readonly html: string;
+}
+
 /**
- * O botão TRADUZIR: percorre as formas ligadas na ordem, a primeira disponível traduz, e
- * o resultado vai para `trans/<língua>/<tipo>` — com a forma e a impressão digital do
- * original. Depois, quem lê a tradução gravada (`useStoredTranslation`) vê a nova.
+ * O botão TRADUZIR: percorre as formas ligadas na ordem, a primeira disponível traduz
+ * TODOS os campos do escopo do botão (Etapa 35, pelo autor: "cada botão respeitando todo
+ * o seu escopo" — a lateral traduz o `main` e as tabelas; a tela completa, a página, o
+ * apêndice e as tabelas), e cada resultado vai para `trans/<língua>/<tipo>` com a forma e
+ * a impressão digital do original. Um campo já traduzido do MESMO original é pulado: a
+ * lateral pode ter traduzido a tabela antes da tela completa. Depois, quem lê a tradução
+ * gravada (`useStoredTranslations`) vê as novas.
  */
 export function useTranslate(): {
   readonly state: TranslateState;
-  readonly translate: (entityType: string, key: string, field: string, html: string) => void;
+  readonly translate: (entityType: string, key: string, fields: readonly TranslateField[]) => void;
 } {
   const { prefs } = usePreferences();
   const { language, methods } = prefs.translation;
   const [state, setState] = useState<TranslateState>({ status: 'idle' });
 
   const translate = useCallback(
-    (entityType: string, key: string, field: string, html: string): void => {
+    (entityType: string, key: string, fields: readonly TranslateField[]): void => {
       setState({ status: 'busy' });
       (async () => {
+        const gravadas = (await readTranslations(store, language, entityType))[key] ?? {};
+        const pendentes = fields.filter(
+          ({ field, html }) => html !== '' && gravadas[field]?.sourceHash !== sourceHash(html),
+        );
+        if (pendentes.length === 0) {
+          setState({ status: 'idle' });
+          return;
+        }
         const candidatos = await provedores(methods, language);
         for (const provedor of candidatos) {
           const disponivel = await provedor.availability(language);
           if (disponivel.kind === 'unavailable') continue;
-          const traduzido = await provedor.translate({ language, entityType, key, field, html });
-          await writeTranslation(store, language, entityType, key, field, {
-            html: traduzido,
-            method: provedor.id,
-            at: new Date().toISOString(),
-            sourceHash: sourceHash(html),
-          });
-          anunciar();
+          for (const { field, html } of pendentes) {
+            const traduzido = await provedor.translate({ language, entityType, key, field, html });
+            await writeTranslation(store, language, entityType, key, field, {
+              html: traduzido,
+              method: provedor.id,
+              at: new Date().toISOString(),
+              sourceHash: sourceHash(html),
+            });
+            /* Anuncia campo a campo: a tela mostra o que já chegou enquanto o resto traduz. */
+            anunciar();
+          }
           setState({ status: 'idle' });
           return;
         }

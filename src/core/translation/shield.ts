@@ -16,11 +16,15 @@
  * não gravar do que gravar texto quebrado.
  *
  * E o GLOSSÁRIO: termos do jogo que o tradutor genérico erra ("Strike" vira "greve",
- * "saving throw" vira "salvar joga", "Fortitude" vira "fortaleza") são trocados ANTES
- * pelo termo da comunidade, dentro de `<span translate="no">`, que o Bergamot deixa em
- * paz. O rótulo de uma referência que o pacote conhece pelo nome ("Sneak Attack" →
- * "Ataque Furtivo") também entra assim, em vez de ir para o tradutor. Só em texto —
- * nunca dentro de uma tag HTML.
+ * "saving throw" vira "salvar joga", "Fortitude" vira "fortaleza") viram um elemento
+ * próprio, `<x-g i="n">skill feat</x-g>`, com o INGLÊS dentro: o tradutor vê a frase
+ * inteira (e acerta a volta dela), e `restore` joga fora o que ele fez com o termo e põe
+ * o da comunidade. Na Etapa 34 o termo ia em `<span translate="no">` já em português —
+ * medido na 35, o Bergamot mexe na ORDEM das palavras dentro do `translate="no"`
+ * ("talento de perícia" voltou "de talento perícia"): ele não traduz, mas realinha. O
+ * rótulo de referência que o pacote conhece pelo nome ("Sneak Attack" → "Ataque
+ * Furtivo") segue a mesma regra: vai em inglês, e volta pelo nome. Só em texto — nunca
+ * dentro de uma tag HTML.
  */
 
 import { parseMarkup } from '../markup/parse';
@@ -53,13 +57,19 @@ export class ShieldError extends Error {}
 const ETIQUETA = /(<[^>]+>)/;
 const REF = /<x-ref i="(\d+)">([\s\S]*?)<\/x-ref>/g;
 const TOK = /<x-tok i="(\d+)"><\/x-tok>/g;
-const SEM_TRADUCAO = /<span translate="no">([\s\S]*?)<\/span>/g;
+const GLOSSARIO = /<x-g i="(\d+)">([\s\S]*?)<\/x-g>/g;
 
 function escapeRegex(text: string): string {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+/** "STRENGTH OR DEXTERITY": um título em caixa alta, no dado — o termo vai em caixa alta. */
+function ehCaixaAlta(texto: string): boolean {
+  return texto.length > 1 && texto === texto.toUpperCase() && texto !== texto.toLowerCase();
+}
+
 function comCaixaDe(modelo: string, termo: string): string {
+  if (ehCaixaAlta(modelo)) return termo.toUpperCase();
   const primeira = modelo.charAt(0);
   if (primeira === primeira.toUpperCase() && primeira !== primeira.toLowerCase()) {
     return termo.charAt(0).toUpperCase() + termo.slice(1);
@@ -68,27 +78,35 @@ function comCaixaDe(modelo: string, termo: string): string {
 }
 
 /**
- * Aplica o glossário a um trecho de TEXTO (fora de tags): termo → `<span translate="no">`.
- * Uma passada só, com todos os termos numa alternância (do mais longo ao mais curto):
- * passadas sucessivas deixariam um termo casar dentro do que outro já protegeu.
+ * Aplica o glossário a um trecho de TEXTO (fora de tags): termo → `<x-g i="n">termo</x-g>`,
+ * e o português vai para `termos`, na caixa do original. Uma passada só, com todos os
+ * termos numa alternância (do mais longo ao mais curto): passadas sucessivas deixariam
+ * um termo casar dentro do que outro já protegeu.
  */
-function comGlossario(texto: string, phrases: readonly Phrase[]): string {
-  const porTermo = new Map(phrases.map((phrase) => [phrase.en.toLowerCase(), phrase]));
+function comGlossario(texto: string, phrases: readonly Phrase[], termos: string[]): string {
+  /* O PRIMEIRO termo de cada chave vence: os fixos do app vêm antes dos do pacote. */
+  const porTermo = new Map<string, Phrase>();
+  for (const phrase of phrases) {
+    const chave = phrase.en.toLowerCase();
+    if (!porTermo.has(chave)) porTermo.set(chave, phrase);
+  }
   const regex = new RegExp(`\\b(?:${phrases.map((p) => escapeRegex(p.en)).join('|')})\\b`, 'gi');
   return texto.replace(regex, (match) => {
     const phrase = porTermo.get(match.toLowerCase());
     if (phrase === undefined) return match;
-    if (phrase.exact === true && match !== phrase.en) return match;
-    return `<span translate="no">${comCaixaDe(match, phrase.pt)}</span>`;
+    /* O exato aceita a caixa alta: "STRENGTH" num título é o atributo, não outra coisa. */
+    if (phrase.exact === true && match !== phrase.en && !ehCaixaAlta(match)) return match;
+    termos.push(comCaixaDe(match, phrase.pt));
+    return `<x-g i="${String(termos.length)}">${match}</x-g>`;
   });
 }
 
 /** O glossário só em texto: o HTML é fatiado em tags e trechos, e só os trechos mudam. */
-function glossarioForaDasTags(html: string, phrases: readonly Phrase[]): string {
+function glossarioForaDasTags(html: string, phrases: readonly Phrase[], termos: string[]): string {
   if (phrases.length === 0) return html;
   return html
     .split(ETIQUETA)
-    .map((parte) => (parte.startsWith('<') ? parte : comGlossario(parte, phrases)))
+    .map((parte) => (parte.startsWith('<') ? parte : comGlossario(parte, phrases, termos)))
     .join('');
 }
 
@@ -101,27 +119,24 @@ function comRotulo(raw: string, label: string, novo: string): string {
 
 export function shield(html: string, options: ShieldOptions = {}): Shielded {
   const phrases = [...(options.phrases ?? [])].sort((a, b) => b.en.length - a.en.length);
-  const marcas: { raw: string; label: string | null }[] = [];
+  const marcas: { raw: string; label: string | null; nome: string | null }[] = [];
+  const termos: string[] = [];
   const partes: string[] = [];
 
   for (const token of parseMarkup(html)) {
     if (token.kind === 'text') {
-      partes.push(glossarioForaDasTags(token.raw, phrases));
+      partes.push(glossarioForaDasTags(token.raw, phrases, termos));
       continue;
     }
     const i = marcas.length + 1;
     const label = 'label' in token ? token.label : null;
-    marcas.push({ raw: token.raw, label });
-    if (label === null || label === '') {
-      partes.push(`<x-tok i="${String(i)}"></x-tok>`);
-      continue;
-    }
-    /* O rótulo que o pacote conhece não vai ao tradutor: entra pronto e protegido. */
-    const nome = options.nameOf?.(label) ?? null;
+    /* O rótulo que o pacote conhece pelo nome volta pelo nome; o tradutor só vê o inglês. */
+    const nome = label === null || label === '' ? null : (options.nameOf?.(label) ?? null);
+    marcas.push({ raw: token.raw, label, nome });
     partes.push(
-      nome === null
-        ? `<x-ref i="${String(i)}">${label}</x-ref>`
-        : `<x-ref i="${String(i)}"><span translate="no">${nome}</span></x-ref>`,
+      label === null || label === ''
+        ? `<x-tok i="${String(i)}"></x-tok>`
+        : `<x-ref i="${String(i)}">${label}</x-ref>`,
     );
   }
 
@@ -135,7 +150,7 @@ export function shield(html: string, options: ShieldOptions = {}): Shielded {
         const marca = marcas[i - 1];
         if (marca?.label == null) throw new ShieldError(`marca ${n} sem rótulo`);
         vistas.add(i);
-        const novo = label.replace(SEM_TRADUCAO, '$1').trim();
+        const novo = marca.nome ?? label.trim();
         return comRotulo(marca.raw, marca.label, novo === '' ? marca.label : novo);
       });
       out = out.replace(TOK, (_, n: string) => {
@@ -151,7 +166,15 @@ export function shield(html: string, options: ShieldOptions = {}): Shielded {
         );
       }
       if (/<x-(ref|tok)\b/.test(out)) throw new ShieldError('marca mal formada na tradução');
-      return out.replace(SEM_TRADUCAO, '$1');
+      /*
+       * Os termos do glossário: o que o tradutor fez com o inglês sai, o da comunidade
+       * entra. Um termo que o tradutor engoliu não é erro — fica o que ele escreveu.
+       */
+      out = out.replace(
+        GLOSSARIO,
+        (_, n: string, dentro: string) => termos[Number(n) - 1] ?? dentro,
+      );
+      return out.replace(/<\/?x-g\b[^>]*>/g, '');
     },
   };
 }

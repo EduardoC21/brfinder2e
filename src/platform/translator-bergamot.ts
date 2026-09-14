@@ -12,7 +12,7 @@
  *
  * Medido no navegador em 14/09/2026: 5,7 s na primeira tradução (com o download);
  * 20 a 35 ms por parágrafo depois. O modo HTML preserva tags e atributos, inclusive
- * `<span translate="no">`, que a blindagem usa.
+ * os elementos `<x-ref>`, `<x-tok>` e `<x-g>` que a blindagem usa.
  */
 
 import {
@@ -36,11 +36,11 @@ export const keyBergamot = (parte: string): string => `bergamot/${parte}`;
  * os dois é tudo o que o offline precisa.
  */
 class ApoioComCache extends TranslatorBacking {
-  constructor(
-    private readonly store: StorePort,
-    options: BergamotOptions,
-  ) {
+  private readonly store: StorePort;
+
+  constructor(store: StorePort, options: BergamotOptions) {
     super(options);
+    this.store = store;
   }
 
   override async loadModelRegistery(): Promise<unknown> {

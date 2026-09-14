@@ -52,6 +52,8 @@ interface DetailPaneProps {
    * componente só empresta o espaço.
    */
   readonly overlay?: React.ReactNode;
+  /** Repassado ao painel: a tela completa é dona da tradução (Etapa 35). */
+  readonly translationShowing?: boolean;
   readonly collapsed: boolean;
   readonly onToggleCollapsed: () => void;
 }
@@ -79,6 +81,7 @@ export function DetailPane({
   onToggleCollapsed,
   reference,
   side,
+  translationShowing,
 }: DetailPaneProps) {
   /*
    * A largura vem da preferência, não de um `useState` local: ela precisa sobreviver ao
@@ -180,6 +183,7 @@ export function DetailPane({
           {...(onExpand === undefined ? {} : { onExpand })}
           {...(reference === undefined ? {} : { reference })}
           {...(side === undefined ? {} : { side })}
+          {...(translationShowing === undefined ? {} : { translationShowing })}
         />
       )}
 

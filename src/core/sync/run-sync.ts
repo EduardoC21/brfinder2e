@@ -24,6 +24,7 @@ import {
   type ZipChannel,
 } from '../source/index';
 import { buildTraitGlossary, type TraitGlossary } from '../glossary/index';
+import { pickTerms } from '../translation/terms';
 import { listRetiredRaw, type StorePort } from '../store/index';
 import { indexFeats, type FeatsByName } from '../normalization/feats-index';
 import { indexClassFeatures, type ClassFeaturesIndex } from '../normalization/features-index';
@@ -103,6 +104,8 @@ export interface SyncResult {
    * chegar juntas.
    */
   readonly traitGlossary: TraitGlossary;
+  /** As famílias de termos da tabela de idioma, em inglês. Ver `translation/terms.ts`. */
+  readonly termsEn: Readonly<Record<string, string>>;
 }
 
 export interface SyncOptions {
@@ -244,6 +247,8 @@ export async function runSync(
     types,
     total: types.reduce((sum, entry) => sum + entry.imported, 0),
     traitGlossary: buildTraitGlossary(language),
+    /* O lado inglês do glossário de termos (Etapa 35): emparelha com o do pacote. */
+    termsEn: pickTerms(language),
   };
 }
 

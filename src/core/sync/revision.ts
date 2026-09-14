@@ -30,5 +30,8 @@
  *   9  Etapa 25b — os talentos adicionais do arquétipo, e a prosa sem o parágrafo deles.
  *  10  Etapa 25c — a dedicação recuperada pela tabela de talentos (Guardian).
  *  11  Etapa 26 — a fonte de classe; as 874 habilidades de classe entram em Habilidades.
+ *  12–15  Etapas 26b, 26d, 26e, 26g — as siglas, as tabelas da lateral da classe, a ordem
+ *      das escolhas, as perícias numa linha.
+ *  16  Etapa 35 — `glossary/terms-en`: o lado inglês do glossário de termos, com a base.
  */
-export const RECIPES_REVISION = 15;
+export const RECIPES_REVISION = 16;

@@ -48,6 +48,7 @@ function result(entities: readonly NormalizedEntity[]): SyncResult {
     total: entities.length,
     unreadPacks: [],
     traitGlossary: { agile: { label: 'Agile', description: 'The multiple attack penalty…' } },
+    termsEn: { 'PF2E.ConditionTypeFrightened': 'Frightened' },
   };
 }
 
@@ -64,6 +65,10 @@ describe('persistSync', () => {
     );
     expect(await readGlossary(store, 'traits')).toEqual({
       agile: { label: 'Agile', description: 'The multiple attack penalty…' },
+    });
+    /* O lado inglês dos termos (Etapa 35) vai junto: nasce do mesmo zip. */
+    expect(await readGlossary(store, 'terms-en')).toEqual({
+      'PF2E.ConditionTypeFrightened': 'Frightened',
     });
   });
 
