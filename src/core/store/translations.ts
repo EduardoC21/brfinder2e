@@ -98,6 +98,28 @@ export async function writeTranslation(
   });
 }
 
+/**
+ * Apaga UMA tradução (Etapa 43). É o único caminho de volta da forma `manual`: como ela
+ * nunca é sobrescrita, quem quer a tradução da máquina de novo apaga a sua antes.
+ */
+export async function deleteTranslation(
+  store: StorePort,
+  language: string,
+  type: string,
+  key: string,
+  field: string,
+): Promise<void> {
+  const atual = await readTranslations(store, language, type);
+  const campos = atual[key];
+  if (campos?.[field] === undefined) return;
+  const resto = Object.fromEntries(Object.entries(campos).filter(([nome]) => nome !== field));
+  const outras = Object.fromEntries(Object.entries(atual).filter(([nome]) => nome !== key));
+  await store.put(
+    keyTranslations(language, type),
+    Object.keys(resto).length === 0 ? outras : { ...outras, [key]: resto },
+  );
+}
+
 /** As chaves de tradução existentes — `trans/pt-BR/spell`… — para a manutenção. */
 export async function translationKeys(store: StorePort): Promise<readonly string[]> {
   return store.keys('trans/');

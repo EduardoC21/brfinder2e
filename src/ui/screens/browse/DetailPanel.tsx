@@ -42,6 +42,7 @@ import { sourceHash } from '@core/store/index';
 import { itemBulkText, itemDamageText, itemPriceText, statText } from './itemFields';
 import type { PopoutSubject } from './popouts';
 import { areaText, defenseText, durationText, ritualLines, spellCast } from './spellFields';
+import { TranslationEditor } from './TranslationEditor';
 import styles from './DetailPanel.module.css';
 
 const t = strings.browse.detail;
@@ -172,6 +173,8 @@ export function DetailPanel({
     setEntradaDaTraducao(entity.key);
     setVerTraducao(prefs.translation.display === 'translated');
   }
+  /* O editor de tradução (Etapa 43), do `main`: abre por cima de tudo, num portal. */
+  const [editando, setEditando] = useState(false);
   const mostrando = translationShowing ?? verTraducao;
   const mostrandoTraducao = traducao !== null && mostrando;
   const description = mostrandoTraducao ? traducao.html : original;
@@ -374,6 +377,9 @@ export function DetailPanel({
                   onToggle: () => {
                     setVerTraducao((estava) => !estava);
                   },
+                  onEdit: () => {
+                    setEditando(true);
+                  },
                 }
           }
         />
@@ -430,6 +436,22 @@ export function DetailPanel({
           ))}
         </dl>
       </header>
+
+      {editando && original !== null && (
+        <TranslationEditor
+          entityType={entityType}
+          entityKey={entity.key}
+          field="main"
+          title={displayName(entityType, fieldValue(entity, 'name'))}
+          original={original}
+          current={traducao === null ? null : { html: traducao.html, method: traducao.method }}
+          onClose={(saved) => {
+            setEditando(false);
+            /* Quem acabou de gravar a sua tradução quer vê-la. */
+            if (saved) setVerTraducao(true);
+          }}
+        />
+      )}
 
       {/*
         O aviso de tradução (Etapa 34): de que forma veio, e se o original mudou desde
@@ -533,6 +555,8 @@ interface TranslationActions {
   readonly error: string | null;
   readonly onTranslate: () => void;
   readonly onToggle: () => void;
+  /** Abre o editor da tradução (Etapa 43). */
+  readonly onEdit: () => void;
 }
 
 function Actions({
@@ -607,6 +631,18 @@ function Actions({
                 ? t.toggleOriginal
                 : t.toggleTranslated
               : t.translate}
+        </button>
+      )}
+
+      {translation !== undefined && (
+        <button
+          type="button"
+          className={cx(styles['icon'], 'chamfer-sm')}
+          aria-label={t.editTranslation}
+          title={t.editTranslation}
+          onClick={translation.onEdit}
+        >
+          ✎
         </button>
       )}
 

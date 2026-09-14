@@ -81,6 +81,10 @@ Antes: **Etapa 20** — as tabelas das regras param de quebrar (célula compacta
 linha, `@Embed` cola a entrada apontada, e as duas vassouras em Configurações: apagar as
 entradas aposentadas e apagar a base inteira.
 
+Antes: **Etapa 43** — a edição manual: o lápis abre a fonte HTML com prévia ao vivo e a
+trava das marcas do Foundry; grava como "manual" (nunca sobrescrita), com "Apagar
+tradução" como caminho de volta. E a vassoura do cache órfão do Bergamot ao abrir.
+
 Antes: **Etapa 42** — a limpeza: o Bergamot saiu (dependência, worker, cache do modelo,
 adaptador), a hierarquia de formas saiu das preferências e da tela, e as configurações de
 tradução viraram três blocos — como ler, o glossário da comunidade, o tradutor (Gemini).
@@ -211,7 +215,7 @@ como Tipo da ancestralidade; as abas de lista da tela completa, com o filtro tra
 Dwarf: Heranças 9, Talentos 48; Nephilim: Talentos 88.
 
 Próxima: o teste de verdade do Gemini com uma chave, e a amostra pelo modelo; depois,
-tradução em lote de uma fonte (com a cota do nível gratuito em mente) e a edição manual. O modelo de linguagem (BYOK, 2 ou 3 ferramentas) vem depois — é
+tradução em lote de uma fonte (com a cota do nível gratuito em mente). O modelo de linguagem (BYOK, 2 ou 3 ferramentas) vem depois — é
 aprimoramento, não o caminho principal. O PR
 ao pf2e com a seção 3 do INCONSISTENCIAS se faz em outro chat, com o repositório deles.
 

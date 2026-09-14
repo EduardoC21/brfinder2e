@@ -166,3 +166,9 @@
 .apendiceCorpo {
   margin-top: var(--space-4);
 }
+
+/* O lápis ao lado do Traduzir: mesma altura, sem `margin-left: auto` (o Traduzir já empurra). */
+.editar {
+  margin-left: 0;
+  padding: 0 var(--space-2);
+}

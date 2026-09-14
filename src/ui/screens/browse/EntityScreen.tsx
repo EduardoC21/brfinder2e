@@ -28,6 +28,7 @@ import { usePreferences } from '@ui/prefs/usePreferences';
 import { DetailPane } from './DetailPane';
 import type { ReferenceBridge } from './DetailPanel';
 import type { PopoutSubject } from './popouts';
+import { TranslationEditor } from './TranslationEditor';
 import styles from './EntityScreen.module.css';
 
 const t = strings.browse.fullView;
@@ -144,6 +145,8 @@ export function EntityScreen({
   );
   /* A lateral recolhe como na lista — e volta ao trocar de aba, que é conteúdo novo. */
   const [lateralFechada, setLateralFechada] = useState(false);
+  /* O editor de tradução da página (Etapa 43). */
+  const [editando, setEditando] = useState(false);
   /* O nome como a preferência manda (Etapa 36). */
   const nome = displayName(entityType, fieldValue(entity, 'name'));
 
@@ -272,7 +275,39 @@ export function EntityScreen({
                 : d.translate}
           </button>
         )}
+        {abaDePagina !== null && campoDaPagina !== null && textos !== null && (
+          <button
+            type="button"
+            className={cx(styles['traduzir'], styles['editar'], 'chamfer-sm')}
+            title={d.editTranslation}
+            aria-label={d.editTranslation}
+            onClick={() => {
+              setEditando(true);
+            }}
+          >
+            ✎
+          </button>
+        )}
       </header>
+
+      {editando && campoDaPagina !== null && textos !== null && (
+        <TranslationEditor
+          entityType={entityType}
+          entityKey={entity.key}
+          field={campoDaPagina}
+          title={nome}
+          original={textos[campoDaPagina] ?? ''}
+          current={
+            traducaoDaPagina === null
+              ? null
+              : { html: traducaoDaPagina.html, method: traducaoDaPagina.method }
+          }
+          onClose={(saved) => {
+            setEditando(false);
+            if (saved) setVerTraducao(true);
+          }}
+        />
+      )}
 
       {aba?.tab.kind === 'page' && (
         <>

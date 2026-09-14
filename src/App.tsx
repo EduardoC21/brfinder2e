@@ -1,3 +1,7 @@
+import { useEffect } from 'react';
+
+import { purgeLegacy } from '@core/store/index';
+import { createIndexedDbStore } from '@platform/store-indexeddb';
 import { TopBar } from '@ui/components/TopBar';
 import { useSync } from '@ui/hooks/useSync';
 import { PreferencesProvider } from '@ui/prefs/PreferencesProvider';
@@ -16,6 +20,12 @@ import { BrowseScreen } from '@ui/screens/browse/BrowseScreen';
  */
 export function App() {
   const sync = useSync();
+  /* O que uma versão anterior gravou e esta não lê (o cache do Bergamot) sai ao abrir. */
+  useEffect(() => {
+    purgeLegacy(createIndexedDbStore()).catch(() => {
+      // Sem armazenamento (teste, navegador sem IndexedDB), não há o que varrer.
+    });
+  }, []);
 
   return (
     <PreferencesProvider>

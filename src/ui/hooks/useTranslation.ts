@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 
 import {
+  deleteTranslation,
   readTranslations,
   sourceHash,
   writeTranslation,
@@ -20,6 +21,7 @@ import { readGlossary } from '@core/store/index';
 import { createIndexedDbStore } from '@platform/store-indexeddb';
 import { createGeminiChat } from '@platform/gemini';
 import { createBrowserSecretStore, LLM_KEY_SECRET } from '@platform/secrets';
+import { KEY_PREFERENCES, readPreferences } from '@core/prefs/index';
 import { strings } from '@i18n/index';
 import { usePreferences } from '@ui/prefs/usePreferences';
 
@@ -204,6 +206,40 @@ export function useTranslate(): {
   );
 
   return { state, translate };
+}
+
+/**
+ * A EDIÇÃO MANUAL (Etapa 43): grava o HTML da pessoa como `manual` — que a máquina nunca
+ * sobrescreve — com a impressão digital do original de hoje; e apaga uma tradução, que é
+ * o único caminho de volta da manual. As duas anunciam, para as telas relerem. A língua
+ * vem das preferências gravadas, lida na hora: fora de hook, porque quem chama é o
+ * editor num evento.
+ */
+export async function saveManualTranslation(
+  entityType: string,
+  key: string,
+  field: string,
+  html: string,
+  original: string,
+): Promise<void> {
+  const { translation } = readPreferences(await store.get(KEY_PREFERENCES));
+  await writeTranslation(store, translation.language, entityType, key, field, {
+    html,
+    method: 'manual',
+    at: new Date().toISOString(),
+    sourceHash: sourceHash(original),
+  });
+  anunciar();
+}
+
+export async function deleteStoredTranslation(
+  entityType: string,
+  key: string,
+  field: string,
+): Promise<void> {
+  const { translation } = readPreferences(await store.get(KEY_PREFERENCES));
+  await deleteTranslation(store, translation.language, entityType, key, field);
+  anunciar();
 }
 
 /**

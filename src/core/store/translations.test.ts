@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
 import { createMemoryStore } from './memory';
-import { readTranslations, sourceHash, translationKeys, writeTranslation } from './translations';
+import {
+  deleteTranslation,
+  readTranslations,
+  sourceHash,
+  translationKeys,
+  writeTranslation,
+} from './translations';
 
 const agora = '2026-09-14T12:00:00.000Z';
 
@@ -54,5 +60,25 @@ describe('a camada de traduções', () => {
     expect(sourceHash('a')).toBe(sourceHash('a'));
     expect(sourceHash('a')).not.toBe(sourceHash('b'));
     expect(sourceHash('')).toHaveLength(8);
+  });
+});
+
+describe('deleteTranslation', () => {
+  it('tira um campo; a entrada some quando fica sem campos; o resto fica', async () => {
+    const store = createMemoryStore();
+    const t = (html: string) => ({ html, method: 'manual' as const, at: 'x', sourceHash: 'h' });
+    await writeTranslation(store, 'pt-BR', 'spell', 'a', 'main', t('a-main'));
+    await writeTranslation(store, 'pt-BR', 'spell', 'a', 'page', t('a-page'));
+    await writeTranslation(store, 'pt-BR', 'spell', 'b', 'main', t('b-main'));
+    await deleteTranslation(store, 'pt-BR', 'spell', 'a', 'main');
+    expect(Object.keys((await readTranslations(store, 'pt-BR', 'spell'))['a'] ?? {})).toEqual([
+      'page',
+    ]);
+    await deleteTranslation(store, 'pt-BR', 'spell', 'a', 'page');
+    const depois = await readTranslations(store, 'pt-BR', 'spell');
+    expect(Object.keys(depois)).toEqual(['b']);
+    /* Apagada a manual, a máquina volta a poder gravar. */
+    await writeTranslation(store, 'pt-BR', 'spell', 'a', 'main', { ...t('llm'), method: 'llm' });
+    expect((await readTranslations(store, 'pt-BR', 'spell'))['a']?.['main']?.html).toBe('llm');
   });
 });

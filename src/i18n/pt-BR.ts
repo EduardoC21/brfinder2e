@@ -25,6 +25,23 @@ export const ptBR = {
     stale: '· sincronize de novo',
   },
   browse: {
+    /** O editor de tradução (Etapa 43). */
+    editor: {
+      title: (nome: string) => `Editar a tradução: ${nome}`,
+      fromOriginal: 'a partir do original — não há tradução gravada',
+      fromTranslation: (forma: string) => `a partir da tradução: ${forma.toLowerCase()}`,
+      source: 'HTML',
+      preview: 'Como vai aparecer',
+      hint: 'Edite o texto entre as tags. As marcas do Foundry (@UUID, @Damage, @Check…) têm de continuar: o nome entre chaves pode mudar, o alvo não.',
+      marksMissing: (alvos: readonly string[]) =>
+        `Falta${alvos.length === 1 ? '' : 'm'} ${String(alvos.length)} marca${alvos.length === 1 ? '' : 's'} do original: ${alvos.map((a) => a.slice(0, 60)).join(' · ')}`,
+      save: 'Gravar',
+      saving: 'Gravando…',
+      close: 'Fechar',
+      discard: 'Descartar',
+      delete: 'Apagar tradução',
+      deleteConfirm: 'Apagar mesmo — a máquina poderá traduzir de novo',
+    },
     /**
      * OS TERMOS DO SISTEMA em português, alimentados pela tradução da comunidade (Etapa 33,
      * pelo autor: "usar no sistema as traduções corretas"). Só aparecem com a preferência
@@ -570,6 +587,7 @@ export const ptBR = {
       translate: 'Traduzir',
       translating: 'Traduzindo…',
       retranslate: 'Traduzir de novo, sem usar o cache',
+      editTranslation: 'Editar a tradução',
       toggleOriginal: 'Ver original',
       toggleTranslated: 'Ver tradução',
       /** O aviso acima da tradução (Etapa 34). */

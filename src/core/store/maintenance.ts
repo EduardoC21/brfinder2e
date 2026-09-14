@@ -102,3 +102,22 @@ export async function countRetired(store: StorePort): Promise<number> {
   }
   return total;
 }
+
+/**
+ * A terceira vassoura (Etapa 43): o que uma versão anterior gravou e o app de hoje não
+ * lê mais. Roda sozinha ao abrir — não é decisão de ninguém, é lixo — e devolve quantas
+ * chaves tirou, para o registro. Hoje: o cache do modelo do Bergamot (`bergamot/…`, uns
+ * 22 MB), que saiu na Etapa 42.
+ */
+const PREFIXOS_ORFAOS = ['bergamot/'] as const;
+
+export async function purgeLegacy(store: StorePort): Promise<number> {
+  let tiradas = 0;
+  for (const prefixo of PREFIXOS_ORFAOS) {
+    for (const chave of await store.keys(prefixo)) {
+      await store.delete(chave);
+      tiradas += 1;
+    }
+  }
+  return tiradas;
+}

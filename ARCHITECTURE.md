@@ -1088,6 +1088,16 @@ gravada o mesmo botão alterna "Ver original" / "Ver tradução", nascendo na pr
 cada entrada; acima do texto, "Tradução: modelo local", e "o original mudou desde a
 tradução" quando a impressão digital não bate mais.
 
+**A edição manual (Etapa 43).** `TranslationEditor` (portal no `body`) edita UM campo
+(`main` na lateral e no flutuante; a página na tela completa). `saveManualTranslation`
+grava com `method: 'manual'` e a impressão digital do original de hoje;
+`deleteTranslation` (novo em `store/translations.ts`) tira o campo — e a entrada, se
+ficou vazia — porque a manual nunca é sobrescrita e alguém precisa poder voltar. A trava
+das marcas (`browse/marks.ts`) usa o MESMO tokenizador da leitura e da blindagem: um regex
+próprio tropeçava no `@Damage[6d6[fire]]`. Marca a mais não é erro; a menos, é.
+`purgeLegacy` (`store/maintenance.ts`) varre ao abrir o que uma versão anterior gravou e
+esta não lê — o cache do Bergamot.
+
 **Os links na prosa traduzida (Etapa 39).** `RichTextLinks.label(target, label)` deixa a
 tela trocar o rótulo de uma referência que resolve; a lateral e a tela completa passam
 `translatedLabel(tipo, nome, rótulo)` quando a prosa à vista é a tradução. `ui/text.ts`

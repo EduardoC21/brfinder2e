@@ -181,6 +181,18 @@ não tem fica no original, sem marca — a lista mistura "Anão" com "Aiuvarin" 
 honesto, não é erro. A lista ordena pelo nome que se vê. A busca acha pelos dois nomes seja
 qual for a escolha: quem procura não quer decidir antes como vai ler.
 
+**A edição manual (Etapa 43, pelo autor).** Um lápis ao lado do Traduzir — na lateral,
+no flutuante e na barra da tela completa — abre um editor MODAL: a fonte HTML da tradução
+à esquerda (ou do original, para começar do zero), a máscara de leitura à direita
+desenhando a cada tecla, e uma trava: só grava se todas as marcas do Foundry do original
+continuarem, com o mesmo alvo (o rótulo entre chaves pode mudar; o alvo não) — o aviso
+diz qual falta. Entre as três formas possíveis (editor visual, um campo por parágrafo, a
+fonte com prévia), a fonte é a única que garante o link e cabe numa etapa; a prévia tira
+o medo do HTML. Grava como "manual", que a máquina nunca sobrescreve — por isso o "Apagar
+tradução" mora no editor, com confirmação de dois cliques: é o único caminho de volta à
+tradução da máquina. Esc fecha só sem alteração; com alteração, só o botão Descartar.
+Quem grava vê a tradução na hora, seja qual for a preferência.
+
 **Os links na prosa traduzida (Etapa 39, pelo autor).** Quando o texto à vista é a
 tradução, a referência em latão mostra o nome traduzido do alvo — "Cegado", "Prostrado",
 "Enfraquecido 2" — resolvido na hora de desenhar, pelo pacote da comunidade, e não pelo
