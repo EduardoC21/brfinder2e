@@ -1,5 +1,5 @@
 export * from './community';
-export * from './local';
+export * from './polish';
 export * from './methods';
 export * from './phrases';
 export * from './shield';

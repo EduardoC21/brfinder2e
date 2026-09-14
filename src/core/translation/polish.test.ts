@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { polishPortuguese } from './local';
+import { polishPortuguese } from './polish';
 
 describe('o polimento do português', () => {
   it('põe o º nos ordinais que o motor escreve com "o" ou "a", só em texto', () => {

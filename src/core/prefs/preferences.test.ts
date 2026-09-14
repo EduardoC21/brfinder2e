@@ -47,8 +47,6 @@ describe('readPreferences', () => {
       names: 'original',
       language: 'pt-BR',
       llm: { model: 'gemini-2.5-flash' },
-      /* O local não vem ligado por padrão desde a 41. */
-      methods: ['manual', 'community', 'llm'],
     });
     expect(lido.layout).toEqual({
       detailWidth: 500,

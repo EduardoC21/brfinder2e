@@ -904,19 +904,24 @@ toda segunda-feira, e também em PR que mexa em `source/` ou `platform/`.
 O texto do jogo está em inglês e a tradução é **sob demanda** — por entrada, quando a
 pessoa pede. O esqueleto entrou na Etapa 30; os provedores entram um a um depois.
 
-### As formas, e por que são uma lista ordenada
+### As formas — e como a lista virou uma só (Etapas 30 → 42)
 
-Há mais de um jeito de obter uma tradução, e eles não valem o mesmo. Por isso as formas
-são uma **hierarquia** nas preferências (`translation.methods`, só as ligadas, na ordem):
-ao traduzir, a primeira disponível responde; ao mostrar, a tradução gravada por uma forma
-mais alta sobrescreve a de uma mais baixa. O que cada uma é, medido contra o que existe:
+A Etapa 30 desenhou uma **hierarquia** de quatro formas nas preferências (ligar,
+desligar, reordenar): a primeira disponível traduzia, a gravada por uma mais alta
+sobrescrevia a de uma mais baixa. Na Etapa 42, pelo autor ("só o modelo de linguagem"),
+a lista saiu. O que ficou de cada forma:
 
-| forma       | o que é                                                     | escopo    | internet |
-| ----------- | ----------------------------------------------------------- | --------- | -------- |
-| `manual`    | o que a pessoa escreveu ou corrigiu; nunca é sobrescrita    | prosa     | não      |
-| `community` | a tradução pt-BR do sistema pf2e para o Foundry (mclemente) | só termos | não      |
-| `llm`       | um modelo de linguagem por API, com a chave da pessoa       | prosa     | sim      |
-| `local`     | um modelo de tradução dentro do app (Bergamot, WASM, en→pt) | prosa     | não      |
+| forma       | o que é                                                     | hoje                                          |
+| ----------- | ----------------------------------------------------------- | --------------------------------------------- |
+| `manual`    | o que a pessoa escreveu ou corrigiu; nunca é sobrescrita    | regra fixa na gravação; a edição vem depois   |
+| `community` | a tradução pt-BR do sistema pf2e para o Foundry (mclemente) | INFRAESTRUTURA: glossário e nomes             |
+| `llm`       | o Gemini com a chave da pessoa                              | a ÚNICA forma que traduz prosa                |
+| `local`     | o motor do Firefox (Bergamot) dentro do app                 | REMOVIDO na 42; o que gravou continua legível |
+
+`translation.methods` saiu das preferências; os ids antigos continuam válidos num registro
+de tradução (`method`), porque uma tradução feita pelo motor local ainda se lê até ser
+refeita. O que o Bergamot deixou de herança e ficou: a blindagem, o glossário, o
+polimento — tudo o que era do TEXTO e não do motor.
 
 **O pacote da comunidade é lido como glossário, por decisão do autor.** O repositório
 ainda tem os arquivos do Babele (nomes, e descrições parciais de antes do Remaster), mas
@@ -933,13 +938,11 @@ lado das traduções, porque `glossary/` é prefixo da base e `clearData` o apag
 mais conhecidas — a pessoa escolhe o provedor e o modelo, põe a própria chave e gasta os
 próprios créditos. O app não paga tradução para ninguém.
 
-**O executável muda as contas.** O app é Tauri e funciona sem internet depois de
-sincronizado. Um modelo local é o único caminho para prosa offline: o motor de tradução
-do Firefox (Bergamot) roda em WASM dentro da webview, com o par en→pt em uns 20 MB
-baixados uma vez — qualidade de tradutor automático, serve para ler. O modelo por API dá
-a melhor prosa, mas precisa de internet e de uma chave, que fica no **cofre do sistema**
-(plugin do Tauri), nunca em `prefs/`. As duas coexistem na lista: quem tem chave e
-internet usa a API; sem uma das duas, cai no local.
+**O executável deixou de mudar as contas** (Etapa 40, pelo autor: o offline não importa;
+o executável era só distribuição). A Etapa 34 tinha posto o motor do Firefox (Bergamot,
+WASM) dentro do app como o "carro-chefe" da prosa offline; a medição da 40 mostrou a
+qualidade de tradutor automático que ele era, e a 42 o tirou. A prosa é do modelo de
+linguagem, com a chave da pessoa fora de `prefs/`.
 
 **Os termos aparecem traduzidos pela preferência, não por pedido** (Etapa 31): com
 "Traduzido" e o pacote baixado, o rótulo do chip e a caixinha do traço saem em português
@@ -967,7 +970,11 @@ como sempre. O modo é um estado de módulo em `ui/text.ts` (`setTermMode`), lid
 da tela de consulta e não um hook: `fieldText` é chamada em dezenas de lugares sem React
 por perto; a lista remonta pela `key` quando o modo muda.
 
-### O provedor local: o carro-chefe (Etapa 34)
+### O provedor local (Etapa 34, removido na 42) e o que ele deixou
+
+O que segue descreve o motor que SAIU — fica como registro do que foi medido e do que a
+blindagem herdou dele. `platform/translator-bergamot.ts`, o trabalhador em
+`public/bergamot/`, a dependência e o cache do modelo não existem mais.
 
 **Decisão do autor:** a tradução "grátis e constante" é o caminho principal; os modelos
 de linguagem são aprimoramento. É o motor de tradução do Firefox — Bergamot,

@@ -8,23 +8,19 @@ import {
 } from '@core/store/index';
 import {
   createLlmProvider,
-  createLocalProvider,
   dictionaryPhrases,
-  machineLanguage,
   namePhrases,
   pairTerms,
   readCommunityDictionary,
   readCommunityNames,
   readCommunityTerms,
-  type ProviderAvailability,
-  type TranslationMethodId,
   type TranslationProvider,
 } from '@core/translation/index';
 import { readGlossary } from '@core/store/index';
 import { createIndexedDbStore } from '@platform/store-indexeddb';
 import { createGeminiChat } from '@platform/gemini';
 import { createBrowserSecretStore, LLM_KEY_SECRET } from '@platform/secrets';
-import { createBergamotTranslator } from '@platform/translator-bergamot';
+import { strings } from '@i18n/index';
 import { usePreferences } from '@ui/prefs/usePreferences';
 
 const store = createIndexedDbStore();
@@ -99,20 +95,15 @@ export function useStoredTranslation(
 }
 
 /*
- * Os PROVEDORES que existem, por id. Só o local hoje: `manual` é edição (não traduz),
- * `community` é glossário (alimenta os outros), `llm` ainda não existe. A ordem em que
- * se tenta é a das preferências; um id sem provedor é pulado.
+ * O PROVEDOR (Etapa 42: um só — o modelo de linguagem; a hierarquia de formas saiu). A
+ * chave mora nos segredos, nunca nas preferências (Etapa 41). O glossário do pacote entra
+ * aqui, montado a cada tradução — é uma leitura do armazenamento, e o pacote pode ter
+ * sido baixado depois do app abrir.
  */
-const maquina = createBergamotTranslator(store);
-/* A chave do modelo de linguagem mora nos segredos, nunca nas preferências (Etapa 41). */
 const segredos = createBrowserSecretStore();
 const gemini = createGeminiChat(() => segredos.get(LLM_KEY_SECRET));
 
-async function provedores(
-  ids: readonly TranslationMethodId[],
-  language: string,
-  llmModel: string,
-): Promise<TranslationProvider[]> {
+async function provedor(language: string, llmModel: string): Promise<TranslationProvider> {
   const nomes = await readCommunityNames(store, language);
   const nomeDe = (label: string): string | null => {
     for (const porTipo of Object.values(nomes)) {
@@ -136,19 +127,14 @@ async function provedores(
     ...dictionaryPhrases(dicionario),
     ...namePhrases(nomes),
   ];
-  const glossario = { nameOf: nomeDe, phrases: frases };
-  const todos: Partial<Record<TranslationMethodId, TranslationProvider>> = {
-    llm: createLlmProvider(
-      gemini,
-      async () => ({ model: llmModel, hasKey: (await segredos.get(LLM_KEY_SECRET)) !== null }),
-      glossario,
-    ),
-    local: createLocalProvider(maquina, glossario),
-  };
-  return ids.flatMap((id) => {
-    const provedor = todos[id];
-    return provedor === undefined ? [] : [provedor];
-  });
+  return createLlmProvider(
+    gemini,
+    async () => {
+      const chave = await segredos.get(LLM_KEY_SECRET);
+      return { model: llmModel, hasKey: chave !== null && chave !== '' };
+    },
+    { nameOf: nomeDe, phrases: frases },
+  );
 }
 
 export type TranslateState =
@@ -163,20 +149,20 @@ export interface TranslateField {
 }
 
 /**
- * O botão TRADUZIR: percorre as formas ligadas na ordem, a primeira disponível traduz
- * TODOS os campos do escopo do botão (Etapa 35, pelo autor: "cada botão respeitando todo
- * o seu escopo" — a lateral traduz o `main` e as tabelas; a tela completa, a página, o
- * apêndice e as tabelas), e cada resultado vai para `trans/<língua>/<tipo>` com a forma e
- * a impressão digital do original. Um campo já traduzido do MESMO original é pulado: a
- * lateral pode ter traduzido a tabela antes da tela completa. Depois, quem lê a tradução
- * gravada (`useStoredTranslations`) vê as novas.
+ * O botão TRADUZIR: o provedor traduz TODOS os campos do escopo do botão (Etapa 35, pelo
+ * autor: "cada botão respeitando todo o seu escopo" — a lateral traduz o `main` e as
+ * tabelas; a tela completa, a página, o apêndice e as tabelas), e cada resultado vai para
+ * `trans/<língua>/<tipo>` com a forma e a impressão digital do original. Um campo já
+ * traduzido do MESMO original é pulado: a lateral pode ter traduzido a tabela antes da
+ * tela completa. Sem chave, o botão diz isso. Depois, quem lê a tradução gravada
+ * (`useStoredTranslations`) vê as novas.
  */
 export function useTranslate(): {
   readonly state: TranslateState;
   readonly translate: (entityType: string, key: string, fields: readonly TranslateField[]) => void;
 } {
   const { prefs } = usePreferences();
-  const { language, methods } = prefs.translation;
+  const { language } = prefs.translation;
   const llmModel = prefs.translation.llm.model;
   const [state, setState] = useState<TranslateState>({ status: 'idle' });
 
@@ -192,30 +178,29 @@ export function useTranslate(): {
           setState({ status: 'idle' });
           return;
         }
-        const candidatos = await provedores(methods, language, llmModel);
-        for (const provedor of candidatos) {
-          const disponivel = await provedor.availability(language);
-          if (disponivel.kind === 'unavailable') continue;
-          for (const { field, html } of pendentes) {
-            const traduzido = await provedor.translate({ language, entityType, key, field, html });
-            await writeTranslation(store, language, entityType, key, field, {
-              html: traduzido,
-              method: provedor.id,
-              at: new Date().toISOString(),
-              sourceHash: sourceHash(html),
-            });
-            /* Anuncia campo a campo: a tela mostra o que já chegou enquanto o resto traduz. */
-            anunciar();
-          }
-          setState({ status: 'idle' });
+        const tradutor = await provedor(language, llmModel);
+        const disponivel = await tradutor.availability(language);
+        if (disponivel.kind !== 'ready') {
+          setState({ status: 'error', message: strings.settings.translation.llm.noKey });
           return;
         }
-        setState({ status: 'error', message: 'nenhuma forma de tradução disponível' });
+        for (const { field, html } of pendentes) {
+          const traduzido = await tradutor.translate({ language, entityType, key, field, html });
+          await writeTranslation(store, language, entityType, key, field, {
+            html: traduzido,
+            method: tradutor.id,
+            at: new Date().toISOString(),
+            sourceHash: sourceHash(html),
+          });
+          /* Anuncia campo a campo: a tela mostra o que já chegou enquanto o resto traduz. */
+          anunciar();
+        }
+        setState({ status: 'idle' });
       })().catch((erro: unknown) => {
         setState({ status: 'error', message: erro instanceof Error ? erro.message : String(erro) });
       });
     },
-    [language, methods, llmModel],
+    [language, llmModel],
   );
 
   return { state, translate };
@@ -262,10 +247,9 @@ export function useLlmKey(): {
     anunciar();
   }, []);
   const test = useCallback(async () => {
-    const [provedor] = await provedores(['llm'], language, llmModel);
-    if (provedor === undefined) return { ok: false as const, why: 'sem provedor' };
+    const tradutor = await provedor(language, llmModel);
     try {
-      const html = await provedor.translate({
+      const html = await tradutor.translate({
         language,
         entityType: 'teste',
         key: 'teste',
@@ -279,25 +263,4 @@ export function useLlmKey(): {
   }, [language, llmModel]);
 
   return { hasKey, save, forget, test };
-}
-
-/** O estado do modelo local para a língua — o que as configurações mostram ao lado dele. */
-export function useLocalStatus(language: string): ProviderAvailability | null {
-  const version = useTranslationsVersion();
-  const [estado, setEstado] = useState<ProviderAvailability | null>(null);
-  useEffect(() => {
-    let alive = true;
-    maquina
-      .ready('en', machineLanguage(language))
-      .then((resposta) => {
-        if (alive) setEstado(resposta);
-      })
-      .catch(() => {
-        if (alive) setEstado({ kind: 'unavailable', why: 'erro ao conferir o modelo' });
-      });
-    return () => {
-      alive = false;
-    };
-  }, [language, version]);
-  return estado;
 }

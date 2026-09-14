@@ -6,7 +6,7 @@
  * (`platform/secrets.ts`); o app não tem chave nem custo. O modelo traduz a PROSA; o
  * glossário entra de dois jeitos, e é isso que dá o melhor dos dois mundos medido na 40:
  *
- *   1. A BLINDAGEM (`shield.ts`), a mesma do provedor local: marcas do Foundry viram
+ *   1. A BLINDAGEM (`shield.ts`), herdada do provedor local (Etapas 34–38): marcas viram
  *      elementos que o modelo preserva, e cada termo do glossário vira
  *      `<span translate="no" i="n">`. Na volta, o conteúdo do span é descartado e o termo
  *      da comunidade entra — garantia que não depende do modelo obedecer.
@@ -18,10 +18,18 @@
  * sabe. Trocar de provedor (OpenAI, Groq) é outro adaptador da mesma porta.
  */
 
-import { CORE_PHRASES } from './phrases';
-import { polishPortuguese, type LocalGlossary } from './local';
 import type { ProviderAvailability, TranslationProvider, TranslationRequest } from './methods';
-import { shield } from './shield';
+import { CORE_PHRASES } from './phrases';
+import { polishPortuguese } from './polish';
+import { shield, type Phrase } from './shield';
+
+/** O que o pacote da comunidade dá ao provedor além dos termos fixos. */
+export interface TranslationGlossary {
+  /** Termos além dos fixos — os do pacote, quando houver. */
+  readonly phrases?: readonly Phrase[];
+  /** O nome em português de um rótulo de referência. */
+  readonly nameOf?: (label: string) => string | null;
+}
 
 /** Uma conversa de uma volta com o modelo: instrução, pedido, resposta em texto. */
 export interface LlmChat {
@@ -76,7 +84,7 @@ export function unfence(text: string): string {
 export function createLlmProvider(
   chat: LlmChat,
   config: () => Promise<LlmConfig>,
-  glossary: LocalGlossary = {},
+  glossary: TranslationGlossary = {},
 ): TranslationProvider {
   return {
     id: 'llm',

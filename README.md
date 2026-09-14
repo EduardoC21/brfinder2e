@@ -81,6 +81,10 @@ Antes: **Etapa 20** — as tabelas das regras param de quebrar (célula compacta
 linha, `@Embed` cola a entrada apontada, e as duas vassouras em Configurações: apagar as
 entradas aposentadas e apagar a base inteira.
 
+Antes: **Etapa 42** — a limpeza: o Bergamot saiu (dependência, worker, cache do modelo,
+adaptador), a hierarquia de formas saiu das preferências e da tela, e as configurações de
+tradução viraram três blocos — como ler, o glossário da comunidade, o tradutor (Gemini).
+
 Antes: **Etapa 41** — o Gemini com a chave da pessoa (BYOK) como forma principal de
 tradução: provedor no core com a blindagem e o glossário no prompt, adaptador REST na
 plataforma, a chave fora das preferências, e o bloco nas configurações (modelo, chave,

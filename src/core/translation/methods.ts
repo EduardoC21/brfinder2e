@@ -1,73 +1,44 @@
 /**
- * AS FORMAS DE TRADUÇÃO, e a hierarquia entre elas (Etapa 30, pelo autor).
+ * AS FORMAS DE TRADUÇÃO (Etapa 30; enxugadas na Etapa 42, pelo autor: "só o modelo de
+ * linguagem").
  *
  * O texto do jogo está em inglês e a tradução é SOB DEMANDA: por entrada, quando a
- * pessoa pede. Há mais de um jeito de obter uma tradução, e eles não valem o mesmo — a
- * que a pessoa escreveu à mão vale mais que a de um modelo, e a de um modelo bom vale
- * mais que a de um modelo fraco. Por isso as formas são uma LISTA ORDENADA nas
- * preferências: ao traduzir, a primeira que estiver disponível responde; ao mostrar, a
- * tradução gravada de uma forma mais alta na lista sobrescreve a de uma mais baixa.
+ * pessoa pede. Hoje há UMA forma que traduz prosa e uma que vale mais que ela:
  *
- * O que cada forma é, e o que ela pede num app que é um EXECUTÁVEL (Tauri) e funciona
- * sem internet depois de sincronizado:
+ *   manual   o que a pessoa escreveu ou corrigiu. Nunca é sobrescrita por outra forma. É
+ *            a única que vale para a ficha exportada. (A edição ainda não existe; a regra
+ *            já vale na gravação.)
+ *   llm      um modelo de linguagem por API — BYOK: a chave é da pessoa, guardada em
+ *            `platform/secrets.ts`, nunca em `prefs/`. O glossário entra no prompt e na
+ *            blindagem. Precisa de internet; o Gemini tem nível gratuito.
  *
- *   manual      o que a pessoa escreveu ou corrigiu. Sempre disponível; nunca é
- *               sobrescrita por outra forma. É a única que vale para a ficha exportada.
- *   community   o pacote da comunidade — a tradução pt-BR do sistema pf2e para o Foundry
- *               (mclemente/fvtt-ptbr-pf2e-translation). Desde a versão 3.3.0 ela traduz
- *               só a INTERFACE e os TERMOS (nomes e descrições de traços, perícias,
- *               ações do sistema): a tradução dos compêndios foi abandonada. Vale como
- *               glossário; não traduz prosa. Baixado na sincronização, como o zip — é
- *               conteúdo de terceiros, nunca embutido.
- *   llm         um modelo de linguagem por API — BYOK: a chave é da pessoa, guardada em
- *               `platform/secrets.ts`, nunca em `prefs/`. Melhor prosa, e o glossário
- *               entra no prompt. Precisa de internet; o Gemini tem nível gratuito. É a
- *               forma principal desde a Etapa 41.
- *   local       um modelo de tradução que roda dentro do app, sem internet — o motor do
- *               Firefox (Bergamot, WASM) com o par en→pt, uns 20 MB baixados uma vez.
- *               Qualidade de tradutor automático: serve para ler, não para publicar.
+ * O que já foi forma e deixou de ser: o PACOTE DA COMUNIDADE (Etapa 31) é glossário e
+ * nomes — alimenta a blindagem, o prompt e a tela — e não traduz prosa: virou
+ * infraestrutura, com o próprio bloco nas configurações. O MODELO LOCAL (Bergamot,
+ * Etapas 34–38) foi medido contra o modelo de linguagem na 40 e saiu na 42: qualidade de
+ * tradutor automático, e o offline deixou de importar.
  *
- * Nenhuma delas existe ainda além do contrato: esta etapa é o esqueleto — a preferência,
- * a camada de armazenamento e o lugar de cada provedor. `Preferences.translation.methods`
- * é a lista ligada, na ordem; o que não está nela está desligado.
+ * Os ids antigos (`community`, `local`) continuam VÁLIDOS numa tradução gravada: o
+ * registro diz de onde veio, e uma tradução feita pelo motor local ainda se lê até ser
+ * refeita.
  */
 
-export type TranslationMethodId = 'manual' | 'community' | 'llm' | 'local';
+export type TranslationMethodId = 'manual' | 'llm' | 'community' | 'local';
 
-export interface TranslationMethod {
-  readonly id: TranslationMethodId;
-  /** Traduz PROSA (descrições) ou só TERMOS (nomes, traços, rótulos)? */
-  readonly scope: 'prose' | 'terms';
-  /** Precisa de internet na hora de traduzir. */
-  readonly online: boolean;
-}
-
-/**
- * As formas, na ordem padrão da hierarquia — a que vale mais primeiro. O modelo local NÃO
- * vem ligado por padrão desde a Etapa 41 (pelo autor: "vamos usar só o Gemini"): fica
- * disponível para quem ligar. `DEFAULT_METHOD_ORDER` é a lista LIGADA por padrão.
- */
-export const TRANSLATION_METHODS: readonly TranslationMethod[] = [
-  { id: 'manual', scope: 'prose', online: false },
-  { id: 'community', scope: 'terms', online: false },
-  { id: 'llm', scope: 'prose', online: true },
-  { id: 'local', scope: 'prose', online: false },
-];
-
-export const DEFAULT_METHOD_ORDER: readonly TranslationMethodId[] = ['manual', 'community', 'llm'];
+const IDS: ReadonlySet<string> = new Set(['manual', 'llm', 'community', 'local']);
 
 /** As línguas que o app sabe pedir. Só pt-BR tem caminho hoje; as outras entram pelo mesmo contrato. */
 export const TRANSLATION_LANGUAGES: readonly string[] = ['pt-BR'];
 
 export function isTranslationMethodId(value: unknown): value is TranslationMethodId {
-  return TRANSLATION_METHODS.some((method) => method.id === value);
+  return typeof value === 'string' && IDS.has(value);
 }
 
 /**
  * O contrato de um provedor. `availability` responde ANTES de traduzir — é o que as
- * configurações mostram ao lado de cada forma ("sem chave", "modelo não baixado") — e
- * `translate` recebe o HTML original e devolve o HTML traduzido, preservando as marcas
- * `@UUID`/`@Embed`/`@Damage` do Foundry, que nunca se traduzem.
+ * configurações mostram ("sem chave") — e `translate` recebe o HTML original e devolve o
+ * HTML traduzido, preservando as marcas `@UUID`/`@Embed`/`@Damage` do Foundry, que nunca
+ * se traduzem (é a blindagem que garante).
  */
 export type ProviderAvailability =
   | { readonly kind: 'ready' }

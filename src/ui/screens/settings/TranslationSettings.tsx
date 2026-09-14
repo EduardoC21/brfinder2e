@@ -1,16 +1,11 @@
 import { useState } from 'react';
 
-import {
-  LLM_MODELS,
-  TRANSLATION_LANGUAGES,
-  TRANSLATION_METHODS,
-  type TranslationMethodId,
-} from '@core/translation/index';
+import { LLM_MODELS, TRANSLATION_LANGUAGES } from '@core/translation/index';
 import { withTranslation } from '@core/prefs/index';
 import { strings } from '@i18n/index';
 import { cx } from '@ui/cx';
 import { useCommunityPack } from '@ui/hooks/useCommunityPack';
-import { useLlmKey, useLocalStatus } from '@ui/hooks/useTranslation';
+import { useLlmKey } from '@ui/hooks/useTranslation';
 import { usePreferences } from '@ui/prefs/usePreferences';
 
 import styles from './SettingsPanel.module.css';
@@ -18,156 +13,23 @@ import styles from './SettingsPanel.module.css';
 const t = strings.settings.translation;
 
 /**
- * O setor TRADUÇÃO das configurações (Etapa 30, pelo autor): as preferências globais —
- * o que aparece quando há tradução, a língua, e as FORMAS de traduzir na ordem em que
- * uma sobrescreve a outra.
+ * O setor TRADUÇÃO das configurações (Etapa 30; enxugado na 42, pelo autor: "só o modelo
+ * de linguagem"). Três blocos, na ordem em que se decide:
  *
- * As formas são uma lista que se REORDENA e se LIGA/DESLIGA: `prefs.translation.methods`
- * guarda só as ligadas, na ordem. As desligadas ficam no fim, apagadas, com o botão de
- * ligar. Ao lado de cada uma, o que ela precisa para funcionar — hoje texto fixo; quando
- * os provedores existirem, é `availability()` de cada um que responde aqui.
+ *   1. como LER: o que aparece quando há tradução, os nomes das entradas, a língua;
+ *   2. o GLOSSÁRIO da comunidade — nomes e termos que alimentam a tradução e a tela;
+ *      era uma "forma" na hierarquia da 30, e nunca traduziu prosa: virou infraestrutura;
+ *   3. o TRADUTOR: o Gemini com a chave da pessoa — modelo, chave, Testar.
+ *
+ * A hierarquia de formas (ligar, desligar, reordenar) saiu com o modelo local: com um
+ * tradutor só, ela não decidia nada. A regra que sobrou não precisa de tela: a tradução
+ * manual, quando existir, nunca é sobrescrita.
  */
-/** A linha de estado do pacote da comunidade: o que há gravado, ou o que houve. */
-function estadoDoPacote(state: ReturnType<typeof useCommunityPack>['state']): string {
-  switch (state.status) {
-    case 'loading':
-      return t.community.loading;
-    case 'absent':
-      return t.community.absent;
-    case 'downloading':
-      return t.community.downloading;
-    case 'error':
-      return t.community.error(state.message);
-    case 'ready':
-      return t.community.ready(state.meta.tag, state.meta.traits, state.meta.names);
-  }
-}
-
-/** A linha de estado do modelo local: guardado, por baixar, ou sem como. */
-function estadoDoLocal(state: ReturnType<typeof useLocalStatus>): string {
-  if (state === null) return t.local.checking;
-  switch (state.kind) {
-    case 'ready':
-      return t.local.ready;
-    case 'needs-setup':
-      return t.local.needsSetup;
-    case 'unavailable':
-      return t.local.unavailable(state.why);
-  }
-}
-
 export function TranslationSettings() {
   const { prefs, update } = usePreferences();
-  const { display, names, language, methods } = prefs.translation;
+  const { display, names, language } = prefs.translation;
   const pacote = useCommunityPack(language);
-  const local = useLocalStatus(language);
   const chave = useLlmKey();
-
-  const ligadas = methods;
-  const desligadas = TRANSLATION_METHODS.map((m) => m.id).filter((id) => !ligadas.includes(id));
-
-  const mover = (id: TranslationMethodId, delta: -1 | 1): void => {
-    const i = ligadas.indexOf(id);
-    const j = i + delta;
-    if (i < 0 || j < 0 || j >= ligadas.length) return;
-    const nova = [...ligadas];
-    const outra = nova[j];
-    if (outra === undefined) return;
-    nova[j] = id;
-    nova[i] = outra;
-    update((atual) => withTranslation(atual, { methods: nova }));
-  };
-  const ligar = (id: TranslationMethodId, ligada: boolean): void => {
-    update((atual) =>
-      withTranslation(atual, {
-        methods: ligada
-          ? [...atual.translation.methods.filter((m) => m !== id), id]
-          : atual.translation.methods.filter((m) => m !== id),
-      }),
-    );
-  };
-
-  const linha = (id: TranslationMethodId, ligada: boolean, indice: number) => {
-    const forma = TRANSLATION_METHODS.find((m) => m.id === id);
-    return (
-      <li key={id} className={cx(styles['forma'], !ligada && styles['formaDesligada'])}>
-        <div className={styles['formaOrdem']}>
-          {ligada ? (
-            <>
-              <button
-                type="button"
-                className={styles['formaSeta']}
-                aria-label={t.moveUp}
-                disabled={indice === 0}
-                onClick={() => {
-                  mover(id, -1);
-                }}
-              >
-                ▲
-              </button>
-              <button
-                type="button"
-                className={styles['formaSeta']}
-                aria-label={t.moveDown}
-                disabled={indice === ligadas.length - 1}
-                onClick={() => {
-                  mover(id, 1);
-                }}
-              >
-                ▼
-              </button>
-            </>
-          ) : null}
-        </div>
-        <div className={styles['formaTexto']}>
-          <span className={styles['formaNome']}>
-            {ligada && <span className={styles['formaNumero']}>{indice + 1}</span>}
-            {t.methods[id]?.name ?? id}
-            {forma?.scope === 'terms' && (
-              <span className={styles['formaEscopo']}>{t.termsOnly}</span>
-            )}
-            {forma?.online === true && <span className={styles['formaEscopo']}>{t.online}</span>}
-          </span>
-          <span className={styles['formaEstado']}>
-            {id === 'community'
-              ? estadoDoPacote(pacote.state)
-              : id === 'local'
-                ? estadoDoLocal(local)
-                : (t.methods[id]?.status ?? '')}
-          </span>
-          {id === 'llm' && (
-            <Llm
-              model={prefs.translation.llm.model}
-              onModel={(model) => {
-                update((atual) => withTranslation(atual, { llm: { model } }));
-              }}
-              chave={chave}
-            />
-          )}
-          {id === 'community' && (
-            <button
-              type="button"
-              className={cx(styles['secondary'], styles['formaBotao'], 'chamfer-sm')}
-              disabled={pacote.state.status === 'downloading' || pacote.state.status === 'loading'}
-              onClick={pacote.download}
-            >
-              {pacote.state.status === 'ready' ? t.community.downloadAgain : t.community.download}
-            </button>
-          )}
-        </div>
-        <label className={styles['formaLiga']}>
-          <input
-            type="checkbox"
-            checked={ligada}
-            onChange={(event) => {
-              ligar(id, event.target.checked);
-            }}
-          />
-          {ligada ? t.on : t.off}
-        </label>
-      </li>
-    );
-  };
 
   return (
     <>
@@ -207,16 +69,51 @@ export function TranslationSettings() {
       </section>
 
       <section className={styles['section']}>
-        <h3 className={styles['sectionTitle']}>{t.methodsTitle}</h3>
-        <p className={styles['hint']}>{t.methodsDescription}</p>
-        <ol className={styles['formas']}>
-          {ligadas.map((id, indice) => linha(id, true, indice))}
-          {desligadas.map((id) => linha(id, false, -1))}
-        </ol>
+        <h3 className={styles['sectionTitle']}>{t.community.title}</h3>
+        <p className={styles['hint']}>{t.community.description}</p>
+        <div className={styles['llmLinha']}>
+          <span className={styles['formaEstado']}>{estadoDoPacote(pacote.state)}</span>
+          <button
+            type="button"
+            className={cx(styles['secondary'], styles['formaBotao'], 'chamfer-sm')}
+            disabled={pacote.state.status === 'downloading' || pacote.state.status === 'loading'}
+            onClick={pacote.download}
+          >
+            {pacote.state.status === 'ready' ? t.community.downloadAgain : t.community.download}
+          </button>
+        </div>
+      </section>
+
+      <section className={styles['section']}>
+        <h3 className={styles['sectionTitle']}>{t.llm.title}</h3>
+        <p className={styles['hint']}>{t.llm.description}</p>
+        <Llm
+          model={prefs.translation.llm.model}
+          onModel={(model) => {
+            update((atual) => withTranslation(atual, { llm: { model } }));
+          }}
+          chave={chave}
+        />
         <p className={styles['hint']}>{t.storage}</p>
       </section>
     </>
   );
+}
+
+/** A linha de estado do pacote da comunidade: o que há gravado, ou o que houve. */
+function estadoDoPacote(state: ReturnType<typeof useCommunityPack>['state']): string {
+  switch (state.status) {
+    case 'loading':
+      return t.community.loading;
+    case 'absent':
+      return t.community.absent;
+    case 'downloading':
+      return t.community.downloading;
+    case 'error':
+      return t.community.error(state.message);
+    case 'ready':
+      return t.community.ready(state.meta.tag, state.meta.traits, state.meta.names);
+  }
 }
 
 /** Um par Original / Traduzido, como rádio: a preferência de prosa e a de nomes usam o mesmo. */

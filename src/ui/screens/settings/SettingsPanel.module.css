@@ -82,80 +82,7 @@
   font: 400 var(--text-sm) / 1.4 var(--font-body);
 }
 
-/*
- * As formas de tradução: uma lista ORDENADA. Setas para subir e descer, o número da
- * posição, o nome com as etiquetas ("só termos", "internet"), o estado embaixo, e o
- * liga/desliga à direita. A desligada fica apagada no fim, sem número nem setas.
- */
-.formas {
-  list-style: none;
-  margin: 0 0 var(--space-3);
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-
-.forma {
-  display: grid;
-  grid-template-columns: 18px 1fr auto;
-  gap: var(--space-2);
-  align-items: center;
-  padding: var(--space-2);
-  border: 1px solid var(--color-hairline);
-}
-
-.formaDesligada {
-  opacity: 0.55;
-}
-
-.formaOrdem {
-  display: flex;
-  flex-direction: column;
-}
-
-.formaSeta {
-  border: 0;
-  padding: 0;
-  background: transparent;
-  color: var(--color-text-muted);
-  font-size: 9px;
-  line-height: 1.2;
-  cursor: pointer;
-}
-
-.formaSeta:disabled {
-  opacity: 0.3;
-  cursor: default;
-}
-
-.formaTexto {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.formaNome {
-  display: flex;
-  align-items: baseline;
-  gap: var(--space-2);
-  font: 500 var(--text-sm) / 1.3 var(--font-body);
-  color: var(--color-text);
-}
-
-.formaNumero {
-  font: 400 var(--text-xs) / 1 var(--font-mono);
-  color: var(--color-data);
-}
-
-.formaEscopo {
-  padding: 1px var(--space-1);
-  background: var(--color-bg);
-  font: 400 var(--text-xs) / 1.4 var(--font-mono);
-  color: var(--color-text-muted);
-}
-
+/* A linha de estado de um bloco (glossário, tradutor) e o botão pequeno ao lado dela. */
 .formaEstado {
   font: 400 var(--text-xs) / 1.4 var(--font-body);
   color: var(--color-text-muted);
@@ -166,15 +93,6 @@
   margin: var(--space-1) 0 0;
   padding: 2px var(--space-3);
   font-size: var(--text-xs);
-}
-
-.formaLiga {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  font: 400 var(--text-xs) / 1 var(--font-mono);
-  color: var(--color-text-muted);
-  cursor: pointer;
 }
 
 .section + .section {

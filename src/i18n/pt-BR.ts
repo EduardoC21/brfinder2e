@@ -767,30 +767,21 @@ export const ptBR = {
         description: 'Cada língua guarda o próprio conjunto de traduções.',
         names: { 'pt-BR': 'Português (Brasil)' } as Record<string, string>,
       },
-      methodsTitle: 'Formas de tradução',
-      methodsDescription:
-        'Na ordem: a primeira disponível traduz, e a tradução de uma forma mais alta na lista sobrescreve a de uma mais baixa.',
+      /**
+       * De onde uma tradução gravada veio, para o aviso acima do texto. `community` e
+       * `local` já não traduzem (Etapa 42), mas o que gravaram continua legível.
+       */
       methods: {
-        manual: {
-          name: 'Manual',
-          status: 'O que você escreveu ou corrigiu. Sempre disponível; nunca é sobrescrita.',
-        },
-        community: {
-          name: 'Pacote da comunidade',
-          status: 'A tradução pt-BR do sistema para o Foundry: nomes e termos, não a prosa.',
-        },
-        llm: {
-          name: 'Gemini (chave sua)',
-          status:
-            'A melhor prosa, com o glossário no contexto. Precisa de internet e de uma chave sua.',
-        },
-        local: {
-          name: 'Modelo local',
-          status: 'Roda dentro do app, sem internet (uns 22 MB, baixados uma vez).',
-        },
-      } as Record<string, { name: string; status: string }>,
-      /** O pacote da comunidade (Etapa 31): o que há gravado, e o botão. */
+        manual: { name: 'Manual' },
+        llm: { name: 'Gemini' },
+        community: { name: 'Pacote da comunidade' },
+        local: { name: 'Modelo local (antigo)' },
+      } as Record<string, { name: string }>,
+      /** O glossário da comunidade (Etapa 31): o que há gravado, e o botão. */
       community: {
+        title: 'Glossário da comunidade',
+        description:
+          'A tradução pt-BR do sistema para o Foundry: os nomes das entradas e os termos do jogo. É o que a tradução usa como glossário, e o que a tela usa para os nomes.',
         loading: 'Conferindo o que há gravado…',
         absent: 'Nomes e termos da tradução pt-BR do sistema para o Foundry. Ainda não baixado.',
         downloading: 'Baixando o pacote…',
@@ -800,18 +791,11 @@ export const ptBR = {
         download: 'Baixar',
         downloadAgain: 'Baixar de novo',
       },
-      /** O modelo local (Etapa 34): o motor do Firefox em WASM, com o modelo guardado. */
-      local: {
-        checking: 'Conferindo o modelo guardado…',
-        ready: 'Modelo guardado: traduz sem internet, dentro do app.',
-        needsSetup:
-          'Baixa o modelo (uns 22 MB) na primeira tradução e o guarda; depois, sem internet.',
-        unavailable: (porque: string) => `Indisponível: ${porque}.`,
-      },
-      termsOnly: 'só termos',
-      online: 'internet',
-      /** O modelo de linguagem BYOK (Etapa 41): modelo, chave, teste. */
+      /** O tradutor BYOK (Etapa 41): modelo, chave, teste. */
       llm: {
+        title: 'Tradutor',
+        description:
+          'O Gemini traduz a prosa com o glossário no contexto, usando uma chave sua. Precisa de internet. O que você corrigir à mão nunca é sobrescrito.',
         model: 'Modelo',
         key: 'Chave de API',
         keyPlaceholder: 'Cole a chave do Google AI Studio',
@@ -822,15 +806,11 @@ export const ptBR = {
         test: 'Testar',
         testing: 'Testando…',
         checking: 'Conferindo…',
-        noKey: 'Sem chave: cole a sua para ligar esta forma.',
+        noKey: 'Sem chave: cole a sua nas configurações para traduzir.',
         hasKey: 'Chave guardada.',
         testOk: (texto: string) => `Funciona: "${texto}"`,
         testFail: (porque: string) => `Não funcionou: ${porque}`,
       },
-      on: 'ligada',
-      off: 'desligada',
-      moveUp: 'Subir na ordem',
-      moveDown: 'Descer na ordem',
       storage:
         'As traduções ficam gravadas por língua, fora da base: sobrevivem à sincronização e não são apagadas com ela.',
     },

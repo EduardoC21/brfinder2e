@@ -165,8 +165,9 @@ Duas peças fazem isso funcionar:
 
 ### Tradução
 
-**Ligada na Etapa 34.** Um botão só, que diz o que vai fazer: sem tradução gravada,
-"Traduzir" (a primeira forma disponível na ordem das preferências — o modelo local, hoje);
+**Ligada na Etapa 34; um tradutor só desde a 42.** Um botão só, que diz o que vai fazer:
+sem tradução gravada, "Traduzir" (o Gemini com a chave da pessoa; sem chave, o botão
+avisa);
 enquanto traduz, "Traduzindo…"; com tradução gravada, "Ver original" / "Ver tradução",
 nascendo na preferência de visualização a cada entrada nova — e quem acabou de clicar em
 Traduzir vê a tradução. Acima do texto traduzido, a forma que o traduziu, e o aviso quando

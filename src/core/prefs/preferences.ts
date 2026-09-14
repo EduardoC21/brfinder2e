@@ -14,11 +14,6 @@
  * padrão, que é sempre recuperável; uma exceção aqui derrubaria a tela inteira na abertura.
  */
 
-import {
-  DEFAULT_METHOD_ORDER,
-  isTranslationMethodId,
-  type TranslationMethodId,
-} from '../translation/methods';
 import { DEFAULT_LLM_MODEL } from '../translation/llm';
 import type { FilterSelection } from '../browse/query';
 import { isRecord } from '../json';
@@ -91,9 +86,8 @@ export interface LayoutPreferences {
  *              gravada, é sempre o original: nada se traduz sem pedir.
  *   language   a língua para a qual se traduz; cada língua é um conjunto próprio em
  *              `trans/<língua>/`.
- *   methods    as formas LIGADAS, na ordem da hierarquia — a primeira que estiver
- *              disponível traduz, e a gravada por uma forma mais alta sobrescreve a de
- *              uma mais baixa. Ver `core/translation/methods.ts`.
+ *   llm        o modelo de linguagem escolhido — a chave NÃO mora aqui (Etapa 41). Não
+ *              há mais lista de formas (Etapa 42): o modelo traduz, a manual vence.
  */
 export interface TranslationPreferences {
   readonly display: 'original' | 'translated';
@@ -107,7 +101,6 @@ export interface TranslationPreferences {
   readonly language: string;
   /** O modelo de linguagem escolhido (Etapa 41). A chave NÃO mora aqui. */
   readonly llm: { readonly model: string };
-  readonly methods: readonly TranslationMethodId[];
 }
 
 export interface Preferences {
@@ -137,7 +130,6 @@ export const DEFAULT_PREFERENCES: Preferences = {
     names: 'original',
     language: 'pt-BR',
     llm: { model: DEFAULT_LLM_MODEL },
-    methods: DEFAULT_METHOD_ORDER,
   },
 };
 
@@ -206,9 +198,6 @@ export function readPreferences(stored: unknown): Preferences {
 
   const layout = isRecord(stored['layout']) ? stored['layout'] : {};
   const translation = isRecord(stored['translation']) ? stored['translation'] : {};
-  const methods = Array.isArray(translation['methods'])
-    ? translation['methods'].filter(isTranslationMethodId)
-    : null;
   return {
     sources,
     layout: {
@@ -230,8 +219,6 @@ export function readPreferences(stored: unknown): Preferences {
             ? translation['llm']['model']
             : DEFAULT_LLM_MODEL,
       },
-      // Chave ausente é "nunca configurei"; lista presente, mesmo vazia, é escolha.
-      methods: methods ?? DEFAULT_METHOD_ORDER,
     },
   };
 }
