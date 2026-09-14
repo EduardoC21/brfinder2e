@@ -35,3 +35,6 @@ coverage
 src-tauri/target
 src-tauri/gen/schemas
 __pycache__/
+
+# O trabalhador do Bergamot, copiado de node_modules no postinstall (Etapa 34).
+public/bergamot/

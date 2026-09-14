@@ -7,6 +7,7 @@ import { withTranslation } from '@core/prefs/index';
 import { strings } from '@i18n/index';
 import { cx } from '@ui/cx';
 import { useCommunityPack } from '@ui/hooks/useCommunityPack';
+import { useLocalStatus } from '@ui/hooks/useTranslation';
 import { usePreferences } from '@ui/prefs/usePreferences';
 
 import styles from './SettingsPanel.module.css';
@@ -39,10 +40,24 @@ function estadoDoPacote(state: ReturnType<typeof useCommunityPack>['state']): st
   }
 }
 
+/** A linha de estado do modelo local: guardado, por baixar, ou sem como. */
+function estadoDoLocal(state: ReturnType<typeof useLocalStatus>): string {
+  if (state === null) return t.local.checking;
+  switch (state.kind) {
+    case 'ready':
+      return t.local.ready;
+    case 'needs-setup':
+      return t.local.needsSetup;
+    case 'unavailable':
+      return t.local.unavailable(state.why);
+  }
+}
+
 export function TranslationSettings() {
   const { prefs, update } = usePreferences();
   const { display, language, methods } = prefs.translation;
   const pacote = useCommunityPack(language);
+  const local = useLocalStatus(language);
 
   const ligadas = methods;
   const desligadas = TRANSLATION_METHODS.map((m) => m.id).filter((id) => !ligadas.includes(id));
@@ -110,7 +125,11 @@ export function TranslationSettings() {
             {forma?.online === true && <span className={styles['formaEscopo']}>{t.online}</span>}
           </span>
           <span className={styles['formaEstado']}>
-            {id === 'community' ? estadoDoPacote(pacote.state) : (t.methods[id]?.status ?? '')}
+            {id === 'community'
+              ? estadoDoPacote(pacote.state)
+              : id === 'local'
+                ? estadoDoLocal(local)
+                : (t.methods[id]?.status ?? '')}
           </span>
           {id === 'community' && (
             <button

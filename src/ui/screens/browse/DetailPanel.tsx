@@ -23,12 +23,15 @@ import { ScrollRail } from '@ui/components/ScrollRail';
 import { TraitChip } from '@ui/components/TraitChip';
 import { useTraitLabel } from '@ui/glossary/useTraitLabel';
 import { useDescription, useDescriptionFields } from '@ui/hooks/useDescription';
+import { useStoredTranslation, useTranslate } from '@ui/hooks/useTranslation';
+import { usePreferences } from '@ui/prefs/usePreferences';
 import { CollapseToggle } from '@ui/components/CollapseToggle';
 import { cx } from '@ui/cx';
 import { bookLabel, capitalizar, fieldText, rankLabel } from '@ui/text';
 
 import { ATTRIBUTE_NAME_FIELDS, attributeNameByName, boostsText } from './backgroundFields';
 import { references as referenciasDe, type Reference } from './referenceFields';
+import { sourceHash } from '@core/store/index';
 import { itemBulkText, itemDamageText, itemPriceText, statText } from './itemFields';
 import type { PopoutSubject } from './popouts';
 import { areaText, defenseText, durationText, ritualLines, spellCast } from './spellFields';
@@ -126,7 +129,26 @@ export function DetailPanel({
   context,
   side,
 }: DetailPanelProps) {
-  const description = useDescription(entityType, entity.key);
+  const original = useDescription(entityType, entity.key);
+  /*
+   * A TRADUÇÃO GRAVADA do texto principal (Etapa 34). Existindo, a preferência decide o
+   * que aparece primeiro ("Original" ou "Traduzido"), e o botão troca; não existindo, o
+   * botão TRADUZ — pela primeira forma disponível na ordem das preferências. `verTraducao`
+   * nasce da preferência a cada entrada nova, e a pessoa pode virar nesta.
+   */
+  const traducao = useStoredTranslation(entityType, entity.key, 'main');
+  const { prefs } = usePreferences();
+  const tradutor = useTranslate();
+  const [verTraducao, setVerTraducao] = useState(prefs.translation.display === 'translated');
+  const [entradaDaTraducao, setEntradaDaTraducao] = useState(entity.key);
+  if (entradaDaTraducao !== entity.key) {
+    setEntradaDaTraducao(entity.key);
+    setVerTraducao(prefs.translation.display === 'translated');
+  }
+  const mostrandoTraducao = traducao !== null && verTraducao;
+  const description = mostrandoTraducao ? traducao.html : original;
+  const originalMudou =
+    traducao !== null && original !== null && traducao.sourceHash !== sourceHash(original);
 
   /*
    * A SUB-TELA: qual referência está aberta debaixo desta entrada.
@@ -279,7 +301,24 @@ export function DetailPanel({
         separadas, o nome fica com a largura inteira e nada o disputa.
       */}
       <header className={styles['head']}>
-        <Actions onCollapse={onCollapse} onPopOut={onPopOut} onExpand={onExpand} onBack={onBack} />
+        <Actions
+          onCollapse={onCollapse}
+          onPopOut={onPopOut}
+          onExpand={onExpand}
+          onBack={onBack}
+          translation={{
+            has: traducao !== null,
+            showing: mostrandoTraducao,
+            busy: tradutor.state.status === 'busy',
+            error: tradutor.state.status === 'error' ? tradutor.state.message : null,
+            onTranslate: () => {
+              if (original !== null) tradutor.translate(entityType, entity.key, 'main', original);
+            },
+            onToggle: () => {
+              setVerTraducao((estava) => !estava);
+            },
+          }}
+        />
 
         {/*
           Nome e raridade juntos, como na lista.
@@ -333,6 +372,19 @@ export function DetailPanel({
           ))}
         </dl>
       </header>
+
+      {/*
+        O aviso de tradução (Etapa 34): de que forma veio, e se o original mudou desde
+        então — a impressão digital gravada não bate com a do texto de hoje.
+      */}
+      {traducao !== null && verTraducao && (
+        <p className={styles['contexto']}>
+          {t.translatedBy(
+            strings.settings.translation.methods[traducao.method]?.name ?? traducao.method,
+          )}
+          {originalMudou && ` · ${t.originalChanged}`}
+        </p>
+      )}
 
       {/*
        * O painel INTEIRO rola (26d, pelo autor): antes só o corpo rolava, com o cabeçalho
@@ -414,16 +466,28 @@ export function DetailPanel({
  * Tudo DESABILITADO: a tradução sob demanda é a Etapa 15. Visível permite avaliar o
  * desenho; clicável seria fingir que funciona. O motivo vai no `title`.
  */
+/** O que a barra precisa saber da tradução: se há, se está à vista, e o que cada clique faz. */
+interface TranslationActions {
+  readonly has: boolean;
+  readonly showing: boolean;
+  readonly busy: boolean;
+  readonly error: string | null;
+  readonly onTranslate: () => void;
+  readonly onToggle: () => void;
+}
+
 function Actions({
   onCollapse,
   onPopOut,
   onExpand,
   onBack,
+  translation,
 }: {
   readonly onCollapse?: (() => void) | undefined;
   readonly onPopOut?: (() => void) | undefined;
   readonly onExpand?: (() => void) | undefined;
   readonly onBack?: (() => void) | undefined;
+  readonly translation?: TranslationActions | undefined;
 }) {
   return (
     <div className={styles['actions']}>
@@ -464,14 +528,37 @@ function Actions({
       )}
       <span className={styles['espaco']} />
 
-      <button
-        type="button"
-        className={cx(styles['action'], 'chamfer-sm')}
-        disabled
-        title={t.translationPending}
-      >
-        {t.translate}
-      </button>
+      {/*
+        TRADUZIR / VER ORIGINAL / VER TRADUÇÃO (Etapa 34): um botão só, que diz o que vai
+        fazer. Sem tradução gravada, traduz; com ela, alterna. Enquanto traduz, diz que
+        está traduzindo; se falhou, o erro vai para o `title` e o botão volta a oferecer.
+      */}
+      {translation === undefined ? (
+        <button
+          type="button"
+          className={cx(styles['action'], 'chamfer-sm')}
+          disabled
+          title={t.translationPending}
+        >
+          {t.translate}
+        </button>
+      ) : (
+        <button
+          type="button"
+          className={cx(styles['action'], 'chamfer-sm')}
+          disabled={translation.busy}
+          title={translation.error ?? undefined}
+          onClick={translation.has ? translation.onToggle : translation.onTranslate}
+        >
+          {translation.busy
+            ? t.translating
+            : translation.has
+              ? translation.showing
+                ? t.toggleOriginal
+                : t.toggleTranslated
+              : t.translate}
+        </button>
+      )}
 
       {onPopOut && (
         <button

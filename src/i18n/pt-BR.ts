@@ -568,9 +568,13 @@ export const ptBR = {
       nothingSelected: 'Escolha uma entrada da lista para ver os detalhes.',
       restore: 'Restaurar',
       translate: 'Traduzir',
+      translating: 'Traduzindo…',
       retranslate: 'Traduzir de novo, sem usar o cache',
       toggleOriginal: 'Ver original',
       toggleTranslated: 'Ver tradução',
+      /** O aviso acima da tradução (Etapa 34). */
+      translatedBy: (forma: string) => `Tradução: ${forma.toLowerCase()}`,
+      originalChanged: 'o original mudou desde a tradução',
       /** A tradução é a Etapa 14. Os botões existem, e dizem por que não funcionam ainda. */
       translationPending:
         'A tradução sob demanda é a Etapa 15 do plano. Os botões já estão no lugar para o desenho ser avaliado.',
@@ -777,7 +781,7 @@ export const ptBR = {
         },
         local: {
           name: 'Modelo local',
-          status: 'Roda dentro do app, sem internet (uns 20 MB, baixados uma vez). Não instalado.',
+          status: 'Roda dentro do app, sem internet (uns 22 MB, baixados uma vez).',
         },
       } as Record<string, { name: string; status: string }>,
       /** O pacote da comunidade (Etapa 31): o que há gravado, e o botão. */
@@ -790,6 +794,14 @@ export const ptBR = {
           `Baixado (${tag}): ${String(tracos)} traços, ${String(nomes)} nomes de entradas.`,
         download: 'Baixar',
         downloadAgain: 'Baixar de novo',
+      },
+      /** O modelo local (Etapa 34): o motor do Firefox em WASM, com o modelo guardado. */
+      local: {
+        checking: 'Conferindo o modelo guardado…',
+        ready: 'Modelo guardado: traduz sem internet, dentro do app.',
+        needsSetup:
+          'Baixa o modelo (uns 22 MB) na primeira tradução e o guarda; depois, sem internet.',
+        unavailable: (porque: string) => `Indisponível: ${porque}.`,
       },
       termsOnly: 'só termos',
       online: 'internet',

@@ -967,6 +967,47 @@ como sempre. O modo é um estado de módulo em `ui/text.ts` (`setTermMode`), lid
 da tela de consulta e não um hook: `fieldText` é chamada em dezenas de lugares sem React
 por perto; a lista remonta pela `key` quando o modo muda.
 
+### O provedor local: o carro-chefe (Etapa 34)
+
+**Decisão do autor:** a tradução "grátis e constante" é o caminho principal; os modelos
+de linguagem são aprimoramento. É o motor de tradução do Firefox — Bergamot,
+`@browsermt/bergamot-translator`, WASM num Web Worker dentro da webview: sem servidor,
+sem chave, sem custo. Medido: 5,7 s na primeira tradução (com o download do modelo
+en→pt, 22 MB), **20 a 35 ms por parágrafo** depois.
+
+Três peças, e a fronteira entre elas:
+
+- **`platform/translator-bergamot.ts`** é a porta (`MachineTranslator`): sabe do WASM, do
+  trabalhador (copiado de `node_modules` para `public/bergamot/` no `postinstall`, porque
+  ele carrega dois irmãos por caminho relativo que o empacotador não segue) e do modelo.
+  O registro e os três arquivos do modelo ficam GUARDADOS no armazenamento local
+  (`bergamot/…`, fora dos prefixos da base) — é o que faz o executável traduzir offline
+  depois da primeira vez. Uma subclasse de `TranslatorBacking` troca `fetch` e
+  `loadModelRegistery` por versões que passam pelo armazenamento antes da rede.
+- **`core/translation/shield.ts`** é a BLINDAGEM: o texto passa pelo mesmo tokenizador da
+  leitura (`parseMarkup`), e cada marca do Foundry vira um elemento inline que o modo HTML
+  do Bergamot preserva — `@UUID[…]{Fireball}` → `<x-ref i="1">Fireball</x-ref>` (o rótulo
+  traduz), `@Damage[…]` → `<x-tok i="2"></x-tok>` (nada traduz). `restore` refaz cada
+  marca com o rótulo traduzido; se uma marca sumiu, FALHA, e nada se grava. O rótulo que o
+  pacote da comunidade conhece pelo nome entra pronto e protegido ("Sneak Attack" →
+  "Ataque Furtivo").
+- **`core/translation/phrases.ts`** é o GLOSSÁRIO FIXO: termos que o tradutor genérico
+  erra — medido: "Strike" virou "greve", "Cast" virou "elenco", "saving throw" virou
+  "salvar joga", "Fortitude" virou "fortaleza" — trocados antes pelo termo da comunidade
+  dentro de `<span translate="no">`, que o Bergamot deixa em paz. Uma passada só, do termo
+  mais longo ao mais curto, só em texto (nunca dentro de uma tag); `exact` nos nomes
+  capitalizados ("Strike" é o golpe, "strike" é o verbo). Um termo não pode existir duas
+  vezes em caixas diferentes — há teste.
+
+`core/translation/local.ts` compõe as três: blinda, traduz pela porta, refaz.
+
+**O botão Traduzir** (na lateral e no flutuante) percorre as formas ligadas na ordem das
+preferências; a primeira que não está indisponível traduz o `main` e grava em
+`trans/<língua>/<tipo>` com a forma e a impressão digital. Com tradução gravada o mesmo
+botão alterna "Ver original" / "Ver tradução", nascendo na preferência; acima do texto,
+"Tradução: modelo local", e "o original mudou desde a tradução" quando a impressão
+digital não bate mais.
+
 ### Onde a tradução mora: a quinta camada
 
     trans/<língua>/<tipo>    { [chave]: { [campo]: { html, method, at, sourceHash } } }

@@ -81,6 +81,12 @@ Antes: **Etapa 20** — as tabelas das regras param de quebrar (célula compacta
 linha, `@Embed` cola a entrada apontada, e as duas vassouras em Configurações: apagar as
 entradas aposentadas e apagar a base inteira.
 
+Antes: **Etapa 34** — a tradução local, o carro-chefe: o motor do Firefox (Bergamot) em
+WASM dentro do app, com o modelo en→pt guardado para funcionar sem internet; a
+blindagem das marcas do Foundry (`@UUID`, `@Damage`… viram elementos que o motor
+preserva, e voltam com o rótulo traduzido — ou a tradução é recusada); o glossário fixo
+dos termos que o tradutor erra; e o botão Traduzir ligado na lateral e no flutuante.
+
 Antes: **Etapa 33** — os termos do sistema na nomenclatura da comunidade: "Características",
 "círculo", "Média"; e, com "Traduzido", perícias, atributos, tradições, tipos de dano,
 categorias, grupos e Tipos em português (tabela copiada do módulo). No "Original", tudo
@@ -163,8 +169,9 @@ Antes: **Etapa 23** — `heritage` (311 próprias, fonte fora do trilho) e as 17
 como Tipo da ancestralidade; as abas de lista da tela completa, com o filtro travado —
 Dwarf: Heranças 9, Talentos 48; Nephilim: Talentos 88.
 
-Próxima: **o modelo de linguagem da própria pessoa** — provedor, modelo e chave dela, com
-o glossário do pacote no contexto; e o botão Traduzir ligado. Depois, o modelo local. O PR
+Próxima: a tradução da **página inteira** na tela completa (só o `main` traduz hoje),
+tradução em lote de uma fonte, e a edição manual. O modelo de linguagem (BYOK, 2 ou 3
+ferramentas) vem depois — é aprimoramento, não o caminho principal. O PR
 ao pf2e com a seção 3 do INCONSISTENCIAS se faz em outro chat, com o repositório deles.
 
 Antes: **Etapa 22e** — a descrição no contexto: o Change Shape aberto pelo Anadi tem o

@@ -165,6 +165,13 @@ Duas peças fazem isso funcionar:
 
 ### Tradução
 
+**Ligada na Etapa 34.** Um botão só, que diz o que vai fazer: sem tradução gravada,
+"Traduzir" (a primeira forma disponível na ordem das preferências — o modelo local, hoje);
+enquanto traduz, "Traduzindo…"; com tradução gravada, "Ver original" / "Ver tradução",
+nascendo na preferência de visualização a cada entrada nova. Acima do texto traduzido, a
+forma que o traduziu, e o aviso quando o original mudou desde então. O erro, quando há, vai
+para o `title` do botão, que volta a oferecer.
+
 **Um** botão, rotulado pelo **destino**: `Traduzir` quando se está vendo o original,
 `Ver original` quando se está vendo a tradução. A roda de regerar (`⟳`) aparece **só** no
 modo tradução, ao lado, e é o único caminho que ignora o cache local.
