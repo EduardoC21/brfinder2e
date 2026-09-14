@@ -162,3 +162,26 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* O nome (45): uma linha — rótulo, campo, e o original ao lado como lembrete. */
+.nome {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.nomeCampo {
+  flex: 0 1 320px;
+  min-width: 160px;
+  border: 1px solid var(--color-hairline);
+  padding: var(--space-1) var(--space-2);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font: 400 var(--text-md) / 1.4 var(--font-body);
+}
+
+.nomeCampo:focus {
+  outline: 1px solid var(--color-state);
+  outline-offset: -1px;
+}

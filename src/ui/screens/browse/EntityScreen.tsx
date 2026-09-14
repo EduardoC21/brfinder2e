@@ -13,16 +13,22 @@ import {
   type SideSpec,
 } from '@core/browse/index';
 import { parseDescription, pruneForReading } from '@core/markup/index';
+import { NAME_FIELD } from '@core/translation/index';
 import { strings } from '@i18n/index';
 import { CollapseToggle } from '@ui/components/CollapseToggle';
 import { ScrollRail } from '@ui/components/ScrollRail';
 import { RichText, type RichTextLinks } from '@ui/components/RichText';
 import { cx } from '@ui/cx';
-import { displayName, translatedLabel } from '@ui/text';
+import { displayName, translatedLabel, translatedName } from '@ui/text';
 import { sourceHash, type Translation } from '@core/store/index';
 import { useDescriptionFields } from '@ui/hooks/useDescription';
 import type { LoadedSource } from '@ui/hooks/useAllBases';
-import { useHasLlmKey, useStoredTranslations, useTranslate } from '@ui/hooks/useTranslation';
+import {
+  campoDoNome,
+  useHasLlmKey,
+  useStoredTranslations,
+  useTranslate,
+} from '@ui/hooks/useTranslation';
 import { usePreferences } from '@ui/prefs/usePreferences';
 
 import { DetailPane } from './DetailPane';
@@ -197,13 +203,12 @@ export function EntityScreen({
     if (textos === null) return;
     /* Quem pediu para traduzir quer VER a tradução, seja qual for a preferência. */
     setVerTraducao(true);
-    tradutor.translate(
-      entityType,
-      entity.key,
-      camposDaTela
+    tradutor.translate(entityType, entity.key, [
+      ...campoDoNome(entityType, fieldValue(entity, 'name')),
+      ...camposDaTela
         .filter((campo) => campo !== abaDePagina?.fallback || campo === campoDaPagina)
         .map((campo) => ({ field: campo, html: textos[campo] ?? '' })),
-    );
+    ]);
   };
 
   return (
@@ -308,6 +313,12 @@ export function EntityScreen({
           field={campoDaPagina}
           title={nome}
           original={textos[campoDaPagina] ?? ''}
+          name={{
+            original: fieldValue(entity, 'name'),
+            shown:
+              translatedName(entityType, fieldValue(entity, 'name')) ?? fieldValue(entity, 'name'),
+            stored: gravadas[NAME_FIELD]?.html ?? null,
+          }}
           current={
             traducaoDaPagina === null
               ? null

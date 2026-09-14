@@ -32,6 +32,8 @@ export const ptBR = {
       fromTranslation: (forma: string) => `a partir da tradução: ${forma.toLowerCase()}`,
       source: 'HTML',
       preview: 'Como vai aparecer',
+      name: 'Nome',
+      nameHint: (original: string) => `original: ${original} — vazio volta ao glossário`,
       hint: 'Edite o texto entre as tags. As marcas do Foundry (@UUID, @Damage, @Check…) têm de continuar: o nome entre chaves pode mudar, o alvo não.',
       marksMissing: (alvos: readonly string[]) =>
         `Falta${alvos.length === 1 ? '' : 'm'} ${String(alvos.length)} marca${alvos.length === 1 ? '' : 's'} do original: ${alvos.map((a) => a.slice(0, 60)).join(' · ')}`,

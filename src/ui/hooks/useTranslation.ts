@@ -10,6 +10,7 @@ import {
 import {
   createLlmProvider,
   dictionaryPhrases,
+  NAME_FIELD,
   namePhrases,
   pairTerms,
   readCommunityDictionary,
@@ -18,6 +19,7 @@ import {
   type TranslationProvider,
 } from '@core/translation/index';
 import { readGlossary } from '@core/store/index';
+import { translatedName } from '@ui/text';
 import { createIndexedDbStore } from '@platform/store-indexeddb';
 import { createGeminiChat } from '@platform/gemini';
 import { createBrowserSecretStore, LLM_KEY_SECRET } from '@platform/secrets';
@@ -87,6 +89,52 @@ export function useStoredTranslations(
   return loaded.token === token ? loaded.translations : NENHUMA;
 }
 
+/**
+ * Os NOMES gravados (Etapa 45): para cada fonte carregada, os `name` traduzidos em
+ * `trans/<língua>/<tipo>`, indexados pelo nome ORIGINAL — que é como a tela pergunta
+ * (`displayName(tipo, nome)`). Precisa das entidades para ligar a chave ao nome. Relê
+ * quando uma tradução é gravada.
+ */
+export function useStoredNames(
+  sources: readonly { readonly type: string; readonly names: ReadonlyMap<string, string> }[],
+): Readonly<Record<string, Readonly<Record<string, string>>>> {
+  const { prefs } = usePreferences();
+  const language = prefs.translation.language;
+  const version = useTranslationsVersion();
+  const [tabela, setTabela] = useState<Readonly<Record<string, Readonly<Record<string, string>>>>>(
+    {},
+  );
+  useEffect(() => {
+    let alive = true;
+    const ler = async (): Promise<Record<string, Record<string, string>>> => {
+      const out: Record<string, Record<string, string>> = {};
+      for (const fonte of sources) {
+        const todas = await readTranslations(store, language, fonte.type);
+        for (const [key, campos] of Object.entries(todas)) {
+          const nome = campos['name'];
+          const original = fonte.names.get(key);
+          if (nome === undefined || original === undefined || nome.html.trim() === '') continue;
+          const porTipo = out[fonte.type] ?? {};
+          porTipo[original] = nome.html.trim();
+          out[fonte.type] = porTipo;
+        }
+      }
+      return out;
+    };
+    ler()
+      .then((out) => {
+        if (alive) setTabela(out);
+      })
+      .catch(() => {
+        if (alive) setTabela({});
+      });
+    return () => {
+      alive = false;
+    };
+  }, [sources, language, version]);
+  return tabela;
+}
+
 /** A tradução gravada de UM campo, ou nula. */
 export function useStoredTranslation(
   entityType: string,
@@ -148,6 +196,15 @@ export type TranslateState =
 export interface TranslateField {
   readonly field: string;
   readonly html: string;
+}
+
+/**
+ * O NOME como campo do escopo (Etapa 45): só quando o glossário da comunidade não o tem —
+ * o glossário é a nomenclatura oficial, e o modelo só preenche o buraco (Necromancer, das
+ * classes novas). Lido pela tabela da tela, que já tem o glossário mais os gravados.
+ */
+export function campoDoNome(entityType: string, name: string): TranslateField[] {
+  return translatedName(entityType, name) === null ? [{ field: NAME_FIELD, html: name }] : [];
 }
 
 /**

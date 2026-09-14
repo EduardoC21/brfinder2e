@@ -103,10 +103,21 @@ type NameTable = Readonly<Record<string, Readonly<Record<string, string>>>>;
 let nameTable: NameTable = {};
 let showTranslatedNames = false;
 
-/** A tabela do pacote (sempre), e se a preferência manda mostrar os nomes por ela. */
+/**
+ * A tabela de nomes (o glossário, e por cima dele os nomes GRAVADOS — traduzidos pelo
+ * modelo ou corrigidos à mão, Etapa 45), e se a preferência manda mostrar por ela.
+ */
 export function setNameTable(table: NameTable, show: boolean): void {
   nameTable = table;
   showTranslatedNames = show;
+}
+
+/** Junta o glossário com os nomes gravados: o gravado vence, porque é decisão ou pedido da pessoa. */
+export function mergeNameTables(base: NameTable, override: NameTable): NameTable {
+  const out: Record<string, Record<string, string>> = {};
+  for (const [tipo, nomes] of Object.entries(base)) out[tipo] = { ...nomes };
+  for (const [tipo, nomes] of Object.entries(override)) out[tipo] = { ...out[tipo], ...nomes };
+  return out;
 }
 
 /** O nome em português do pacote, ou nulo — independente da preferência (Etapa 39). */

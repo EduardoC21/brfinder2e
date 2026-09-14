@@ -39,7 +39,7 @@ import {
 } from '@core/browse/index';
 import { sourcePreferences, withLayout, withSource } from '@core/prefs/index';
 import { strings } from '@i18n/index';
-import { displayName, setNameTable, setTermMode } from '@ui/text';
+import { displayName, mergeNameTables, setNameTable, setTermMode } from '@ui/text';
 import { FloatingPanel } from '@ui/components/FloatingPanel';
 import type { LoadedSource } from '@ui/hooks/useAllBases';
 import { SearchInput } from '@ui/components/SearchInput';
@@ -55,6 +55,7 @@ import {
 } from '@ui/hooks/useTraitGlossary';
 import { useCommunityPackVersion } from '@ui/hooks/useCommunityPack';
 import { TraitGlossaryContext } from '@ui/glossary/TraitGlossaryContext';
+import { useStoredNames } from '@ui/hooks/useTranslation';
 import { usePreferences } from '@ui/prefs/usePreferences';
 
 import { DetailPane } from './DetailPane';
@@ -210,8 +211,33 @@ export function BrowseScreen({ baseVersion }: BrowseScreenProps) {
    * baixado, e independente da preferência de visualização: quem procura em português
    * não quer decidir antes como vai ler. A tela mostra o nome original.
    */
-  const nomesTraduzidos = useCommunityNames(prefs.translation.language, versaoDoPacote);
-  /* Os NOMES na tela (Etapa 36): a tabela do pacote quando a preferência pede; senão, nada. */
+  const nomesDoPacote = useCommunityNames(prefs.translation.language, versaoDoPacote);
+  const carregadas = useMemo(() => (bases.status === 'ready' ? bases.sources : VAZIAS), [bases]);
+  /*
+   * Os NOMES GRAVADOS (Etapa 45, pelo autor: "se eu traduzir o Necromancer, a lista tem de
+   * mostrar Necromante"): o `name` traduzido pelo modelo ou corrigido à mão, por cima do
+   * glossário. A tabela junta é o que a tela e a busca usam.
+   */
+  const fontesParaNomes = useMemo(
+    () =>
+      carregadas.flatMap((loaded) =>
+        loaded.source.entityType === null
+          ? []
+          : [
+              {
+                type: loaded.source.entityType,
+                names: new Map(loaded.entities.map((e) => [e.key, fieldValue(e, 'name')])),
+              },
+            ],
+      ),
+    [carregadas],
+  );
+  const nomesGravados = useStoredNames(fontesParaNomes);
+  const nomesTraduzidos = useMemo(
+    () => mergeNameTables(nomesDoPacote, nomesGravados),
+    [nomesDoPacote, nomesGravados],
+  );
+  /* Os NOMES na tela (Etapa 36): a tabela quando a preferência pede; senão, nada. */
   setNameTable(nomesTraduzidos, prefs.translation.names === 'translated');
   const glossario = useMemo(
     () =>
@@ -220,7 +246,6 @@ export function BrowseScreen({ baseVersion }: BrowseScreenProps) {
         : original,
     [original, traduzido, prefs.translation.display],
   );
-  const carregadas = useMemo(() => (bases.status === 'ready' ? bases.sources : VAZIAS), [bases]);
   const indiceGlobal = useGlobalIndex(carregadas, buscaNaDescricao, nomesTraduzidos);
 
   /*

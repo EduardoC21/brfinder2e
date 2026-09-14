@@ -5,6 +5,7 @@ import { parseDescription, pruneForReading } from '@core/markup/index';
 import { strings } from '@i18n/index';
 import { RichText } from '@ui/components/RichText';
 import { cx } from '@ui/cx';
+import { NAME_FIELD } from '@core/translation/index';
 import { deleteStoredTranslation, saveManualTranslation } from '@ui/hooks/useTranslation';
 
 import { missingMarks } from './marks';
@@ -39,6 +40,12 @@ export interface TranslationEditorProps {
   readonly original: string;
   /** A tradução gravada, se há. */
   readonly current: { readonly html: string; readonly method: string } | null;
+  /** O nome (Etapa 45): o original, o que está à vista hoje, e se dá para editar aqui. */
+  readonly name?: {
+    readonly original: string;
+    readonly shown: string;
+    readonly stored: string | null;
+  };
   /** `saved` diz se gravou (ou apagou): quem abriu decide o que mostrar depois. */
   readonly onClose: (saved: boolean) => void;
 }
@@ -50,12 +57,15 @@ export function TranslationEditor({
   title,
   original,
   current,
+  name,
   onClose,
 }: TranslationEditorProps) {
   const [texto, setTexto] = useState(current?.html ?? original);
+  const [nome, setNome] = useState(name?.stored ?? '');
+  const nomeMudou = name !== undefined && nome.trim() !== (name.stored ?? '');
   const [salvando, setSalvando] = useState(false);
   const [confirmarApagar, setConfirmarApagar] = useState(false);
-  const mudou = texto !== (current?.html ?? original);
+  const mudou = texto !== (current?.html ?? original) || nomeMudou;
   const faltam = useMemo(() => missingMarks(original, texto), [original, texto]);
   const nodes = useMemo(() => pruneForReading(parseDescription(texto)), [texto]);
 
@@ -73,10 +83,24 @@ export function TranslationEditor({
   const salvar = (): void => {
     if (faltam.length > 0 || salvando) return;
     setSalvando(true);
-    void saveManualTranslation(entityType, entityKey, field, texto, original).then(() => {
+    void (async () => {
+      if (texto !== (current?.html ?? original)) {
+        await saveManualTranslation(entityType, entityKey, field, texto, original);
+      }
+      if (name !== undefined && nomeMudou) {
+        if (nome.trim() === '') await deleteStoredTranslation(entityType, entityKey, NAME_FIELD);
+        else
+          await saveManualTranslation(
+            entityType,
+            entityKey,
+            NAME_FIELD,
+            nome.trim(),
+            name.original,
+          );
+      }
       setSalvando(false);
       onClose(true);
-    });
+    })();
   };
 
   return createPortal(
@@ -92,6 +116,22 @@ export function TranslationEditor({
                 )}
           </span>
         </header>
+
+        {name !== undefined && (
+          <label className={styles['nome']}>
+            <span className={styles['rotulo']}>{t.name}</span>
+            <input
+              type="text"
+              className={styles['nomeCampo']}
+              value={nome}
+              placeholder={name.shown === name.original ? name.original : name.shown}
+              onChange={(event) => {
+                setNome(event.target.value);
+              }}
+            />
+            <span className={styles['origem']}>{t.nameHint(name.original)}</span>
+          </label>
+        )}
 
         <div className={styles['colunas']}>
           <section className={styles['coluna']}>

@@ -1088,6 +1088,17 @@ gravada o mesmo botão alterna "Ver original" / "Ver tradução", nascendo na pr
 cada entrada; acima do texto, "Tradução: modelo local", e "o original mudou desde a
 tradução" quando a impressão digital não bate mais.
 
+**O nome faz parte da entidade traduzida (Etapa 45, pelo autor: "se eu traduzir o
+Necromancer, a lista tem de mostrar Necromante").** O nome é o campo `name` da tradução
+gravada, texto puro, com prompt próprio no provedor (nomenclatura oficial quando existe;
+nome próprio fica). Entra no escopo do Traduzir SÓ quando o glossário da comunidade não o
+tem (`campoDoNome`): o glossário é a nomenclatura oficial, o modelo preenche o buraco. A
+tela lê os nomes gravados por cima do glossário: `useStoredNames` junta `trans/<língua>/
+<tipo>` com as entidades carregadas (a tradução é por chave; a tela pergunta pelo nome
+original), `mergeNameTables` põe o gravado por cima, e a tabela junta alimenta
+`setNameTable` E a busca pelos dois nomes. O editor ganhou o campo Nome (vazio volta ao
+glossário).
+
 **O glossário vem com a base (Etapa 44).** O autor perguntou por que baixar à parte. A
 resposta de licença não muda — é conteúdo de terceiros, nunca embutido —, mas o momento
 sim: `useSync` baixa o glossário da língua escolhida logo depois de gravar a base

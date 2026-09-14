@@ -13,6 +13,7 @@ import {
 import type { DescriptionAlteration } from '@core/normalization/index';
 import { isRecord } from '@core/json';
 import { parseDescription, pruneForReading } from '@core/markup/index';
+import { NAME_FIELD } from '@core/translation/index';
 import { strings } from '@i18n/index';
 import { ActionCost } from '@ui/components/ActionCost';
 import { CastCost } from '@ui/components/CastCost';
@@ -23,7 +24,12 @@ import { ScrollRail } from '@ui/components/ScrollRail';
 import { TraitChip } from '@ui/components/TraitChip';
 import { useTraitLabel } from '@ui/glossary/useTraitLabel';
 import { useDescription, useDescriptionFields } from '@ui/hooks/useDescription';
-import { useHasLlmKey, useStoredTranslations, useTranslate } from '@ui/hooks/useTranslation';
+import {
+  campoDoNome,
+  useHasLlmKey,
+  useStoredTranslations,
+  useTranslate,
+} from '@ui/hooks/useTranslation';
 import { usePreferences } from '@ui/prefs/usePreferences';
 import { CollapseToggle } from '@ui/components/CollapseToggle';
 import { cx } from '@ui/cx';
@@ -34,6 +40,7 @@ import {
   fieldText,
   rankLabel,
   translatedLabel,
+  translatedName,
 } from '@ui/text';
 
 import { ATTRIBUTE_NAME_FIELDS, attributeNameByName, boostsText } from './backgroundFields';
@@ -372,6 +379,7 @@ export function DetailPanel({
                     setVerTraducao(true);
                     /* O escopo da lateral: a descrição e as tabelas que ela mostra. */
                     tradutor.translate(entityType, entity.key, [
+                      ...campoDoNome(entityType, fieldValue(entity, 'name')),
                       { field: 'main', html: original },
                       ...camposDeTabela.map((field) => ({ field, html: tabelas?.[field] ?? '' })),
                     ]);
@@ -447,6 +455,12 @@ export function DetailPanel({
           title={displayName(entityType, fieldValue(entity, 'name'))}
           original={original}
           current={traducao === null ? null : { html: traducao.html, method: traducao.method }}
+          name={{
+            original: fieldValue(entity, 'name'),
+            shown:
+              translatedName(entityType, fieldValue(entity, 'name')) ?? fieldValue(entity, 'name'),
+            stored: gravadas[NAME_FIELD]?.html ?? null,
+          }}
           onClose={(saved) => {
             setEditando(false);
             /* Quem acabou de gravar a sua tradução quer vê-la. */

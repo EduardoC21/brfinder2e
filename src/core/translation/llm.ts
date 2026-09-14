@@ -63,6 +63,11 @@ Regras obrigatórias:
 5. Mantenha números, dados (2d6), sinais (+2, –4), unidades (pés, minutos) e a pontuação.
 6. Termos de jogo fora dos spans: use a nomenclatura da tradução oficial brasileira (Golpe, Avançar, Passo, salvamento, CD, CA, PV, Mestre, PJ, círculo de magia, talento, perícia).`;
 
+/** O campo especial: o NOME da entrada (Etapa 45), texto puro, com prompt próprio. */
+export const NAME_FIELD = 'name';
+
+const INSTRUCAO_NOME = `Você traduz NOMES de entradas do Pathfinder 2e (Remaster) do inglês para o português do Brasil, seguindo a nomenclatura da tradução oficial brasileira quando ela existe (Guerreiro, Feiticeiro, Ladino, Bola de Fogo, Ataque Furtivo). Nome próprio de lugar, pessoa ou divindade fica como está. Responda SOMENTE com o nome traduzido, sem aspas, sem ponto, sem explicação.`;
+
 /** O prompt: a instrução fixa e o pedido com os termos numerados e o HTML blindado. */
 export function buildPrompt(
   shieldedHtml: string,
@@ -94,6 +99,19 @@ export function createLlmProvider(
     },
     async translate(request: TranslationRequest): Promise<string> {
       const { model } = await config();
+      if (request.field === NAME_FIELD) {
+        const nome = await chat.complete({
+          model,
+          system: INSTRUCAO_NOME,
+          user: `Tipo: ${request.entityType}\nNome: ${request.html}`,
+        });
+        return (
+          unfence(nome)
+            .replace(/^["'«]|["'»]$/g, '')
+            .split('\n')[0]
+            ?.trim() ?? ''
+        );
+      }
       const blindado = shield(request.html, {
         phrases: [...CORE_PHRASES, ...(glossary.phrases ?? [])],
         ...(glossary.nameOf === undefined ? {} : { nameOf: glossary.nameOf }),

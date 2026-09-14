@@ -81,6 +81,10 @@ Antes: **Etapa 20** — as tabelas das regras param de quebrar (célula compacta
 linha, `@Embed` cola a entrada apontada, e as duas vassouras em Configurações: apagar as
 entradas aposentadas e apagar a base inteira.
 
+Antes: **Etapa 45** — o nome faz parte da entidade traduzida: o Traduzir também traduz o
+nome quando o glossário não o tem, a lista e a busca leem o nome gravado por cima do
+glossário, e o editor ganhou o campo Nome ("Necromancer" → "Necromante").
+
 Antes: **Etapa 44** — os acertos do autor: o glossário da comunidade vem junto com a
 sincronização (o botão virou "Atualizar"), o Traduzir fica apagado sem chave, o cursor
 dos botões da tela completa, os textos das configurações sem citar uma língua, e as abas
