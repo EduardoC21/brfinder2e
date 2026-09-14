@@ -385,7 +385,21 @@ HTML, inclusive o do navegador.
   executável. A qualidade dela não é a do Google na nuvem — é de modelo local, como o
   Bergamot — e não foi medida.
 
-**Recomendação:** não trocar de casa por causa disto. O caminho que não perde o offline
+**A API `Translator` do Chrome, medida (14/09/2026, Chrome 152, extensão conectada):**
+modelo baixado com um clique (exige gesto do usuário), 8 parágrafos em **0,74 s** no
+total. Qualidade ENTRE o Bergamot e o Google: "merecida reputação… martelos batendo nas
+bigornas" (bom), mas "cai de bruços", "condições cegas e desprevenidas", "Passe duas
+vezes" por Stride, "swing" sem traduzir, "armação de espadas". Não é um tradutor de HTML:
+traduz o que está dentro de `translate="no"` (irrelevante — a blindagem descarta o
+conteúdo) e MANGLA marca crua (`@Damage` virou `@damage`, o UUID perdeu a caixa) — mas
+preservou os elementos da blindagem (`<x-tok>`, `<x-ref>`, `<span i>`) no teste. Serve
+como provedor com a mesma blindagem, disponível quando o app roda no Chrome.
+
+**O autor respondeu (Etapa 40):** o offline não importa; o executável era só distribuição.
+Quer o melhor dos dois mundos, de graça para ele e para quem usa. Os caminhos estão na
+conversa e a decisão fica para a próxima etapa.
+
+**Recomendação (antes da resposta do autor):** não trocar de casa por causa disto. O caminho que não perde o offline
 é (1) medir a API `Translator` no Chrome de verdade (extensão conectada, ou o app aberto
 no Chrome com um botão de teste nas configurações), e se ela for melhor que o Bergamot,
 entrar como provedor com a mesma blindagem; (2) o modelo de linguagem BYOK, que já estava
