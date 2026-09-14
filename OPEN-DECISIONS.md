@@ -341,3 +341,55 @@ divisor. O que falta é o avaliador de predicado contra a ficha — `item:*`, `s
 com o mesmo `contextFor`.
 
 **Decidir quando:** ao montar a validação da ficha.
+
+## 15. O motor de tradução: o local (Bergamot) contra o do navegador `novo`
+
+Registrado na Etapa 40, a pedido do autor: "se a do navegador na parte do texto livre for
+muito superior, a gente cogita deixar o aplicativo como navegador só para ter acesso a
+essa capacidade".
+
+**A medição (14/09/2026):** 8 parágrafos de texto livre, de 8 tipos, traduzidos pelo
+provedor local (Bergamot + glossário + blindagem) e pelo Google Tradutor na web — o mesmo
+serviço da "traduzir página" do Chrome. A extensão do Chrome não estava conectada; a API
+`Translator` no dispositivo (Chrome 138+) existia no painel mas `availability()` não
+respondeu, então ficou sem medir.
+
+| Trecho                              | Local (Bergamot)                                                      | Google                                                           |
+| ----------------------------------- | --------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| "take a –4 status penalty to AC"    | "toma uma penalidade de estado –4 no para CA"                         | "sofre uma penalidade de -4 nos testes de resistência de CA"     |
+| "you fall Prone and drop items"     | "você cair Prostrado e drop itens"                                    | "você cai no chão e deixa cair os itens"                         |
+| "Stride twice"                      | "Avançar duas vezes"                                                  | "Dê dois passos"                                                 |
+| "Burrowing, Climbing, Flying…"      | "o Burrowing, Escalada, Voar ou Nadar em vez de estriturar"           | "escava, escala, voa ou nada em vez de caminhar"                 |
+| "Longswords, also known as…"        | "Longas palavras, também conhecidas como espadas armadas"             | "Espadas longas, também conhecidas como espadas de armar"        |
+| "well-earned reputation… anvils"    | "reputação bem-gansa… ensconced… clanníveis… quentes… batendo anvils" | "reputação merecida… abrigado… clânicos… calorosos… em bigornas" |
+| "brush off frightening experiences" | "eliminar experiências assustadoras"                                  | "evitar experiências assustadoras"                               |
+| "Heightened (+1)"                   | "Elevada +1 dano (+1)"                                                | "Elevado (+1)"                                                   |
+
+**O que a medição diz:** na PROSA LIVRE o Google é claramente superior — fluente, sem
+palavra em inglês sobrando, sem "Longas palavras". Nos TERMOS DE JOGO é o contrário: o
+Google perde o nome da condição ("cai no chão" por Prostrado), troca a ação ("Dê dois
+passos" por Avançar duas vezes — Step não é Stride), dilui os nomes de ação ("escava,
+escala, voa") e erra a sigla ("testes de resistência de CA"). O local acerta os termos
+porque o glossário e a blindagem os seguram — e isso vale para QUALQUER motor que preserve
+HTML, inclusive o do navegador.
+
+**O que "virar navegador" custaria, de fato:**
+
+- A "traduzir página" do Chrome traduz o DOM, na hora, pela nuvem: não grava, não edita,
+  não funciona sem internet, e não existe no WebView2 do Tauri — só no Chrome aberto como
+  site. O executável offline deixaria de ser o produto.
+- A API `Translator` no dispositivo (Chrome 138+) é outra conversa: programática (a
+  blindagem e o glossário se aplicam, o resultado se grava), offline depois do modelo, mas
+  só no Chrome — não no WebView2, não no Firefox. Poderia ser um TERCEIRO provedor,
+  "tradutor do navegador", disponível quando o app roda no Chrome, e indisponível no
+  executável. A qualidade dela não é a do Google na nuvem — é de modelo local, como o
+  Bergamot — e não foi medida.
+
+**Recomendação:** não trocar de casa por causa disto. O caminho que não perde o offline
+é (1) medir a API `Translator` no Chrome de verdade (extensão conectada, ou o app aberto
+no Chrome com um botão de teste nas configurações), e se ela for melhor que o Bergamot,
+entrar como provedor com a mesma blindagem; (2) o modelo de linguagem BYOK, que já estava
+no plano, é o que dá prosa de qualidade Google-ou-melhor com o glossário no contexto —
+para quem quiser pagar por ele.
+
+**Decidir quando:** depois da medição da API `Translator` no Chrome.

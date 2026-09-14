@@ -81,6 +81,11 @@ Antes: **Etapa 20** — as tabelas das regras param de quebrar (célula compacta
 linha, `@Embed` cola a entrada apontada, e as duas vassouras em Configurações: apagar as
 entradas aposentadas e apagar a base inteira.
 
+Antes: **Etapa 40** — a medição do motor local contra o do navegador (Google Tradutor, 8
+parágrafos): o Google é claramente melhor na prosa livre e claramente pior nos termos de
+jogo; "virar navegador" perderia o offline. Registrado em OPEN-DECISIONS #15, com a
+recomendação: medir a API `Translator` do Chrome como terceiro provedor, e o BYOK.
+
 Antes: **Etapa 39** — os links na prosa traduzida mostram o nome traduzido do alvo, em
 latão, resolvido na hora de desenhar pelo pacote; e a caixa dos termos afinada (sigla,
 título).
