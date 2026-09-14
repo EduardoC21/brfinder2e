@@ -1098,6 +1098,38 @@ recebe o nome VISTO como critério (`nameOf`), senão "Guerreiro" ficaria onde "
 fica. Os dados não mudam: o nome original continua sendo o que se grava, se exporta e se
 busca (a busca já acha pelos dois desde a 32).
 
+### O provedor de modelo de linguagem: BYOK Gemini (Etapa 41)
+
+**Decisão do autor (Etapa 40 → 41):** o offline não importa e o executável era só
+distribuição; a medição mostrou que o Google é claramente melhor na prosa livre e que só
+um modelo de linguagem integra o glossário À prosa. Então: **Gemini, com a chave da
+pessoa, como a forma principal** — o modelo local sai do padrão (fica disponível para
+quem ligar).
+
+BYOK — bring your own key: o app não tem chave nem custo. A chave mora em
+`platform/secrets.ts` (hoje `localStorage`, na origem do app; no executável seria o cofre
+do sistema pelo mesmo contrato) e **nunca** em `prefs/`, que se exporta e se lê em teste.
+As preferências guardam só o modelo (`translation.llm.model`).
+
+Três peças:
+
+- **`core/translation/llm.ts`** — o provedor. Porta `LlmChat` (`complete({model, system,
+user}) → texto`): o core não sabe de HTTP nem de Gemini. O glossário entra de DOIS
+  jeitos: a mesma blindagem do provedor local (marcas viram elementos; termos viram
+  `<span translate="no" i="n">` cujo conteúdo é descartado na volta — garantia que não
+  depende do modelo obedecer), e o PROMPT lista os termos por número pedindo que o modelo
+  os escreva dentro do span concordando a frase ao redor — é o que dá "um Golpe corpo a
+  corpo" no masculino, coisa que o motor local não faz. A resposta passa por `unfence`
+  (o modelo cerca com ``` mesmo proibido), `restore` e `polishPortuguese`.
+- **`platform/gemini.ts`** — o adaptador: um POST em `generateContent` (REST, sem o SDK
+  de 1 MB), chave no cabeçalho, `thinkingBudget: 0` (tradução não precisa de raciocínio,
+  e ele custaria cota), temperatura 0,2. Os erros viram uma frase para a pessoa: chave
+  inválida, chave recusada, limite de uso, modelo não encontrado.
+- **As configurações** — o bloco na forma "Gemini (chave sua)": modelo (2.5 Flash e
+  Flash-Lite, os dois com nível gratuito), campo de chave que some ao guardar ("chave
+  guardada" é tudo o que se mostra de volta), Esquecer, e Testar — traduz uma frase de
+  verdade pelo provedor e mostra o resultado ou o erro.
+
 ### Onde a tradução mora: a quinta camada
 
     trans/<língua>/<tipo>    { [chave]: { [campo]: { html, method, at, sourceHash } } }

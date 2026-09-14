@@ -406,4 +406,6 @@ entrar como provedor com a mesma blindagem; (2) o modelo de linguagem BYOK, que 
 no plano, é o que dá prosa de qualidade Google-ou-melhor com o glossário no contexto —
 para quem quiser pagar por ele.
 
-**Decidir quando:** depois da medição da API `Translator` no Chrome.
+**Decidido (Etapa 41):** o Gemini, com a chave da pessoa, é a forma principal. O modelo
+local sai do padrão, mas fica disponível. O app pode viver como site; o executável, se
+voltar, ganha o cofre do sistema para a chave pelo mesmo contrato de `secrets.ts`.

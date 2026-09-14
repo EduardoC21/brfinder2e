@@ -65,6 +65,8 @@ export interface Shielded {
   readonly text: string;
   /** Quantas marcas foram protegidas — para o teste e para o relatório. */
   readonly marks: number;
+  /** O termo português de cada `<span translate="no" i="n">`, na ordem — para o prompt (41). */
+  readonly terms: readonly string[];
   /** Refaz o HTML do Foundry a partir do traduzido. Lança quando uma marca sumiu. */
   restore(translated: string): string;
 }
@@ -266,6 +268,7 @@ export function shield(html: string, options: ShieldOptions = {}): Shielded {
   return {
     text,
     marks: marcas.length,
+    terms: termos,
     restore(translated: string): string {
       const vistas = new Set<number>();
       /* O motor engole o espaço depois de um bloco ("leva  <x-tok/>Dano"): devolve-se. */

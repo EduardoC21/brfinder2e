@@ -19,8 +19,10 @@
  *               ações do sistema): a tradução dos compêndios foi abandonada. Vale como
  *               glossário; não traduz prosa. Baixado na sincronização, como o zip — é
  *               conteúdo de terceiros, nunca embutido.
- *   llm         um modelo de linguagem por API (a chave é da pessoa, guardada no cofre do
- *               sistema, nunca em `prefs/`). Melhor prosa; precisa de internet e custa.
+ *   llm         um modelo de linguagem por API — BYOK: a chave é da pessoa, guardada em
+ *               `platform/secrets.ts`, nunca em `prefs/`. Melhor prosa, e o glossário
+ *               entra no prompt. Precisa de internet; o Gemini tem nível gratuito. É a
+ *               forma principal desde a Etapa 41.
  *   local       um modelo de tradução que roda dentro do app, sem internet — o motor do
  *               Firefox (Bergamot, WASM) com o par en→pt, uns 20 MB baixados uma vez.
  *               Qualidade de tradutor automático: serve para ler, não para publicar.
@@ -40,7 +42,11 @@ export interface TranslationMethod {
   readonly online: boolean;
 }
 
-/** As formas, na ordem padrão da hierarquia — a que vale mais primeiro. */
+/**
+ * As formas, na ordem padrão da hierarquia — a que vale mais primeiro. O modelo local NÃO
+ * vem ligado por padrão desde a Etapa 41 (pelo autor: "vamos usar só o Gemini"): fica
+ * disponível para quem ligar. `DEFAULT_METHOD_ORDER` é a lista LIGADA por padrão.
+ */
 export const TRANSLATION_METHODS: readonly TranslationMethod[] = [
   { id: 'manual', scope: 'prose', online: false },
   { id: 'community', scope: 'terms', online: false },
@@ -48,9 +54,7 @@ export const TRANSLATION_METHODS: readonly TranslationMethod[] = [
   { id: 'local', scope: 'prose', online: false },
 ];
 
-export const DEFAULT_METHOD_ORDER: readonly TranslationMethodId[] = TRANSLATION_METHODS.map(
-  (method) => method.id,
-);
+export const DEFAULT_METHOD_ORDER: readonly TranslationMethodId[] = ['manual', 'community', 'llm'];
 
 /** As línguas que o app sabe pedir. Só pt-BR tem caminho hoje; as outras entram pelo mesmo contrato. */
 export const TRANSLATION_LANGUAGES: readonly string[] = ['pt-BR'];

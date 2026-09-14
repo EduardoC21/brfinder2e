@@ -397,3 +397,41 @@
 .resposta .secondary {
   margin-left: 0;
 }
+
+/* O bloco do modelo de linguagem (41): linhas rótulo + controle, e o resultado do teste. */
+.llm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.llmLinha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.llmLinha .formaBotao {
+  margin: 0;
+}
+
+.llmRotulo {
+  min-width: 80px;
+  font: 400 var(--text-xs) / 1.4 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.llmChave {
+  flex: 1;
+  min-width: 200px;
+}
+
+.llmResultado {
+  margin: 0;
+  font: 400 var(--text-xs) / 1.5 var(--font-body);
+  color: var(--color-text);
+}

@@ -81,6 +81,11 @@ Antes: **Etapa 20** — as tabelas das regras param de quebrar (célula compacta
 linha, `@Embed` cola a entrada apontada, e as duas vassouras em Configurações: apagar as
 entradas aposentadas e apagar a base inteira.
 
+Antes: **Etapa 41** — o Gemini com a chave da pessoa (BYOK) como forma principal de
+tradução: provedor no core com a blindagem e o glossário no prompt, adaptador REST na
+plataforma, a chave fora das preferências, e o bloco nas configurações (modelo, chave,
+Testar). O modelo local sai do padrão.
+
 Antes: **Etapa 40** — a medição do motor local contra o do navegador (Google Tradutor, 8
 parágrafos): o Google é claramente melhor na prosa livre e claramente pior nos termos de
 jogo; "virar navegador" perderia o offline. Registrado em OPEN-DECISIONS #15, com a
@@ -201,8 +206,8 @@ Antes: **Etapa 23** — `heritage` (311 próprias, fonte fora do trilho) e as 17
 como Tipo da ancestralidade; as abas de lista da tela completa, com o filtro travado —
 Dwarf: Heranças 9, Talentos 48; Nephilim: Talentos 88.
 
-Próxima: tradução em lote de uma fonte, e a edição manual. Depois, o modelo de linguagem
-(BYOK). O modelo de linguagem (BYOK, 2 ou 3 ferramentas) vem depois — é
+Próxima: o teste de verdade do Gemini com uma chave, e a amostra pelo modelo; depois,
+tradução em lote de uma fonte (com a cota do nível gratuito em mente) e a edição manual. O modelo de linguagem (BYOK, 2 ou 3 ferramentas) vem depois — é
 aprimoramento, não o caminho principal. O PR
 ao pf2e com a seção 3 do INCONSISTENCIAS se faz em outro chat, com o repositório deles.
 

@@ -780,8 +780,9 @@ export const ptBR = {
           status: 'A tradução pt-BR do sistema para o Foundry: nomes e termos, não a prosa.',
         },
         llm: {
-          name: 'Modelo de linguagem (API)',
-          status: 'Melhor prosa; precisa de internet e de uma chave sua. Sem chave.',
+          name: 'Gemini (chave sua)',
+          status:
+            'A melhor prosa, com o glossário no contexto. Precisa de internet e de uma chave sua.',
         },
         local: {
           name: 'Modelo local',
@@ -809,6 +810,23 @@ export const ptBR = {
       },
       termsOnly: 'só termos',
       online: 'internet',
+      /** O modelo de linguagem BYOK (Etapa 41): modelo, chave, teste. */
+      llm: {
+        model: 'Modelo',
+        key: 'Chave de API',
+        keyPlaceholder: 'Cole a chave do Google AI Studio',
+        keyHint:
+          'A chave é sua e fica só neste aparelho. Crie uma grátis em aistudio.google.com/apikey (nível gratuito, sem cartão).',
+        save: 'Guardar',
+        forget: 'Esquecer',
+        test: 'Testar',
+        testing: 'Testando…',
+        checking: 'Conferindo…',
+        noKey: 'Sem chave: cole a sua para ligar esta forma.',
+        hasKey: 'Chave guardada.',
+        testOk: (texto: string) => `Funciona: "${texto}"`,
+        testFail: (porque: string) => `Não funcionou: ${porque}`,
+      },
       on: 'ligada',
       off: 'desligada',
       moveUp: 'Subir na ordem',

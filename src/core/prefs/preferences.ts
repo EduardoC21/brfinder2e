@@ -19,6 +19,7 @@ import {
   isTranslationMethodId,
   type TranslationMethodId,
 } from '../translation/methods';
+import { DEFAULT_LLM_MODEL } from '../translation/llm';
 import type { FilterSelection } from '../browse/query';
 import { isRecord } from '../json';
 
@@ -104,6 +105,8 @@ export interface TranslationPreferences {
    */
   readonly names: 'original' | 'translated';
   readonly language: string;
+  /** O modelo de linguagem escolhido (Etapa 41). A chave NÃO mora aqui. */
+  readonly llm: { readonly model: string };
   readonly methods: readonly TranslationMethodId[];
 }
 
@@ -133,6 +136,7 @@ export const DEFAULT_PREFERENCES: Preferences = {
     display: 'original',
     names: 'original',
     language: 'pt-BR',
+    llm: { model: DEFAULT_LLM_MODEL },
     methods: DEFAULT_METHOD_ORDER,
   },
 };
@@ -220,6 +224,12 @@ export function readPreferences(stored: unknown): Preferences {
         typeof translation['language'] === 'string' && translation['language'] !== ''
           ? translation['language']
           : DEFAULT_PREFERENCES.translation.language,
+      llm: {
+        model:
+          isRecord(translation['llm']) && typeof translation['llm']['model'] === 'string'
+            ? translation['llm']['model']
+            : DEFAULT_LLM_MODEL,
+      },
       // Chave ausente é "nunca configurei"; lista presente, mesmo vazia, é escolha.
       methods: methods ?? DEFAULT_METHOD_ORDER,
     },

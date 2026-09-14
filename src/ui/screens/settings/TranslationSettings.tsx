@@ -1,4 +1,7 @@
+import { useState } from 'react';
+
 import {
+  LLM_MODELS,
   TRANSLATION_LANGUAGES,
   TRANSLATION_METHODS,
   type TranslationMethodId,
@@ -7,7 +10,7 @@ import { withTranslation } from '@core/prefs/index';
 import { strings } from '@i18n/index';
 import { cx } from '@ui/cx';
 import { useCommunityPack } from '@ui/hooks/useCommunityPack';
-import { useLocalStatus } from '@ui/hooks/useTranslation';
+import { useLlmKey, useLocalStatus } from '@ui/hooks/useTranslation';
 import { usePreferences } from '@ui/prefs/usePreferences';
 
 import styles from './SettingsPanel.module.css';
@@ -58,6 +61,7 @@ export function TranslationSettings() {
   const { display, names, language, methods } = prefs.translation;
   const pacote = useCommunityPack(language);
   const local = useLocalStatus(language);
+  const chave = useLlmKey();
 
   const ligadas = methods;
   const desligadas = TRANSLATION_METHODS.map((m) => m.id).filter((id) => !ligadas.includes(id));
@@ -131,6 +135,15 @@ export function TranslationSettings() {
                 ? estadoDoLocal(local)
                 : (t.methods[id]?.status ?? '')}
           </span>
+          {id === 'llm' && (
+            <Llm
+              model={prefs.translation.llm.model}
+              onModel={(model) => {
+                update((atual) => withTranslation(atual, { llm: { model } }));
+              }}
+              chave={chave}
+            />
+          )}
           {id === 'community' && (
             <button
               type="button"
@@ -242,5 +255,110 @@ function Escolha({
         ))}
       </div>
     </section>
+  );
+}
+
+/**
+ * O bloco do modelo de linguagem (Etapa 41): o modelo, a chave (guardada fora das
+ * preferências, nunca mostrada de volta — só "chave guardada"), e o Testar, que traduz uma
+ * frase de verdade e mostra o resultado ou o erro. A chave digitada some do campo ao
+ * guardar: o campo é para colar, não para ler.
+ */
+function Llm({
+  model,
+  onModel,
+  chave,
+}: {
+  readonly model: string;
+  readonly onModel: (model: string) => void;
+  readonly chave: ReturnType<typeof useLlmKey>;
+}) {
+  const [digitada, setDigitada] = useState('');
+  const [teste, setTeste] = useState<
+    { status: 'idle' } | { status: 'busy' } | { status: 'done'; texto: string }
+  >({ status: 'idle' });
+  const estado = chave.hasKey === null ? t.llm.checking : chave.hasKey ? t.llm.hasKey : t.llm.noKey;
+
+  return (
+    <div className={styles['llm']}>
+      <label className={styles['llmLinha']}>
+        <span className={styles['llmRotulo']}>{t.llm.model}</span>
+        <select
+          className={cx(styles['seletor'], 'chamfer-sm')}
+          value={model}
+          onChange={(event) => {
+            onModel(event.target.value);
+          }}
+        >
+          {LLM_MODELS.map((m) => (
+            <option key={m.id} value={m.id}>
+              {m.label}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className={styles['llmLinha']}>
+        <span className={styles['llmRotulo']}>{t.llm.key}</span>
+        <input
+          type="password"
+          className={cx(styles['seletor'], styles['llmChave'], 'chamfer-sm')}
+          placeholder={t.llm.keyPlaceholder}
+          value={digitada}
+          autoComplete="off"
+          onChange={(event) => {
+            setDigitada(event.target.value);
+          }}
+        />
+        <button
+          type="button"
+          className={cx(styles['secondary'], styles['formaBotao'], 'chamfer-sm')}
+          disabled={digitada.trim() === ''}
+          onClick={() => {
+            void chave.save(digitada).then(() => {
+              setDigitada('');
+              setTeste({ status: 'idle' });
+            });
+          }}
+        >
+          {t.llm.save}
+        </button>
+        {chave.hasKey === true && (
+          <button
+            type="button"
+            className={cx(styles['secondary'], styles['formaBotao'], 'chamfer-sm')}
+            onClick={() => {
+              void chave.forget().then(() => {
+                setTeste({ status: 'idle' });
+              });
+            }}
+          >
+            {t.llm.forget}
+          </button>
+        )}
+      </label>
+      <p className={styles['hint']}>{t.llm.keyHint}</p>
+      <div className={styles['llmLinha']}>
+        <span className={styles['formaEstado']}>{estado}</span>
+        {chave.hasKey === true && (
+          <button
+            type="button"
+            className={cx(styles['secondary'], styles['formaBotao'], 'chamfer-sm')}
+            disabled={teste.status === 'busy'}
+            onClick={() => {
+              setTeste({ status: 'busy' });
+              void chave.test().then((r) => {
+                setTeste({
+                  status: 'done',
+                  texto: r.ok ? t.llm.testOk(r.text) : t.llm.testFail(r.why),
+                });
+              });
+            }}
+          >
+            {teste.status === 'busy' ? t.llm.testing : t.llm.test}
+          </button>
+        )}
+      </div>
+      {teste.status === 'done' && <p className={styles['llmResultado']}>{teste.texto}</p>}
+    </div>
   );
 }

@@ -7,6 +7,7 @@ import {
   type Translation,
 } from '@core/store/index';
 import {
+  createLlmProvider,
   createLocalProvider,
   dictionaryPhrases,
   machineLanguage,
@@ -21,6 +22,8 @@ import {
 } from '@core/translation/index';
 import { readGlossary } from '@core/store/index';
 import { createIndexedDbStore } from '@platform/store-indexeddb';
+import { createGeminiChat } from '@platform/gemini';
+import { createBrowserSecretStore, LLM_KEY_SECRET } from '@platform/secrets';
 import { createBergamotTranslator } from '@platform/translator-bergamot';
 import { usePreferences } from '@ui/prefs/usePreferences';
 
@@ -101,10 +104,14 @@ export function useStoredTranslation(
  * se tenta é a das preferências; um id sem provedor é pulado.
  */
 const maquina = createBergamotTranslator(store);
+/* A chave do modelo de linguagem mora nos segredos, nunca nas preferências (Etapa 41). */
+const segredos = createBrowserSecretStore();
+const gemini = createGeminiChat(() => segredos.get(LLM_KEY_SECRET));
 
 async function provedores(
   ids: readonly TranslationMethodId[],
   language: string,
+  llmModel: string,
 ): Promise<TranslationProvider[]> {
   const nomes = await readCommunityNames(store, language);
   const nomeDe = (label: string): string | null => {
@@ -129,8 +136,14 @@ async function provedores(
     ...dictionaryPhrases(dicionario),
     ...namePhrases(nomes),
   ];
+  const glossario = { nameOf: nomeDe, phrases: frases };
   const todos: Partial<Record<TranslationMethodId, TranslationProvider>> = {
-    local: createLocalProvider(maquina, { nameOf: nomeDe, phrases: frases }),
+    llm: createLlmProvider(
+      gemini,
+      async () => ({ model: llmModel, hasKey: (await segredos.get(LLM_KEY_SECRET)) !== null }),
+      glossario,
+    ),
+    local: createLocalProvider(maquina, glossario),
   };
   return ids.flatMap((id) => {
     const provedor = todos[id];
@@ -164,6 +177,7 @@ export function useTranslate(): {
 } {
   const { prefs } = usePreferences();
   const { language, methods } = prefs.translation;
+  const llmModel = prefs.translation.llm.model;
   const [state, setState] = useState<TranslateState>({ status: 'idle' });
 
   const translate = useCallback(
@@ -178,7 +192,7 @@ export function useTranslate(): {
           setState({ status: 'idle' });
           return;
         }
-        const candidatos = await provedores(methods, language);
+        const candidatos = await provedores(methods, language, llmModel);
         for (const provedor of candidatos) {
           const disponivel = await provedor.availability(language);
           if (disponivel.kind === 'unavailable') continue;
@@ -201,10 +215,70 @@ export function useTranslate(): {
         setState({ status: 'error', message: erro instanceof Error ? erro.message : String(erro) });
       });
     },
-    [language, methods],
+    [language, methods, llmModel],
   );
 
   return { state, translate };
+}
+
+/**
+ * A CHAVE do modelo de linguagem, para as configurações (Etapa 41): se há uma guardada,
+ * guardar, esquecer, e testar — traduz uma frase curta pelo provedor de verdade e devolve
+ * o texto, ou o erro. A versão das traduções sobe ao mudar a chave, para quem confere a
+ * disponibilidade reler.
+ */
+export function useLlmKey(): {
+  readonly hasKey: boolean | null;
+  readonly save: (key: string) => Promise<void>;
+  readonly forget: () => Promise<void>;
+  readonly test: () => Promise<{ ok: true; text: string } | { ok: false; why: string }>;
+} {
+  const { prefs } = usePreferences();
+  const { language } = prefs.translation;
+  const llmModel = prefs.translation.llm.model;
+  const version = useTranslationsVersion();
+  const [hasKey, setHasKey] = useState<boolean | null>(null);
+  useEffect(() => {
+    let alive = true;
+    segredos
+      .get(LLM_KEY_SECRET)
+      .then((chave) => {
+        if (alive) setHasKey(chave !== null && chave !== '');
+      })
+      .catch(() => {
+        if (alive) setHasKey(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [version]);
+
+  const save = useCallback(async (key: string) => {
+    await segredos.set(LLM_KEY_SECRET, key.trim());
+    anunciar();
+  }, []);
+  const forget = useCallback(async () => {
+    await segredos.delete(LLM_KEY_SECRET);
+    anunciar();
+  }, []);
+  const test = useCallback(async () => {
+    const [provedor] = await provedores(['llm'], language, llmModel);
+    if (provedor === undefined) return { ok: false as const, why: 'sem provedor' };
+    try {
+      const html = await provedor.translate({
+        language,
+        entityType: 'teste',
+        key: 'teste',
+        field: 'main',
+        html: '<p>Make a melee Strike against the target. On a hit, it is Frightened 1.</p>',
+      });
+      return { ok: true as const, text: html.replace(/<[^>]+>/g, '') };
+    } catch (erro: unknown) {
+      return { ok: false as const, why: erro instanceof Error ? erro.message : String(erro) };
+    }
+  }, [language, llmModel]);
+
+  return { hasKey, save, forget, test };
 }
 
 /** O estado do modelo local para a língua — o que as configurações mostram ao lado dele. */
