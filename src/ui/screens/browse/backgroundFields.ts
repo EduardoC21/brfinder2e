@@ -2,6 +2,7 @@ import type { BrowseEntity } from '@core/browse/index';
 import type { BoostsFormat } from '@core/browse/spec';
 import { isRecord } from '@core/json';
 import { strings } from '@i18n/index';
+import { isTranslatedMode } from '@ui/text';
 
 import { references, type Reference } from './referenceFields';
 
@@ -58,9 +59,18 @@ const ATTRIBUTE_ORDER: readonly string[] = Object.keys(ATTRIBUTE_NAME);
  */
 export const ATTRIBUTE_FIELDS: ReadonlySet<string> = new Set(['boosts', 'divineAttribute']);
 
-/** Um código desconhecido volta como veio, em vez de sumir. */
+/** Um código desconhecido volta como veio, em vez de sumir. No modo traduzido, em português. */
 export function attributeName(code: string): string {
+  if (isTranslatedMode())
+    return strings.browse.terms.attributes[code] ?? ATTRIBUTE_NAME[code] ?? code;
   return ATTRIBUTE_NAME[code] ?? code;
+}
+
+/** `Strength` → `Força` no modo traduzido; o que não é atributo volta como veio. */
+export function attributeNameByName(name: string): string {
+  if (!isTranslatedMode()) return name;
+  const code = Object.keys(ATTRIBUTE_NAME).find((key) => ATTRIBUTE_NAME[key] === name);
+  return code === undefined ? name : (strings.browse.terms.attributes[code] ?? name);
 }
 
 /** `str` → `For`; o desconhecido volta como veio. */

@@ -1014,6 +1014,11 @@ classe não precisam de "de classe" — tudo ali é da classe — nem herdam o q
 ligou no trilho de Habilidades. A escolha de colunas da aba grava à parte (`aba:<fonte>:
 <aba>`), com o padrão da aba; sem `defaultColumns`, o da fonte.
 
+**Habilidades virou Características** (Etapa 33): a fonte `features` passou a se chamar
+Características — "Característica de Classe" é como a tradução da comunidade escreve
+`class feature`. Onde este arquivo diz "Habilidades" como nome de fonte ou de aba, leia
+Características; o que era decisão continua valendo.
+
 **Fonte fora do trilho** (`hidden`): a herança própria existe como fonte — carrega, indexa,
 abre em flutuante, aparece na busca global — mas não é uma lista que se abre pelo trilho:
 só faz sentido como aba de uma ancestralidade. Decisão do autor. A herança VERSÁTIL, que

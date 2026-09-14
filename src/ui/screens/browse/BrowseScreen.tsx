@@ -39,6 +39,7 @@ import {
 } from '@core/browse/index';
 import { sourcePreferences, withLayout, withSource } from '@core/prefs/index';
 import { strings } from '@i18n/index';
+import { setTermMode } from '@ui/text';
 import { FloatingPanel } from '@ui/components/FloatingPanel';
 import type { LoadedSource } from '@ui/hooks/useAllBases';
 import { SearchInput } from '@ui/components/SearchInput';
@@ -195,6 +196,12 @@ export function BrowseScreen({ baseVersion }: BrowseScreenProps) {
    * português — rótulo do chip e caixinha —, o que ele não tem fica em inglês. Com
    * "Original", o pacote pode estar lá e não aparece: é o que a preferência diz.
    */
+  /*
+   * O modo dos termos segue a preferência (Etapa 33), lido no render — antes de qualquer
+   * célula desenhar — e a lista remonta pela `key` quando ele muda, para nenhuma célula
+   * memorizada ficar com o texto do outro modo.
+   */
+  setTermMode(prefs.translation.display);
   const versaoDoPacote = useCommunityPackVersion();
   const traduzido = useTranslatedTraitGlossary(prefs.translation.language, versaoDoPacote);
   /*
@@ -306,7 +313,7 @@ export function BrowseScreen({ baseVersion }: BrowseScreenProps) {
           <p className={styles['empty']}>{t.empty}</p>
         ) : (
           <SourcePane
-            key={source.id}
+            key={`${source.id}#${prefs.translation.display}`}
             source={source}
             entities={entities}
             loading={base.status === 'loading'}

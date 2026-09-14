@@ -955,6 +955,18 @@ ler. A tela continua mostrando o nome original. É o campo `alias` de `createSea
 e de `createTextIndex`; quem sabe o segundo nome é a tela, que tem o pacote — o índice só
 indexa.
 
+**Os termos do sistema seguem a nomenclatura da comunidade** (Etapa 33, pelo autor: "usar
+no sistema as traduções corretas"). Duas coisas: (1) os rótulos FIXOS do app foram
+alinhados ao módulo — "Características" no lugar de "Habilidades" (`Característica de
+Classe`), "círculo" no lugar de "ranque" (`PF2E.Item.Spell.Rank.Label`), "Média/Enorme/
+Imenso" nos tamanhos, "Recipientes" nos `backpack`; (2) os VALORES de dado de jogo que
+ficavam em inglês ganharam uma tabela de termos (`browse.terms`: perícias, atributos,
+tradições, tipos de dano, categorias e grupos de arma e armadura, Tipos), copiada do
+módulo, que só entra com a preferência "Traduzido" — no "Original" o dado fica em inglês,
+como sempre. O modo é um estado de módulo em `ui/text.ts` (`setTermMode`), lido no render
+da tela de consulta e não um hook: `fieldText` é chamada em dezenas de lugares sem React
+por perto; a lista remonta pela `key` quando o modo muda.
+
 ### Onde a tradução mora: a quinta camada
 
     trans/<língua>/<tipo>    { [chave]: { [campo]: { html, method, at, sourceHash } } }

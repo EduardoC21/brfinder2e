@@ -74,7 +74,47 @@ export const BOOK_FIELD = 'source.title';
  * Uma função só, usada pela coluna e pelo detalhe. O filtro passa por `valueLabel`, que a
  * chama por dentro depois de tratar as espécies que têm tradução própria.
  */
+/*
+ * O MODO DOS TERMOS (Etapa 33): "original" mostra o dado de jogo em inglês, como sempre;
+ * "translated" põe os termos da comunidade (`browse.terms`) no lugar — perícias,
+ * atributos, tradições, tipos de dano, categorias e grupos. É a preferência de
+ * visualização, lida uma vez por render da tela de consulta (`setTermMode`), e não um
+ * hook: `fieldText` é chamada em dezenas de lugares sem React por perto. A tela remonta a
+ * lista quando o modo muda, para nada ficar com o texto velho.
+ */
+let termMode: 'original' | 'translated' = 'original';
+
+export function setTermMode(mode: 'original' | 'translated'): void {
+  termMode = mode;
+}
+
+export function isTranslatedMode(): boolean {
+  return termMode === 'translated';
+}
+
+const SKILL_FIELDS: ReadonlySet<string> = new Set(['skills', 'divineSkill']);
+const TERM_VALUE_FIELDS: ReadonlySet<string> = new Set([
+  'category',
+  'group',
+  'sector',
+  'weaponType',
+  'kind',
+]);
+
+/** O termo em português para o valor deste campo, ou nulo no modo original / sem termo. */
+function termFor(field: string, value: string): string | null {
+  if (termMode !== 'translated') return null;
+  const terms = strings.browse.terms;
+  if (SKILL_FIELDS.has(field)) return terms.skills[value.toLowerCase()] ?? null;
+  if (field === 'traditions') return terms.traditions[value] ?? null;
+  if (field === 'damageType') return terms.damage[value] ?? null;
+  if (TERM_VALUE_FIELDS.has(field)) return terms.values[value] ?? null;
+  return null;
+}
+
 export function fieldText(field: string, value: string): string {
+  const termo = termFor(field, value);
+  if (termo !== null) return termo;
   if (field === BOOK_FIELD) return bookLabel(value);
   if (field === SANCTIFICATION_FIELD) return sanctificationLabel(value);
   if (field === SIZE_FIELD || field === SIZES_FIELD)

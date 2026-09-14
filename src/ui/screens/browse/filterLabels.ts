@@ -9,7 +9,12 @@ import {
   sanctificationLabel,
 } from '@ui/text';
 
-import { ATTRIBUTE_FIELDS, attributeName } from './backgroundFields';
+import {
+  ATTRIBUTE_FIELDS,
+  ATTRIBUTE_NAME_FIELDS,
+  attributeName,
+  attributeNameByName,
+} from './backgroundFields';
 
 const t = strings.browse;
 
@@ -65,6 +70,7 @@ export function valueLabel(spec: FilterSpec, value: string): string {
    * a tela de perícias.
    */
   if (ATTRIBUTE_FIELDS.has(spec.field)) return attributeName(value);
+  if (ATTRIBUTE_NAME_FIELDS.has(spec.field)) return attributeNameByName(value);
   // O resto passa pelo MESMO caminho da coluna e do detalhe — tamanho, visão, e o que vier.
   return fieldText(spec.field, value);
 }

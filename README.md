@@ -81,6 +81,11 @@ Antes: **Etapa 20** — as tabelas das regras param de quebrar (célula compacta
 linha, `@Embed` cola a entrada apontada, e as duas vassouras em Configurações: apagar as
 entradas aposentadas e apagar a base inteira.
 
+Antes: **Etapa 33** — os termos do sistema na nomenclatura da comunidade: "Características",
+"círculo", "Média"; e, com "Traduzido", perícias, atributos, tradições, tipos de dano,
+categorias, grupos e Tipos em português (tabela copiada do módulo). No "Original", tudo
+como era.
+
 Antes: **Etapa 32** — a busca acha pelo nome original e pelo nome em português do pacote
 ("guerreiro" e "fighter" levam ao Fighter), na lista e na paleta.
 

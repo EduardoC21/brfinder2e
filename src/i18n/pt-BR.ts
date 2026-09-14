@@ -25,12 +25,121 @@ export const ptBR = {
     stale: '· sincronize de novo',
   },
   browse: {
+    /**
+     * OS TERMOS DO SISTEMA em português, alimentados pela tradução da comunidade (Etapa 33,
+     * pelo autor: "usar no sistema as traduções corretas"). Só aparecem com a preferência
+     * "Traduzido" — no "Original" o dado de jogo fica em inglês, como sempre foi. Cada
+     * valor é o do módulo pt-BR (`PF2E.Skill.*`, `PF2E.Ability*`, `PF2E.Trait*`,
+     * `PF2E.Damage.RollFlavor.*`, `PF2E.WeaponType*`, `PF2E.ArmorType*`,
+     * `PF2E.WeaponGroup*`, `PF2E.Item.Feat.Category.*`), copiado e não inventado.
+     */
+    terms: {
+      skills: {
+        acrobatics: 'Acrobatismo',
+        arcana: 'Arcanismo',
+        athletics: 'Atletismo',
+        crafting: 'Manufatura',
+        deception: 'Dissimulação',
+        diplomacy: 'Diplomacia',
+        intimidation: 'Intimidação',
+        medicine: 'Medicina',
+        nature: 'Natureza',
+        occultism: 'Ocultismo',
+        religion: 'Religião',
+        society: 'Sociedade',
+        stealth: 'Furtividade',
+        survival: 'Sobrevivência',
+        thievery: 'Ladroagem',
+      } as Record<string, string>,
+      attributes: {
+        str: 'Força',
+        dex: 'Destreza',
+        con: 'Constituição',
+        int: 'Inteligência',
+        wis: 'Sabedoria',
+        cha: 'Carisma',
+      } as Record<string, string>,
+      traditions: {
+        arcane: 'Arcana',
+        divine: 'Divina',
+        occult: 'Ocultista',
+        primal: 'Primal',
+      } as Record<string, string>,
+      damage: {
+        acid: 'ácido',
+        bleed: 'sangramento',
+        bludgeoning: 'contundente',
+        cold: 'frio',
+        electricity: 'eletricidade',
+        fire: 'fogo',
+        force: 'energia',
+        mental: 'mental',
+        piercing: 'perfurante',
+        poison: 'veneno',
+        precision: 'precisão',
+        slashing: 'cortante',
+        sonic: 'sônico',
+        spirit: 'espírito',
+        vitality: 'vitalidade',
+        void: 'vazio',
+        untyped: 'sem tipo',
+      } as Record<string, string>,
+      /* Valores de Tipo, categoria e grupo que aparecem em coluna, filtro e detalhe. */
+      values: {
+        simple: 'Simples',
+        martial: 'Marcial',
+        advanced: 'Avançada',
+        unarmed: 'Desarmado',
+        unarmored: 'Sem armadura',
+        light: 'Leve',
+        medium: 'Média',
+        heavy: 'Pesada',
+        axe: 'Machado',
+        bomb: 'Bomba',
+        bow: 'Arco',
+        brawling: 'Pugilato',
+        club: 'Clava',
+        crossbow: 'Besta',
+        dart: 'Dardo',
+        firearm: 'Arma de fogo',
+        flail: 'Mangual',
+        hammer: 'Martelo',
+        knife: 'Faca',
+        pick: 'Picareta',
+        polearm: 'Haste',
+        shield: 'Escudo',
+        sling: 'Funda',
+        spear: 'Lança',
+        sword: 'Espada',
+        Ancestry: 'Ancestralidade',
+        Class: 'Classe',
+        Archetype: 'Arquétipo',
+        Skill: 'Perícia',
+        General: 'Geral',
+        Mythic: 'Mítico',
+        Miscellaneous: 'Diversos',
+        Spells: 'Magias',
+        Focus: 'Foco',
+        Rituals: 'Rituais',
+        'Impossible Spells': 'Impossíveis',
+        Basic: 'Básica',
+        Adventure: 'Aventura',
+        weapon: 'Arma',
+        armor: 'Armadura',
+        consumable: 'Consumível',
+        ammo: 'Munição',
+        equipment: 'Equipamento',
+        treasure: 'Tesouro',
+        backpack: 'Recipiente',
+        kit: 'Kit',
+      } as Record<string, string>,
+    },
     /** O trilho setorizado (Etapa 27): as pastas, o "Todos", e a fonte no plural. */
     rail: {
       groups: {
         character: 'Personagem',
         feats: 'Talentos',
-        features: 'Habilidades',
+        features: 'Características',
         equipment: 'Equipamentos',
         spells: 'Magias',
         rules: 'Regras',
@@ -58,7 +167,7 @@ export const ptBR = {
           ammo: 'Munições',
           equipment: 'Equipamentos',
           treasure: 'Tesouros',
-          backpack: 'Mochilas',
+          backpack: 'Recipientes',
           kit: 'Kits',
         },
         spells: {
@@ -287,7 +396,7 @@ export const ptBR = {
         heritages: 'Heranças',
         feats: 'Talentos',
         universal: 'Universais',
-        features: 'Habilidades',
+        features: 'Características',
         focus: 'Foco',
       } as Record<string, string>,
     },
@@ -299,8 +408,10 @@ export const ptBR = {
       size: {
         tiny: 'Minúsculo',
         sm: 'Pequeno',
-        med: 'Médio',
+        med: 'Média',
         lg: 'Grande',
+        huge: 'Enorme',
+        grg: 'Imenso',
       } as Record<string, string>,
       vision: {
         normal: 'Normal',
@@ -334,7 +445,7 @@ export const ptBR = {
         undead: 'Morto-vivo',
         artifact: 'Artefato',
       } as Record<string, string>,
-      /** A categoria da habilidade, que é o Tipo da fonte de habilidades. */
+      /** A categoria da característica, que é o Tipo da fonte de características. */
       category: {
         ancestryfeature: 'Ancestralidade',
         classfeature: 'Classe',
@@ -488,11 +599,11 @@ export const ptBR = {
       category: 'categoria',
       rarity: 'raridade',
       /*
-       * "Ranque", e não "posto": é como a comunidade brasileira lê `rank` do Remaster, e é
-       * o rótulo tanto da calha antes do nome quanto do filtro. Os dois liam textos
-       * diferentes — a calha usava o `nível` fixo de talentos, e o filtro dizia `posto`.
+       * "Círculo": é como a tradução da comunidade escreve `rank` de magia
+       * (`PF2E.Item.Spell.Rank.Label`), e é o rótulo tanto da calha antes do nome quanto
+       * do filtro. Era "ranque" até a Etapa 33.
        */
-      rank: 'ranque',
+      rank: 'círculo',
       cast: 'execução',
       traditions: 'tradições',
       range: 'distância',
@@ -524,7 +635,7 @@ export const ptBR = {
       languages: 'idiomas',
       additionalLanguages: 'idiomas ad.',
       extraLanguages: 'idiomas qnt.',
-      features: 'habilidades',
+      features: 'características',
       /* Habilidade: a ancestralidade dona. Só aparece com o Tipo Ancestralidade marcado. */
       owner: 'ancestralidade',
       /* Herança: a ancestralidade dona. */
@@ -597,7 +708,7 @@ export const ptBR = {
     classes: 'Classe',
     companions: 'Companheiro',
     familiars: 'Familiar',
-    features: 'Habilidades',
+    features: 'Características',
     heritages: 'Heranças',
     deities: 'Divindades',
     domains: 'Domínios',

@@ -1,7 +1,7 @@
 import { fieldValue, type BrowseEntity, type StatFormat } from '@core/browse/index';
 import { isRecord } from '@core/json';
 import { strings } from '@i18n/index';
-import { bulkText, capitalizar, priceText } from '@ui/text';
+import { bulkText, capitalizar, fieldText, priceText } from '@ui/text';
 
 /**
  * Os três campos de equipamento que viram frase.
@@ -85,7 +85,9 @@ const D = strings.browse.damage;
 
 function tipoEscrito(tipo: string, curto: boolean): string {
   if (tipo === '') return '';
-  return curto ? (FISICO[tipo] ?? capitalizar(tipo)) : capitalizar(tipo);
+  if (curto && FISICO[tipo] !== undefined) return FISICO[tipo];
+  /* O tipo de dano por extenso passa pelos termos: "Fogo" no modo traduzido (Etapa 33). */
+  return capitalizar(fieldText('damageType', tipo));
 }
 
 /** `1d8` + `slashing` → `1d8 S`. Sem tipo, só a fórmula. */

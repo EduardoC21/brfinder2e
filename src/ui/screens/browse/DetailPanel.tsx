@@ -27,7 +27,7 @@ import { CollapseToggle } from '@ui/components/CollapseToggle';
 import { cx } from '@ui/cx';
 import { bookLabel, capitalizar, fieldText, rankLabel } from '@ui/text';
 
-import { boostsText } from './backgroundFields';
+import { ATTRIBUTE_NAME_FIELDS, attributeNameByName, boostsText } from './backgroundFields';
 import { references as referenciasDe, type Reference } from './referenceFields';
 import { itemBulkText, itemDamageText, itemPriceText, statText } from './itemFields';
 import type { PopoutSubject } from './popouts';
@@ -547,7 +547,11 @@ function Field({
     case 'text': {
       const value = fieldValue(entity, spec.field);
       if (value === '') return null;
-      return <Row label={label(spec.field)}>{fieldText(spec.field, value)}</Row>;
+      /* O atributo da perícia vem por extenso ("Strength"): no modo traduzido, "Força". */
+      const texto = ATTRIBUTE_NAME_FIELDS.has(spec.field)
+        ? attributeNameByName(value)
+        : fieldText(spec.field, value);
+      return <Row label={label(spec.field)}>{texto}</Row>;
     }
 
     /*
@@ -746,7 +750,7 @@ function Field({
           <span className={styles['chips']}>
             {fixas.map((item) => (
               <span key={item} className={cx(styles['chip'], 'chamfer-sm')}>
-                {capitalizar(item)}
+                {fieldText(spec.field, item)}
               </span>
             ))}
             {outra && (
