@@ -81,6 +81,11 @@ Antes: **Etapa 20** — as tabelas das regras param de quebrar (célula compacta
 linha, `@Embed` cola a entrada apontada, e as duas vassouras em Configurações: apagar as
 entradas aposentadas e apagar a base inteira.
 
+Antes: **Etapa 29** — a varredura: o pack cruzado com ele mesmo e com o Archives of
+Nethys (mesma era) por `scripts/varredura-foundry.py` — 1.606 magias, 4.677 talentos,
+3.526 itens, 248 antecedentes, 31 ancestralidades, 29 classes; a seção 3 do
+INCONSISTENCIAS é a lista de entrada do PR ao pf2e.
+
 Antes: **Etapa 28** — o fechamento das fontes: a ponte arquétipo multiclasse → classe
 (que nunca desenhava: o campo é texto e a ponte só lia lista), o "Mecânicas" da
 ancestralidade aberto de vez, a sub-aba da lateral lembrada por tipo, os Tipos do trilho
@@ -141,10 +146,8 @@ Antes: **Etapa 23** — `heritage` (311 próprias, fonte fora do trilho) e as 17
 como Tipo da ancestralidade; as abas de lista da tela completa, com o filtro travado —
 Dwarf: Heranças 9, Talentos 48; Nephilim: Talentos 88.
 
-Próxima: **a varredura das inconsistências** — a seção "Para a varredura final" do
-INCONSISTENCIAS-FOUNDRY (a pasta `family` do equipamento, a defesa das magias contra o
-AoN, os traços compostos de escudo, os 33 traços sem descrição), medida de novo e
-registrada. Depois, a tradução dos filtros e valores.
+Próxima: **a tradução dos filtros e valores** (a semente é a tabela do trilho). O PR ao
+pf2e com a seção 3 do INCONSISTENCIAS se faz em outro chat, com o repositório deles.
 
 Antes: **Etapa 22e** — a descrição no contexto: o Change Shape aberto pelo Anadi tem o
 texto do Anadi (o `ItemAlteration` de descrição do Foundry, 91 estáticas no zip), com

@@ -221,25 +221,168 @@ Versão medida: **`pf2e-8.5.0`**.
 
 ---
 
-## 3. Para a varredura final
+## 3. A varredura (Etapa 29)
 
-Coisas que foram VISTAS mas não medidas o bastante para entrar acima. Não afirmar nada
-delas sem medir de novo.
+Medida com `scripts/varredura-foundry.py` sobre o `pf2e-8.5.0`, cruzando o pack com ele
+mesmo (a prosa do jornal contra os campos) e com o Archives of Nethys (baixado por
+`scripts/aon-dump.py`, na mesma era: Remaster com Remaster, legado com legado). O
+relatório inteiro fica em `.dados/varredura/relatorio.md` e `.json` (fora do git); aqui
+ficam os números e os casos que valem abrir. **Nem toda divergência é do Foundry** — onde
+o AoN costuma estar incompleto está dito. O PR ao pf2e se faz em outro chat, com o
+repositório deles clonado; este arquivo é a lista de entrada.
 
-- Equipamento: a pasta do compêndio (`family`) parecia discordar dos traços em parte dos
-  163 itens que a têm. Foi o motivo de tirá-la (Etapa 12g), mas os casos não foram
-  listados.
-- Magias: além das 4 do item 1.6, a defesa de outras magias divergia do AoN "nos dois
-  sentidos" na Etapa 10c (Phase Bolt entre elas). Os casos exatos precisam ser recontados.
-- Traços parametrizados de escudo (`integrated-1d6-s`, `integrated-1d6-s-versatile-p`):
-  slug composto que nenhuma regra de sufixo alcança. 2 usos. Pode ser modelagem, não erro.
-- 33 traços usados nas fontes importadas sem `PF2E.TraitDescription` (`jotunborn`,
-  `naari`, `yaksha`…). Provavelmente traços de criatura sem texto de propósito.
+### 3.1 Magias × AoN — 1.606 comparadas, 150 divergências
+
+- **Rank:** Corpse Bloom `1` × AoN `3`.
+- **Alcance:** Thief of Fortune `60` × `30`; Flame Barrier `30` × `60`.
+- **Ações (14):** Cup of Dust `3` × `2`, Theogeny `2` × `3`, Wish Market `2` × `1`, Warning
+  Stripes `2` × `1`, Sawtooth Terrain `2` × `3`, Far-Flung Fetch `2` × `1`, Timely Reminder
+  `2` × `3`, Ember Doppelgänger `2` × `3`, Metal Merged `2` × `1`, Patron's Protector `2` ×
+  `3`, Summon Oliphaunt of Jandelay `2` × `3`, Rune Trap `10 minutes` × `1 hour`; Splinter
+  Volley e Howling Blizzard só diferem no "2 a 3".
+- **Salvamento (16 + 23):** 16 em que o Foundry não tem `defense` e o AoN tem (Boots on the
+  Ground `will`, Manifest Will `basic reflex`, Overwhelming Memory `will`, Cinder Swarm…) ou
+  o tipo difere (Ymeri's Mark `basic reflex` × `fortitude`; Murderous Vine `fortitude-dc` ×
+  `fortitude`, um valor que não é dos quatro); e 23 em que só o `basic` difere (Rouse
+  Skeletons, Phantasmal Calamity, Floating Flame…: Foundry `basic`, AoN sem) — **a
+  confirmar no livro**, o AoN abrevia.
+- **Tradições (8):** Incarnate Draconic Legion `arcane` × as quatro; Fungal Exhalation,
+  Mushroom Patch e Hedge Prison sem tradição × `primal`; Guiding Star sem `occult`;
+  Banishing Touch, Bacchanalia e Frost's Touch com tradições × AoN vazio (aí é o AoN).
+- **Raridade:** Adapt Self `common` × `uncommon`.
+- **Traços (85):** quase todo o resto é o AoN sem `concentrate`/`manipulate` (25) ou sem
+  `attack` (8), ou com o traço de classe `druid` (7) que o Foundry não põe em magia —
+  ruído do AoN, não do Foundry.
+- O que a Etapa 10c tinha visto ("Phase Bolt, nos dois sentidos") está coberto: o par
+  Remaster/legado do AoN era o que confundia, e na mesma era o Phase Bolt bate.
+
+### 3.2 Talentos × AoN — 4.677 comparados, 309 divergências
+
+- **Nível (12):** Voice of the Elements `5` × `2`, Draconic Scent `5` × `4`, Practical
+  Magic `6` × `1`, Animal Soul Siblings `5` × `1`, Devoted Focus `10` × `12`, Feathered
+  Flechettes `6` × `8`, Death from Above `8` × `16`, Remote Detonation `1` × `8`, Basic
+  Magus Spellcasting `6` × `4`, Dual-Weapon Reload `1` × `4`, Blade of Law `12` × `10`,
+  Uplifting Winds `12` × `16`. Parte pode ser talento HOMÔNIMO de outro livro — ler.
+- **Raridade (10):** Army of One, Death from Above, Crossbow Infiltrator Dedication e
+  Jousting Mount `uncommon` × `common`; Spellshot Dedication, Remote Detonation,
+  Sleepwalker Dedication, Ultimate Flexibility, Spell Mastery e Unstoppable Juggernaut
+  `common` × `uncommon`.
+- **Ações (68):** 11 sem custo no Foundry com `1` no AoN e 9 com `2`, 5 com `reaction`; 6
+  com `2` no Foundry e nada no AoN; 4 `3` × `2`. Os "1 a 2" e "2 a 3" do AoN (17) o Foundry
+  não modela — não contam.
+- **Pré-requisitos, presença (54):** 35 o Foundry tem e o AoN não; 19 o AoN tem e o Foundry
+  não (Draconic Scent "Dragon Disciple Dedication"…). Os 19 valem olhar.
+- **Traços (165):** o grosso é o AoN pondo traço de ancestralidade ou de categoria que o
+  Foundry guarda em campo — `locathah` (30), `universal-ancestry` (24), `skill` (10),
+  `general` (9), `half-elf` (4) — ruído; e `metamagic`/`spellshape` que a mesma era
+  já mistura. Sobra pouco de fato.
+
+### 3.3 Equipamento × AoN — 3.526 comparados, 250 divergências
+
+- **Preço (27), os que parecem dígito trocado:** Ring of Fair Assessment `350 gp` × `35 gp`;
+  Hollow Robes `3.000 gp` × `300 gp`; Traitor's Ring `15 gp` × `1,5 gp`; Digly's Oil of
+  Sympathy (Minor) `4 gp` × `40 gp`; One Day's Breath `60 gp` × `6 gp`; Look-Me-Not `300 gp`
+  × `150 gp`; Fearcracker `25 gp` × `5 gp`; Gakgung `2 gp` × `6 gp`; Chakri `20 cp` × `2 cp`;
+  Bellows Pipes `140 gp` × `50 gp`; Tales in Timber `1.000 gp` × `850 gp`; Bleeding Canines
+  `320 gp` × `520 gp`; Lattice Armor `6 gp` × `9 gp`; Fan of Falling Words `900 gp` × `1.300
+gp`; Elven Chain (Standard-Grade) `740 gp` × `2.500 gp` e (High-Grade) `16.800 gp` ×
+  `52.000 gp`; Aeon Stone (Peering) `8.500 gp` × `9.500 gp`; Slumber Arrow `11 gp` × `10 gp`;
+  Undertaker's Manifest `200 gp` × `220 gp`; Rusting Ammunition (Greater) `600 gp` × `3.600
+gp`; Mentalist's Staff (Greater) `450 gp` × `460 gp`; Sanguine Pendant (Greater) `17.000
+gp` × `13.000 gp`. E 5 com preço ZERO no Foundry e preço no AoN: Whispering Veil (2.600
+  gp), Hero Killer (120 gp), Panaceatic Salve (155 gp), Arclord Eye (350 gp), e Scroll
+  Robes/Gi sem preço nenhum.
+- **Nível (35):** materiais em ingote/pedaço/lenho com nível `0` no Foundry e o nível do
+  material no AoN (Orichalcum 17, Adamantine/Dawnsilver/Duskwood/Peachwood 8, Cold Iron/
+  Silver 2 — 13 itens: modelagem do Foundry, não erro); e os que valem olhar: Lifebloom `6`
+  × `8`, Irritating Seedpod `7` × `3`, Stolen Countenance `13` × `11`, Atmospheric Staff `8`
+  × `4`, Fey Dragonet Liqueur `12` × `7`, Vernai Shell `16` × `15`, Reaper's Sigh `7` × `8`,
+  Chimera Thread `5` × `4`, Blood-Drinker `18` × `16`, Harpy's Talon `1` × `2`, Beekeeper's
+  Smoker `1` × `2`, Traveler's Chair `0` × `1`; e 8 com nível `1` no Foundry e `0` no AoN
+  (Repeating Crossbow, Repeating Hand Crossbow, Aldori Dueling Sword, 8-Round Magazine,
+  Flying Talon, Serene Smelling Salts, Atmospheric Breathing Suit `3`, War Saddle `5`,
+  High-contrast Goggles `4`).
+- **Arma:** Chakri `martial 1d6` × `Advanced 1d4 S`; Feng Huo Lun `1d4` × `1d6 S`; Panabas
+  grupo `axe` × `Sword`; Tri-bladed Katar `knife` × `Brawling`; Repeating Heavy Crossbow,
+  Rotary Bow, Taw Launcher e Repeating Hand Crossbow grupo `crossbow` × `Bow` (o AoN é que
+  está velho: são bestas); Blowgun e Dart Umbrella dano `1d` × `1 P` (o Foundry guarda `1`
+  sem dado — modelagem). Buckle Armor categoria `light` × `Unarmored`.
+- **Raridade (30):** Execution Powder, Phantom Fang, Thousand-Blade Thesis, Dezullon
+  Fountain, Dragontooth Club, 8-Round Magazine, Lethargy Poison `uncommon` × `common`;
+  Irritating Seedpod, Dragon Rune Bracelet, Poet's Fritter (3), Sure-Step Crampons, Beetle
+  Gel, Repeater Bandolier, Bola `common` × `uncommon`; Moritype `rare` × `uncommon`;
+  Addiction Suppressant (4), The Kardosian Fragments, Beloved's Bracelets, Chromatic Robe,
+  Doomsday Door, One Day's Breath `rare` × `common`; Forgefather's Seal `rare` × `unique`;
+  Candlecap `common` × `unique`; Aeon Stone (Western/Eastern Star) `rare` × `uncommon`.
+- **Volume (144):** quase todo `L` × `—` e `1` × `L` — o AoN escreve o volume de itens
+  vestidos e o Foundry o do item solto, ou vice-versa. Só com o livro. Lista no JSON.
+
+### 3.4 Antecedentes × AoN — 248 comparados, 53 divergências
+
+- **Aumento (3):** Archival Assistant `Con/Sab` × `Int/Sab`; Absalom Street Preacher
+  `Con/Int` × `Con/Sab`; Feral Child três fixos × AoN vazio.
+- **Talento (17):** 10 o Foundry concede e o AoN não lista (Hired Killer, Tech-Reliant,
+  Planar Migrant, Tree Friend, Eagle Hunter, Driver, Pilgrim, Returned, Belkzen
+  Anthropologist…) — provável AoN; 7 o AoN lista e o Foundry não concede: Anti-Thrune
+  Saboteur (Lengthy Diversion), Nomad, Stargazer, Aeronaut, Farmhand, Scholar (Assurance),
+  Haunted (Diehard), Alloysmith (Specialty Crafting) — **valem olhar**.
+- **Perícias (33):** Anti-Thrune Saboteur `Cheliax Lore, Engineering Lore` × `Deception,
+Thievery` (o único caso de perícia trocada); Hermit sem nada × `Nature, Occultism`; Kaiju
+  Stalker com `Athletics, Kaiju Lore` × vazio; e erros de grafia no Foundry: "Gladatorial
+  Lore" (Gladiator) e "Gladitorial Lore" (Clockfighter), "Theatre Lore" (Entertainer, o AoN
+  escreve Theater). O resto é o Saber que um lado nomeia e o outro não.
+
+### 3.5 Ancestralidades × AoN — 31 comparadas, 2 divergências
+
+- Só o Awakened Animal, que no AoN não tem PV nem deslocamento numérico (item 1.12). PV,
+  deslocamento, tamanho, aumentos, falha e idiomas batem nas outras 30.
+
+### 3.6 Classe: página do jornal × campos — 29, 1 divergência
+
+- Só o Ranger sem Nature (item 2.10). PV, percepção, resistências, perícias extras, ataques
+  e defesas batem nas 29.
+
+### 3.7 Classe: habilidades por nível × tabela de progressão — 29, 34 nomes que não batem
+
+- Nenhum NÍVEL errado: são NOMES que a tabela escreve de um jeito e o item de outro —
+  "Reflex Expertise" × "reflex expert", "Greater Rogue Reflexes" × "improved rogue
+  reflexes", "Perception Mastery" × "vigilant senses", "Bloodline Spells" × "bloodline",
+  "Psi Cantrips and Amps", "Oracular Curse" × "curse", "Second Gate's Threshold" × "gate's
+  threshold". 34 casos em 11 classes (Rogue 5, Thaumaturge 6, Oracle 4, Swashbuckler 4,
+  Sorcerer 3, Kineticist 3…). É a tabela do livro velho contra o item renomeado — para o
+  PR, se eles quiserem a tabela no vocabulário do Remaster.
+
+### 3.8 Ancestralidade: bloco de mecânica do jornal × campos — 50, 0 divergências
+
+### 3.9 Divindades: texto × domínios — não se aplica
+
+- A descrição da divindade no pack não repete os domínios em texto; não há o que cruzar.
+
+### 3.10 As quatro pendentes, medidas
+
+- **Pasta × traços (163 em pasta, 36 sem eco):** 35 Aeon Stones e 1 em Materials. A pasta
+  é organização do compêndio, não traço — não é defeito. Fecha o que a Etapa 12g viu.
+- **Traços compostos `integrated-*`:** 8 itens — Klar, Sanguine Klar (2), Hippopotamus
+  Klar, Razor Disc, Highhelm War Shield (3). É modelagem do dano integrado do escudo, não
+  erro.
+- **Traços sem `PF2E.TraitDescription` (403 usados, 21 sem):** `guardian` (83 usos — o traço
+  da classe Guardian sem descrição), `harrow-court` (54), `yaksha` (30), `yaoguai` (27),
+  `jotunborn` (27), `sarangay` (26), `tanuki` (25), `naari` (25), `dragonet` (20),
+  `hungerseed` (11), `trial` (5), `pervasive-magic` (4), `additive1`/`additive2` (6),
+  `stamina` (3), `spellshot` (3), `circus` (1); e os quatro de alinhamento legado (`good`
+  16, `evil` 11, `chaotic` 3, `lawful` 1). Os de ancestralidade e o `guardian` valem PR.
+- **Defesa das magias:** é o 3.1.
 
 ---
 
 ## Como medir de novo
 
 Todo número acima sai de `npm run test:contract` ou de um script sobre o zip em
-`.dados/json-assets-<tag>.zip`. Antes de abrir o PR, rodar contra a tag mais nova: parte
-disso pode já ter sido corrigida lá.
+`.dados/json-assets-<tag>.zip`. A seção 3 sai de dois scripts, que ficam no repositório:
+
+    python scripts/aon-dump.py spell feat weapon armor shield equipment background ancestry class
+    python scripts/varredura-foundry.py .dados/json-assets-pf2e-8.5.0.zip
+
+O primeiro baixa do Archives of Nethys só os campos comparados (em `.dados/aon/`, fora do
+git); o segundo escreve `.dados/varredura/relatorio.md` e `.json`. Antes de abrir o PR,
+rodar contra a tag mais nova: parte disso pode já ter sido corrigida lá.
