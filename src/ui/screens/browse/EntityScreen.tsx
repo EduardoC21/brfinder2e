@@ -22,7 +22,7 @@ import { displayName, translatedLabel } from '@ui/text';
 import { sourceHash, type Translation } from '@core/store/index';
 import { useDescriptionFields } from '@ui/hooks/useDescription';
 import type { LoadedSource } from '@ui/hooks/useAllBases';
-import { useStoredTranslations, useTranslate } from '@ui/hooks/useTranslation';
+import { useHasLlmKey, useStoredTranslations, useTranslate } from '@ui/hooks/useTranslation';
 import { usePreferences } from '@ui/prefs/usePreferences';
 
 import { DetailPane } from './DetailPane';
@@ -171,6 +171,7 @@ export function EntityScreen({
   const gravadas = useStoredTranslations(entityType, entity.key);
   const { prefs } = usePreferences();
   const tradutor = useTranslate();
+  const temChave = useHasLlmKey();
   const [verTraducao, setVerTraducao] = useState(prefs.translation.display === 'translated');
   const [entradaDaTraducao, setEntradaDaTraducao] = useState(entity.key);
   if (entradaDaTraducao !== entity.key) {
@@ -246,7 +247,7 @@ export function EntityScreen({
                   setLateralFechada(false);
                 }}
               >
-                {label ?? t.tabs[tab.id] ?? tab.id}
+                {label === null ? (t.tabs[tab.id] ?? tab.id) : displayName('feature', label)}
                 {count !== null && <span className={styles['contagem']}>{count}</span>}
               </button>
             ))}
@@ -256,8 +257,18 @@ export function EntityScreen({
           <button
             type="button"
             className={cx(styles['traduzir'], 'chamfer-sm')}
-            disabled={tradutor.state.status === 'busy' || textos === null}
-            title={tradutor.state.status === 'error' ? tradutor.state.message : undefined}
+            disabled={
+              tradutor.state.status === 'busy' ||
+              textos === null ||
+              (traducaoDaPagina === null && temChave !== true)
+            }
+            title={
+              tradutor.state.status === 'error'
+                ? tradutor.state.message
+                : traducaoDaPagina === null && temChave !== true
+                  ? strings.settings.translation.llm.noKey
+                  : undefined
+            }
             onClick={
               traducaoDaPagina !== null
                 ? () => {

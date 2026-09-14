@@ -1088,6 +1088,15 @@ gravada o mesmo botão alterna "Ver original" / "Ver tradução", nascendo na pr
 cada entrada; acima do texto, "Tradução: modelo local", e "o original mudou desde a
 tradução" quando a impressão digital não bate mais.
 
+**O glossário vem com a base (Etapa 44).** O autor perguntou por que baixar à parte. A
+resposta de licença não muda — é conteúdo de terceiros, nunca embutido —, mas o momento
+sim: `useSync` baixa o glossário da língua escolhida logo depois de gravar a base
+(`downloadCommunityPack`, em `useCommunityPack.ts`), em `try/catch` — falha dele não
+derruba a sincronização. O botão das configurações virou "Atualizar": para quem quer a
+versão nova antes da próxima sincronização. E o botão Traduzir fica APAGADO sem chave
+(`useHasLlmKey`), com o motivo no `title`; a edição manual continua disponível. Os
+rótulos das abas de escolha da classe ("Instinct", "Cause") passam por `displayName`.
+
 **A edição manual (Etapa 43).** `TranslationEditor` (portal no `body`) edita UM campo
 (`main` na lateral e no flutuante; a página na tela completa). `saveManualTranslation`
 grava com `method: 'manual'` e a impressão digital do original de hoje;

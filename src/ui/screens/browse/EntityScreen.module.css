@@ -65,11 +65,18 @@
   color: var(--color-text-muted);
   font: 400 var(--text-xs) / 1.6 var(--font-body);
   white-space: nowrap;
+  cursor: pointer;
 }
 
+.traduzir:hover:not(:disabled) {
+  background: var(--color-state);
+  color: var(--color-text);
+}
+
+/* Sem chave, o botão fica apagado e o cursor não promete nada (o autor, Etapa 44). */
 .traduzir:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
+  opacity: 0.4;
+  cursor: default;
 }
 
 /* O aviso acima da prosa traduzida, na voz do `.contexto` da lateral: anotação, não texto. */

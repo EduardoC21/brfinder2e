@@ -81,6 +81,11 @@ Antes: **Etapa 20** — as tabelas das regras param de quebrar (célula compacta
 linha, `@Embed` cola a entrada apontada, e as duas vassouras em Configurações: apagar as
 entradas aposentadas e apagar a base inteira.
 
+Antes: **Etapa 44** — os acertos do autor: o glossário da comunidade vem junto com a
+sincronização (o botão virou "Atualizar"), o Traduzir fica apagado sem chave, o cursor
+dos botões da tela completa, os textos das configurações sem citar uma língua, e as abas
+de escolha da classe com o nome traduzido.
+
 Antes: **Etapa 43** — a edição manual: o lápis abre a fonte HTML com prévia ao vivo e a
 trava das marcas do Foundry; grava como "manual" (nunca sobrescrita), com "Apagar
 tradução" como caminho de volta. E a vassoura do cache órfão do Bergamot ao abrir.

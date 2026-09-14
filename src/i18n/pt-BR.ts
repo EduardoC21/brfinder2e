@@ -776,7 +776,7 @@ export const ptBR = {
       names: {
         title: 'Nomes das entradas',
         description:
-          'Na lista e nos títulos: o nome original, ou o nome em português do pacote da comunidade. O que o pacote não tem fica no original. A busca acha pelos dois nomes, seja qual for a escolha.',
+          'Na lista e nos títulos: o nome original, ou o nome traduzido do glossário da comunidade. O que o glossário não tem fica no original. A busca acha pelos dois nomes, seja qual for a escolha.',
         original: 'Original',
         translated: 'Traduzido',
       },
@@ -799,15 +799,15 @@ export const ptBR = {
       community: {
         title: 'Glossário da comunidade',
         description:
-          'A tradução pt-BR do sistema para o Foundry: os nomes das entradas e os termos do jogo. É o que a tradução usa como glossário, e o que a tela usa para os nomes.',
+          'A tradução do sistema para o Foundry feita pela comunidade, na língua escolhida: os nomes das entradas e os termos do jogo. É o que o tradutor usa como glossário e o que a tela usa para os nomes. Baixado junto com a base, na sincronização; aqui só se quiser atualizar antes.',
         loading: 'Conferindo o que há gravado…',
-        absent: 'Nomes e termos da tradução pt-BR do sistema para o Foundry. Ainda não baixado.',
-        downloading: 'Baixando o pacote…',
+        absent: 'Ainda não baixado — vem com a próxima sincronização.',
+        downloading: 'Baixando o glossário…',
         error: (mensagem: string) => `Não deu para baixar: ${mensagem}`,
         ready: (tag: string, tracos: number, nomes: number) =>
-          `Baixado (${tag}): ${String(tracos)} traços, ${String(nomes)} nomes de entradas.`,
-        download: 'Baixar',
-        downloadAgain: 'Baixar de novo',
+          `Versão ${tag}: ${String(tracos)} traços, ${String(nomes)} nomes de entradas.`,
+        download: 'Baixar agora',
+        downloadAgain: 'Atualizar',
       },
       /** O tradutor BYOK (Etapa 41): modelo, chave, teste. */
       llm: {

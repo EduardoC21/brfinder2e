@@ -36,6 +36,18 @@ const anunciar = (): void => {
 };
 
 /** Sobe a cada pacote baixado; é o gatilho de releitura do glossário traduzido. */
+/**
+ * Baixa o glossário da língua e o grava (Etapa 44): é o que a sincronização chama depois
+ * de gravar a base, e o que o botão das configurações chama à mão. Anuncia para quem lê.
+ */
+export async function downloadCommunityPack(language: string): Promise<CommunityMeta> {
+  const tag = await latestCommunityTag(http);
+  const pack = await fetchCommunityPack(http, tag);
+  const meta = await writeCommunityPack(store, language, pack, new Date().toISOString());
+  anunciar();
+  return meta;
+}
+
 export function useCommunityPackVersion(): number {
   return useSyncExternalStore(subscribe, () => versao);
 }
@@ -77,19 +89,17 @@ export function useCommunityPack(language: string): {
   const download = useCallback((): void => {
     const anterior = state.status === 'ready' ? state.meta : null;
     setState({ status: 'downloading', meta: anterior });
-    (async () => {
-      const tag = await latestCommunityTag(http);
-      const pack = await fetchCommunityPack(http, tag);
-      const meta = await writeCommunityPack(store, language, pack, new Date().toISOString());
-      setState({ status: 'ready', meta });
-      anunciar();
-    })().catch((error: unknown) => {
-      setState({
-        status: 'error',
-        message: error instanceof Error ? error.message : String(error),
-        meta: anterior,
+    downloadCommunityPack(language)
+      .then((meta) => {
+        setState({ status: 'ready', meta });
+      })
+      .catch((error: unknown) => {
+        setState({
+          status: 'error',
+          message: error instanceof Error ? error.message : String(error),
+          meta: anterior,
+        });
       });
-    });
   }, [language, state]);
 
   return { state, download };

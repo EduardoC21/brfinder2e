@@ -242,21 +242,8 @@ export async function deleteStoredTranslation(
   anunciar();
 }
 
-/**
- * A CHAVE do modelo de linguagem, para as configurações (Etapa 41): se há uma guardada,
- * guardar, esquecer, e testar — traduz uma frase curta pelo provedor de verdade e devolve
- * o texto, ou o erro. A versão das traduções sobe ao mudar a chave, para quem confere a
- * disponibilidade reler.
- */
-export function useLlmKey(): {
-  readonly hasKey: boolean | null;
-  readonly save: (key: string) => Promise<void>;
-  readonly forget: () => Promise<void>;
-  readonly test: () => Promise<{ ok: true; text: string } | { ok: false; why: string }>;
-} {
-  const { prefs } = usePreferences();
-  const { language } = prefs.translation;
-  const llmModel = prefs.translation.llm.model;
+/** Há chave guardada? `null` enquanto confere. O botão Traduzir apaga sem ela (Etapa 44). */
+export function useHasLlmKey(): boolean | null {
   const version = useTranslationsVersion();
   const [hasKey, setHasKey] = useState<boolean | null>(null);
   useEffect(() => {
@@ -273,6 +260,25 @@ export function useLlmKey(): {
       alive = false;
     };
   }, [version]);
+  return hasKey;
+}
+
+/**
+ * A CHAVE do modelo de linguagem, para as configurações (Etapa 41): se há uma guardada,
+ * guardar, esquecer, e testar — traduz uma frase curta pelo provedor de verdade e devolve
+ * o texto, ou o erro. A versão das traduções sobe ao mudar a chave, para quem confere a
+ * disponibilidade reler.
+ */
+export function useLlmKey(): {
+  readonly hasKey: boolean | null;
+  readonly save: (key: string) => Promise<void>;
+  readonly forget: () => Promise<void>;
+  readonly test: () => Promise<{ ok: true; text: string } | { ok: false; why: string }>;
+} {
+  const { prefs } = usePreferences();
+  const { language } = prefs.translation;
+  const llmModel = prefs.translation.llm.model;
+  const hasKey = useHasLlmKey();
 
   const save = useCallback(async (key: string) => {
     await segredos.set(LLM_KEY_SECRET, key.trim());

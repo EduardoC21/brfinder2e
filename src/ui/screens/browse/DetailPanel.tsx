@@ -23,7 +23,7 @@ import { ScrollRail } from '@ui/components/ScrollRail';
 import { TraitChip } from '@ui/components/TraitChip';
 import { useTraitLabel } from '@ui/glossary/useTraitLabel';
 import { useDescription, useDescriptionFields } from '@ui/hooks/useDescription';
-import { useStoredTranslations, useTranslate } from '@ui/hooks/useTranslation';
+import { useHasLlmKey, useStoredTranslations, useTranslate } from '@ui/hooks/useTranslation';
 import { usePreferences } from '@ui/prefs/usePreferences';
 import { CollapseToggle } from '@ui/components/CollapseToggle';
 import { cx } from '@ui/cx';
@@ -167,6 +167,7 @@ export function DetailPanel({
   const traducao = gravadas['main'] ?? null;
   const { prefs } = usePreferences();
   const tradutor = useTranslate();
+  const temChave = useHasLlmKey();
   const [verTraducao, setVerTraducao] = useState(prefs.translation.display === 'translated');
   const [entradaDaTraducao, setEntradaDaTraducao] = useState(entity.key);
   if (entradaDaTraducao !== entity.key) {
@@ -363,6 +364,7 @@ export function DetailPanel({
                   has: traducao !== null,
                   showing: mostrandoTraducao,
                   busy: tradutor.state.status === 'busy',
+                  canTranslate: temChave === true,
                   error: tradutor.state.status === 'error' ? tradutor.state.message : null,
                   onTranslate: () => {
                     if (original === null) return;
@@ -554,6 +556,8 @@ interface TranslationActions {
   readonly busy: boolean;
   readonly error: string | null;
   readonly onTranslate: () => void;
+  /** Há como traduzir (chave guardada)? Sem, o botão fica apagado — a edição continua. */
+  readonly canTranslate: boolean;
   readonly onToggle: () => void;
   /** Abre o editor da tradução (Etapa 43). */
   readonly onEdit: () => void;
@@ -620,8 +624,13 @@ function Actions({
         <button
           type="button"
           className={cx(styles['action'], 'chamfer-sm')}
-          disabled={translation.busy}
-          title={translation.error ?? undefined}
+          disabled={translation.busy || (!translation.has && !translation.canTranslate)}
+          title={
+            translation.error ??
+            (!translation.has && !translation.canTranslate
+              ? strings.settings.translation.llm.noKey
+              : undefined)
+          }
           onClick={translation.has ? translation.onToggle : translation.onTranslate}
         >
           {translation.busy

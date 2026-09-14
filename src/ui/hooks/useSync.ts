@@ -36,6 +36,8 @@ import {
 } from '@core/store/index';
 import { createFetchHttp, viteProxyRewrite } from '@platform/http-fetch';
 import { createIndexedDbStore } from '@platform/store-indexeddb';
+import { KEY_PREFERENCES, readPreferences } from '@core/prefs/index';
+import { downloadCommunityPack } from '@ui/hooks/useCommunityPack';
 
 /** Uma linha do relatório: o que entrou, o que mudou, e o que está aposentado. */
 export interface SyncedType {
@@ -328,6 +330,18 @@ export function useSync(): UseSync {
 
         const persisted = await persistSync(store, result);
         if (runId.current !== id) return;
+        /*
+         * O GLOSSÁRIO da comunidade vem junto (Etapa 44, pelo autor: "não era melhor
+         * deixar baixado direto?"): não pode ser embutido — é conteúdo de terceiros —,
+         * mas pode vir com a base, sem botão. Falha dele não derruba a sincronização: o
+         * botão das configurações continua lá.
+         */
+        try {
+          const { translation } = readPreferences(await store.get(KEY_PREFERENCES));
+          await downloadCommunityPack(translation.language);
+        } catch {
+          // Sem rede para o GitHub do glossário, ou repositório fora do ar: fica para depois.
+        }
 
         const byType = new Map(persisted.types.map((entry) => [entry.type, entry]));
         dispatch({
