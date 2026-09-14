@@ -44,6 +44,11 @@ export interface RichTextLinks {
    * base. Ausente dentro de uma entrada colada: o embed resolve UM nível (ver `Colada`).
    */
   readonly embed?: (target: string) => EmbedSubject | null;
+  /**
+   * O rótulo a desenhar numa referência que resolve, no lugar do que está no texto —
+   * a prosa traduzida mostra o nome traduzido do alvo (Etapa 39). Ausente, o do texto.
+   */
+  readonly label?: (target: string, label: string) => string;
 }
 
 /** A entrada a colar: o tipo e a chave, que é o que `useDescription` precisa. */
@@ -236,7 +241,7 @@ function TokenPiece({
             }
           }}
         >
-          {text}
+          {links.label?.(token.target, text) ?? text}
         </button>
       );
     }

@@ -81,6 +81,10 @@ Antes: **Etapa 20** — as tabelas das regras param de quebrar (célula compacta
 linha, `@Embed` cola a entrada apontada, e as duas vassouras em Configurações: apagar as
 entradas aposentadas e apagar a base inteira.
 
+Antes: **Etapa 39** — os links na prosa traduzida mostram o nome traduzido do alvo, em
+latão, resolvido na hora de desenhar pelo pacote; e a caixa dos termos afinada (sigla,
+título).
+
 Antes: **Etapa 38** — a segunda bateria (120 entradas novas): siglas do módulo (CD, CA,
 PV, Mestre, PJ), ordinais com º, a caixa do termo pela caixa do original, e 40 frases
 fixas a mais (salvamentos, jogadas, testes, rótulos da divindade).

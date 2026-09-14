@@ -180,6 +180,15 @@ não tem fica no original, sem marca — a lista mistura "Anão" com "Aiuvarin" 
 honesto, não é erro. A lista ordena pelo nome que se vê. A busca acha pelos dois nomes seja
 qual for a escolha: quem procura não quer decidir antes como vai ler.
 
+**Os links na prosa traduzida (Etapa 39, pelo autor).** Quando o texto à vista é a
+tradução, a referência em latão mostra o nome traduzido do alvo — "Cegado", "Prostrado",
+"Enfraquecido 2" — resolvido na hora de desenhar, pelo pacote da comunidade, e não pelo
+texto gravado: uma tradução feita antes do pacote existir ganha os nomes assim mesmo. O
+rótulo que não é o nome do alvo (um plural, um rótulo próprio) fica como a tradução o
+deixou. Na prosa original, o link segue com o rótulo original, seja qual for a preferência
+de nomes: misturar "Frightened" em inglês com "Amedrontado" em latão no mesmo parágrafo
+não ajuda ninguém.
+
 **O escopo é o do lugar onde o botão está (Etapa 35, pelo autor).** O botão da lateral
 traduz tudo o que a lateral mostra — a descrição e as tabelas das sub-abas. Na tela
 completa há UM botão, no canto da barra, e ele traduz o centro e a lateral (página,

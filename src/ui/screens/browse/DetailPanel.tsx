@@ -27,7 +27,14 @@ import { useStoredTranslations, useTranslate } from '@ui/hooks/useTranslation';
 import { usePreferences } from '@ui/prefs/usePreferences';
 import { CollapseToggle } from '@ui/components/CollapseToggle';
 import { cx } from '@ui/cx';
-import { bookLabel, capitalizar, displayName, fieldText, rankLabel } from '@ui/text';
+import {
+  bookLabel,
+  capitalizar,
+  displayName,
+  fieldText,
+  rankLabel,
+  translatedLabel,
+} from '@ui/text';
 
 import { ATTRIBUTE_NAME_FIELDS, attributeNameByName, boostsText } from './backgroundFields';
 import { references as referenciasDe, type Reference } from './referenceFields';
@@ -254,6 +261,14 @@ export function DetailPanel({
           embed: (target) => {
             const alvo = reference.resolve(target);
             return alvo === null ? null : { type: alvo.entityType, key: alvo.entity.key };
+          },
+          /* Na prosa traduzida, o link mostra o nome traduzido do alvo (Etapa 39). */
+          label: (target, label) => {
+            if (!mostrando) return label;
+            const alvo = reference.resolve(target);
+            return alvo === null
+              ? label
+              : translatedLabel(alvo.entityType, fieldValue(alvo.entity, 'name'), label);
           },
         };
   const nodes = useMemo(

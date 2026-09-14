@@ -101,8 +101,38 @@ function ehCaixaAlta(texto: string): boolean {
   return texto.length > 1 && texto === texto.toUpperCase() && texto !== texto.toLowerCase();
 }
 
+/** "Hit Points": cada palavra em maiúscula. Uma palavra só não conta — é a frase. */
+function ehTitulo(texto: string): boolean {
+  const palavras = texto.split(/\s+/);
+  return palavras.length > 1 && palavras.every((p) => /^\p{Lu}/u.test(p));
+}
+const CONECTIVOS: ReadonlySet<string> = new Set([
+  'de',
+  'da',
+  'do',
+  'das',
+  'dos',
+  'e',
+  'a',
+  'em',
+  'com',
+]);
+function emTitulo(termo: string): string {
+  return termo
+    .split(' ')
+    .map((p, i) =>
+      i > 0 && CONECTIVOS.has(p.toLowerCase())
+        ? p.toLowerCase()
+        : p.charAt(0).toUpperCase() + p.slice(1),
+    )
+    .join(' ');
+}
+
 function comCaixaDe(modelo: string, termo: string, en = ''): string {
-  if (ehCaixaAlta(modelo)) return termo.toUpperCase();
+  /* Caixa alta só quando ela é da FRASE: "GM" é sigla, e "MESTRE" estava errado. */
+  if (ehCaixaAlta(modelo) && !ehCaixaAlta(en)) return termo.toUpperCase();
+  /* "Hit Points" no texto → "Pontos de Vida", não "Pontos de vida". */
+  if (ehTitulo(modelo) && !ehTitulo(en)) return emTitulo(termo);
   const primeira = modelo.charAt(0);
   const enPrimeira = en.charAt(0);
   /*

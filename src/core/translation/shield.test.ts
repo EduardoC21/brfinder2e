@@ -64,6 +64,19 @@ describe('a blindagem', () => {
     expect(s.restore(s.text)).toBe('<p>the same CA and salvamentos as you; a golpe reativo</p>');
   });
 
+  it('a sigla não vira caixa alta, e o título vira título', () => {
+    const s = shield('<p>The GM decides. You have 5 Hit Points and 1 hit point.</p>', {
+      phrases: [
+        { en: 'GM', pt: 'Mestre', exact: true },
+        { en: 'hit points', pt: 'pontos de vida' },
+        { en: 'hit point', pt: 'ponto de vida' },
+      ],
+    });
+    expect(s.restore(s.text)).toBe(
+      '<p>The Mestre decides. You have 5 Pontos de Vida and 1 ponto de vida.</p>',
+    );
+  });
+
   it('capitaliza só quando a maiúscula é da frase, não do termo', () => {
     const s = shield('<p>Saving throw. Your Reflex saves improve.</p>', {
       phrases: [

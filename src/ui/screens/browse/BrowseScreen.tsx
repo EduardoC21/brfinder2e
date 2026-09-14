@@ -212,7 +212,7 @@ export function BrowseScreen({ baseVersion }: BrowseScreenProps) {
    */
   const nomesTraduzidos = useCommunityNames(prefs.translation.language, versaoDoPacote);
   /* Os NOMES na tela (Etapa 36): a tabela do pacote quando a preferência pede; senão, nada. */
-  setNameTable(prefs.translation.names === 'translated' ? nomesTraduzidos : null);
+  setNameTable(nomesTraduzidos, prefs.translation.names === 'translated');
   const glossario = useMemo(
     () =>
       prefs.translation.display === 'translated' && Object.keys(traduzido).length > 0

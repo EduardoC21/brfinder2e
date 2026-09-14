@@ -1081,6 +1081,14 @@ gravada o mesmo botão alterna "Ver original" / "Ver tradução", nascendo na pr
 cada entrada; acima do texto, "Tradução: modelo local", e "o original mudou desde a
 tradução" quando a impressão digital não bate mais.
 
+**Os links na prosa traduzida (Etapa 39).** `RichTextLinks.label(target, label)` deixa a
+tela trocar o rótulo de uma referência que resolve; a lateral e a tela completa passam
+`translatedLabel(tipo, nome, rótulo)` quando a prosa à vista é a tradução. `ui/text.ts`
+guarda a tabela do pacote SEMPRE (`setNameTable(tabela, mostrar)`): `translatedName`
+responde independente da preferência, `displayName` a respeita. Ainda na 39, a caixa:
+sigla não vira caixa alta ("GM" → "Mestre", não "MESTRE"), e título vira título ("Hit
+Points" → "Pontos de Vida").
+
 **Os nomes na tela (Etapa 36).** `translation.names` é preferência separada de `display`:
 dá para ler a prosa em inglês com os nomes em português. O mecanismo é o mesmo do modo dos
 termos: a tela de consulta chama `setNameTable` no render (a tabela de nomes do pacote, ou

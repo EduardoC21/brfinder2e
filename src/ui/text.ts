@@ -100,16 +100,40 @@ export function isTranslatedMode(): boolean {
  * flutuante desenham o nome sem React por perto para a preferência.
  */
 type NameTable = Readonly<Record<string, Readonly<Record<string, string>>>>;
-let nameTable: NameTable | null = null;
+let nameTable: NameTable = {};
+let showTranslatedNames = false;
 
-export function setNameTable(table: NameTable | null): void {
+/** A tabela do pacote (sempre), e se a preferência manda mostrar os nomes por ela. */
+export function setNameTable(table: NameTable, show: boolean): void {
   nameTable = table;
+  showTranslatedNames = show;
+}
+
+/** O nome em português do pacote, ou nulo — independente da preferência (Etapa 39). */
+export function translatedName(entityType: string | null, name: string): string | null {
+  if (entityType === null) return null;
+  return nameTable[entityType]?.[name] ?? null;
 }
 
 /** O nome como a preferência manda: o do pacote se houver e se for para mostrá-lo. */
 export function displayName(entityType: string | null, name: string): string {
-  if (nameTable === null || entityType === null) return name;
-  return nameTable[entityType]?.[name] ?? name;
+  if (!showTranslatedNames) return name;
+  return translatedName(entityType, name) ?? name;
+}
+
+/**
+ * O rótulo de um link na PROSA TRADUZIDA (Etapa 39, pelo autor: "se o texto está
+ * traduzido, a referência deve estar traduzida também"). O rótulo que é o nome do alvo
+ * vira o nome em português; "Enfeebled 2" vira "Enfraquecido 2"; o que não é o nome
+ * (um rótulo próprio, um plural) fica como a tradução o deixou.
+ */
+export function translatedLabel(entityType: string | null, name: string, label: string): string {
+  const nome = translatedName(entityType, name);
+  if (nome === null) return label;
+  if (label === name) return nome;
+  const sufixo = /^(.*\S)\s+(\d+)$/.exec(label);
+  if (sufixo !== null && sufixo[1] === name) return `${nome} ${sufixo[2] ?? ''}`;
+  return label;
 }
 
 const SKILL_FIELDS: ReadonlySet<string> = new Set(['skills', 'divineSkill']);

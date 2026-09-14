@@ -128,6 +128,7 @@ export const CORE_PHRASES: readonly Phrase[] = [
   { en: 'Targets', pt: 'Alvos', exact: true },
   /* O resto do vocabulário de mesa. */
   { en: 'hit points', pt: 'pontos de vida' },
+  { en: 'hit point', pt: 'ponto de vida' },
   { en: 'armor class', pt: 'classe de armadura' },
   /*
    * As SIGLAS (Etapa 38): medido na amostra, o motor deixa AC, DC, HP, GM e PC em

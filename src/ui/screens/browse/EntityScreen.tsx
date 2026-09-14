@@ -18,7 +18,7 @@ import { CollapseToggle } from '@ui/components/CollapseToggle';
 import { ScrollRail } from '@ui/components/ScrollRail';
 import { RichText, type RichTextLinks } from '@ui/components/RichText';
 import { cx } from '@ui/cx';
-import { displayName } from '@ui/text';
+import { displayName, translatedLabel } from '@ui/text';
 import { sourceHash, type Translation } from '@core/store/index';
 import { useDescriptionFields } from '@ui/hooks/useDescription';
 import type { LoadedSource } from '@ui/hooks/useAllBases';
@@ -391,6 +391,14 @@ function PageTab({
     embed: (target) => {
       const alvo = reference.resolve(target);
       return alvo === null ? null : { type: alvo.entityType, key: alvo.entity.key };
+    },
+    /* Na prosa traduzida, o link mostra o nome traduzido do alvo (Etapa 39). */
+    label: (target, label) => {
+      if (translation === null) return label;
+      const alvo = reference.resolve(target);
+      return alvo === null
+        ? label
+        : translatedLabel(alvo.entityType, fieldValue(alvo.entity, 'name'), label);
     },
   };
 
