@@ -42,6 +42,11 @@ describe('readPreferences', () => {
       values: ['attack'],
       combine: 'all',
     });
+    expect(lido.translation).toEqual({
+      display: 'original',
+      language: 'pt-BR',
+      methods: ['manual', 'community', 'llm', 'local'],
+    });
     expect(lido.layout).toEqual({
       detailWidth: 500,
       railCollapsed: false,

@@ -81,6 +81,11 @@ Antes: **Etapa 20** — as tabelas das regras param de quebrar (célula compacta
 linha, `@Embed` cola a entrada apontada, e as duas vassouras em Configurações: apagar as
 entradas aposentadas e apagar a base inteira.
 
+Antes: **Etapa 30** — o esqueleto da tradução: as configurações em setores (Sincronização
+e Tradução), as preferências globais (o que aparece quando há tradução, a língua, as
+formas na hierarquia em que uma sobrescreve a outra), a quinta camada `trans/<língua>/`
+que sobrevive à sincronização, e o contrato do provedor. Nenhum provedor ainda.
+
 Antes: **Etapa 29** — a varredura: o pack cruzado com ele mesmo e com o Archives of
 Nethys (mesma era) por `scripts/varredura-foundry.py` — 1.606 magias, 4.677 talentos,
 3.526 itens, 248 antecedentes, 31 ancestralidades, 29 classes; a seção 3 do
@@ -146,8 +151,9 @@ Antes: **Etapa 23** — `heritage` (311 próprias, fonte fora do trilho) e as 17
 como Tipo da ancestralidade; as abas de lista da tela completa, com o filtro travado —
 Dwarf: Heranças 9, Talentos 48; Nephilim: Talentos 88.
 
-Próxima: **a tradução dos filtros e valores** (a semente é a tabela do trilho). O PR ao
-pf2e com a seção 3 do INCONSISTENCIAS se faz em outro chat, com o repositório deles.
+Próxima: **o primeiro provedor de tradução** — o pacote da comunidade (termos e traços,
+baixado na sincronização) e o botão Traduzir ligado; depois o modelo local e a API. O PR
+ao pf2e com a seção 3 do INCONSISTENCIAS se faz em outro chat, com o repositório deles.
 
 Antes: **Etapa 22e** — a descrição no contexto: o Change Shape aberto pelo Anadi tem o
 texto do Anadi (o `ItemAlteration` de descrição do Foundry, 91 estáticas no zip), com

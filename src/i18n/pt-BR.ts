@@ -630,6 +630,55 @@ export const ptBR = {
     },
     open: 'Configurações',
     title: 'Configurações',
+    /** Os SETORES das configurações (Etapa 30): sincronização e tradução. */
+    sectors: {
+      sync: 'Sincronização',
+      translation: 'Tradução',
+    } as Record<string, string>,
+    translation: {
+      display: {
+        title: 'Preferência de visualização',
+        description:
+          'O que aparece quando a entrada já tem tradução. Sem tradução, é sempre o original — nada se traduz sem você pedir.',
+        original: 'Original',
+        translated: 'Traduzido',
+      },
+      language: {
+        title: 'Língua de tradução',
+        description: 'Cada língua guarda o próprio conjunto de traduções.',
+        names: { 'pt-BR': 'Português (Brasil)' } as Record<string, string>,
+      },
+      methodsTitle: 'Formas de tradução',
+      methodsDescription:
+        'Na ordem: a primeira disponível traduz, e a tradução de uma forma mais alta na lista sobrescreve a de uma mais baixa.',
+      methods: {
+        manual: {
+          name: 'Manual',
+          status: 'O que você escreveu ou corrigiu. Sempre disponível; nunca é sobrescrita.',
+        },
+        community: {
+          name: 'Pacote da comunidade',
+          status:
+            'A tradução pt-BR do sistema para o Foundry: nomes e termos, não a prosa. Ainda não baixado.',
+        },
+        llm: {
+          name: 'Modelo de linguagem (API)',
+          status: 'Melhor prosa; precisa de internet e de uma chave sua. Sem chave.',
+        },
+        local: {
+          name: 'Modelo local',
+          status: 'Roda dentro do app, sem internet (uns 20 MB, baixados uma vez). Não instalado.',
+        },
+      } as Record<string, { name: string; status: string }>,
+      termsOnly: 'só termos',
+      online: 'internet',
+      on: 'ligada',
+      off: 'desligada',
+      moveUp: 'Subir na ordem',
+      moveDown: 'Descer na ordem',
+      storage:
+        'As traduções ficam gravadas por língua, fora da base: sobrevivem à sincronização e não são apagadas com ela.',
+    },
     database: {
       title: 'Base de dados',
       description: 'Baixa o sistema Pathfinder 2e do Foundry e prepara as entradas para consulta.',

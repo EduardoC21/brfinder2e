@@ -899,7 +899,71 @@ toda segunda-feira, e também em PR que mexa em `source/` ou `platform/`.
 
 ---
 
-## 12. O que a Etapa 0 não fez
+## 12. A tradução (Etapa 30)
+
+O texto do jogo está em inglês e a tradução é **sob demanda** — por entrada, quando a
+pessoa pede. O esqueleto entrou na Etapa 30; os provedores entram um a um depois.
+
+### As formas, e por que são uma lista ordenada
+
+Há mais de um jeito de obter uma tradução, e eles não valem o mesmo. Por isso as formas
+são uma **hierarquia** nas preferências (`translation.methods`, só as ligadas, na ordem):
+ao traduzir, a primeira disponível responde; ao mostrar, a tradução gravada por uma forma
+mais alta sobrescreve a de uma mais baixa. O que cada uma é, medido contra o que existe:
+
+| forma       | o que é                                                     | escopo    | internet |
+| ----------- | ----------------------------------------------------------- | --------- | -------- |
+| `manual`    | o que a pessoa escreveu ou corrigiu; nunca é sobrescrita    | prosa     | não      |
+| `community` | a tradução pt-BR do sistema pf2e para o Foundry (mclemente) | só termos | não      |
+| `llm`       | um modelo de linguagem por API, com a chave da pessoa       | prosa     | sim      |
+| `local`     | um modelo de tradução dentro do app (Bergamot, WASM, en→pt) | prosa     | não      |
+
+**O pacote da comunidade só traduz termos.** Foi conferido: desde a versão 3.3.0 o
+módulo pt-BR abandonou a tradução dos compêndios (Babele) — "pela quantidade de conteúdo,
+atrasos da tradução oficial e falta de contribuições" — e traduz só a interface e os
+termos do sistema (nomes e descrições de traços, perícias, ações). É um GLOSSÁRIO, e como
+glossário vale muito: é o vocabulário que a comunidade brasileira usa. Baixado na
+sincronização, como o zip — conteúdo de terceiros, nunca embutido.
+
+**O executável muda as contas.** O app é Tauri e funciona sem internet depois de
+sincronizado. Um modelo local é o único caminho para prosa offline: o motor de tradução
+do Firefox (Bergamot) roda em WASM dentro da webview, com o par en→pt em uns 20 MB
+baixados uma vez — qualidade de tradutor automático, serve para ler. O modelo por API dá
+a melhor prosa, mas precisa de internet e de uma chave, que fica no **cofre do sistema**
+(plugin do Tauri), nunca em `prefs/`. As duas coexistem na lista: quem tem chave e
+internet usa a API; sem uma das duas, cai no local.
+
+### Onde a tradução mora: a quinta camada
+
+    trans/<língua>/<tipo>    { [chave]: { [campo]: { html, method, at, sourceHash } } }
+
+Fora de `desc/` de propósito: `desc/` é o que veio do Foundry e é reescrito a cada
+sincronização; a tradução é trabalho da pessoa (ou pago, ou baixado) e **sobrevive à
+sincronização**, como as preferências — `clearData` apaga por prefixo da base e não a
+toca. Uma língua por chave: a pessoa pode usar mais de uma, e cada uma é um conjunto
+inteiro. Cada tradução guarda de onde veio (`method`) e uma impressão digital do original
+(`sourceHash`, FNV-1a): quando o Foundry muda o texto numa versão nova, a tela pode avisar
+que a tradução é de um texto que já não existe. A forma `manual` nunca é sobrescrita por
+outra (`writeTranslation`).
+
+### As preferências
+
+`translation.display` — o que aparece quando a entrada **tem** tradução: o original
+("traduzo quando quero ler") ou a tradução ("li uma vez, quero sempre"). Sem tradução
+gravada é sempre o original: nada se traduz sem pedir. `translation.language` — a língua.
+`translation.methods` — a hierarquia. O setor Tradução das configurações edita as três; o
+setor Sincronização é o painel que sempre existiu.
+
+### O contrato do provedor
+
+`TranslationProvider { id, availability(language), translate(request) }` em
+`core/translation/methods.ts`. `availability` responde antes de traduzir — é o que as
+configurações mostram ao lado de cada forma ("sem chave", "modelo não baixado"). `translate`
+recebe o HTML original e devolve o HTML traduzido preservando as marcas do Foundry
+(`@UUID`, `@Embed`, `@Damage`), que nunca se traduzem. Nenhum provedor existe ainda; o
+botão Traduzir continua desligado até o primeiro.
+
+## 13. O que a Etapa 0 não fez
 
 - **Não compilou nada de Rust.** Rust não está instalado; decisão aprovada.
 - **Não gerou ícones** do instalador. `bundle.icon` está vazio. Etapa 15.

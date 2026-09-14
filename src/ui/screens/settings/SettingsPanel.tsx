@@ -9,6 +9,7 @@ import type { UnreadPack } from '@core/sync/unread-packs';
 import type { SyncState, SyncedType, UpdateState } from '@ui/hooks/useSync';
 
 import styles from './SettingsPanel.module.css';
+import { TranslationSettings } from './TranslationSettings';
 
 interface SettingsPanelProps {
   readonly anchor: React.RefObject<HTMLButtonElement | null>;
@@ -62,6 +63,11 @@ export function SettingsPanel({
 
   const { run, stored, update } = sync;
   const busy = run.status === 'running' || run.status === 'loading';
+  /*
+   * Os SETORES (Etapa 30, pelo autor): a mesma barra de sub-abas da lateral. O painel
+   * nasce em Sincronização, que é o que ele sempre foi; Tradução é o segundo.
+   */
+  const [setor, setSetor] = useState<'sync' | 'translation'>('sync');
 
   return (
     <div
@@ -72,58 +78,81 @@ export function SettingsPanel({
     >
       <h2 className={styles['title']}>{t.title}</h2>
 
-      <section className={styles['section']}>
-        <h3 className={styles['sectionTitle']}>{t.database.title}</h3>
-        <p className={styles['hint']}>{t.database.description}</p>
+      <nav className={styles['setores']} role="tablist">
+        {(['sync', 'translation'] as const).map((id) => (
+          <button
+            key={id}
+            type="button"
+            role="tab"
+            aria-selected={setor === id}
+            className={cx(styles['setor'], setor === id && styles['setorAtivo'], 'chamfer-sm')}
+            onClick={() => {
+              setSetor(id);
+            }}
+          >
+            {t.sectors[id] ?? id}
+          </button>
+        ))}
+      </nav>
 
-        <button
-          type="button"
-          className={cx(styles['action'], 'chamfer-sm')}
-          onClick={onSync}
-          disabled={busy}
-        >
-          {stored === null ? t.database.sync : t.database.syncAgain}
-        </button>
+      {setor === 'translation' && <TranslationSettings />}
 
-        {stored !== null && (
+      {setor === 'sync' && (
+        <section className={styles['section']}>
+          <h3 className={styles['sectionTitle']}>{t.database.title}</h3>
+          <p className={styles['hint']}>{t.database.description}</p>
+
           <button
             type="button"
-            className={cx(styles['secondary'], 'chamfer-sm')}
-            onClick={onCheckUpdate}
-            disabled={busy || update.status === 'checking'}
+            className={cx(styles['action'], 'chamfer-sm')}
+            onClick={onSync}
+            disabled={busy}
           >
-            {update.status === 'checking' ? t.database.checking : t.database.checkUpdate}
+            {stored === null ? t.database.sync : t.database.syncAgain}
           </button>
-        )}
 
-        {run.status === 'running' && <Running phase={run.phase} />}
-        {run.status === 'done' && <Report types={run.types} />}
-        {run.status === 'done' && run.unreadPacks.length > 0 && (
-          <UnreadPacks packs={run.unreadPacks} />
-        )}
-        {run.status === 'refused' && (
-          <Refused
-            rejected={run.rejected}
-            failures={run.failures}
-            keeping={run.keeping}
-            {...(run.reason === undefined ? {} : { reason: run.reason })}
-          />
-        )}
-        {run.status === 'error' && <Failure message={run.message} />}
+          {stored !== null && (
+            <button
+              type="button"
+              className={cx(styles['secondary'], 'chamfer-sm')}
+              onClick={onCheckUpdate}
+              disabled={busy || update.status === 'checking'}
+            >
+              {update.status === 'checking' ? t.database.checking : t.database.checkUpdate}
+            </button>
+          )}
 
-        {run.status !== 'running' && <Update state={update} busy={busy} onApply={onApplyUpdate} />}
+          {run.status === 'running' && <Running phase={run.phase} />}
+          {run.status === 'done' && <Report types={run.types} />}
+          {run.status === 'done' && run.unreadPacks.length > 0 && (
+            <UnreadPacks packs={run.unreadPacks} />
+          )}
+          {run.status === 'refused' && (
+            <Refused
+              rejected={run.rejected}
+              failures={run.failures}
+              keeping={run.keeping}
+              {...(run.reason === undefined ? {} : { reason: run.reason })}
+            />
+          )}
+          {run.status === 'error' && <Failure message={run.message} />}
 
-        {stored === null ? (
-          run.status === 'idle' && <p className={styles['hint']}>{t.database.report.none}</p>
-        ) : (
-          <>
-            <StoredMeta meta={stored} />
-            {stale && <p className={styles['aviso']}>{t.database.report.stale}</p>}
-          </>
-        )}
-      </section>
+          {run.status !== 'running' && (
+            <Update state={update} busy={busy} onApply={onApplyUpdate} />
+          )}
 
-      {stored !== null && (
+          {stored === null ? (
+            run.status === 'idle' && <p className={styles['hint']}>{t.database.report.none}</p>
+          ) : (
+            <>
+              <StoredMeta meta={stored} />
+              {stale && <p className={styles['aviso']}>{t.database.report.stale}</p>}
+            </>
+          )}
+        </section>
+      )}
+
+      {setor === 'sync' && stored !== null && (
         <section className={styles['section']}>
           <h3 className={styles['sectionTitle']}>{t.maintenance.title}</h3>
           {/*

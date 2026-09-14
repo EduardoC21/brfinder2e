@@ -14,6 +14,11 @@
  * padrão, que é sempre recuperável; uma exceção aqui derrubaria a tela inteira na abertura.
  */
 
+import {
+  DEFAULT_METHOD_ORDER,
+  isTranslationMethodId,
+  type TranslationMethodId,
+} from '../translation/methods';
 import type { FilterSelection } from '../browse/query';
 import { isRecord } from '../json';
 
@@ -77,9 +82,28 @@ export interface LayoutPreferences {
   readonly popoutHeight: number | null;
 }
 
+/**
+ * As preferências de TRADUÇÃO (Etapa 30, pelo autor). Globais: valem para toda fonte.
+ *
+ *   display    o que aparece quando a entrada TEM tradução — o original ("traduzo quando
+ *              quero ler") ou a tradução ("li uma vez, quero sempre"). Sem tradução
+ *              gravada, é sempre o original: nada se traduz sem pedir.
+ *   language   a língua para a qual se traduz; cada língua é um conjunto próprio em
+ *              `trans/<língua>/`.
+ *   methods    as formas LIGADAS, na ordem da hierarquia — a primeira que estiver
+ *              disponível traduz, e a gravada por uma forma mais alta sobrescreve a de
+ *              uma mais baixa. Ver `core/translation/methods.ts`.
+ */
+export interface TranslationPreferences {
+  readonly display: 'original' | 'translated';
+  readonly language: string;
+  readonly methods: readonly TranslationMethodId[];
+}
+
 export interface Preferences {
   readonly sources: Readonly<Record<string, SourcePreferences>>;
   readonly layout: LayoutPreferences;
+  readonly translation: TranslationPreferences;
 }
 
 export const EMPTY_SOURCE_PREFERENCES: SourcePreferences = {
@@ -97,6 +121,8 @@ export const DEFAULT_PREFERENCES: Preferences = {
     popoutWidth: null,
     popoutHeight: null,
   },
+  /* O original primeiro: ninguém vê tradução sem ter pedido uma. */
+  translation: { display: 'original', language: 'pt-BR', methods: DEFAULT_METHOD_ORDER },
 };
 
 /** Onde as preferências moram. Chave única: elas são poucas e sempre lidas juntas. */
@@ -163,6 +189,10 @@ export function readPreferences(stored: unknown): Preferences {
   }
 
   const layout = isRecord(stored['layout']) ? stored['layout'] : {};
+  const translation = isRecord(stored['translation']) ? stored['translation'] : {};
+  const methods = Array.isArray(translation['methods'])
+    ? translation['methods'].filter(isTranslationMethodId)
+    : null;
   return {
     sources,
     layout: {
@@ -171,7 +201,23 @@ export function readPreferences(stored: unknown): Preferences {
       popoutWidth: positive(layout['popoutWidth']),
       popoutHeight: positive(layout['popoutHeight']),
     },
+    translation: {
+      display: translation['display'] === 'translated' ? 'translated' : 'original',
+      language:
+        typeof translation['language'] === 'string' && translation['language'] !== ''
+          ? translation['language']
+          : DEFAULT_PREFERENCES.translation.language,
+      // Chave ausente é "nunca configurei"; lista presente, mesmo vazia, é escolha.
+      methods: methods ?? DEFAULT_METHOD_ORDER,
+    },
   };
+}
+
+export function withTranslation(
+  prefs: Preferences,
+  patch: Partial<TranslationPreferences>,
+): Preferences {
+  return { ...prefs, translation: { ...prefs.translation, ...patch } };
 }
 
 /** As preferências de uma fonte, com o padrão quando ela nunca foi configurada. */

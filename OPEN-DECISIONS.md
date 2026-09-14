@@ -268,8 +268,11 @@ tradução e de onde veio —, e não só da chave `glossary/traits` de hoje, qu
 original. Quando as fontes forem setorizadas, ela ficaria numa categoria de "termos de
 jogo" ou "core", junto com perícia e ação.
 
-**Decidir quando:** na etapa da tradução. Nada aqui muda o que a 15b gravou — o glossário
-de hoje é o "original" dessa tabela futura.
+**Etapa 30:** a configuração existe — `translation.display`, "Original" ou "Traduzido",
+global. Falta a tabela do traço (original, tradução, origem), que entra quando o pacote da
+comunidade for provedor: ele é exatamente a tradução dos traços.
+
+**Decidir quando:** ao ligar o provedor `community`.
 
 ---
 
