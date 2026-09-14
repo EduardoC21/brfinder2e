@@ -81,6 +81,13 @@ Antes: **Etapa 20** — as tabelas das regras param de quebrar (célula compacta
 linha, `@Embed` cola a entrada apontada, e as duas vassouras em Configurações: apagar as
 entradas aposentadas e apagar a base inteira.
 
+Antes: **Etapa 37** — a amostra da tradução: 105 entradas de 15 tipos, 1.762 marcas do
+Foundry, nenhuma perdida — e o que ela ensinou sobre o motor mudou a blindagem: termo do
+glossário inline com o inglês dentro, referência sempre em bloco (inline duplicava o
+link), rótulo desconhecido fica no original, o negrito-rótulo (`Trigger`, `Sacred
+Animal`) vira bloco para traduzir sozinho, número com sinal protegido, ". ." e espaço
+engolido corrigidos na volta.
+
 Antes: **Etapa 36** — os nomes das entradas em português na tela, por preferência própria
 (separada da prosa): na lista, na paleta, nos títulos da lateral e da tela completa e nas
 caixinhas de referência, o nome do pacote da comunidade — e o original para o que o pacote
@@ -181,8 +188,8 @@ Antes: **Etapa 23** — `heritage` (311 próprias, fonte fora do trilho) e as 17
 como Tipo da ancestralidade; as abas de lista da tela completa, com o filtro travado —
 Dwarf: Heranças 9, Talentos 48; Nephilim: Talentos 88.
 
-Próxima: a amostragem da qualidade da tradução por tipo de fonte (links e formatação
-inclusos), tradução em lote de uma fonte, e a edição manual. O modelo de linguagem (BYOK, 2 ou 3 ferramentas) vem depois — é
+Próxima: tradução em lote de uma fonte, e a edição manual. Depois, o modelo de linguagem
+(BYOK). O modelo de linguagem (BYOK, 2 ou 3 ferramentas) vem depois — é
 aprimoramento, não o caminho principal. O PR
 ao pf2e com a seção 3 do INCONSISTENCIAS se faz em outro chat, com o repositório deles.
 

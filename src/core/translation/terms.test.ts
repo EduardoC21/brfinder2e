@@ -54,6 +54,12 @@ describe('as famílias de termos', () => {
     /* "Fortitude" é igual dos dois lados; "Label" é rótulo; "Cha" é curto e não é nome. */
   });
 
+  it('o prefixo mais longo decide a família: "Free" é exato', () => {
+    expect(pairTerms({ 'PF2E.AbilityFree': 'Free' }, { 'PF2E.AbilityFree': 'Livre' })).toEqual([
+      { en: 'Free', pt: 'Livre', exact: true },
+    ]);
+  });
+
   it('uma chave por termo em qualquer caixa — a blindagem faz uma passada só', () => {
     const frases = pairTerms(
       { 'PF2E.TraitFire': 'Fire', 'PF2E.Damage.RollFlavor.fire': 'fire' },

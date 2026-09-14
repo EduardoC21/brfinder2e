@@ -76,6 +76,10 @@ export const CORE_PHRASES: readonly Phrase[] = [
   { en: 'initial proficiencies', pt: 'proficiências iniciais' },
   { en: 'ancestry and background', pt: 'ancestralidade e biografia' },
   { en: 'shield block', pt: 'bloqueio com escudo' },
+  /* Os rótulos do domínio: medido, "Domain Spell" sozinho virou "Orto Domínio". */
+  { en: 'Advanced Domain Spell', pt: 'Magia de Domínio Avançada', exact: true },
+  { en: 'Domain Spell', pt: 'Magia de Domínio', exact: true },
+  { en: 'Deities', pt: 'Divindades', exact: true },
   { en: 'critical success', pt: 'sucesso crítico' },
   { en: 'critical failure', pt: 'falha crítica' },
   { en: 'critical hit', pt: 'acerto crítico' },

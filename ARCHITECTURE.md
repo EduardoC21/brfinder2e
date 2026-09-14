@@ -1000,14 +1000,35 @@ Três peças, e a fronteira entre elas:
 
 `core/translation/local.ts` compõe as três: blinda, traduz pela porta, refaz.
 
-**Como o termo viaja (mudou na Etapa 35).** Na 34 o termo ia já em português, dentro de
-`<span translate="no">`. Medido na 35: o Bergamot não traduz o que está ali, mas
-**realinha as palavras** — "talento de perícia" voltou "de talento perícia". Agora o
-termo vai em INGLÊS, dentro de `<x-g i="n">skill feat</x-g>`: o motor vê a frase inteira
-(e acerta a ordem do resto), e `restore` joga fora o que ele fez com o termo e põe o da
-comunidade, na caixa do original (caixa alta inclusive: "STRENGTH" → "FORÇA"). O rótulo
-de referência que o pacote conhece pelo nome segue a mesma regra — vai em inglês, volta
-pelo nome. Um termo que o motor engoliu não é erro: fica o que ele escreveu.
+**Como o termo viaja (mudou na 35 e de novo na 37 — tudo medido no motor).** Na 34 o
+termo ia já em português dentro de `<span translate="no">`, e o Bergamot **realinhava as
+palavras** ("talento de perícia" → "de talento perícia"). A 35 tentou um elemento próprio
+(`<x-g>`), e a amostra da 37 mostrou o custo: elemento DESCONHECIDO é **bloco** para o
+motor — quebra a frase ao redor ("Faça um corpo a corpo Golpe. ."). O que ficou:
+
+- **Termo do glossário**: `<span translate="no" i="n">skill feat</span>`, com o INGLÊS
+  dentro. Inline (a frase fica inteira), o motor lê a frase natural, e o conteúdo que
+  ele devolver é descartado — `restore` põe o da comunidade, na caixa do original (caixa
+  alta inclusive: "STRENGTH" → "FORÇA"). Duplicata do motor sai; espaço engolido volta
+  ("vaziocura" → "vazio cura"). Termo engolido não é erro.
+- **Número com sinal** ("+2", "–4") vai protegido do mesmo jeito: "a –4 status penalty"
+  virava "de de 4 euros".
+- **Referência**: `<x-ref>`, BLOCO, sempre. Inline o motor às vezes duplicava o elemento
+  — "de {Bola de Fogo} de {Bola de Fogo}" — e link duplicado é dado quebrado; em bloco,
+  1.762 marcas da amostra voltaram uma a uma. O rótulo que o pacote conhece pelo nome
+  (ou o glossário inteiro, ou "Nome N" como "Enfeebled 2") volta por ele; o que ninguém
+  conhece **fica no original** — o motor sozinho fazia de "Aonaurious" "Amenitário".
+- **Rótulo de bloco** (`<strong>Trigger</strong> A creature…`, `<strong>Sacred
+Animal</strong> fox`): um negrito curto no começo de bloco, item ou frase, seguido de
+  texto, vira `<x-lab>` — bloco — e rótulo e valor traduzem cada um sozinho. Inline, o
+  motor engolia o rótulo, trocava rótulo e valor de lugar ("raposa <strong>animal
+  sagrada</strong>") ou duplicava a tag. Rótulo que sumiu é texto perdido: falha.
+- O ". ." que o motor deixa depois de um bloco (30 de 105 entradas) vira ".".
+
+**A amostra (Etapa 37):** 105 entradas de 15 tipos (as 4 com mais marcas de cada tipo e
+3 a passos fixos), 273 mil caracteres, 1.762 marcas do Foundry: zero falhas, zero marcas
+perdidas ou com alvo trocado, zero ". .", 3 entradas com um `<em>`/`<strong>` a mais que
+o motor duplicou (cosmético). ~54 s no total, ~0,5 s por entrada.
 
 **O glossário aprendido do pacote (Etapa 35).** O glossário fixo tem 90 termos; o pacote
 da comunidade tem os outros. Três fontes, todas em `core/translation/terms.ts`:

@@ -17,10 +17,10 @@ describe('a blindagem', () => {
     expect(s.restore(s.text)).toBe(html);
   });
 
-  it('põe o rótulo traduzido de volta na marca', () => {
+  it('o rótulo que ninguém conhece fica no original — nome próprio não se adivinha', () => {
     const s = shield(`<p>${uuid}</p>`);
-    expect(s.restore('<p><x-ref i="1">Bola de Fogo</x-ref></p>')).toBe(
-      '<p>@UUID[Compendium.pf2e.spells-srd.Item.abcdefghijklmnop]{Bola de Fogo}</p>',
+    expect(s.restore('<p><x-ref i="1">Bola de Fogo (em inglês)</x-ref></p>')).toBe(
+      '<p>@UUID[Compendium.pf2e.spells-srd.Item.abcdefghijklmnop]{Fireball}</p>',
     );
   });
 
@@ -43,12 +43,12 @@ describe('a blindagem', () => {
       },
     );
     expect(s.text).toBe(
-      '<p class="Strike">Make a <x-g i="1">Strike</x-g>. A strike hits. <em><x-g i="2">Fortitude</x-g></em> save.</p>',
+      '<p class="Strike">Make a <span translate="no" i="1">Strike</span>. A strike hits. <em><span translate="no" i="2">Fortitude</span></em> save.</p>',
     );
     /* Ao refazer, o que o tradutor fez com o termo sai, e o da comunidade entra. */
     expect(
       s.restore(
-        '<p class="Strike">Faça um <x-g i="1">greve</x-g>. Um golpe acerta. <em><x-g i="2">fortaleza</x-g></em> salvamento.</p>',
+        '<p class="Strike">Faça um <span translate="no" i="1">greve</span>. Um golpe acerta. <em><span translate="no" i="2">fortaleza</span></em> salvamento.</p>',
       ),
     ).toBe('<p class="Strike">Faça um Golpe. Um golpe acerta. <em>Fortitude</em> salvamento.</p>');
   });
@@ -70,6 +70,22 @@ describe('a blindagem', () => {
     expect(s.restore('<p>Faça uma greve agora.</p>')).toBe('<p>Faça uma greve agora.</p>');
   });
 
+  it('dois termos colados pelo tradutor voltam com espaço, e o rótulo aceita termo logo depois', () => {
+    const s = shield('<p><strong>Bloodline Skills</strong> Nature; void healing</p>', {
+      phrases: [
+        { en: 'Nature', pt: 'Natureza' },
+        { en: 'void', pt: 'vazio' },
+        { en: 'healing', pt: 'cura' },
+      ],
+    });
+    expect(s.text).toContain('<x-lab i="1">Bloodline Skills</x-lab>');
+    expect(
+      s.restore(
+        '<p><x-lab i="1">Perícias</x-lab> <span translate="no" i="1">Nature</span>; <span translate="no" i="2">void</span><span translate="no" i="3">healing</span></p>',
+      ),
+    ).toBe('<p><strong>Perícias</strong> Natureza; vazio cura</p>');
+  });
+
   it('o termo mais longo vence o mais curto', () => {
     const s = shield('<p>a saving throw and a throw</p>', {
       phrases: [
@@ -77,10 +93,14 @@ describe('a blindagem', () => {
         { en: 'saving throw', pt: 'salvamento' },
       ],
     });
-    expect(s.text).toBe('<p>a <x-g i="1">saving throw</x-g> and a <x-g i="2">throw</x-g></p>');
-    expect(s.restore('<p>um <x-g i="1">x</x-g> e um <x-g i="2">y</x-g></p>')).toBe(
-      '<p>um salvamento e um arremesso</p>',
+    expect(s.text).toBe(
+      '<p>a <span translate="no" i="1">saving throw</span> and a <span translate="no" i="2">throw</span></p>',
     );
+    expect(
+      s.restore(
+        '<p>um <span translate="no" i="1">x</span> e um <span translate="no" i="2">y</span></p>',
+      ),
+    ).toBe('<p>um salvamento e um arremesso</p>');
   });
 
   it('o rótulo que o pacote conhece vai em inglês e volta pelo nome', () => {
@@ -91,6 +111,72 @@ describe('a blindagem', () => {
     expect(s.restore('<p><x-ref i="1">Bola de fogo qualquer</x-ref></p>')).toContain(
       '{Bola de Fogo}',
     );
+  });
+
+  it('o rótulo que o glossário conhece inteiro volta pelo glossário', () => {
+    const s = shield('<p>@UUID[Compendium.pf2e.actionspf2e.Item.x]{Strike} now</p>', {
+      phrases: [{ en: 'Strike', pt: 'Golpe', exact: true }],
+    });
+    expect(s.text).toBe('<p><x-ref i="1">Strike</x-ref> now</p>');
+    expect(s.restore('<p><x-ref i="1">greve</x-ref> agora</p>')).toBe(
+      '<p>@UUID[Compendium.pf2e.actionspf2e.Item.x]{Golpe} agora</p>',
+    );
+  });
+
+  it('o ". ." que o motor deixa depois de uma marca vira "."', () => {
+    const s = shield(`<p>Cast ${uuid}. Then ${damage}.</p>`);
+    expect(
+      s.restore('<p>Conjure <x-ref i="1">Bola</x-ref>. . Então <x-tok i="2"></x-tok>. .</p>'),
+    ).toBe(`<p>Conjure ${uuid}. Então ${damage}.</p>`);
+  });
+
+  it('protege o número com sinal, resolve "Nome 1" pelo nome, e aceita termo dentro do rótulo', () => {
+    const s = shield(
+      '<p><strong>Bloodline Skills</strong> Nature. You take a –4 penalty and are @UUID[Compendium.pf2e.conditionitems.Item.x]{Enfeebled 2}.</p>',
+      {
+        phrases: [{ en: 'Skills', pt: 'Perícias' }],
+        nameOf: (label) => (label === 'Enfeebled' ? 'Enfraquecido' : null),
+      },
+    );
+    expect(s.text).toBe(
+      '<p><x-lab i="1">Bloodline <span translate="no" i="1">Skills</span></x-lab> Nature. You take a <span translate="no" i="2">–4</span> penalty and are <x-ref i="1">Enfeebled 2</x-ref>.</p>',
+    );
+    expect(
+      s.restore(
+        '<p><x-lab i="1">Linhagem <span translate="no" i="1">Skills</span></x-lab> Natureza. Você sofre uma penalidade de <span translate="no" i="2">4 euros</span> e fica <x-ref i="1">Enfeebled 2</x-ref>.</p>',
+      ),
+    ).toBe(
+      '<p><strong>Linhagem Perícias</strong> Natureza. Você sofre uma penalidade de –4 e fica @UUID[Compendium.pf2e.conditionitems.Item.x]{Enfraquecido 2}.</p>',
+    );
+  });
+
+  it('devolve o espaço que o tradutor engole depois da marca, e tira o termo duplicado', () => {
+    const s = shield(`<p>takes ${damage} damage and a Strike</p>`, {
+      phrases: [{ en: 'Strike', pt: 'Golpe', exact: true }],
+    });
+    expect(
+      s.restore(
+        '<p>leva  <x-tok i="1"></x-tok>dano e um <span translate="no" i="1">Strike</span> <span translate="no" i="1">Strike</span></p>',
+      ),
+    ).toBe(`<p>leva  ${damage} dano e um Golpe </p>`);
+  });
+
+  it('o rótulo de bloco vira bloco para o tradutor e volta negrito', () => {
+    const s = shield(
+      '<p><strong>Trigger</strong> A creature moves. <strong>Effect</strong> You Strike.</p><p>You gain a <strong>+2 bonus</strong> to hit.</p><li><strong>Sacred Animal</strong> fox</li>',
+    );
+    expect(s.text).toBe(
+      '<p><x-lab i="1">Trigger</x-lab> A creature moves. <x-lab i="2">Effect</x-lab> You Strike.</p><p>You gain a <strong><span translate="no" i="1">+2</span> bonus</strong> to hit.</p><li><x-lab i="3">Sacred Animal</x-lab> fox</li>',
+    );
+    expect(
+      s.restore(
+        '<p><x-lab i="1">Gatilho</x-lab> Uma criatura se move. <x-lab i="2">Efeito</x-lab> Você golpeia.</p><p>Você ganha um <strong>bônus de +2</strong> para acertar.</p><li><x-lab i="3">Animal Sagrado</x-lab> raposa</li>',
+      ),
+    ).toBe(
+      '<p><strong>Gatilho</strong> Uma criatura se move. <strong>Efeito</strong> Você golpeia.</p><p>Você ganha um <strong>bônus de +2</strong> para acertar.</p><li><strong>Animal Sagrado</strong> raposa</li>',
+    );
+    /* Um rótulo que sumiu é texto perdido: falha. */
+    expect(() => s.restore('<p>Uma criatura se move.</p>')).toThrow(ShieldError);
   });
 });
 

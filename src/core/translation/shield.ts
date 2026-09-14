@@ -16,15 +16,32 @@
  * não gravar do que gravar texto quebrado.
  *
  * E o GLOSSÁRIO: termos do jogo que o tradutor genérico erra ("Strike" vira "greve",
- * "saving throw" vira "salvar joga", "Fortitude" vira "fortaleza") viram um elemento
- * próprio, `<x-g i="n">skill feat</x-g>`, com o INGLÊS dentro: o tradutor vê a frase
- * inteira (e acerta a volta dela), e `restore` joga fora o que ele fez com o termo e põe
- * o da comunidade. Na Etapa 34 o termo ia em `<span translate="no">` já em português —
- * medido na 35, o Bergamot mexe na ORDEM das palavras dentro do `translate="no"`
- * ("talento de perícia" voltou "de talento perícia"): ele não traduz, mas realinha. O
- * rótulo de referência que o pacote conhece pelo nome ("Sneak Attack" → "Ataque
- * Furtivo") segue a mesma regra: vai em inglês, e volta pelo nome. Só em texto — nunca
- * dentro de uma tag HTML.
+ * "saving throw" vira "salvar joga", "Fortitude" vira "fortaleza") vão em
+ * `<span translate="no" i="n">skill feat</span>`, com o INGLÊS dentro, e `restore` joga
+ * fora o que o tradutor fez com o termo e põe o da comunidade. Medido no motor (Etapa
+ * 37), e é isto que decide a forma:
+ *
+ *   - elemento DESCONHECIDO (`<x-g>`) é tratado como BLOCO: quebra a frase ao redor
+ *     ("Faça um corpo a corpo Golpe. .");
+ *   - `<span translate="no">` é inline — a frase fica inteira — e o conteúdo pode voltar
+ *     realinhado ("talento de perícia" → "de talento perícia"), o que não importa porque
+ *     o conteúdo é descartado. Na Etapa 34 o português ia DENTRO, e aí importava.
+ *
+ * As REFERÊNCIAS ficam em `<x-ref>` — bloco — sempre. Medido: o motor às vezes DUPLICA
+ * um elemento inline ("de {Bola de Fogo} de {Bola de Fogo}"), e um link duplicado é
+ * dado quebrado; em bloco, 1.762 marcas da amostra voltaram uma a uma. O rótulo que o
+ * pacote conhece pelo nome ("Sneak Attack" → "Ataque Furtivo"), ou que o glossário
+ * conhece inteiro, volta por ele; o que ninguém conhece FICA NO ORIGINAL — medido, o
+ * motor sozinho fazia de "Aonaurious" "Amenitário" e de "Alglenweis" "Alglenweis (em
+ * inglês)": nome próprio não se adivinha. Um termo do glossário duplicado só duplicaria
+ * uma palavra — e a segunda cópia sai na volta.
+ *
+ * E os RÓTULOS DE BLOCO: `<strong>Sacred Animal</strong> fox`, `<strong>Trigger</strong>
+ * A creature…` — um negrito curto no começo de um parágrafo, item ou frase, seguido de
+ * texto. Medido: como inline, o motor engolia o rótulo, trocava rótulo e valor de lugar
+ * ("raposa <strong>animal sagrada</strong>") ou duplicava a tag. Vira `<x-lab>` — bloco —
+ * e rótulo e valor traduzem cada um sozinho; `restore` devolve o `<strong>`. Só em texto —
+ * nunca dentro de uma tag HTML.
  */
 
 import { parseMarkup } from '../markup/parse';
@@ -57,7 +74,21 @@ export class ShieldError extends Error {}
 const ETIQUETA = /(<[^>]+>)/;
 const REF = /<x-ref i="(\d+)">([\s\S]*?)<\/x-ref>/g;
 const TOK = /<x-tok i="(\d+)"><\/x-tok>/g;
-const GLOSSARIO = /<x-g i="(\d+)">([\s\S]*?)<\/x-g>/g;
+const GLOSSARIO = /<span translate="no" i="(\d+)">([\s\S]*?)<\/span>/g;
+const ROTULO = /<x-lab i="(\d+)">([\s\S]*?)<\/x-lab>/g;
+/**
+ * Um negrito CURTO (até 40 caracteres, sem ponto) no começo de um bloco, depois de um
+ * `<br>`, ou depois do fim de uma frase — e seguido de texto. É o rótulo do Foundry. O
+ * glossário já passou, então o rótulo pode ter um termo protegido dentro
+ * ("Bloodline <span…>Skills</span>").
+ */
+const ROTULO_EM_NEGRITO =
+  /(^|<(?:p|li|td|th|div)(?:\s[^>]*)?>|<br\s*\/?>|[.!?;:]\s+)<strong>((?:[^<.]|<span translate="no" i="\d+">[^<.]*<\/span>)+?)<\/strong>(?=\s*(?:[^\s<]|<span translate="no"))/g;
+/**
+ * Um número com sinal — "+2 bonus", "–4 penalty" — vai protegido como termo, com o
+ * mesmo texto na volta. Medido: "a –4 status penalty" virou "de de 4 euros".
+ */
+const NUMERO_COM_SINAL = /[+\u2013\u2212-]\d+(?:\/\d+)?/g;
 
 function escapeRegex(text: string): string {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -83,6 +114,13 @@ function comCaixaDe(modelo: string, termo: string): string {
  * termos numa alternância (do mais longo ao mais curto): passadas sucessivas deixariam
  * um termo casar dentro do que outro já protegeu.
  */
+function comNumeros(texto: string, termos: string[]): string {
+  return texto.replace(NUMERO_COM_SINAL, (numero) => {
+    termos.push(numero);
+    return `<span translate="no" i="${String(termos.length)}">${numero}</span>`;
+  });
+}
+
 function comGlossario(texto: string, phrases: readonly Phrase[], termos: string[]): string {
   /* O PRIMEIRO termo de cada chave vence: os fixos do app vêm antes dos do pacote. */
   const porTermo = new Map<string, Phrase>();
@@ -97,16 +135,19 @@ function comGlossario(texto: string, phrases: readonly Phrase[], termos: string[
     /* O exato aceita a caixa alta: "STRENGTH" num título é o atributo, não outra coisa. */
     if (phrase.exact === true && match !== phrase.en && !ehCaixaAlta(match)) return match;
     termos.push(comCaixaDe(match, phrase.pt));
-    return `<x-g i="${String(termos.length)}">${match}</x-g>`;
+    return `<span translate="no" i="${String(termos.length)}">${match}</span>`;
   });
 }
 
 /** O glossário só em texto: o HTML é fatiado em tags e trechos, e só os trechos mudam. */
 function glossarioForaDasTags(html: string, phrases: readonly Phrase[], termos: string[]): string {
-  if (phrases.length === 0) return html;
   return html
     .split(ETIQUETA)
-    .map((parte) => (parte.startsWith('<') ? parte : comGlossario(parte, phrases, termos)))
+    .map((parte) =>
+      parte.startsWith('<')
+        ? parte
+        : comNumeros(phrases.length === 0 ? parte : comGlossario(parte, phrases, termos), termos),
+    )
     .join('');
 }
 
@@ -122,6 +163,24 @@ export function shield(html: string, options: ShieldOptions = {}): Shielded {
   const marcas: { raw: string; label: string | null; nome: string | null }[] = [];
   const termos: string[] = [];
   const partes: string[] = [];
+  /* O glossário conhece o rótulo INTEIRO? ("Strike", "flat-footed") Então volta por ele. */
+  const porTermo = new Map(phrases.map((phrase) => [phrase.en.toLowerCase(), phrase]));
+  const termoInteiro = (label: string): string | null => {
+    const phrase = porTermo.get(label.toLowerCase());
+    if (phrase === undefined) return null;
+    if (phrase.exact === true && label !== phrase.en) return null;
+    return comCaixaDe(label, phrase.pt);
+  };
+
+  /* "Enfeebled 1", "Stunned 2": o nome com o valor atrás — o nome resolve, o valor fica. */
+  const nomeDoRotulo = (label: string): string | null => {
+    const direto = options.nameOf?.(label) ?? termoInteiro(label);
+    if (direto !== null) return direto;
+    const m = /^(.*\S)\s+(\d+)$/.exec(label);
+    if (m === null) return null;
+    const base = options.nameOf?.(m[1] ?? '') ?? termoInteiro(m[1] ?? '');
+    return base === null ? null : `${base} ${m[2] ?? ''}`;
+  };
 
   for (const token of parseMarkup(html)) {
     if (token.kind === 'text') {
@@ -130,8 +189,8 @@ export function shield(html: string, options: ShieldOptions = {}): Shielded {
     }
     const i = marcas.length + 1;
     const label = 'label' in token ? token.label : null;
-    /* O rótulo que o pacote conhece pelo nome volta pelo nome; o tradutor só vê o inglês. */
-    const nome = label === null || label === '' ? null : (options.nameOf?.(label) ?? null);
+    /* O rótulo que o pacote ou o glossário conhece volta pronto; o tradutor só vê o inglês. */
+    const nome = label === null || label === '' ? null : nomeDoRotulo(label);
     marcas.push({ raw: token.raw, label, nome });
     partes.push(
       label === null || label === ''
@@ -140,41 +199,87 @@ export function shield(html: string, options: ShieldOptions = {}): Shielded {
     );
   }
 
+  /* Os rótulos de bloco viram bloco de verdade para o tradutor. */
+  let rotulos = 0;
+  const text = partes
+    .join('')
+    .replace(ROTULO_EM_NEGRITO, (match, antes: string, rotulo: string) => {
+      if (rotulo.replace(/<[^>]+>/g, '').length > 40) return match;
+      rotulos += 1;
+      return `${antes}<x-lab i="${String(rotulos)}">${rotulo}</x-lab>`;
+    });
+
   return {
-    text: partes.join(''),
+    text,
     marks: marcas.length,
     restore(translated: string): string {
       const vistas = new Set<number>();
-      let out = translated.replace(REF, (_, n: string, label: string) => {
-        const i = Number(n);
-        const marca = marcas[i - 1];
-        if (marca?.label == null) throw new ShieldError(`marca ${n} sem rótulo`);
-        vistas.add(i);
-        const novo = marca.nome ?? label.trim();
-        return comRotulo(marca.raw, marca.label, novo === '' ? marca.label : novo);
-      });
-      out = out.replace(TOK, (_, n: string) => {
+      /* O motor engole o espaço depois de um bloco ("leva  <x-tok/>Dano"): devolve-se. */
+      const comEspaco = (raw: string, offset: number, match: string, whole: string): string => {
+        const depois = offset + match.length;
+        const colado =
+          /[\p{L}\p{N}]/u.test(whole.charAt(depois)) ||
+          whole.startsWith('<span translate="no"', depois);
+        return colado ? `${raw} ` : raw;
+      };
+      let out = translated.replace(
+        REF,
+        (match: string, n: string, _label: string, offset: number, whole: string) => {
+          const i = Number(n);
+          const marca = marcas[i - 1];
+          if (marca?.label == null) throw new ShieldError(`marca ${n} sem rótulo`);
+          vistas.add(i);
+          /* O rótulo traduzido pelo motor (`label`) é descartado: só o nome conhecido entra. */
+          const raw = comRotulo(marca.raw, marca.label, marca.nome ?? marca.label);
+          return comEspaco(raw, offset, match, whole);
+        },
+      );
+      out = out.replace(TOK, (match: string, n: string, offset: number, whole: string) => {
         const i = Number(n);
         const marca = marcas[i - 1];
         if (marca === undefined) throw new ShieldError(`marca ${n} desconhecida`);
         vistas.add(i);
-        return marca.raw;
+        return comEspaco(marca.raw, offset, match, whole);
       });
+      /*
+       * O ponto que fecha a frase logo depois de um bloco vira segmento sozinho, e o motor
+       * o devolve como ". ." — medido: 30 das 105 entradas da amostra, e nenhum ". ." no
+       * original. Só depois de uma marca refeita.
+       */
+      out = out.replace(/([\]}])\. \./g, '$1.');
       if (vistas.size !== marcas.length) {
         throw new ShieldError(
           `${String(marcas.length - vistas.size)} marca(s) sumiram na tradução`,
         );
       }
       if (/<x-(ref|tok)\b/.test(out)) throw new ShieldError('marca mal formada na tradução');
+      /* Os rótulos de bloco voltam a ser negrito; um que sumiu é texto perdido — falha. */
+      let devolvidos = 0;
+      out = out.replace(ROTULO, (_, _n: string, dentro: string) => {
+        devolvidos += 1;
+        return `<strong>${dentro.trim()}</strong>`;
+      });
+      if (devolvidos !== rotulos) {
+        throw new ShieldError(`${String(rotulos - devolvidos)} rótulo(s) sumiram na tradução`);
+      }
+      if (/<\/?x-lab\b/.test(out)) throw new ShieldError('rótulo mal formado na tradução');
       /*
        * Os termos do glossário: o que o tradutor fez com o inglês sai, o da comunidade
        * entra. Um termo que o tradutor engoliu não é erro — fica o que ele escreveu.
        */
+      const usados = new Set<number>();
       out = out.replace(
         GLOSSARIO,
-        (_, n: string, dentro: string) => termos[Number(n) - 1] ?? dentro,
+        (match: string, n: string, dentro: string, offset: number, whole: string) => {
+          const i = Number(n);
+          /* A segunda cópia de um termo que o motor duplicou sai. */
+          if (usados.has(i)) return '';
+          usados.add(i);
+          /* "void healing" voltava "vaziocura": o espaço depois do termo também some. */
+          return comEspaco(termos[i - 1] ?? dentro, offset, match, whole);
+        },
       );
-      return out.replace(/<\/?x-g\b[^>]*>/g, '');
+      return out.replace(/<\/?span translate="no"[^>]*>/g, '');
     },
   };
 }

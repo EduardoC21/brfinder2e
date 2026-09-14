@@ -37,7 +37,9 @@ export const TERM_FAMILIES: readonly { readonly prefix: string; readonly exact: 
   { prefix: 'PF2E.Item.Deity.Domain.', exact: true },
   { prefix: 'PF2E.Duration.', exact: false },
   { prefix: 'PF2E.Area.Shape.', exact: false },
-  { prefix: 'PF2E.ActionType', exact: false },
+  /* "Free" → "Livre" casava "break free" e "free Avistan": só com a caixa do nome. */
+  { prefix: 'PF2E.ActionType', exact: true },
+  { prefix: 'PF2E.AbilityFree', exact: true },
   { prefix: 'PF2E.Focus.', exact: false },
   { prefix: 'PF2E.Item.Spell.Rank.', exact: false },
   { prefix: 'PF2E.PerceptionLabel', exact: false },
@@ -91,7 +93,10 @@ export function pairTerms(
     const termoPt = pt[key];
     if (termoPt === undefined || termoPt === termoEn) continue;
     if (NUNCA.has(termoEn.toLowerCase())) continue;
-    const familia = TERM_FAMILIES.find((f) => key.startsWith(f.prefix));
+    /* O prefixo mais LONGO decide: `PF2E.AbilityFree` (exato) antes de `PF2E.Ability`. */
+    const familia = TERM_FAMILIES.filter((f) => key.startsWith(f.prefix)).sort(
+      (a, b) => b.prefix.length - a.prefix.length,
+    )[0];
     const exact = familia?.exact === true;
     /* "air", "day", "Cha": curto demais para casar sem caixa exata — sairia em qualquer frase. */
     if (!exact && termoEn.length < 4) continue;
