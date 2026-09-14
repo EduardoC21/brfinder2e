@@ -144,13 +144,31 @@
   color: var(--color-state);
 }
 
-.pasta .source {
-  padding-left: calc(var(--space-3) + var(--space-2));
+/*
+ * O bloco das entradas da pasta aberta (27d): fio bordô à esquerda, o fundo tingido de
+ * leve, e um respiro embaixo antes da próxima pasta. É o que diz "isto está DENTRO" —
+ * as pastas fechadas continuam soltas no fundo do trilho.
+ */
+.entradas {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 2px 0 var(--space-3) var(--space-2);
+  padding: var(--space-1) 0 var(--space-1) var(--space-1);
+  border-left: 2px solid var(--color-state);
+  background: color-mix(in srgb, var(--color-state) 7%, transparent);
+}
+
+.entradas .source {
+  padding-left: var(--space-3);
+}
+
+.entradas .tipo {
+  padding-left: calc(var(--space-3) + var(--space-3));
 }
 
 /* A entrada de Tipo é subordinada ao "Todos": mais recuada e um pouco menor. */
 .tipo {
-  padding-left: calc(var(--space-3) + var(--space-4));
   font-size: var(--text-sm);
 }
 

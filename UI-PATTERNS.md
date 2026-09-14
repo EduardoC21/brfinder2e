@@ -627,7 +627,9 @@ nelas sozinha.
 
 **As pastas são um acordeão** (27c, pelo autor): todas nascem fechadas, só uma abre por
 vez, e a aberta é ESTADO — bordô cheio, como a entrada escolhida dentro dela. Sem seta:
-com uma só aberta, a cor já diz qual é. Fechada, a pasta onde a entrada aberta mora fica
+com uma só aberta, a cor já diz qual é. As entradas da aberta ficam num BLOCO (27d, pelo
+autor): fio bordô à esquerda, fundo tingido de leve, respiro antes da próxima pasta — só
+o recuo não separava "o que está dentro" das pastas fechadas logo abaixo. Fechada, a pasta onde a entrada aberta mora fica
 com o texto em bordô — o "você está aqui" quando se abre outra para olhar. A aberta é
 estado do trilho, não preferência: "sempre começam fechadas" é a regra, e gravar a aberta
 a quebraria no primeiro recarregamento. Com termo na busca do trilho, toda pasta abre:

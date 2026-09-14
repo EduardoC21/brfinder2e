@@ -174,7 +174,12 @@ export function SourceRail({
               >
                 {t.rail.groups[group.id] ?? group.id}
               </button>
-              {estaAberta && entries.map(botao)}
+              {/*
+                As entradas num BLOCO próprio (27d, pelo autor): fio bordô à esquerda e um
+                fundo levemente tingido, para o olho separar "o que está dentro da pasta
+                aberta" de "as outras pastas logo abaixo" — só o recuo não separava.
+              */}
+              {estaAberta && <div className={styles['entradas']}>{entries.map(botao)}</div>}
             </section>
           );
         })}
