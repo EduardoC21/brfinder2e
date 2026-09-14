@@ -271,7 +271,6 @@ function PageTab({
         : pruneForReading(parseDescription(apendice)),
     [tab.appendix, apendice],
   );
-  const [apendiceAberto, setApendiceAberto] = useState(false);
 
   /*
    * Devolve a rolagem UMA vez, quando a prosa chega — a descrição vem do armazenamento,
@@ -321,26 +320,19 @@ function PageTab({
           <RichText nodes={nodes} links={links} />
         </div>
       )}
+      {/*
+        O apêndice ABERTO (28, pelo autor): a prosa toda no centro, como na classe, e sem
+        recolher — o botão de recolher da 24 saiu. Um fio, o título na voz dos títulos da
+        prosa, e o bloco do livro embaixo.
+      */}
       {apendiceNodes !== null && tab.appendix !== undefined && (
         <section className={styles['apendice']}>
-          <button
-            type="button"
-            className={cx(styles['apendiceTitulo'], 'chamfer-sm')}
-            aria-expanded={apendiceAberto}
-            onClick={() => {
-              setApendiceAberto((estava) => !estava);
-            }}
-          >
-            <span className={styles['apendiceSeta']} aria-hidden="true">
-              {apendiceAberto ? '▾' : '▸'}
-            </span>
+          <h2 className={styles['apendiceTitulo']}>
             {t.appendix[tab.appendix.label] ?? tab.appendix.label}
-          </button>
-          {apendiceAberto && (
-            <div className={cx(styles['pagina'], styles['apendiceCorpo'])}>
-              <RichText nodes={apendiceNodes} links={links} />
-            </div>
-          )}
+          </h2>
+          <div className={cx(styles['pagina'], styles['apendiceCorpo'])}>
+            <RichText nodes={apendiceNodes} links={links} />
+          </div>
         </section>
       )}
     </div>

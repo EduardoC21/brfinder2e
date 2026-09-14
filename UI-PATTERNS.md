@@ -274,6 +274,17 @@ genérica. Navegar no flutuante deixa o contexto para trás; o Voltar o traz.
 
 ### `@Embed`: a entrada colada
 
+**Recontado na 28, com as três fontes grandes na base** (era a OPEN-DECISIONS #12): no
+`pf2e-8.5.0`, 2.757 `@Embed` nas fontes que lemos — `journals` 2.661 (Archetypes → feats
+2.108; Classes → classfeatures 469; actions 66; spells 12; ancestryfeatures 3; equipment
+3), `class-features` 53, `feats` 25, `equipment` 16, `heritages` 1, `backgrounds` 1 — e
+**zero apontam para fora da base**: todo alvo é um pack que já é fonte. O segundo nível
+(embed dentro de entrada colada) existe UMA vez, a página do Runelord colando a
+habilidade Runelord, que cola habilidades; continua um nível só, e a segunda camada sai
+como link, não colada — um caso não paga um contador de profundidade. `@Localize` já
+expande (`markup/localize.ts`: a Sickened, 20 habilidades de classe, 135 páginas de
+jornal). Decisão fechada.
+
 **Decidido (Etapa 20b):** `@Embed[<uuid> inline]` cola a descrição da entrada apontada no
 lugar do token, quando ela está na base. É como as páginas de subsistema são escritas —
 Hexploration tem o título "Travel" como link e, logo abaixo, o embed da ação. 19 nas
@@ -886,11 +897,12 @@ Aiuvarin conta como elfo, `countsAs: ['aiuvarin','elf']`, e leva os 50 talentos 
 `is` (valor fixo) e `none-of` (a lista não tem nenhum valor de outra fonte — é como os 41
 talentos universais se acham: de ancestralidade, sem traço de ancestralidade nenhuma).
 
-**O apêndice "Mecânicas"** (Etapa 24, pelo autor): no fim da prosa da aba de texto, uma
-chamada RECOLHIDA com o bloco de mecânica do livro como ele está escrito. A lateral mostra
-o que os campos dão; o bloco tem o resto — 5 das 50 ancestralidades têm uma habilidade
-que só existe como texto. Fechado por padrão: a lateral já diz o essencial, e quem quer o
-livro abre. É `appendix` na aba de texto: um campo de `desc/` e um rótulo.
+**O apêndice "Mecânicas"** (Etapa 24, pelo autor): no fim da prosa da aba de texto, o
+bloco de mecânica do livro como ele está escrito. A lateral mostra o que os campos dão; o
+bloco tem o resto — 5 das 50 ancestralidades têm uma habilidade que só existe como texto.
+Nasceu RECOLHIDO (a lateral já dizia o essencial); na 28 o autor o abriu de vez, para a
+prosa ficar inteira no centro como na classe, onde nada recolhe. É `appendix` na aba de
+texto: um campo de `desc/` e um rótulo, sob um fio e um título.
 
 **A aba de lista anota e recorta** (Etapa 25b): `annotate` escreve numa CÓPIA de cada
 linha um campo que só existe na aba — a origem do talento do arquétipo (próprio ou

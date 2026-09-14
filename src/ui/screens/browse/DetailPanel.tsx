@@ -857,6 +857,14 @@ function Field({
  * quando o campo é vazio — 17 classes não têm magias por dia — e por isso as tabelas
  * são lidas ANTES de desenhar a barra, numa leitura só.
  */
+/**
+ * A sub-aba escolhida, por TIPO de entrada, enquanto o app está aberto (28, pelo autor):
+ * quem estava em Proficiências no Druid vê Proficiências no Rogue, e ao voltar da tela
+ * completa. Memória de módulo, não preferência: some com o recarregamento, como a
+ * rolagem da aba de texto.
+ */
+const ultimaSubAba = new Map<string, string>();
+
 function Lateral({
   side,
   entity,
@@ -885,7 +893,8 @@ function Lateral({
   const abas = side.tabs.filter(
     (tab) => tab.kind !== 'table' || (tabelas !== null && tabelas[tab.field] !== ''),
   );
-  const [abaId, setAbaId] = useState(side.tabs[0]?.id ?? '');
+  const [abaId, setAbaId] = useState(() => ultimaSubAba.get(entityType) ?? side.tabs[0]?.id ?? '');
+  /* A lembrada pode não existir aqui (Detalhes some na tela completa; Magias, em 17): cai na primeira. */
   const aba = abas.find((tab) => tab.id === abaId) ?? abas[0];
   const html = aba?.kind === 'table' ? (tabelas?.[aba.field] ?? '') : '';
   const nodes = useMemo(
@@ -911,6 +920,7 @@ function Lateral({
               )}
               onClick={() => {
                 setAbaId(tab.id);
+                ultimaSubAba.set(entityType, tab.id);
               }}
             >
               {b.fullView.side[tab.id] ?? tab.id}
@@ -963,10 +973,17 @@ function Row({
   );
 }
 
+/**
+ * Os valores de um campo de lista — ou o valor ÚNICO de um campo de texto, como lista de
+ * um. É o que faz a ponte por slug valer para `class` do arquétipo (uma string), e não
+ * só para `domains` da divindade (uma lista): sem isto, o "Fighter" do arquétipo
+ * multiclasse nunca virava botão (28).
+ */
 function readList(entity: BrowseEntity, field: string): string[] {
   const base = entity.base;
   if (!isRecord(base)) return [];
   const value = base[field];
+  if (typeof value === 'string') return value === '' ? [] : [value];
   return Array.isArray(value)
     ? value.filter((item): item is string => typeof item === 'string')
     : [];

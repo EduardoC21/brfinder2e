@@ -138,10 +138,10 @@
 }
 
 /*
- * O apêndice "Mecânicas": um fio acima, o título como botão de recolher — seta, e o nome
- * na voz dos títulos da prosa. Fechado por padrão: a lateral já diz o essencial, e quem
- * quer o livro abre. O corpo tem a mesma medida da prosa; os rótulos em latão (Hit
- * Points, Size…) já são o `blockLabel` do RichText.
+ * O apêndice "Mecânicas": um fio acima, o título na voz dos títulos da prosa, e o bloco
+ * do livro embaixo — sempre aberto (28, pelo autor; o recolher da 24 saiu, para a prosa
+ * ficar inteira no centro como na classe). Os rótulos em latão (Hit Points, Size…) já
+ * são o `blockLabel` do RichText.
  */
 .apendice {
   margin-top: var(--space-6);
@@ -150,24 +150,9 @@
 }
 
 .apendiceTitulo {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  border: 1px solid var(--color-hairline);
-  padding: var(--space-1) var(--space-3);
-  background: transparent;
+  margin: 0;
   color: var(--color-text);
   font: 400 var(--text-lg) / 1.2 var(--font-display);
-  cursor: pointer;
-}
-
-.apendiceTitulo:hover {
-  border-color: var(--color-data);
-}
-
-.apendiceSeta {
-  font-size: var(--text-sm);
-  color: var(--color-text-muted);
 }
 
 .apendiceCorpo {

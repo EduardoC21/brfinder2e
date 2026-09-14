@@ -81,6 +81,12 @@ Antes: **Etapa 20** — as tabelas das regras param de quebrar (célula compacta
 linha, `@Embed` cola a entrada apontada, e as duas vassouras em Configurações: apagar as
 entradas aposentadas e apagar a base inteira.
 
+Antes: **Etapa 28** — o fechamento das fontes: a ponte arquétipo multiclasse → classe
+(que nunca desenhava: o campo é texto e a ponte só lia lista), o "Mecânicas" da
+ancestralidade aberto de vez, a sub-aba da lateral lembrada por tipo, os Tipos do trilho
+também na paleta de busca, e a OPEN-DECISIONS #12 fechada (2.757 `@Embed`, zero fora da
+base).
+
 Antes: **Etapa 27c** — o trilho vira acordeão: todas as pastas nascem fechadas, só uma
 abre por vez, a aberta em bordô com a entrada escolhida dentro, sem seta.
 
@@ -135,10 +141,10 @@ Antes: **Etapa 23** — `heritage` (311 próprias, fonte fora do trilho) e as 17
 como Tipo da ancestralidade; as abas de lista da tela completa, com o filtro travado —
 Dwarf: Heranças 9, Talentos 48; Nephilim: Talentos 88.
 
-Próxima: **classe, a lateral da aba Detalhes** — a tabela de progressão por nível (o que
-se ganha em cada um, dos níveis de talento e das habilidades) e as proficiências
-iniciais, trocando entre as duas dentro da lateral; e as pontes que ficaram esperando
-(arquétipo multiclasse → classe).
+Próxima: **a varredura das inconsistências** — a seção "Para a varredura final" do
+INCONSISTENCIAS-FOUNDRY (a pasta `family` do equipamento, a defesa das magias contra o
+AoN, os traços compostos de escudo, os 33 traços sem descrição), medida de novo e
+registrada. Depois, a tradução dos filtros e valores.
 
 Antes: **Etapa 22e** — a descrição no contexto: o Change Shape aberto pelo Anadi tem o
 texto do Anadi (o `ItemAlteration` de descrição do Foundry, 91 estáticas no zip), com

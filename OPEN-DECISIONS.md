@@ -295,33 +295,6 @@ referência viva à entrada.
 
 **Decidir quando:** depois das três fontes grandes e da setorização do trilho.
 
-## 12. Os `@Embed` que apontam para fora da base `novo`
-
-Registrado na Etapa 20b, quando o `@Embed` passou a colar a entrada apontada. Pedido do
-autor: voltar aqui quando as fontes que faltam existirem.
-
-**O que resolve hoje:** só o que está na base. Os 19 embeds das regras apontam para
-`actionspf2e`, que temos, e colam. Nas descrições dos packs que já lemos, os 25 de `feats`
-e o de `actions`, `heritages` e `backgrounds` também apontam para `actionspf2e` — colam.
-
-**O que fica pendente, medido no zip:** o alvo, no zip inteiro, é `feats-srd` 2.109 e
-`classfeatures` 555 — 2.661 só em `journals`, nos jornais de classe, que só passam a
-interessar quando `class` for fonte e ler o jornal dela. Nos packs que lemos: os 16 de
-`equipment` (15 para `classfeatures`, 1 para `feats-srd`) ficam pendentes; e
-`class-features` (72: 46 para `classfeatures`, 25 para `actionspf2e`, 1 para
-`familiar-abilities`) nem é fonte ainda — `classfeatures`, 874 documentos, está na lista do
-que não sincronizamos.
-
-**O que decidir quando voltar:**
-
-- se `classfeatures` vira fonte própria (é o que os embeds de talento e de classe pedem);
-- se o embed dentro de uma entrada colada resolve também — hoje é UM nível, e o dia em que
-  um jornal de classe colar um talento que cola uma habilidade, o segundo nível fica
-  pendente. Se sim, com contador de profundidade, não com a lista de links podada;
-- `@Localize` (a Sickened) — a tabela de idioma já está lida; falta só ligar.
-
-**Decidir quando:** ao fazer `classe`, a terceira fonte grande.
-
 ## 13. Familiares específicos e companheiros: não estão no zip `novo`
 
 Medido na análise contra o AoN, Etapa 21 (11/09/2026).

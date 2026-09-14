@@ -1,6 +1,15 @@
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 
-import { fieldList, fieldValue, fitTraits, rarityLetter, traitSpace } from '@core/browse/index';
+import {
+  RAIL,
+  SOURCES,
+  fieldList,
+  fieldValue,
+  fitTraits,
+  rarityLetter,
+  traitSpace,
+  typeFilterOf,
+} from '@core/browse/index';
 import { strings } from '@i18n/index';
 import { RarityMark } from '@ui/components/RarityMark';
 import { ScrollRail } from '@ui/components/ScrollRail';
@@ -13,6 +22,7 @@ import { useWindowedRows } from '@ui/hooks/useWindowedRows';
 import { capitalizar } from '@ui/text';
 
 import type { PopoutSubject } from './popouts';
+import { valueLabel } from './filterLabels';
 import styles from './GlobalSearch.module.css';
 
 const t = strings.browse.palette;
@@ -68,6 +78,17 @@ export function GlobalSearch({
 }: GlobalSearchProps) {
   const [termo, setTermo] = useState('');
   const [fonte, setFonte] = useState<string | null>(null);
+  /* O Tipo dentro da fonte escolhida, quando o trilho a abre em Tipos (28). */
+  const [tipo, setTipo] = useState<string | null>(null);
+  const tiposDaFonte = useMemo(() => {
+    if (fonte === null) return [];
+    const pasta = RAIL.find((group) =>
+      group.entries.some((entry) => entry.kind === 'type' && entry.source === fonte),
+    );
+    return pasta === undefined
+      ? []
+      : pasta.entries.flatMap((entry) => (entry.kind === 'type' ? [entry.value] : []));
+  }, [fonte]);
   const [ativo, setAtivo] = useState(0);
 
   /*
@@ -102,12 +123,17 @@ export function GlobalSearch({
     const escolhido = naDescricao ? indice.byText : indice.byName;
     if (escolhido === null) return VAZIO_LINHAS;
 
-    const doFiltro = (row: GlobalRow): boolean => fonte === null || row.source.id === fonte;
+    const doFiltro = (row: GlobalRow): boolean => {
+      if (fonte !== null && row.source.id !== fonte) return false;
+      if (tipo === null) return true;
+      const spec = typeFilterOf(row.source);
+      return spec !== undefined && 'field' in spec && fieldValue(row.entity, spec.field) === tipo;
+    };
     return escolhido
       .search(termoAdiado)
       .map((id) => indice.byId.get(id))
       .filter((row): row is GlobalRow => row !== undefined && doFiltro(row));
-  }, [termoAdiado, fonte, naDescricao, indice]);
+  }, [termoAdiado, fonte, tipo, naDescricao, indice]);
 
   /* O índice ativo nunca aponta para fora: filtrar encurta a lista sob os pés da seleção. */
   const selecionado = Math.min(ativo, Math.max(resultados.length - 1, 0));
@@ -221,6 +247,7 @@ export function GlobalSearch({
             ligada={fonte === null}
             onClick={() => {
               setFonte(null);
+              setTipo(null);
               setAtivo(0);
             }}
           />
@@ -231,11 +258,41 @@ export function GlobalSearch({
               ligada={fonte === source.id}
               onClick={() => {
                 setFonte(fonte === source.id ? null : source.id);
+                setTipo(null);
                 setAtivo(0);
               }}
             />
           ))}
         </ScrollRail>
+
+        {/*
+          A segunda linha (28, pelo autor): os Tipos da fonte escolhida, os mesmos do
+          trilho e com os mesmos nomes — "Todos" mais um por Tipo. Só aparece nas fontes
+          que o trilho abre em Tipos; nas outras a fonte é o fim do caminho.
+        */}
+        {tiposDaFonte.length > 0 && fonte !== null && (
+          <ScrollRail className={styles['fontes']} label={strings.browse.rail.all}>
+            <FonteChip
+              rotulo={strings.browse.rail.all}
+              ligada={tipo === null}
+              onClick={() => {
+                setTipo(null);
+                setAtivo(0);
+              }}
+            />
+            {tiposDaFonte.map((valor) => (
+              <FonteChip
+                key={valor}
+                rotulo={rotuloDoTipo(fonte, valor)}
+                ligada={tipo === valor}
+                onClick={() => {
+                  setTipo(tipo === valor ? null : valor);
+                  setAtivo(0);
+                }}
+              />
+            ))}
+          </ScrollRail>
+        )}
 
         <div className={styles['corpo']} ref={lista} role="listbox" aria-label={t.label}>
           <div ref={trilha} className={styles['medida']} aria-hidden="true" />
@@ -281,6 +338,15 @@ export function GlobalSearch({
 }
 
 const VAZIO_LINHAS: readonly GlobalRow[] = [];
+
+/** O nome do Tipo como o trilho escreve: a tabela em português, ou o rótulo do filtro. */
+function rotuloDoTipo(sourceId: string, valor: string): string {
+  const traduzido = strings.browse.rail.types[sourceId]?.[valor];
+  if (traduzido !== undefined) return traduzido;
+  const source = SOURCES.find((entry) => entry.id === sourceId);
+  const spec = source === undefined ? undefined : typeFilterOf(source);
+  return spec === undefined ? valor : valueLabel(spec, valor);
+}
 
 function FonteChip({
   rotulo,
