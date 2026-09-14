@@ -712,8 +712,16 @@ export function sortEntities(
   entities: readonly BrowseEntity[],
   sort: Sort,
   levelField: string,
+  /**
+   * O nome pelo qual ordenar, quando não é o do dado (Etapa 36): com os nomes em
+   * português na tela, a ordem tem de ser a dos nomes que se VEEM — "Guerreiro" entre
+   * "Feiticeiro" e "Inventor", não onde "Fighter" ficaria.
+   */
+  nameOf: (entity: BrowseEntity) => string = (entity) => fieldValue(entity, 'name'),
 ): BrowseEntity[] {
   const sinal = sort.direction === 'asc' ? 1 : -1;
+  const byName = (a: BrowseEntity, b: BrowseEntity): number =>
+    COLLATOR_NOME.compare(nameOf(a), nameOf(b));
   if (sort.column === 'name') return [...entities].sort((a, b) => sinal * byName(a, b));
 
   return [...entities].sort((a, b) => {

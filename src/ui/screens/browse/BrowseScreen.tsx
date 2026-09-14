@@ -39,7 +39,7 @@ import {
 } from '@core/browse/index';
 import { sourcePreferences, withLayout, withSource } from '@core/prefs/index';
 import { strings } from '@i18n/index';
-import { setTermMode } from '@ui/text';
+import { displayName, setNameTable, setTermMode } from '@ui/text';
 import { FloatingPanel } from '@ui/components/FloatingPanel';
 import type { LoadedSource } from '@ui/hooks/useAllBases';
 import { SearchInput } from '@ui/components/SearchInput';
@@ -211,6 +211,8 @@ export function BrowseScreen({ baseVersion }: BrowseScreenProps) {
    * não quer decidir antes como vai ler. A tela mostra o nome original.
    */
   const nomesTraduzidos = useCommunityNames(prefs.translation.language, versaoDoPacote);
+  /* Os NOMES na tela (Etapa 36): a tabela do pacote quando a preferência pede; senão, nada. */
+  setNameTable(prefs.translation.names === 'translated' ? nomesTraduzidos : null);
   const glossario = useMemo(
     () =>
       prefs.translation.display === 'translated' && Object.keys(traduzido).length > 0
@@ -313,7 +315,7 @@ export function BrowseScreen({ baseVersion }: BrowseScreenProps) {
           <p className={styles['empty']}>{t.empty}</p>
         ) : (
           <SourcePane
-            key={`${source.id}#${prefs.translation.display}`}
+            key={`${source.id}#${prefs.translation.display}#${prefs.translation.names}`}
             source={source}
             entities={entities}
             loading={base.status === 'loading'}
@@ -345,7 +347,7 @@ export function BrowseScreen({ baseVersion }: BrowseScreenProps) {
         {popouts.items.map((item) => (
           <FloatingPanel
             key={item.id}
-            title={fieldValue(item.entity, 'name')}
+            title={displayName(item.entityType, fieldValue(item.entity, 'name'))}
             initial={{ x: item.x, y: item.y }}
             z={item.z}
             onFocus={() => {
@@ -645,7 +647,9 @@ function SourcePane({
   const results = useMemo(() => {
     const filtered = applyFilters(entities, source.filters, filters);
     if (deferredTerm.trim() === '')
-      return sortEntities(filtered, sort, source.special.level ?? 'level');
+      return sortEntities(filtered, sort, source.special.level ?? 'level', (entity) =>
+        displayName(source.entityType, fieldValue(entity, 'name')),
+      );
 
     // Com termo, a ordem é a da RELEVÂNCIA, não a alfabética — e o filtro só recorta.
     const allowed = new Set(filtered.map((entity) => entity.key));
@@ -655,7 +659,20 @@ function SourcePane({
       .filter((key) => allowed.has(key))
       .map((key) => byKey.get(key))
       .filter((entity): entity is BrowseEntity => entity !== undefined);
-  }, [entities, source.filters, filters, source.special.level, deferredTerm, index, sort]);
+    // `aliases` entra porque a ordem é pela tabela de nomes (`displayName`, fora do React),
+    // que chega depois do pacote — o lint não vê a dependência, mas ela existe.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    entities,
+    source.filters,
+    filters,
+    source.special.level,
+    source.entityType,
+    deferredTerm,
+    index,
+    sort,
+    aliases,
+  ]);
 
   /*
    * As entradas que o TERMO deixa passar, sem nenhum filtro.
@@ -1044,6 +1061,7 @@ function SourcePane({
             <p className={styles['empty']}>{t.noResults}</p>
           ) : (
             <ResultList
+              entityType={source.entityType}
               entities={results}
               allEntities={entities}
               columns={colunasVisiveis}

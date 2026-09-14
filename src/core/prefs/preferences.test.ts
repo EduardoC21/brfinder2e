@@ -44,6 +44,7 @@ describe('readPreferences', () => {
     });
     expect(lido.translation).toEqual({
       display: 'original',
+      names: 'original',
       language: 'pt-BR',
       methods: ['manual', 'community', 'llm', 'local'],
     });

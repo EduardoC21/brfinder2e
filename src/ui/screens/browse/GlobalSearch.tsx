@@ -19,7 +19,7 @@ import type { LoadedSource } from '@ui/hooks/useAllBases';
 import type { GlobalIndex, GlobalRow } from '@ui/hooks/useGlobalIndex';
 import { useTrackWidth } from '@ui/hooks/useTrackWidth';
 import { useWindowedRows } from '@ui/hooks/useWindowedRows';
-import { capitalizar } from '@ui/text';
+import { capitalizar, displayName } from '@ui/text';
 
 import type { PopoutSubject } from './popouts';
 import { valueLabel } from './filterLabels';
@@ -393,7 +393,7 @@ function Linha({
   readonly onApontar: () => void;
 }) {
   const { source, entity } = row;
-  const nome = fieldValue(entity, 'name');
+  const nome = displayName(source.entityType, fieldValue(entity, 'name'));
   const nivel = source.special.level === null ? null : fieldValue(entity, source.special.level);
   const raridade =
     source.special.rarity === null ? null : fieldValue(entity, source.special.rarity);

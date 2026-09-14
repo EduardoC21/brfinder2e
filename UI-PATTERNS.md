@@ -173,6 +173,13 @@ Traduzir vê a tradução. Acima do texto traduzido, a forma que o traduziu, e o
 o original mudou desde então. O erro, quando há, vai para o `title` do botão, que volta a
 oferecer.
 
+**Os nomes das entradas (Etapa 36, pelo autor).** Preferência própria, ao lado da de
+prosa: "Original" ou "Traduzido". Traduzido põe o nome do pacote da comunidade na lista, na
+paleta, no título da lateral, na tela completa e nas caixinhas de referência; o que o pacote
+não tem fica no original, sem marca — a lista mistura "Anão" com "Aiuvarin" e isso é
+honesto, não é erro. A lista ordena pelo nome que se vê. A busca acha pelos dois nomes seja
+qual for a escolha: quem procura não quer decidir antes como vai ler.
+
 **O escopo é o do lugar onde o botão está (Etapa 35, pelo autor).** O botão da lateral
 traduz tudo o que a lateral mostra — a descrição e as tabelas das sub-abas. Na tela
 completa há UM botão, no canto da barra, e ele traduz o centro e a lateral (página,

@@ -26,7 +26,7 @@ import { RarityMark } from '@ui/components/RarityMark';
 import { TraitChip } from '@ui/components/TraitChip';
 import { useTraitLabel } from '@ui/glossary/useTraitLabel';
 import { cx } from '@ui/cx';
-import { capitalizar, fieldText } from '@ui/text';
+import { capitalizar, displayName, fieldText } from '@ui/text';
 import { useTrackWidth } from '@ui/hooks/useTrackWidth';
 import { useWindowedRows } from '@ui/hooks/useWindowedRows';
 
@@ -50,6 +50,8 @@ export interface ActiveSpecials {
 }
 
 interface ResultListProps {
+  /** O tipo da fonte: é por ele que o nome em português se acha. */
+  readonly entityType: string | null;
   readonly entities: readonly BrowseEntity[];
   readonly columns: readonly ColumnSpec[];
   readonly specials: ActiveSpecials;
@@ -89,6 +91,7 @@ interface ResultListProps {
  * entram na MESMA grade das células de título.
  */
 export function ResultList({
+  entityType,
   entities,
   columns,
   specials,
@@ -255,6 +258,7 @@ export function ResultList({
           const index = janela.start + offset;
           return (
             <Linha
+              entityType={entityType}
               key={entity.key}
               entity={entity}
               index={index}
@@ -283,6 +287,7 @@ export function ResultList({
  * trilha. O fundo de seleção e o `hover` vêm das próprias células.
  */
 function Linha({
+  entityType,
   entity,
   index,
   columns,
@@ -292,6 +297,7 @@ function Linha({
   onActivate,
   onOpen,
 }: {
+  readonly entityType: string | null;
   readonly entity: BrowseEntity;
   readonly index: number;
   readonly columns: readonly ColumnSpec[];
@@ -301,7 +307,8 @@ function Linha({
   readonly onActivate: (index: number) => void;
   readonly onOpen: (index: number) => void;
 }) {
-  const nome = fieldValue(entity, 'name');
+  /* O nome como a preferência manda (Etapa 36): o do pacote, ou o original. */
+  const nome = displayName(entityType, fieldValue(entity, 'name'));
   const rotuloDeTraco = useTraitLabel();
   const nivel = specials.level === null ? null : fieldValue(entity, specials.level);
   const raridade = specials.rarity === null ? null : fieldValue(entity, specials.rarity);

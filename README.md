@@ -81,6 +81,11 @@ Antes: **Etapa 20** — as tabelas das regras param de quebrar (célula compacta
 linha, `@Embed` cola a entrada apontada, e as duas vassouras em Configurações: apagar as
 entradas aposentadas e apagar a base inteira.
 
+Antes: **Etapa 36** — os nomes das entradas em português na tela, por preferência própria
+(separada da prosa): na lista, na paleta, nos títulos da lateral e da tela completa e nas
+caixinhas de referência, o nome do pacote da comunidade — e o original para o que o pacote
+não tem. A lista ordena pelo nome que se vê. A busca acha pelos dois nomes, sempre.
+
 Antes: **Etapa 35** — o glossário aprendido do pacote da comunidade: as famílias de
 termos das duas tabelas de idioma emparelhadas pela chave (899 pares), o dicionário de
 frases fixas e os nomes de condição, ação e habilidade; o termo passa a viajar em inglês
@@ -176,8 +181,8 @@ Antes: **Etapa 23** — `heritage` (311 próprias, fonte fora do trilho) e as 17
 como Tipo da ancestralidade; as abas de lista da tela completa, com o filtro travado —
 Dwarf: Heranças 9, Talentos 48; Nephilim: Talentos 88.
 
-Próxima: tradução em lote de uma fonte, a edição manual, e os nomes das entradas em
-português na tela. O modelo de linguagem (BYOK, 2 ou 3 ferramentas) vem depois — é
+Próxima: a amostragem da qualidade da tradução por tipo de fonte (links e formatação
+inclusos), tradução em lote de uma fonte, e a edição manual. O modelo de linguagem (BYOK, 2 ou 3 ferramentas) vem depois — é
 aprimoramento, não o caminho principal. O PR
 ao pf2e com a seção 3 do INCONSISTENCIAS se faz em outro chat, com o repositório deles.
 

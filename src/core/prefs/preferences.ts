@@ -96,6 +96,13 @@ export interface LayoutPreferences {
  */
 export interface TranslationPreferences {
   readonly display: 'original' | 'translated';
+  /**
+   * Os NOMES das entradas (Etapa 36, pelo autor): na lista e nos títulos, o nome em
+   * português do pacote da comunidade — ou o original. O que o pacote não tem aparece no
+   * original. Separado de `display` porque são leituras diferentes: dá para querer os
+   * nomes em português com a prosa em inglês. A busca acha pelos dois nomes sempre.
+   */
+  readonly names: 'original' | 'translated';
   readonly language: string;
   readonly methods: readonly TranslationMethodId[];
 }
@@ -122,7 +129,12 @@ export const DEFAULT_PREFERENCES: Preferences = {
     popoutHeight: null,
   },
   /* O original primeiro: ninguém vê tradução sem ter pedido uma. */
-  translation: { display: 'original', language: 'pt-BR', methods: DEFAULT_METHOD_ORDER },
+  translation: {
+    display: 'original',
+    names: 'original',
+    language: 'pt-BR',
+    methods: DEFAULT_METHOD_ORDER,
+  },
 };
 
 /** Onde as preferências moram. Chave única: elas são poucas e sempre lidas juntas. */
@@ -203,6 +215,7 @@ export function readPreferences(stored: unknown): Preferences {
     },
     translation: {
       display: translation['display'] === 'translated' ? 'translated' : 'original',
+      names: translation['names'] === 'translated' ? 'translated' : 'original',
       language:
         typeof translation['language'] === 'string' && translation['language'] !== ''
           ? translation['language']

@@ -755,6 +755,13 @@ export const ptBR = {
         original: 'Original',
         translated: 'Traduzido',
       },
+      names: {
+        title: 'Nomes das entradas',
+        description:
+          'Na lista e nos títulos: o nome original, ou o nome em português do pacote da comunidade. O que o pacote não tem fica no original. A busca acha pelos dois nomes, seja qual for a escolha.',
+        original: 'Original',
+        translated: 'Traduzido',
+      },
       language: {
         title: 'Língua de tradução',
         description: 'Cada língua guarda o próprio conjunto de traduções.',

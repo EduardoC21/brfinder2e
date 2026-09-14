@@ -55,7 +55,7 @@ function estadoDoLocal(state: ReturnType<typeof useLocalStatus>): string {
 
 export function TranslationSettings() {
   const { prefs, update } = usePreferences();
-  const { display, language, methods } = prefs.translation;
+  const { display, names, language, methods } = prefs.translation;
   const pacote = useCommunityPack(language);
   const local = useLocalStatus(language);
 
@@ -158,26 +158,21 @@ export function TranslationSettings() {
 
   return (
     <>
-      <section className={styles['section']}>
-        <h3 className={styles['sectionTitle']}>{t.display.title}</h3>
-        <p className={styles['hint']}>{t.display.description}</p>
-        <div className={styles['opcoes']} role="radiogroup" aria-label={t.display.title}>
-          {(['original', 'translated'] as const).map((valor) => (
-            <button
-              key={valor}
-              type="button"
-              role="radio"
-              aria-checked={display === valor}
-              className={cx(styles['opcao'], display === valor && styles['opcaoOn'], 'chamfer-sm')}
-              onClick={() => {
-                update((atual) => withTranslation(atual, { display: valor }));
-              }}
-            >
-              {t.display[valor]}
-            </button>
-          ))}
-        </div>
-      </section>
+      <Escolha
+        rotulos={t.display}
+        valor={display}
+        onChange={(valor) => {
+          update((atual) => withTranslation(atual, { display: valor }));
+        }}
+      />
+
+      <Escolha
+        rotulos={t.names}
+        valor={names}
+        onChange={(valor) => {
+          update((atual) => withTranslation(atual, { names: valor }));
+        }}
+      />
 
       <section className={styles['section']}>
         <h3 className={styles['sectionTitle']}>{t.language.title}</h3>
@@ -208,5 +203,44 @@ export function TranslationSettings() {
         <p className={styles['hint']}>{t.storage}</p>
       </section>
     </>
+  );
+}
+
+/** Um par Original / Traduzido, como rádio: a preferência de prosa e a de nomes usam o mesmo. */
+function Escolha({
+  rotulos,
+  valor,
+  onChange,
+}: {
+  readonly rotulos: {
+    readonly title: string;
+    readonly description: string;
+    readonly original: string;
+    readonly translated: string;
+  };
+  readonly valor: 'original' | 'translated';
+  readonly onChange: (valor: 'original' | 'translated') => void;
+}) {
+  return (
+    <section className={styles['section']}>
+      <h3 className={styles['sectionTitle']}>{rotulos.title}</h3>
+      <p className={styles['hint']}>{rotulos.description}</p>
+      <div className={styles['opcoes']} role="radiogroup" aria-label={rotulos.title}>
+        {(['original', 'translated'] as const).map((opcao) => (
+          <button
+            key={opcao}
+            type="button"
+            role="radio"
+            aria-checked={valor === opcao}
+            className={cx(styles['opcao'], valor === opcao && styles['opcaoOn'], 'chamfer-sm')}
+            onClick={() => {
+              onChange(opcao);
+            }}
+          >
+            {rotulos[opcao]}
+          </button>
+        ))}
+      </div>
+    </section>
   );
 }

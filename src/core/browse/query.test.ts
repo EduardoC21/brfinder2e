@@ -14,6 +14,7 @@ import {
   optionsFor,
   readBounds,
   sortByName,
+  sortEntities,
   writeBound,
   type BrowseEntity,
 } from './query';
@@ -234,6 +235,19 @@ describe('sortByName', () => {
   it('ignora acento e caixa', () => {
     const acentuadas = [entity('x', { name: 'Ébrio' }), entity('y', { name: 'Eco' })];
     expect(sortByName(acentuadas).map((e) => fieldValue(e, 'name'))).toEqual(['Ébrio', 'Eco']);
+  });
+
+  /* Etapa 36: com os nomes em português na tela, a ordem é a dos nomes que se veem. */
+  it('ordena pelo nome VISTO quando há um', () => {
+    const classes = [entity('f', { name: 'Fighter' }), entity('s', { name: 'Sorcerer' })];
+    const visto: Record<string, string> = { Fighter: 'Guerreiro', Sorcerer: 'Feiticeiro' };
+    const ordem = sortEntities(
+      classes,
+      { column: 'name', direction: 'asc' },
+      'level',
+      (e) => visto[fieldValue(e, 'name')] ?? fieldValue(e, 'name'),
+    );
+    expect(ordem.map((e) => e.key)).toEqual(['s', 'f']);
   });
 });
 

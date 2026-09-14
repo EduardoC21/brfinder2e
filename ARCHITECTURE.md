@@ -1047,6 +1047,15 @@ gravada o mesmo botão alterna "Ver original" / "Ver tradução", nascendo na pr
 cada entrada; acima do texto, "Tradução: modelo local", e "o original mudou desde a
 tradução" quando a impressão digital não bate mais.
 
+**Os nomes na tela (Etapa 36).** `translation.names` é preferência separada de `display`:
+dá para ler a prosa em inglês com os nomes em português. O mecanismo é o mesmo do modo dos
+termos: a tela de consulta chama `setNameTable` no render (a tabela de nomes do pacote, ou
+nada), e `displayName(tipo, nome)` — em `ui/text.ts`, sem hook — devolve o nome do pacote
+ou o original. A lista remonta pela `key` quando a preferência muda, e `sortEntities`
+recebe o nome VISTO como critério (`nameOf`), senão "Guerreiro" ficaria onde "Fighter"
+fica. Os dados não mudam: o nome original continua sendo o que se grava, se exporta e se
+busca (a busca já acha pelos dois desde a 32).
+
 ### Onde a tradução mora: a quinta camada
 
     trans/<língua>/<tipo>    { [chave]: { [campo]: { html, method, at, sourceHash } } }

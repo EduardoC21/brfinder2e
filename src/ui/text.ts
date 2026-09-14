@@ -92,6 +92,26 @@ export function isTranslatedMode(): boolean {
   return termMode === 'translated';
 }
 
+/**
+ * A TABELA DE NOMES (Etapa 36): com a preferência "nomes traduzidos", a tela de consulta
+ * põe aqui os nomes do pacote da comunidade por tipo, e `displayName` devolve o nome em
+ * português — ou o original, quando o pacote não o tem. Mesmo arranjo do modo dos termos:
+ * lida no render da tela, sem hook, porque a linha da lista, o título da lateral e o
+ * flutuante desenham o nome sem React por perto para a preferência.
+ */
+type NameTable = Readonly<Record<string, Readonly<Record<string, string>>>>;
+let nameTable: NameTable | null = null;
+
+export function setNameTable(table: NameTable | null): void {
+  nameTable = table;
+}
+
+/** O nome como a preferência manda: o do pacote se houver e se for para mostrá-lo. */
+export function displayName(entityType: string | null, name: string): string {
+  if (nameTable === null || entityType === null) return name;
+  return nameTable[entityType]?.[name] ?? name;
+}
+
 const SKILL_FIELDS: ReadonlySet<string> = new Set(['skills', 'divineSkill']);
 const TERM_VALUE_FIELDS: ReadonlySet<string> = new Set([
   'category',

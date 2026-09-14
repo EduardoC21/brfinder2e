@@ -18,6 +18,7 @@ import { CollapseToggle } from '@ui/components/CollapseToggle';
 import { ScrollRail } from '@ui/components/ScrollRail';
 import { RichText, type RichTextLinks } from '@ui/components/RichText';
 import { cx } from '@ui/cx';
+import { displayName } from '@ui/text';
 import { sourceHash, type Translation } from '@core/store/index';
 import { useDescriptionFields } from '@ui/hooks/useDescription';
 import type { LoadedSource } from '@ui/hooks/useAllBases';
@@ -143,6 +144,8 @@ export function EntityScreen({
   );
   /* A lateral recolhe como na lista — e volta ao trocar de aba, que é conteúdo novo. */
   const [lateralFechada, setLateralFechada] = useState(false);
+  /* O nome como a preferência manda (Etapa 36). */
+  const nome = displayName(entityType, fieldValue(entity, 'name'));
 
   /*
    * A TRADUÇÃO da tela (Etapa 35, pelo autor: "o central e a lateral traduzidos quando
@@ -202,14 +205,14 @@ export function EntityScreen({
   return (
     <section
       className={styles['full']}
-      aria-label={fieldValue(entity, 'name')}
+      aria-label={nome}
       onKeyDown={(event) => {
         if (event.key === 'Escape') onBack();
       }}
     >
       <header className={styles['bar']}>
         <CollapseToggle side="left" collapsed={false} label={t.back} onToggle={onBack} />
-        <h2 className={styles['nome']}>{fieldValue(entity, 'name')}</h2>
+        <h2 className={styles['nome']}>{nome}</h2>
         <span className={styles['fonte']}>{sourceLabel}</span>
         {/*
           As abas logo depois da fonte, separadas por um fio vertical — pedido do autor:
@@ -311,7 +314,7 @@ export function EntityScreen({
 
       {aba?.tab.kind === 'list' &&
         aba.entities !== null &&
-        renderList(aba.tab, aba.entities, `${sourceLabel}: ${fieldValue(entity, 'name')}`)}
+        renderList(aba.tab, aba.entities, `${sourceLabel}: ${nome}`)}
     </section>
   );
 }

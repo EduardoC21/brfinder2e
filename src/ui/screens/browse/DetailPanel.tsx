@@ -27,7 +27,7 @@ import { useStoredTranslations, useTranslate } from '@ui/hooks/useTranslation';
 import { usePreferences } from '@ui/prefs/usePreferences';
 import { CollapseToggle } from '@ui/components/CollapseToggle';
 import { cx } from '@ui/cx';
-import { bookLabel, capitalizar, fieldText, rankLabel } from '@ui/text';
+import { bookLabel, capitalizar, displayName, fieldText, rankLabel } from '@ui/text';
 
 import { ATTRIBUTE_NAME_FIELDS, attributeNameByName, boostsText } from './backgroundFields';
 import { references as referenciasDe, type Reference } from './referenceFields';
@@ -239,7 +239,9 @@ export function DetailPanel({
    */
   const nomeDe = (uuid: string): string | null => {
     const alvo = reference?.resolve(uuid);
-    return alvo === undefined || alvo === null ? null : fieldValue(alvo.entity, 'name');
+    return alvo === undefined || alvo === null
+      ? null
+      : displayName(alvo.entityType, fieldValue(alvo.entity, 'name'));
   };
 
   /* Só o que RESOLVE vira botão na prosa — e só o que resolve é colado. Ver `RichTextLinks`. */
@@ -321,7 +323,7 @@ export function DetailPanel({
         embedded && styles['embutido'],
         alvo !== null && styles['comSub'],
       )}
-      aria-label={fieldValue(entity, 'name')}
+      aria-label={displayName(entityType, fieldValue(entity, 'name'))}
     >
       {/*
         Ações em CIMA, nome embaixo.
@@ -368,7 +370,7 @@ export function DetailPanel({
           normal. Fora do `<dl>`, ela também não some quando o campo `rarity` não existir.
         */}
         <div className={styles['nameRow']}>
-          <h2 className={styles['name']}>{fieldValue(entity, 'name')}</h2>
+          <h2 className={styles['name']}>{displayName(entityType, fieldValue(entity, 'name'))}</h2>
           {/*
             Ao lado do nome fica só a RARIDADE.
 
@@ -1196,7 +1198,8 @@ function Referencias({
    * índice quando a fonte não o guarda. As magias da divindade são o caso: só o UUID.
    */
   const rotulo = (acao: Reference): string => {
-    const nome = acao.name !== '' ? acao.name : (nameOf?.(acao.uuid) ?? acao.uuid);
+    /* O índice primeiro (Etapa 36): é ele que sabe o nome como a preferência manda. */
+    const nome = nameOf?.(acao.uuid) ?? (acao.name !== '' ? acao.name : acao.uuid);
     return acao.rank === undefined ? nome : `${String(acao.rank)}º ${nome}`;
   };
   return (
