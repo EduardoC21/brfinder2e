@@ -947,6 +947,14 @@ internet usa a API; sem uma das duas, cai no local.
 "Original", o pacote está lá e não aparece. É a resposta à OPEN-DECISIONS #10 — o traço
 não tem botão próprio, e a preferência global decide.
 
+**A busca acha pelos dois nomes** (Etapa 32, pelo autor): com o pacote baixado, a lista e
+a paleta indexam o nome em português como SEGUNDO NOME, com o mesmo peso do original —
+"guerreiro" e "fighter" levam ao Fighter, "bola de fogo" ao Fireball. Independe da
+preferência de visualização: quem procura em português não quer decidir antes como vai
+ler. A tela continua mostrando o nome original. É o campo `alias` de `createSearchIndex`
+e de `createTextIndex`; quem sabe o segundo nome é a tela, que tem o pacote — o índice só
+indexa.
+
 ### Onde a tradução mora: a quinta camada
 
     trans/<língua>/<tipo>    { [chave]: { [campo]: { html, method, at, sourceHash } } }

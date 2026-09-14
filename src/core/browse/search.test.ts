@@ -107,3 +107,30 @@ describe('createTextIndex', () => {
     expect(createTextIndex(docs).search('   ')).toEqual([]);
   });
 });
+
+describe('o segundo nome (Etapa 32)', () => {
+  const fighter = entity('fighter', 'Fighter', 'A master of weapons.');
+  const alias = (e: BrowseEntity): string => (e.key === 'fighter' ? 'Guerreiro' : '');
+
+  it('a lista acha pelo nome original e pelo traduzido, com o mesmo peso', () => {
+    const indice = createSearchIndex([fighter, ...base], ['name', 'summary'], alias);
+    expect(indice.search('fighter')[0]).toBe('fighter');
+    expect(indice.search('guerreiro')[0]).toBe('fighter');
+    expect(indice.search('guerr')).toContain('fighter');
+  });
+
+  it('sem o pacote, o segundo nome é vazio e nada muda', () => {
+    const indice = createSearchIndex([fighter], ['name', 'summary']);
+    expect(indice.search('guerreiro')).toEqual([]);
+    expect(indice.search('fighter')).toEqual(['fighter']);
+  });
+
+  it('a paleta indexa o alias dos documentos', () => {
+    const indice = createTextIndex([
+      { key: 'a', name: 'Fighter', alias: 'Guerreiro', text: '' },
+      { key: 'b', name: 'Rogue', text: '' },
+    ]);
+    expect(indice.search('guerreiro')).toEqual(['a']);
+    expect(indice.search('rogue')).toEqual(['b']);
+  });
+});

@@ -42,9 +42,17 @@ export interface SearchIndex {
 export interface TextDocument {
   readonly key: string;
   readonly name: string;
+  /**
+   * O SEGUNDO NOME (Etapa 32, pelo autor): o nome em português, do pacote da comunidade.
+   * Pesa como o nome — "guerreiro" acha Fighter, e "fighter" também. Vazio sem pacote.
+   */
+  readonly alias?: string;
   /** Vazio quando só o nome importa. */
   readonly text: string;
 }
+
+/** Quem sabe o segundo nome de uma entidade: a tela, que tem o pacote; o índice só indexa. */
+export type AliasOf = (entity: BrowseEntity) => string;
 
 /**
  * O índice sobre TEXTO JÁ EXTRAÍDO, e não sobre campos de uma entidade.
@@ -59,7 +67,7 @@ export interface TextDocument {
 export function createTextIndex(documents: readonly TextDocument[]): SearchIndex {
   const mini = new MiniSearch<TextDocument>({
     idField: 'key',
-    fields: ['name', 'text'],
+    fields: ['name', 'alias', 'text'],
     processTerm: (term) => {
       const folded = foldTerm(term);
       return folded.length > 0 ? folded : null;
@@ -68,7 +76,7 @@ export function createTextIndex(documents: readonly TextDocument[]): SearchIndex
     searchOptions: {
       prefix: true,
       fuzzy: (term) => (term.length > 4 ? 0.2 : 0),
-      boost: { name: 3 },
+      boost: { name: 3, alias: 3 },
     },
   });
 
@@ -93,12 +101,14 @@ export function createTextIndex(documents: readonly TextDocument[]): SearchIndex
 export function createSearchIndex(
   entities: readonly BrowseEntity[],
   searchFields: readonly string[],
+  aliasOf?: AliasOf,
 ): SearchIndex {
   const [primary] = searchFields;
 
   const mini = new MiniSearch<Record<string, string>>({
     idField: 'key',
-    fields: [...searchFields],
+    /* `alias` é o segundo nome (o traduzido); entra sempre, vazio quando não há. */
+    fields: [...searchFields, 'alias'],
     processTerm: (term) => {
       const folded = foldTerm(term);
       return folded.length > 0 ? folded : null;
@@ -109,7 +119,7 @@ export function createSearchIndex(
       // Tolerância proporcional ao tamanho do termo: 2 letras erradas num nome longo,
       // nenhuma num termo curto. Sem teto, "cat" acharia metade da base.
       fuzzy: (term) => (term.length > 4 ? 0.2 : 0),
-      ...(primary === undefined ? {} : { boost: { [primary]: 3 } }),
+      ...(primary === undefined ? { boost: { alias: 3 } } : { boost: { [primary]: 3, alias: 3 } }),
     },
   });
 
@@ -126,6 +136,7 @@ export function createSearchIndex(
         const valor = fieldValue(entity, field);
         document[field] = valor === '' ? fieldList(entity, field).join(' ') : valor;
       }
+      document['alias'] = aliasOf === undefined ? '' : aliasOf(entity);
       return document;
     }),
   );

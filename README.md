@@ -81,6 +81,9 @@ Antes: **Etapa 20** — as tabelas das regras param de quebrar (célula compacta
 linha, `@Embed` cola a entrada apontada, e as duas vassouras em Configurações: apagar as
 entradas aposentadas e apagar a base inteira.
 
+Antes: **Etapa 32** — a busca acha pelo nome original e pelo nome em português do pacote
+("guerreiro" e "fighter" levam ao Fighter), na lista e na paleta.
+
 Antes: **Etapa 31** — o pacote da comunidade como glossário: baixado a pedido nas
 configurações (v8.1.2.0: 420 traços, 8.801 nomes, o dicionário de frases fixas), gravado
 sob `trans/pt-BR/glossary/`; com "Traduzido", os traços saem em português na tela.

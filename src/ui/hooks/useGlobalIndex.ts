@@ -67,7 +67,13 @@ export interface GlobalIndex {
 export function useGlobalIndex(
   sources: readonly LoadedSource[],
   comDescricao: boolean,
+  aliases: Readonly<Record<string, Readonly<Record<string, string>>>> = {},
 ): GlobalIndex {
+  /** O nome em português do pacote, como segundo nome do documento (Etapa 32). */
+  const aliasDe = (row: GlobalRow): string =>
+    row.source.entityType === null
+      ? ''
+      : (aliases[row.source.entityType]?.[fieldValue(row.entity, 'name')] ?? '');
   /*
    * Ordenadas por NOME, atravessando as fontes.
    *
@@ -108,9 +114,16 @@ export function useGlobalIndex(
       rows.length === 0
         ? null
         : createTextIndex(
-            rows.map((row) => ({ key: row.id, name: fieldValue(row.entity, 'name'), text: '' })),
+            rows.map((row) => ({
+              key: row.id,
+              name: fieldValue(row.entity, 'name'),
+              alias: aliasDe(row),
+              text: '',
+            })),
           ),
-    [rows],
+    // `aliasDe` só lê `aliases`, que é dependência.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [rows, aliases],
   );
 
   const [texto, setTexto] = useState<{ token: string; index: SearchIndex } | null>(null);

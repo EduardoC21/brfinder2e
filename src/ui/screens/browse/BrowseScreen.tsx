@@ -46,7 +46,12 @@ import { useAllBases } from '@ui/hooks/useAllBases';
 import { useBase } from '@ui/hooks/useBase';
 import { useGlobalIndex } from '@ui/hooks/useGlobalIndex';
 import { useNarrowScreen } from '@ui/hooks/useNarrowScreen';
-import { useTraitGlossary, useTranslatedTraitGlossary } from '@ui/hooks/useTraitGlossary';
+import {
+  useCommunityNames,
+  useTraitGlossary,
+  useTranslatedTraitGlossary,
+  type CommunityNames,
+} from '@ui/hooks/useTraitGlossary';
 import { useCommunityPackVersion } from '@ui/hooks/useCommunityPack';
 import { TraitGlossaryContext } from '@ui/glossary/TraitGlossaryContext';
 import { usePreferences } from '@ui/prefs/usePreferences';
@@ -192,6 +197,13 @@ export function BrowseScreen({ baseVersion }: BrowseScreenProps) {
    */
   const versaoDoPacote = useCommunityPackVersion();
   const traduzido = useTranslatedTraitGlossary(prefs.translation.language, versaoDoPacote);
+  /*
+   * O SEGUNDO NOME (Etapa 32, pelo autor): a busca acha pelo nome original E pelo nome
+   * em português do pacote — "guerreiro" e "fighter" levam ao Fighter —, com o pacote
+   * baixado, e independente da preferência de visualização: quem procura em português
+   * não quer decidir antes como vai ler. A tela mostra o nome original.
+   */
+  const nomesTraduzidos = useCommunityNames(prefs.translation.language, versaoDoPacote);
   const glossario = useMemo(
     () =>
       prefs.translation.display === 'translated' && Object.keys(traduzido).length > 0
@@ -200,7 +212,7 @@ export function BrowseScreen({ baseVersion }: BrowseScreenProps) {
     [original, traduzido, prefs.translation.display],
   );
   const carregadas = useMemo(() => (bases.status === 'ready' ? bases.sources : VAZIAS), [bases]);
-  const indiceGlobal = useGlobalIndex(carregadas, buscaNaDescricao);
+  const indiceGlobal = useGlobalIndex(carregadas, buscaNaDescricao, nomesTraduzidos);
 
   /*
    * Ctrl+Q escutado na JANELA, e não num elemento: uma paleta global tem de abrir de onde
@@ -304,6 +316,7 @@ export function BrowseScreen({ baseVersion }: BrowseScreenProps) {
             openRequest={pedidoDeEntrada}
             onOpenHandled={esquecerPedido}
             typeLock={tipoTravado}
+            aliases={nomesTraduzidos}
             sources={carregadas}
           />
         )}
@@ -428,6 +441,7 @@ function SourcePane({
   openRequest = null,
   onOpenHandled,
   typeLock = null,
+  aliases,
   sources,
   lock,
 }: {
@@ -445,6 +459,8 @@ function SourcePane({
    * talentos com `Class` fixo no filtro de Tipo. Ver `RailEntry`.
    */
   readonly typeLock?: string | null;
+  /** Os nomes em português do pacote, por tipo: o segundo nome que a busca indexa. */
+  readonly aliases?: CommunityNames;
   /** Chamado quando o pedido foi atendido, para a tela o esquecer. */
   readonly onOpenHandled?: () => void;
   /** Todas as bases carregadas, para as abas de lista da tela completa. */
@@ -585,8 +601,11 @@ function SourcePane({
 
   /* O índice é caro de montar; só refaz quando a base ou os campos mudam. */
   const index = useMemo(
-    () => createSearchIndex(entities, source.searchFields),
-    [entities, source.searchFields],
+    () =>
+      createSearchIndex(entities, source.searchFields, (entity) =>
+        aliasDe(aliases, source.entityType, fieldValue(entity, 'name')),
+      ),
+    [entities, source.searchFields, source.entityType, aliases],
   );
 
   /*
@@ -1078,4 +1097,14 @@ function SourcePane({
       />
     </>
   );
+}
+
+/** O nome em português de uma entrada, ou vazio: sem pacote, sem tipo, ou sem esse nome nele. */
+function aliasDe(
+  aliases: CommunityNames | undefined,
+  entityType: string | null,
+  name: string,
+): string {
+  if (aliases === undefined || entityType === null) return '';
+  return aliases[entityType]?.[name] ?? '';
 }

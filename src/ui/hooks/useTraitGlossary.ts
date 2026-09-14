@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { type TraitGlossary } from '@core/glossary/index';
 import { isRecord } from '@core/json';
 import { readGlossary } from '@core/store/index';
-import { readCommunityTraits } from '@core/translation/index';
+import { readCommunityNames, readCommunityTraits } from '@core/translation/index';
 import { createIndexedDbStore } from '@platform/store-indexeddb';
 
 const store = createIndexedDbStore();
@@ -92,4 +92,35 @@ function parse(raw: Readonly<Record<string, unknown>>): TraitGlossary {
     }
   }
   return glossary;
+}
+
+export type CommunityNames = Readonly<Record<string, Readonly<Record<string, string>>>>;
+const SEM_NOMES: CommunityNames = {};
+
+/**
+ * Os NOMES em português do pacote, por tipo de entidade (Etapa 32): é o segundo nome que a
+ * busca indexa. Relê quando a versão do pacote sobe ou a língua muda; vazio sem pacote.
+ */
+export function useCommunityNames(language: string, version: number): CommunityNames {
+  const [loaded, setLoaded] = useState<{ token: string; names: CommunityNames }>({
+    token: '',
+    names: SEM_NOMES,
+  });
+  const token = `${language}#${String(version)}`;
+
+  useEffect(() => {
+    let alive = true;
+    readCommunityNames(store, language)
+      .then((names) => {
+        if (alive) setLoaded({ token, names });
+      })
+      .catch(() => {
+        if (alive) setLoaded({ token, names: SEM_NOMES });
+      });
+    return () => {
+      alive = false;
+    };
+  }, [language, version, token]);
+
+  return loaded.token === token ? loaded.names : SEM_NOMES;
 }
