@@ -46,7 +46,8 @@ import { useAllBases } from '@ui/hooks/useAllBases';
 import { useBase } from '@ui/hooks/useBase';
 import { useGlobalIndex } from '@ui/hooks/useGlobalIndex';
 import { useNarrowScreen } from '@ui/hooks/useNarrowScreen';
-import { useTraitGlossary } from '@ui/hooks/useTraitGlossary';
+import { useTraitGlossary, useTranslatedTraitGlossary } from '@ui/hooks/useTraitGlossary';
+import { useCommunityPackVersion } from '@ui/hooks/useCommunityPack';
 import { TraitGlossaryContext } from '@ui/glossary/TraitGlossaryContext';
 import { usePreferences } from '@ui/prefs/usePreferences';
 
@@ -182,7 +183,22 @@ export function BrowseScreen({ baseVersion }: BrowseScreenProps) {
    * chip da tela — os da lista, os do detalhe e os de dentro dos flutuantes. Ver
    * `TraitGlossaryContext` para o porquê de contexto e não prop.
    */
-  const glossario = useTraitGlossary(baseVersion);
+  const original = useTraitGlossary(baseVersion);
+  /*
+   * O glossário TRADUZIDO por cima do original quando a preferência é "Traduzido" e o
+   * pacote da comunidade está baixado (Etapa 31): o traço que o pacote tem sai em
+   * português — rótulo do chip e caixinha —, o que ele não tem fica em inglês. Com
+   * "Original", o pacote pode estar lá e não aparece: é o que a preferência diz.
+   */
+  const versaoDoPacote = useCommunityPackVersion();
+  const traduzido = useTranslatedTraitGlossary(prefs.translation.language, versaoDoPacote);
+  const glossario = useMemo(
+    () =>
+      prefs.translation.display === 'translated' && Object.keys(traduzido).length > 0
+        ? { ...original, ...traduzido }
+        : original,
+    [original, traduzido, prefs.translation.display],
+  );
   const carregadas = useMemo(() => (bases.status === 'ready' ? bases.sources : VAZIAS), [bases]);
   const indiceGlobal = useGlobalIndex(carregadas, buscaNaDescricao);
 

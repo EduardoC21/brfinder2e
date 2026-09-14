@@ -658,8 +658,7 @@ export const ptBR = {
         },
         community: {
           name: 'Pacote da comunidade',
-          status:
-            'A tradução pt-BR do sistema para o Foundry: nomes e termos, não a prosa. Ainda não baixado.',
+          status: 'A tradução pt-BR do sistema para o Foundry: nomes e termos, não a prosa.',
         },
         llm: {
           name: 'Modelo de linguagem (API)',
@@ -670,6 +669,17 @@ export const ptBR = {
           status: 'Roda dentro do app, sem internet (uns 20 MB, baixados uma vez). Não instalado.',
         },
       } as Record<string, { name: string; status: string }>,
+      /** O pacote da comunidade (Etapa 31): o que há gravado, e o botão. */
+      community: {
+        loading: 'Conferindo o que há gravado…',
+        absent: 'Nomes e termos da tradução pt-BR do sistema para o Foundry. Ainda não baixado.',
+        downloading: 'Baixando o pacote…',
+        error: (mensagem: string) => `Não deu para baixar: ${mensagem}`,
+        ready: (tag: string, tracos: number, nomes: number) =>
+          `Baixado (${tag}): ${String(tracos)} traços, ${String(nomes)} nomes de entradas.`,
+        download: 'Baixar',
+        downloadAgain: 'Baixar de novo',
+      },
       termsOnly: 'só termos',
       online: 'internet',
       on: 'ligada',

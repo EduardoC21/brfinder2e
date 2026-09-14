@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { type TraitGlossary } from '@core/glossary/index';
 import { isRecord } from '@core/json';
 import { readGlossary } from '@core/store/index';
+import { readCommunityTraits } from '@core/translation/index';
 import { createIndexedDbStore } from '@platform/store-indexeddb';
 
 const store = createIndexedDbStore();
@@ -42,6 +43,35 @@ export function useTraitGlossary(version: string | null): TraitGlossary {
   }, [version]);
 
   return loaded.version === version ? loaded.glossary : VAZIO;
+}
+
+/**
+ * O glossário de traços TRADUZIDO, do pacote da comunidade (Etapa 31). Relê quando a
+ * versão do pacote sobe (um download novo) ou a língua muda. Vazio sem pacote — e aí a
+ * tela mostra o original, que é a regra: nada traduzido sem ter de onde.
+ */
+export function useTranslatedTraitGlossary(language: string, version: number): TraitGlossary {
+  const [loaded, setLoaded] = useState<{ token: string; glossary: TraitGlossary }>({
+    token: '',
+    glossary: VAZIO,
+  });
+  const token = `${language}#${String(version)}`;
+
+  useEffect(() => {
+    let alive = true;
+    readCommunityTraits(store, language)
+      .then((glossary) => {
+        if (alive) setLoaded({ token, glossary });
+      })
+      .catch(() => {
+        if (alive) setLoaded({ token, glossary: VAZIO });
+      });
+    return () => {
+      alive = false;
+    };
+  }, [language, version, token]);
+
+  return loaded.token === token ? loaded.glossary : VAZIO;
 }
 
 /**

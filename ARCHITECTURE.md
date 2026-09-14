@@ -918,12 +918,20 @@ mais alta sobrescreve a de uma mais baixa. O que cada uma é, medido contra o qu
 | `llm`       | um modelo de linguagem por API, com a chave da pessoa       | prosa     | sim      |
 | `local`     | um modelo de tradução dentro do app (Bergamot, WASM, en→pt) | prosa     | não      |
 
-**O pacote da comunidade só traduz termos.** Foi conferido: desde a versão 3.3.0 o
-módulo pt-BR abandonou a tradução dos compêndios (Babele) — "pela quantidade de conteúdo,
-atrasos da tradução oficial e falta de contribuições" — e traduz só a interface e os
-termos do sistema (nomes e descrições de traços, perícias, ações). É um GLOSSÁRIO, e como
-glossário vale muito: é o vocabulário que a comunidade brasileira usa. Baixado na
-sincronização, como o zip — conteúdo de terceiros, nunca embutido.
+**O pacote da comunidade é lido como glossário, por decisão do autor.** O repositório
+ainda tem os arquivos do Babele (nomes, e descrições parciais de antes do Remaster), mas
+o que se tira dele são o CORE — nomes e descrições de traços, os termos do sistema — e os
+PADRÕES de tradução: o nome em português de cada talento, magia e item (8.801 nomes na
+v8.1.2.0) e as frases fixas de duração, alcance e alvo (`dictionary.json`). É o
+vocabulário que a comunidade brasileira usa, e é isso que vai alimentar o contexto dos
+modelos de linguagem para acertarem a escrita do RPG em português. As descrições do
+pacote ficam de fora. Baixado A PEDIDO nas configurações, na tag do último release —
+conteúdo de terceiros, nunca embutido —, e gravado sob `trans/<língua>/glossary/…`, ao
+lado das traduções, porque `glossary/` é prefixo da base e `clearData` o apaga.
+
+**O modelo de linguagem é da pessoa** (decisão do autor): o app dá suporte às ferramentas
+mais conhecidas — a pessoa escolhe o provedor e o modelo, põe a própria chave e gasta os
+próprios créditos. O app não paga tradução para ninguém.
 
 **O executável muda as contas.** O app é Tauri e funciona sem internet depois de
 sincronizado. Um modelo local é o único caminho para prosa offline: o motor de tradução
@@ -932,6 +940,12 @@ baixados uma vez — qualidade de tradutor automático, serve para ler. O modelo
 a melhor prosa, mas precisa de internet e de uma chave, que fica no **cofre do sistema**
 (plugin do Tauri), nunca em `prefs/`. As duas coexistem na lista: quem tem chave e
 internet usa a API; sem uma das duas, cai no local.
+
+**Os termos aparecem traduzidos pela preferência, não por pedido** (Etapa 31): com
+"Traduzido" e o pacote baixado, o rótulo do chip e a caixinha do traço saem em português
+(o glossário do pacote por cima do original; o que o pacote não tem fica em inglês). Com
+"Original", o pacote está lá e não aparece. É a resposta à OPEN-DECISIONS #10 — o traço
+não tem botão próprio, e a preferência global decide.
 
 ### Onde a tradução mora: a quinta camada
 

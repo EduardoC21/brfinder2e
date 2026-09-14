@@ -81,6 +81,10 @@ Antes: **Etapa 20** — as tabelas das regras param de quebrar (célula compacta
 linha, `@Embed` cola a entrada apontada, e as duas vassouras em Configurações: apagar as
 entradas aposentadas e apagar a base inteira.
 
+Antes: **Etapa 31** — o pacote da comunidade como glossário: baixado a pedido nas
+configurações (v8.1.2.0: 420 traços, 8.801 nomes, o dicionário de frases fixas), gravado
+sob `trans/pt-BR/glossary/`; com "Traduzido", os traços saem em português na tela.
+
 Antes: **Etapa 30** — o esqueleto da tradução: as configurações em setores (Sincronização
 e Tradução), as preferências globais (o que aparece quando há tradução, a língua, as
 formas na hierarquia em que uma sobrescreve a outra), a quinta camada `trans/<língua>/`
@@ -151,8 +155,8 @@ Antes: **Etapa 23** — `heritage` (311 próprias, fonte fora do trilho) e as 17
 como Tipo da ancestralidade; as abas de lista da tela completa, com o filtro travado —
 Dwarf: Heranças 9, Talentos 48; Nephilim: Talentos 88.
 
-Próxima: **o primeiro provedor de tradução** — o pacote da comunidade (termos e traços,
-baixado na sincronização) e o botão Traduzir ligado; depois o modelo local e a API. O PR
+Próxima: **o modelo de linguagem da própria pessoa** — provedor, modelo e chave dela, com
+o glossário do pacote no contexto; e o botão Traduzir ligado. Depois, o modelo local. O PR
 ao pf2e com a seção 3 do INCONSISTENCIAS se faz em outro chat, com o repositório deles.
 
 Antes: **Etapa 22e** — a descrição no contexto: o Change Shape aberto pelo Anadi tem o

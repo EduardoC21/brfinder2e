@@ -6,6 +6,7 @@ import {
 import { withTranslation } from '@core/prefs/index';
 import { strings } from '@i18n/index';
 import { cx } from '@ui/cx';
+import { useCommunityPack } from '@ui/hooks/useCommunityPack';
 import { usePreferences } from '@ui/prefs/usePreferences';
 
 import styles from './SettingsPanel.module.css';
@@ -22,9 +23,26 @@ const t = strings.settings.translation;
  * ligar. Ao lado de cada uma, o que ela precisa para funcionar — hoje texto fixo; quando
  * os provedores existirem, é `availability()` de cada um que responde aqui.
  */
+/** A linha de estado do pacote da comunidade: o que há gravado, ou o que houve. */
+function estadoDoPacote(state: ReturnType<typeof useCommunityPack>['state']): string {
+  switch (state.status) {
+    case 'loading':
+      return t.community.loading;
+    case 'absent':
+      return t.community.absent;
+    case 'downloading':
+      return t.community.downloading;
+    case 'error':
+      return t.community.error(state.message);
+    case 'ready':
+      return t.community.ready(state.meta.tag, state.meta.traits, state.meta.names);
+  }
+}
+
 export function TranslationSettings() {
   const { prefs, update } = usePreferences();
   const { display, language, methods } = prefs.translation;
+  const pacote = useCommunityPack(language);
 
   const ligadas = methods;
   const desligadas = TRANSLATION_METHODS.map((m) => m.id).filter((id) => !ligadas.includes(id));
@@ -91,7 +109,19 @@ export function TranslationSettings() {
             )}
             {forma?.online === true && <span className={styles['formaEscopo']}>{t.online}</span>}
           </span>
-          <span className={styles['formaEstado']}>{t.methods[id]?.status ?? ''}</span>
+          <span className={styles['formaEstado']}>
+            {id === 'community' ? estadoDoPacote(pacote.state) : (t.methods[id]?.status ?? '')}
+          </span>
+          {id === 'community' && (
+            <button
+              type="button"
+              className={cx(styles['secondary'], styles['formaBotao'], 'chamfer-sm')}
+              disabled={pacote.state.status === 'downloading' || pacote.state.status === 'loading'}
+              onClick={pacote.download}
+            >
+              {pacote.state.status === 'ready' ? t.community.downloadAgain : t.community.download}
+            </button>
+          )}
         </div>
         <label className={styles['formaLiga']}>
           <input

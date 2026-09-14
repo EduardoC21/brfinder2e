@@ -268,11 +268,11 @@ tradução e de onde veio —, e não só da chave `glossary/traits` de hoje, qu
 original. Quando as fontes forem setorizadas, ela ficaria numa categoria de "termos de
 jogo" ou "core", junto com perícia e ação.
 
-**Etapa 30:** a configuração existe — `translation.display`, "Original" ou "Traduzido",
-global. Falta a tabela do traço (original, tradução, origem), que entra quando o pacote da
-comunidade for provedor: ele é exatamente a tradução dos traços.
-
-**Decidir quando:** ao ligar o provedor `community`.
+**DECIDIDO (Etapas 30 e 31):** a configuração existe — `translation.display`, "Original"
+ou "Traduzido", global — e o traço traduzido vem do pacote da comunidade, gravado como um
+segundo glossário (`trans/<língua>/glossary/traits`) que a tela põe por cima do original
+quando a preferência é "Traduzido". Sem tabela própria por traço: o glossário original e o
+traduzido são as duas colunas. Registrado em ARCHITECTURE §12.
 
 ---
 
