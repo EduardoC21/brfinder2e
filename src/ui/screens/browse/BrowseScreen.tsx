@@ -260,16 +260,6 @@ export function BrowseScreen({ baseVersion }: BrowseScreenProps) {
           sources={SOURCES}
           currentKey={railEntryKey(entrada)}
           currentCount={contagemDaEntrada}
-          closedGroups={prefs.layout.railClosedGroups}
-          onToggleGroup={(id) => {
-            update((atual) =>
-              withLayout(atual, {
-                railClosedGroups: atual.layout.railClosedGroups.includes(id)
-                  ? atual.layout.railClosedGroups.filter((entry) => entry !== id)
-                  : [...atual.layout.railClosedGroups, id],
-              }),
-            );
-          }}
           collapsed={trilhoRecolhido}
           onToggle={alternarTrilho}
           onSelect={(proxima) => {

@@ -625,10 +625,15 @@ lugar o Tipo que estava gravado. Assim "Todos" reencontra o recorte de ontem, e 
 entrada de Tipo o mexe. As colunas já eram por Tipo (`columnsByType`), e a entrada cai
 nelas sozinha.
 
-**As pastas recolhem**, e a escolha persiste (`layout.railClosedGroups`). Com termo na busca
-do trilho, toda pasta abre: recolhida, ela esconderia o que a busca achou — e a busca é
-por entrada, não por pasta ("arma" acha Equipamentos › Weapon). Clicar na entrada aberta,
-ou trocar de Tipo dentro da mesma fonte, volta à lista se a tela completa estava aberta.
+**As pastas são um acordeão** (27c, pelo autor): todas nascem fechadas, só uma abre por
+vez, e a aberta é ESTADO — bordô cheio, como a entrada escolhida dentro dela. Sem seta:
+com uma só aberta, a cor já diz qual é. Fechada, a pasta onde a entrada aberta mora fica
+com o texto em bordô — o "você está aqui" quando se abre outra para olhar. A aberta é
+estado do trilho, não preferência: "sempre começam fechadas" é a regra, e gravar a aberta
+a quebraria no primeiro recarregamento. Com termo na busca do trilho, toda pasta abre:
+fechada, ela esconderia o que a busca achou — e a busca é por entrada, não por pasta
+("arma" acha Equipamentos › Armas). Clicar na entrada aberta, ou trocar de Tipo dentro da
+mesma fonte, volta à lista se a tela completa estava aberta.
 
 Os Tipos saem em PORTUGUÊS no trilho (27b, pelo autor: "por hora só o trilho; os filtros
 depois"): uma tabela por fonte e valor em `browse.rail.types` — Talentos › Classe,

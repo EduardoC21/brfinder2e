@@ -73,8 +73,9 @@
   background: var(--color-hover);
 }
 
-/* Selecionada é ESTADO: bordô. */
-.source[aria-current='true'] {
+/* Selecionada é ESTADO: bordô — e o passar do mouse não a apaga. */
+.source[aria-current='true'],
+.source[aria-current='true']:hover:not(:disabled) {
   background: var(--color-state);
   color: #f6edea;
 }
@@ -95,8 +96,10 @@
 }
 
 /*
- * As PASTAS (Etapa 27): o título é um botão que recolhe, na voz dos rótulos (mono,
- * caixa alta, apagado); as entradas ficam recuadas embaixo, e as de Tipo um pouco mais.
+ * As PASTAS (Etapa 27): o título é um botão, na voz dos rótulos (mono, caixa alta,
+ * apagado); as entradas ficam recuadas embaixo, e as de Tipo um pouco mais. Só uma abre
+ * por vez, e a aberta é ESTADO: bordô, como a entrada escolhida (27c, pelo autor). Sem
+ * seta — com uma só aberta, a cor já diz qual é.
  */
 .pasta {
   display: flex;
@@ -115,7 +118,7 @@
   gap: var(--space-1);
   width: 100%;
   border: 0;
-  padding: var(--space-1) var(--space-2);
+  padding: var(--space-2) var(--space-3);
   background: transparent;
   font: 400 var(--text-xs) / 1.6 var(--font-mono);
   letter-spacing: 0.08em;
@@ -129,9 +132,16 @@
   color: var(--color-text);
 }
 
-.pastaSeta {
-  width: 10px;
-  font-size: 9px;
+/* Aberta é estado: bordô cheio, como a entrada escolhida. */
+.pastaAberta,
+.pastaAberta:hover {
+  background: var(--color-state);
+  color: #f6edea;
+}
+
+/* Fechada, mas é onde a entrada aberta mora: só o texto em bordô. */
+.pastaAtual {
+  color: var(--color-state);
 }
 
 .pasta .source {

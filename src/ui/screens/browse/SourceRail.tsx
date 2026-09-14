@@ -22,9 +22,6 @@ interface SourceRailProps {
   readonly currentKey: string;
   /** Quantas entradas a entrada atual tem. As outras não sabemos sem ler o armazenamento. */
   readonly currentCount: number;
-  /** As pastas recolhidas, por id. */
-  readonly closedGroups: readonly string[];
-  readonly onToggleGroup: (id: string) => void;
   readonly onSelect: (entry: RailEntry) => void;
   readonly collapsed: boolean;
   readonly onToggle: () => void;
@@ -48,13 +45,17 @@ export function SourceRail({
   sources,
   currentKey,
   currentCount,
-  closedGroups,
-  onToggleGroup,
   collapsed,
   onToggle,
   onSelect,
 }: SourceRailProps) {
   const [term, setTerm] = useState('');
+  /*
+   * A pasta ABERTA (27c, pelo autor): todas nascem fechadas, e só uma abre por vez —
+   * abrir uma fecha a outra. Estado do trilho, não preferência: "sempre começam
+   * fechadas" é a regra, e gravar a aberta a quebraria no primeiro recarregamento.
+   */
+  const [aberta, setAberta] = useState<string | null>(null);
 
   const fonte = (id: string): SourceSpec | undefined => sources.find((source) => source.id === id);
 
@@ -147,24 +148,33 @@ export function SourceRail({
         {visiveis.length === 0 && <p className={styles['empty']}>{t.noResults}</p>}
 
         {visiveis.map(({ group, entries }) => {
-          /* Com termo, toda pasta abre: recolhida, ela esconderia o que a busca achou. */
-          const fechada = !buscando && closedGroups.includes(group.id);
+          /* Com termo, toda pasta abre: fechada, ela esconderia o que a busca achou. */
+          const estaAberta = buscando || aberta === group.id;
+          /* A pasta onde a entrada aberta mora — marcada mesmo fechada, para se saber onde se está. */
+          const contemAtual = entries.some((entry) => railEntryKey(entry) === currentKey);
           return (
             <section key={group.id} className={styles['pasta']}>
+              {/*
+                Sem seta (27c, pelo autor): com uma só aberta por vez, a aberta é a que
+                está em bordô, e a seta viraria ruído. Fechada, a pasta que contém a
+                entrada aberta fica com o texto em bordô — é o "você está aqui".
+              */}
               <button
                 type="button"
-                className={styles['pastaTitulo']}
-                aria-expanded={!fechada}
+                className={cx(
+                  styles['pastaTitulo'],
+                  estaAberta && styles['pastaAberta'],
+                  !estaAberta && contemAtual && styles['pastaAtual'],
+                  'chamfer-sm',
+                )}
+                aria-expanded={estaAberta}
                 onClick={() => {
-                  onToggleGroup(group.id);
+                  setAberta((atual) => (atual === group.id ? null : group.id));
                 }}
               >
-                <span className={styles['pastaSeta']} aria-hidden="true">
-                  {fechada ? '▸' : '▾'}
-                </span>
                 {t.rail.groups[group.id] ?? group.id}
               </button>
-              {!fechada && entries.map(botao)}
+              {estaAberta && entries.map(botao)}
             </section>
           );
         })}

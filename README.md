@@ -81,6 +81,9 @@ Antes: **Etapa 20** — as tabelas das regras param de quebrar (célula compacta
 linha, `@Embed` cola a entrada apontada, e as duas vassouras em Configurações: apagar as
 entradas aposentadas e apagar a base inteira.
 
+Antes: **Etapa 27c** — o trilho vira acordeão: todas as pastas nascem fechadas, só uma
+abre por vez, a aberta em bordô com a entrada escolhida dentro, sem seta.
+
 Antes: **Etapa 27** — o trilho setorizado, pelo autor: seis pastas que recolhem
 (Personagem, Talentos, Habilidades, Equipamentos, Magias, Regras), e nas fontes grandes
 "Todos" mais uma entrada por Tipo — a mesma fonte com o Tipo travado, colunas e filtros

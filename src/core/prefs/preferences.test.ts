@@ -33,7 +33,6 @@ describe('readPreferences', () => {
       layout: {
         detailWidth: 500,
         railCollapsed: false,
-        railClosedGroups: ['feats'],
         popoutWidth: 600,
         popoutHeight: 700,
       },
@@ -46,7 +45,6 @@ describe('readPreferences', () => {
     expect(lido.layout).toEqual({
       detailWidth: 500,
       railCollapsed: false,
-      railClosedGroups: ['feats'],
       popoutWidth: 600,
       popoutHeight: 700,
     });
