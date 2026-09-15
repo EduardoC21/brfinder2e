@@ -1,0 +1,39 @@
+name: Backup da central
+
+# Exporta o banco da central toda semana e guarda como ARTEFATO do repositório (90 dias,
+# só para quem tem acesso ao repo). De propósito NÃO commita: o dump tem prosa da Paizo
+# traduzida, e o projeto não redistribui conteúdo dela pelo código.
+#
+# Precisa de dois segredos do repositório (Settings › Secrets and variables › Actions):
+#   CLOUDFLARE_API_TOKEN   token com permissão "D1 Edit" (dash.cloudflare.com › My Profile ›
+#                          API Tokens › Create Token › Edit Cloudflare Workers, ou custom)
+#   CLOUDFLARE_ACCOUNT_ID  o id da conta (aparece na barra lateral do painel da Cloudflare)
+
+on:
+  schedule:
+    # Domingo, 05:00 UTC (02:00 em Brasília).
+    - cron: '0 5 * * 0'
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Exportar o banco
+        working-directory: server
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          npm install --no-audit --no-fund
+          npx wrangler d1 export brfinder2e --remote --output=backup.sql
+          ls -la backup.sql
+      - uses: actions/upload-artifact@v4
+        with:
+          name: central-backup-${{ github.run_id }}
+          path: server/backup.sql
+          retention-days: 90

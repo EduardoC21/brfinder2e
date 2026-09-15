@@ -36,6 +36,12 @@ O banco é um SQLite na Cloudflare. Três redes:
   `npm run db:restore`. Um `.sql` exportado inclui `INSERT`s; num banco já com dados,
   restaure só depois de limpar as tabelas.
 
+- **Toda semana, sozinho**: a Action `Backup da central` (`.github/workflows/backup.yml`)
+  exporta o banco aos domingos e guarda como artefato do repositório por 90 dias
+  (Actions › Backup da central › a execução › Artifacts). Precisa dos segredos
+  `CLOUDFLARE_API_TOKEN` e `CLOUDFLARE_ACCOUNT_ID` no repositório — o cabeçalho do
+  arquivo diz onde criar cada um.
+
 - **Time Travel**: o D1 guarda 30 dias de histórico sozinho, no plano gratuito. Para
   voltar a um instante: `npx wrangler d1 time-travel restore brfinder2e --timestamp=<ISO>`.
 
