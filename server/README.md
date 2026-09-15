@@ -21,6 +21,27 @@ OPEN-DECISIONS #16; o contrato, no cabeçalho de `src/index.ts`.
 Para testar sem subir: `npm run db:schema:local` e `npm run dev` (fica em
 http://localhost:8787). `GET /v1/health` responde `{"ok":true}`.
 
+## Backup e restauração
+
+O banco é um SQLite na Cloudflare. Três redes:
+
+- **Exportar tudo** (traduções, votos, apelidos) para um `.sql` local — faça antes de
+  qualquer mudança grande, e de vez em quando:
+
+  ```
+  npm run db:backup
+  ```
+
+  Restaurar num banco novo: rode `db:schema`, renomeie o arquivo para `backup.sql` e
+  `npm run db:restore`. Um `.sql` exportado inclui `INSERT`s; num banco já com dados,
+  restaure só depois de limpar as tabelas.
+
+- **Time Travel**: o D1 guarda 30 dias de histórico sozinho, no plano gratuito. Para
+  voltar a um instante: `npx wrangler d1 time-travel restore brfinder2e --timestamp=<ISO>`.
+
+- **Cada aparelho tem as próprias traduções**: uma central que sumir não apaga o que os
+  jogadores já aceitaram ou traduziram — só o que ainda não foi trazido por eles.
+
 ## O que fica no banco
 
 Só tradução: língua, tipo, chave e campo da entrada, a impressão digital do original, o

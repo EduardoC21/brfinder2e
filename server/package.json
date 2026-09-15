@@ -6,7 +6,9 @@
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "db:schema": "wrangler d1 execute brfinder2e --remote --file=schema.sql",
-    "db:schema:local": "wrangler d1 execute brfinder2e --local --file=schema.sql"
+    "db:schema:local": "wrangler d1 execute brfinder2e --local --file=schema.sql",
+    "db:backup": "wrangler d1 export brfinder2e --remote --output=backup-$(date +%Y-%m-%d).sql",
+    "db:restore": "wrangler d1 execute brfinder2e --remote --file=backup.sql"
   },
   "devDependencies": {
     "wrangler": "^4.40.0"

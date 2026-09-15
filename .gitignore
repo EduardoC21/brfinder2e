@@ -40,3 +40,5 @@ __pycache__/
 # A central de traduções (server/): dependências e estado local do wrangler.
 server/node_modules/
 server/.wrangler/
+server/backup-*.sql
+server/backup.sql
