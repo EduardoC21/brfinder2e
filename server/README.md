@@ -40,7 +40,8 @@ O banco é um SQLite na Cloudflare. Três redes:
   exporta o banco aos domingos e guarda como artefato do repositório por 90 dias
   (Actions › Backup da central › a execução › Artifacts). Precisa dos segredos
   `CLOUDFLARE_API_TOKEN` e `CLOUDFLARE_ACCOUNT_ID` no repositório — o cabeçalho do
-  arquivo diz onde criar cada um.
+  arquivo diz onde criar cada um. O token precisa da permissão **Account › D1 › Edit**;
+  o modelo "Edit Cloudflare Workers" não a inclui (o export falha com erro 10000).
 
 - **Time Travel**: o D1 guarda 30 dias de histórico sozinho, no plano gratuito. Para
   voltar a um instante: `npx wrangler d1 time-travel restore brfinder2e --timestamp=<ISO>`.

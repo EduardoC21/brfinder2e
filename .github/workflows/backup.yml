@@ -5,8 +5,10 @@ name: Backup da central
 # traduzida, e o projeto não redistribui conteúdo dela pelo código.
 #
 # Precisa de dois segredos do repositório (Settings › Secrets and variables › Actions):
-#   CLOUDFLARE_API_TOKEN   token com permissão "D1 Edit" (dash.cloudflare.com › My Profile ›
-#                          API Tokens › Create Token › Edit Cloudflare Workers, ou custom)
+#   CLOUDFLARE_API_TOKEN   token com a permissão "Account › D1 › Edit". O modelo "Edit
+#                          Cloudflare Workers" NÃO a inclui (medido: erro 10000 no export):
+#                          dash.cloudflare.com › My Profile › API Tokens › Create Custom Token,
+#                          ou editar o token existente e adicionar a linha D1 · Edit.
 #   CLOUDFLARE_ACCOUNT_ID  o id da conta (aparece na barra lateral do painel da Cloudflare)
 
 on:
