@@ -19,7 +19,7 @@ import {
   type TranslationProvider,
 } from '@core/translation/index';
 import { readGlossary } from '@core/store/index';
-import { translatedName } from '@ui/text';
+import { translatedName, translatedNameOf } from '@ui/text';
 import { createIndexedDbStore } from '@platform/store-indexeddb';
 import { createGeminiChat } from '@platform/gemini';
 import { createBrowserSecretStore, LLM_KEY_SECRET } from '@platform/secrets';
@@ -155,7 +155,14 @@ const gemini = createGeminiChat(() => segredos.get(LLM_KEY_SECRET));
 
 async function provedor(language: string, llmModel: string): Promise<TranslationProvider> {
   const nomes = await readCommunityNames(store, language);
+  /*
+   * O nome de um rótulo de referência: o glossário, e por cima dele os nomes GRAVADOS
+   * (Etapa 46) — pela tabela que a tela já montou (`setNameTable`), que junta os dois.
+   * Assim o link para o Necromancer dentro de outra prosa sai "Necromante".
+   */
   const nomeDe = (label: string): string | null => {
+    const gravado = translatedNameOf(label);
+    if (gravado !== null) return gravado;
     for (const porTipo of Object.values(nomes)) {
       const nome = porTipo[label];
       if (nome !== undefined) return nome;

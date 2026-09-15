@@ -126,6 +126,19 @@ export function translatedName(entityType: string | null, name: string): string 
   return nameTable[entityType]?.[name] ?? null;
 }
 
+/**
+ * O nome traduzido de um RÓTULO sem saber o tipo (Etapa 46): é como a blindagem pergunta
+ * ("Sneak Attack" → ?) — varre a tabela junta, glossário mais gravados. O primeiro tipo
+ * que conhece o rótulo responde; ambiguidade entre tipos é rara e o glossário já a tinha.
+ */
+export function translatedNameOf(label: string): string | null {
+  for (const nomes of Object.values(nameTable)) {
+    const nome = nomes[label];
+    if (nome !== undefined) return nome;
+  }
+  return null;
+}
+
 /** O nome como a preferência manda: o do pacote se houver e se for para mostrá-lo. */
 export function displayName(entityType: string | null, name: string): string {
   if (!showTranslatedNames) return name;

@@ -81,6 +81,10 @@ Antes: **Etapa 20** — as tabelas das regras param de quebrar (célula compacta
 linha, `@Embed` cola a entrada apontada, e as duas vassouras em Configurações: apagar as
 entradas aposentadas e apagar a base inteira.
 
+Antes: **Etapa 46** — os nomes gravados entram na blindagem: o rótulo de um link dentro
+da prosa traduzida usa o nome traduzido pelo modelo ou corrigido à mão, por cima do
+glossário.
+
 Antes: **Etapa 45** — o nome faz parte da entidade traduzida: o Traduzir também traduz o
 nome quando o glossário não o tem, a lista e a busca leem o nome gravado por cima do
 glossário, e o editor ganhou o campo Nome ("Necromancer" → "Necromante").

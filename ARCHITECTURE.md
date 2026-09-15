@@ -1097,7 +1097,10 @@ tela lê os nomes gravados por cima do glossário: `useStoredNames` junta `trans
 <tipo>` com as entidades carregadas (a tradução é por chave; a tela pergunta pelo nome
 original), `mergeNameTables` põe o gravado por cima, e a tabela junta alimenta
 `setNameTable` E a busca pelos dois nomes. O editor ganhou o campo Nome (vazio volta ao
-glossário).
+glossário). E os nomes gravados entram na BLINDAGEM (Etapa 46): o `nameOf` do provedor
+consulta primeiro a tabela junta que a tela montou (`translatedNameOf`, sem tipo — é como
+a blindagem pergunta), depois o glossário; o link para o Necromancer dentro de outra
+prosa traduzida sai "Necromante".
 
 **O glossário vem com a base (Etapa 44).** O autor perguntou por que baixar à parte. A
 resposta de licença não muda — é conteúdo de terceiros, nunca embutido —, mas o momento

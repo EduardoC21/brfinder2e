@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { displayName, setNameTable, translatedLabel, translatedName } from './text';
+import {
+  displayName,
+  setNameTable,
+  translatedLabel,
+  translatedName,
+  translatedNameOf,
+} from './text';
 
 describe('a tabela de nomes', () => {
   it('displayName segue a preferência; translatedName e translatedLabel, não', () => {
@@ -12,6 +18,9 @@ describe('a tabela de nomes', () => {
     expect(translatedLabel('condition', 'Enfeebled', 'Enfeebled 2')).toBe('Enfraquecido 2');
     expect(translatedLabel('condition', 'Enfeebled', 'enfeebled')).toBe('enfeebled');
     expect(translatedLabel('spell', 'Fireball', 'Fireball')).toBe('Fireball');
+    /* Sem o tipo, como a blindagem pergunta. */
+    expect(translatedNameOf('Enfeebled')).toBe('Enfraquecido');
+    expect(translatedNameOf('Fireball')).toBeNull();
 
     setNameTable({ condition: { Enfeebled: 'Enfraquecido' } }, true);
     expect(displayName('condition', 'Enfeebled')).toBe('Enfraquecido');
