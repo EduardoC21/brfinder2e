@@ -1192,6 +1192,19 @@ user}) → texto`): o core não sabe de HTTP nem de Gemini. O glossário entra d
   guardada" é tudo o que se mostra de volta), Esquecer, e Testar — traduz uma frase de
   verdade pelo provedor e mostra o resultado ou o erro.
 
+### A central de traduções (Etapa 54)
+
+O primeiro servidor do projeto, e é minúsculo: `server/` é um worker na Cloudflare com um
+banco D1, onde as traduções de máquina de cada pessoa se juntam (OPEN-DECISIONS #16 tem
+as regras). `server/src/logic.ts` é a parte pura — o que se aceita (`parseSubmission`: a
+mesma trava de marcas do editor, do lado de lá), o que se oferece primeiro
+(`pickOffered`: mais "Usar", empate pela mais recente, uma por chave/campo/impressão) —
+testada pelo vitest do projeto (projeto `server`); `server/src/index.ts` liga isso ao HTTP
+e ao D1. O contrato está no cabeçalho dele. Sem login: id anônimo por aparelho, apelido
+opcional, limite por hora pelo hash do IP com sal. E o proxy `/gh-dl`, `/gh-api` do
+release do Foundry, com a mesma forma do proxy do Vite — é o que permite o app viver como
+site. O cliente (Usar, envio automático, Aceitar todas) é a etapa seguinte.
+
 ### Onde a tradução mora: a quinta camada
 
     trans/<língua>/<tipo>    { [chave]: { [campo]: { html, method, at, sourceHash } } }

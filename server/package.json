@@ -1,0 +1,14 @@
+{
+  "name": "brfinder2e-central",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:schema": "wrangler d1 execute brfinder2e --remote --file=schema.sql",
+    "db:schema:local": "wrangler d1 execute brfinder2e --local --file=schema.sql"
+  },
+  "devDependencies": {
+    "wrangler": "^4.40.0"
+  }
+}

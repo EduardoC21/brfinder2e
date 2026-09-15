@@ -56,6 +56,15 @@ export default defineConfig({
           exclude: ['**/*.contract.test.ts'],
         },
       },
+      // A central de traduções (server/): lógica pura, em Node, sem Cloudflare por perto.
+      {
+        extends: true,
+        test: {
+          name: 'server',
+          environment: 'node',
+          include: ['server/src/**/*.test.ts'],
+        },
+      },
       {
         extends: true,
         test: {

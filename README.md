@@ -81,6 +81,11 @@ Antes: **Etapa 20** — as tabelas das regras param de quebrar (célula compacta
 linha, `@Embed` cola a entrada apontada, e as duas vassouras em Configurações: apagar as
 entradas aposentadas e apagar a base inteira.
 
+Antes: **Etapa 54** — a central de traduções, lado servidor: um worker na Cloudflare com
+um banco D1 (`server/`), o contrato (`/v1/translations`, `/use`, `/stats`, o proxy do
+release), a trava das marcas do lado de lá, o limite por hora sem guardar IP, e o passo a
+passo do deploy. As regras de uso estão em OPEN-DECISIONS #16.
+
 Antes: **Etapa 52** — o `[[/act slug]]` da prosa vira link (1.170 na base): resolvido pelo
 slug na fonte de ações, com o nome da ação como rótulo.
 

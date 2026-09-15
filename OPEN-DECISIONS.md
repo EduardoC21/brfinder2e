@@ -409,3 +409,44 @@ para quem quiser pagar por ele.
 **Decidido (Etapa 41):** o Gemini, com a chave da pessoa, é a forma principal. O modelo
 local sai do padrão, mas fica disponível. O app pode viver como site; o executável, se
 voltar, ganha o cofre do sistema para a chave pelo mesmo contrato de `secrets.ts`.
+
+## 16. A central de traduções: compartilhar o que a máquina traduziu `decidido`
+
+Pedido do autor (Etapa 53 → 54): "se cada um fizer sua tradução local, todo mundo uma hora
+vai completar; mas mais de um de nós iria traduzir a mesma coisa". Então: um lugar onde
+as traduções de MÁQUINA se juntam, para ninguém traduzir duas vezes nem gastar cota para
+ler o que outro já traduziu.
+
+**Onde mora:** um worker na Cloudflare com um banco D1 (nível gratuito), em `server/`. O
+app não tinha servidor nenhum; este é o primeiro, e é minúsculo. Sem login.
+
+**As regras de uso, do autor:**
+
+- **O que sobe:** só tradução de máquina, sozinha, ao terminar. A manual não sobe por
+  padrão (opção "enviar também as minhas correções", desligada).
+- **Aceitar:** individualmente ("Compartilhada disponível — Usar · Traduzir a minha") e
+  todas de uma vez (Configurações: "N disponíveis — Aceitar todas", grava só onde a pessoa
+  não tem nada). E uma preferência "aceitar sem perguntar", desligada por padrão, que faz
+  o Traduzir procurar na central antes do Gemini.
+- **Identificar:** a aceita fica com a forma `shared`, com uma etiqueta de uma palavra
+  ("compartilhada") ao lado do botão; no editor, "enviada por <apelido>".
+- **Sobrescrever:** `shared` não é protegida como a manual — "Traduzir a minha" sobrescreve.
+- **Mais de uma pessoa, mesma entrada:** todas as candidatas válidas ficam, por remetente;
+  oferece-se a de mais "Usar", empate pela mais recente; "ver outra" depois. Mesma versão =
+  mesma impressão digital do original; versão diferente não é oferecida.
+- **Quem manda:** id anônimo por aparelho + apelido livre opcional (atribuição, não
+  autoridade). Limite de 120 envios por hora por IP (só o hash com sal é guardado). Só
+  entra o que passa na MESMA trava do editor: as marcas do Foundry do original presentes.
+- **Sem etapa a mais:** quem traduz não faz nada novo; quem chega aperta "Aceitar todas".
+
+**O que mais vale persistir lá (decidido junto):** o proxy do release do Foundry (o
+navegador não consegue baixar o zip direto — é o que destrava o app como site), a
+cobertura por tipo, os nomes e termos que o módulo não tem (entram pelo mesmo depósito).
+Depois: as Fichas, com um código de mesa. Não: contas, preferências, telemetria.
+
+**Licença:** conteúdo derivado da Paizo sob a Community Use Policy, como a comunidade
+sempre distribuiu; o app baixa, nunca embute.
+
+**Construção:** (a) Etapa 54 — o worker, o banco e o contrato; (b) o cliente: Usar,
+Traduzir a minha, etiqueta, envio automático; (c) Aceitar todas, apelido, preferência
+automática. Depois: ver outra, denunciar, cobertura, dump público.

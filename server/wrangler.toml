@@ -1,0 +1,10 @@
+# A central de traduções (Etapa 54). Ver server/README.md para o passo a passo.
+name = "brfinder2e-central"
+main = "src/index.ts"
+compatibility_date = "2026-09-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "brfinder2e"
+# Preencha com o id que `npx wrangler d1 create brfinder2e` imprimir.
+database_id = "SUBSTITUA-PELO-ID"

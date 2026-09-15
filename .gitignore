@@ -36,3 +36,7 @@ src-tauri/target
 src-tauri/gen/schemas
 __pycache__/
 
+
+# A central de traduções (server/): dependências e estado local do wrangler.
+server/node_modules/
+server/.wrangler/
