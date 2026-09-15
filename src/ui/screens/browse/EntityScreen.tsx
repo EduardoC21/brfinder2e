@@ -20,7 +20,7 @@ import { ScrollRail } from '@ui/components/ScrollRail';
 import { RichText, type RichTextLinks } from '@ui/components/RichText';
 import { cx } from '@ui/cx';
 import { displayName, translatedLabel, translatedName } from '@ui/text';
-import { sourceHash, type Translation } from '@core/store/index';
+import { sourceHash } from '@core/store/index';
 import { useDescriptionFields } from '@ui/hooks/useDescription';
 import type { LoadedSource } from '@ui/hooks/useAllBases';
 import {
@@ -154,7 +154,8 @@ export function EntityScreen({
   /* O editor de tradução da página (Etapa 43). */
   const [editando, setEditando] = useState(false);
   /* O nome como a preferência manda (Etapa 36). */
-  const nome = displayName(entityType, fieldValue(entity, 'name'));
+  const nomeOriginal = fieldValue(entity, 'name');
+  const nomePreferido = displayName(entityType, nomeOriginal);
 
   /*
    * A TRADUÇÃO da tela (Etapa 35, pelo autor: "o central e a lateral traduzidos quando
@@ -193,6 +194,10 @@ export function EntityScreen({
         : (abaDePagina.fallback ?? abaDePagina.field);
   const traducaoDaPagina = campoDaPagina === null ? null : (gravadas[campoDaPagina] ?? null);
   const mostrando = traducaoDaPagina !== null && verTraducao;
+  /* Com a tradução à vista, o título é o nome traduzido (48), seja qual for a preferência. */
+  const nome = mostrando
+    ? (translatedName(entityType, nomeOriginal) ?? nomePreferido)
+    : nomePreferido;
   const vista = (campo: string | null | undefined): string | null =>
     campo === undefined || campo === null || textos === null
       ? null
@@ -342,7 +347,6 @@ export function EntityScreen({
             translation={
               mostrando && campoDaPagina !== null
                 ? {
-                    stored: traducaoDaPagina,
                     originalChanged:
                       traducaoDaPagina.sourceHash !== sourceHash(textos?.[campoDaPagina] ?? ''),
                   }
@@ -393,7 +397,7 @@ function PageTab({
   readonly page: string | null;
   readonly appendix: string | null;
   /** A tradução à vista, para o aviso acima da prosa: de que forma veio, e se o original mudou. */
-  readonly translation: { readonly stored: Translation; readonly originalChanged: boolean } | null;
+  readonly translation: { readonly originalChanged: boolean } | null;
   readonly reference: ReferenceBridge;
   /** A memória de rolagem da tela, e a chave desta aba nela. Ver `EntityScreen`. */
   readonly memory: Map<string, number>;
@@ -469,14 +473,8 @@ function PageTab({
       }}
     >
       {/* O aviso de tradução, como na lateral: a forma, e se o original mudou desde então. */}
-      {translation !== null && (
-        <p className={styles['avisoTraducao']}>
-          {d.translatedBy(
-            strings.settings.translation.methods[translation.stored.method]?.name ??
-              translation.stored.method,
-          )}
-          {translation.originalChanged && ` · ${d.originalChanged}`}
-        </p>
+      {translation?.originalChanged === true && (
+        <p className={styles['avisoTraducao']}>{d.originalChanged}</p>
       )}
       {nodes !== null && (
         <div className={styles['pagina']}>

@@ -81,6 +81,10 @@ Antes: **Etapa 20** — as tabelas das regras param de quebrar (célula compacta
 linha, `@Embed` cola a entrada apontada, e as duas vassouras em Configurações: apagar as
 entradas aposentadas e apagar a base inteira.
 
+Antes: **Etapa 48** — o Gemini funcionando com a chave do autor: a lista de modelos vem da
+API (só os de texto, "Flash Latest" como padrão), sem `thinkingConfig`; com a tradução à
+vista, o título mostra o nome traduzido; e o aviso "Tradução: forma" saiu.
+
 Antes: **Etapa 46** — os nomes gravados entram na blindagem: o rótulo de um link dentro
 da prosa traduzida usa o nome traduzido pelo modelo ou corrigido à mão, por cima do
 glossário.

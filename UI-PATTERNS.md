@@ -181,6 +181,12 @@ não tem fica no original, sem marca — a lista mistura "Anão" com "Aiuvarin" 
 honesto, não é erro. A lista ordena pelo nome que se vê. A busca acha pelos dois nomes seja
 qual for a escolha: quem procura não quer decidir antes como vai ler.
 
+**Com a tradução à vista, o nome também (Etapa 48, pelo autor: "o nome faz parte de tudo").**
+O título da lateral, do flutuante e da tela completa mostra o nome traduzido — do
+glossário ou gravado — sempre que a tradução está à vista, seja qual for a preferência de
+nomes; a lista continua obedecendo à preferência. E o aviso "Tradução: forma" saiu: só
+fica "o original mudou desde a tradução", quando é verdade.
+
 **A edição manual (Etapa 43, pelo autor).** Um lápis ao lado do Traduzir — na lateral,
 no flutuante e na barra da tela completa — abre um editor MODAL: a fonte HTML da tradução
 à esquerda (ou do original, para começar do zero), a máscara de leitura à direita

@@ -592,8 +592,7 @@ export const ptBR = {
       editTranslation: 'Editar a tradução',
       toggleOriginal: 'Ver original',
       toggleTranslated: 'Ver tradução',
-      /** O aviso acima da tradução (Etapa 34). */
-      translatedBy: (forma: string) => `Tradução: ${forma.toLowerCase()}`,
+      /** O único aviso acima da tradução (Etapa 34; o "Tradução: forma" saiu na 48). */
       originalChanged: 'o original mudou desde a tradução',
       description: 'Descrição',
       empty: 'Escolha uma entrada na lista.',

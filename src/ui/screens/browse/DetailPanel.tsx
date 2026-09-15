@@ -185,6 +185,16 @@ export function DetailPanel({
   const [editando, setEditando] = useState(false);
   const mostrando = translationShowing ?? verTraducao;
   const mostrandoTraducao = traducao !== null && mostrando;
+  /*
+   * O TÍTULO com a tradução à vista mostra o nome traduzido (Etapa 48, pelo autor: "o
+   * nome faz parte de tudo"), seja qual for a preferência de nomes — a lista continua
+   * obedecendo à preferência. Sem tradução à vista, o de sempre.
+   */
+  const nomeOriginal = fieldValue(entity, 'name');
+  const nomeVisto =
+    mostrandoTraducao || (translationShowing === true && traducao === null)
+      ? (translatedName(entityType, nomeOriginal) ?? displayName(entityType, nomeOriginal))
+      : displayName(entityType, nomeOriginal);
   const description = mostrandoTraducao ? traducao.html : original;
   const originalMudou =
     traducao !== null && original !== null && traducao.sourceHash !== sourceHash(original);
@@ -349,7 +359,7 @@ export function DetailPanel({
         embedded && styles['embutido'],
         alvo !== null && styles['comSub'],
       )}
-      aria-label={displayName(entityType, fieldValue(entity, 'name'))}
+      aria-label={nomeVisto}
     >
       {/*
         Ações em CIMA, nome embaixo.
@@ -401,7 +411,7 @@ export function DetailPanel({
           normal. Fora do `<dl>`, ela também não some quando o campo `rarity` não existir.
         */}
         <div className={styles['nameRow']}>
-          <h2 className={styles['name']}>{displayName(entityType, fieldValue(entity, 'name'))}</h2>
+          <h2 className={styles['name']}>{nomeVisto}</h2>
           {/*
             Ao lado do nome fica só a RARIDADE.
 
@@ -473,13 +483,9 @@ export function DetailPanel({
         O aviso de tradução (Etapa 34): de que forma veio, e se o original mudou desde
         então — a impressão digital gravada não bate com a do texto de hoje.
       */}
-      {mostrandoTraducao && translationShowing === undefined && (
-        <p className={styles['contexto']}>
-          {t.translatedBy(
-            strings.settings.translation.methods[traducao.method]?.name ?? traducao.method,
-          )}
-          {originalMudou && ` · ${t.originalChanged}`}
-        </p>
+      {/* Só o alerta que importa (48, pelo autor): "Tradução: gemini" saiu, com o espaço. */}
+      {mostrandoTraducao && translationShowing === undefined && originalMudou && (
+        <p className={styles['contexto']}>{t.originalChanged}</p>
       )}
 
       {/*
