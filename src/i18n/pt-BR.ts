@@ -600,7 +600,7 @@ export const ptBR = {
       useSharedTitle: (quem: string | null, usos: number) =>
         `Tradução compartilhada${quem === null ? '' : ` enviada por ${quem}`}, usada por ${String(usos)} ${usos === 1 ? 'pessoa' : 'pessoas'}. Grava no seu aparelho sem gastar a sua cota.`,
       /** "Traduzir ↻" (56, pelo autor): refaz com a sua chave, no lugar da compartilhada. */
-      retranslate: 'Traduzir ↻',
+      retranslate: '↻ Traduzir',
       retranslateTitle: 'Traduzir de novo com a sua chave — a sua fica no lugar da compartilhada',
       /** As candidatas (56): "‹ 2/3 ›", e o que passar faz. */
       candidates: (atual: number, total: number) => `${String(atual)}/${String(total)}`,
