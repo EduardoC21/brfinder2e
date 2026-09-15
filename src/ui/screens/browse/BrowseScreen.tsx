@@ -39,7 +39,7 @@ import {
 } from '@core/browse/index';
 import { sourcePreferences, withLayout, withSource } from '@core/prefs/index';
 import { strings } from '@i18n/index';
-import { displayName, mergeNameTables, setNameTable, setTermMode } from '@ui/text';
+import { displayName, mergeNameTables, setNameTable, setTermMode, setTermTable } from '@ui/text';
 import { FloatingPanel } from '@ui/components/FloatingPanel';
 import type { LoadedSource } from '@ui/hooks/useAllBases';
 import { SearchInput } from '@ui/components/SearchInput';
@@ -49,6 +49,7 @@ import { useGlobalIndex } from '@ui/hooks/useGlobalIndex';
 import { useNarrowScreen } from '@ui/hooks/useNarrowScreen';
 import {
   useCommunityNames,
+  useCommunityTerms,
   useTraitGlossary,
   useTranslatedTraitGlossary,
   type CommunityNames,
@@ -212,6 +213,8 @@ export function BrowseScreen({ baseVersion }: BrowseScreenProps) {
    * não quer decidir antes como vai ler. A tela mostra o nome original.
    */
   const nomesDoPacote = useCommunityNames(prefs.translation.language, versaoDoPacote);
+  /* Os TERMOS do pacote para os filtros e os traços sem descrição (Etapa 51). */
+  setTermTable(useCommunityTerms(prefs.translation.language, versaoDoPacote));
   const carregadas = useMemo(() => (bases.status === 'ready' ? bases.sources : VAZIAS), [bases]);
   /*
    * Os NOMES GRAVADOS (Etapa 45, pelo autor: "se eu traduzir o Necromancer, a lista tem de

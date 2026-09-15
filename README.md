@@ -81,6 +81,10 @@ Antes: **Etapa 20** — as tabelas das regras param de quebrar (célula compacta
 linha, `@Embed` cola a entrada apontada, e as duas vassouras em Configurações: apagar as
 entradas aposentadas e apagar a base inteira.
 
+Antes: **Etapa 51** — os filtros em português (a promessa da 28): a tabela de termos do
+pacote alimenta os traços sem descrição, os domínios e a fonte divina; de 402 valores em
+inglês no modo Traduzido para 21 sem termo.
+
 Antes: **Etapa 50** — a tradução chega de uma vez: sem piscar, o botão conta o progresso
 ("Traduzindo… 3/8") e o texto troca no fim.
 

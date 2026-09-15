@@ -1088,6 +1088,21 @@ gravada o mesmo botão alterna "Ver original" / "Ver tradução", nascendo na pr
 cada entrada; acima do texto, "Tradução: modelo local", e "o original mudou desde a
 tradução" quando a impressão digital não bate mais.
 
+**Os filtros em português (Etapa 51 — a promessa da 28).** Medido antes: dos 972 valores
+de filtro de lista, 402 saíam em inglês no modo Traduzido, quase todos traços sem
+descrição (o glossário de traços só tem os que têm descrição: "mental", "visual",
+"two-hand-d8" ficavam de fora) e os 64 domínios. A TABELA DE TERMOS do pacote
+(`trans/<língua>/glossary/terms`, a mesma da blindagem) entra em `ui/text.ts` por
+`setTermTable`, posta no render da tela como a de nomes; `traitTerm(slug)` monta a chave
+como o Foundry (`two-hand-d8` → `PF2E.TraitTwoHandD8`) e, sem termo, tenta a tabela de
+NOMES — os traços de ancestralidade e de classe (`sylph`, `necromancer`) são nomes de
+entrada. `useTraitLabel` encadeia: glossário → termo → nome → slug; `termFor` ganhou os
+domínios (`PF2E.Item.Deity.Domain.X.Label`) e a fonte divina. Depois: dos 947 valores
+(fora os atributos, que já tinham caminho), **21 sem termo** — alinhamentos legados,
+ancestralidades que o módulo ainda não tem, compostos de arma — e 68 que voltam com a
+mesma palavra por decisão da comunidade (Kitsune, Kobold, Mental). `keyAbility` entrou
+nos campos de atributo; "performance" (não está no módulo) ganhou "Atuação".
+
 **As coladas entram no escopo (Etapa 49).** `embedTargets` (`core/markup/embeds.ts`) lista
 os alvos dos `@Embed` de um HTML; `embedJobs` os resolve pela ponte e monta um trabalho por
 alvo (`main`, e o nome se o glossário não o tem); `useTranslate().translate` recebe esses

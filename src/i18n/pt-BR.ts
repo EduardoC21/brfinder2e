@@ -69,6 +69,8 @@ export const ptBR = {
         stealth: 'Furtividade',
         survival: 'Sobrevivência',
         thievery: 'Ladroagem',
+        /* Não está no módulo (a perícia entrou no Remaster); é a da tradução oficial. */
+        performance: 'Atuação',
       } as Record<string, string>,
       attributes: {
         str: 'Força',
@@ -105,6 +107,9 @@ export const ptBR = {
       } as Record<string, string>,
       /* Valores de Tipo, categoria e grupo que aparecem em coluna, filtro e detalhe. */
       values: {
+        /* A fonte divina (PF2E.Item.Deity.DivineFont.*). */
+        harm: 'Ferir',
+        heal: 'Curar',
         simple: 'Simples',
         martial: 'Marcial',
         advanced: 'Avançada',

@@ -3,7 +3,11 @@ import { useEffect, useState } from 'react';
 import { type TraitGlossary } from '@core/glossary/index';
 import { isRecord } from '@core/json';
 import { readGlossary } from '@core/store/index';
-import { readCommunityNames, readCommunityTraits } from '@core/translation/index';
+import {
+  readCommunityNames,
+  readCommunityTraits,
+  readCommunityTerms,
+} from '@core/translation/index';
 import { createIndexedDbStore } from '@platform/store-indexeddb';
 
 const store = createIndexedDbStore();
@@ -92,6 +96,33 @@ function parse(raw: Readonly<Record<string, unknown>>): TraitGlossary {
     }
   }
   return glossary;
+}
+
+/** Os TERMOS em português do pacote (Etapa 51), para os filtros e os traços sem descrição. */
+export function useCommunityTerms(
+  language: string,
+  version: number,
+): Readonly<Record<string, string>> {
+  const [loaded, setLoaded] = useState<{ token: string; terms: Readonly<Record<string, string>> }>({
+    token: '',
+    terms: {},
+  });
+  const token = `${language}#${String(version)}`;
+  useEffect(() => {
+    let alive = true;
+    readCommunityTerms(store, language)
+      .then((terms) => {
+        if (alive) setLoaded({ token, terms });
+      })
+      .catch(() => {
+        if (alive) setLoaded({ token, terms: {} });
+      });
+    return () => {
+      alive = false;
+    };
+  }, [language, version, token]);
+  /* Enquanto relê, o que já tinha: uma tabela velha é melhor que filtro em inglês por um instante. */
+  return loaded.terms;
 }
 
 export type CommunityNames = Readonly<Record<string, Readonly<Record<string, string>>>>;

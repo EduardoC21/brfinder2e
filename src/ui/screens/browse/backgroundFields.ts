@@ -57,7 +57,11 @@ const ATTRIBUTE_ORDER: readonly string[] = Object.keys(ATTRIBUTE_NAME);
  * enquanto a coluna escrevia `Strength`. Mesmo padrão de `BOOK_FIELD`. Dois campos: o
  * aumento do antecedente e o atributo divino, que a fonte escreve com os mesmos códigos.
  */
-export const ATTRIBUTE_FIELDS: ReadonlySet<string> = new Set(['boosts', 'divineAttribute']);
+export const ATTRIBUTE_FIELDS: ReadonlySet<string> = new Set([
+  'boosts',
+  'divineAttribute',
+  'keyAbility',
+]);
 
 /** Um código desconhecido volta como veio, em vez de sumir. No modo traduzido, em português. */
 export function attributeName(code: string): string {

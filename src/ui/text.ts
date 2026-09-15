@@ -160,6 +160,43 @@ export function translatedLabel(entityType: string | null, name: string, label: 
   return label;
 }
 
+/**
+ * A TABELA DE TERMOS do pacote (Etapa 51): `PF2E.TraitMental` → "Mental",
+ * `PF2E.Item.Deity.Domain.Death.Label` → "Morte". Medido: dos 972 valores de filtro de
+ * lista, 402 saíam em inglês no modo Traduzido; 281 deles têm o termo aqui. Posta pela
+ * tela de consulta no render, como a de nomes.
+ */
+let termTable: Readonly<Record<string, string>> = {};
+
+export function setTermTable(table: Readonly<Record<string, string>>): void {
+  termTable = table;
+}
+
+/** `two-hand-d8` → `TwoHandD8`: é como o Foundry monta a chave a partir do slug. */
+function pascal(slug: string): string {
+  return slug
+    .split(/[-_\s]+/)
+    .map((parte) => parte.charAt(0).toUpperCase() + parte.slice(1))
+    .join('');
+}
+
+/**
+ * O rótulo traduzido de um TRAÇO pela tabela de termos, ou pela tabela de nomes — os
+ * traços de ancestralidade e de classe (`sylph`, `necromancer`) são nomes de entrada, e o
+ * glossário de traços não os tem. Nulo no modo original ou sem termo.
+ */
+export function traitTerm(slug: string): string | null {
+  if (termMode !== 'translated') return null;
+  const termo = termTable[`PF2E.Trait${pascal(slug)}`];
+  if (termo !== undefined) return termo;
+  return translatedNameOf(slug.split(/[-_]+/).map(capitalizar).join(' '));
+}
+
+/** O rótulo traduzido de um DOMÍNIO (`death` → "Morte"), ou nulo. */
+function domainTerm(slug: string): string | null {
+  return termTable[`PF2E.Item.Deity.Domain.${pascal(slug)}.Label`] ?? null;
+}
+
 const SKILL_FIELDS: ReadonlySet<string> = new Set(['skills', 'divineSkill']);
 const TERM_VALUE_FIELDS: ReadonlySet<string> = new Set([
   'category',
@@ -177,6 +214,8 @@ function termFor(field: string, value: string): string | null {
   if (field === 'traditions') return terms.traditions[value] ?? null;
   if (field === 'damageType') return terms.damage[value] ?? null;
   if (TERM_VALUE_FIELDS.has(field)) return terms.values[value] ?? null;
+  if (field === 'domains') return domainTerm(value);
+  if (field === 'font') return terms.values[value] ?? null;
   return null;
 }
 
