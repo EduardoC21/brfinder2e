@@ -594,13 +594,20 @@ export const ptBR = {
       translate: 'Traduzir',
       translatingProgress: (feitos: number, total: number) =>
         total === 0 ? 'Traduzindo…' : `Traduzindo… ${String(feitos)}/${String(total)}`,
-      retranslate: 'Traduzir de novo, sem usar o cache',
       editTranslation: 'Editar a tradução',
       /** A central (Etapa 55): a compartilhada oferecida, e a etiqueta da forma. */
       useShared: 'Usar a compartilhada',
       useSharedTitle: (quem: string | null, usos: number) =>
         `Tradução compartilhada${quem === null ? '' : ` enviada por ${quem}`}, usada por ${String(usos)} ${usos === 1 ? 'pessoa' : 'pessoas'}. Grava no seu aparelho sem gastar a sua cota.`,
-      retranslateMine: 'Traduzir a minha (sobrescreve a compartilhada)',
+      /** "Traduzir ↻" (56, pelo autor): refaz com a sua chave, no lugar da compartilhada. */
+      retranslate: 'Traduzir ↻',
+      retranslateTitle: 'Traduzir de novo com a sua chave — a sua fica no lugar da compartilhada',
+      /** As candidatas (56): "‹ 2/3 ›", e o que passar faz. */
+      candidates: (atual: number, total: number) => `${String(atual)}/${String(total)}`,
+      candidatesTitle:
+        'Outras traduções compartilhadas desta entrada — passar grava a escolhida e move o seu voto',
+      candidatePrev: 'Candidata anterior',
+      candidateNext: 'Próxima candidata',
       tag: { shared: 'compartilhada', manual: 'manual' } as Record<string, string>,
       toggleOriginal: 'Ver original',
       toggleTranslated: 'Ver tradução',

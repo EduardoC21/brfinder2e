@@ -449,3 +449,26 @@
   background: var(--color-data);
   color: var(--color-bg);
 }
+
+/* As candidatas (56): "‹ 2/3 ›" em mono, setas sem borda — é um contador, não um botão grande. */
+.candidatas {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  align-self: center;
+  font: 400 var(--text-xs) / 1 var(--font-mono);
+  color: var(--color-text-muted);
+}
+
+.candidataSeta {
+  border: 0;
+  padding: 0 var(--space-1);
+  background: transparent;
+  color: var(--color-text-muted);
+  font: 400 var(--text-md) / 1 var(--font-body);
+  cursor: pointer;
+}
+
+.candidataSeta:hover {
+  color: var(--color-text);
+}

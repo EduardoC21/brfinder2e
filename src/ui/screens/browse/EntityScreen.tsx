@@ -13,7 +13,7 @@ import {
   type SideSpec,
 } from '@core/browse/index';
 import { parseDescription, pruneForReading } from '@core/markup/index';
-import { NAME_FIELD, offeredFor } from '@core/translation/index';
+import { NAME_FIELD, offeredFor, type Candidate } from '@core/translation/index';
 import { strings } from '@i18n/index';
 import { CollapseToggle } from '@ui/components/CollapseToggle';
 import { ScrollRail } from '@ui/components/ScrollRail';
@@ -30,7 +30,7 @@ import {
   useStoredTranslations,
   useTranslate,
 } from '@ui/hooks/useTranslation';
-import { acceptOffered, useOffered } from '@ui/hooks/useCentral';
+import { acceptOffered, candidatesOf, switchTo, useOffered } from '@ui/hooks/useCentral';
 import { usePreferences } from '@ui/prefs/usePreferences';
 
 import { DetailPane } from './DetailPane';
@@ -225,6 +225,37 @@ export function EntityScreen({
       ...camposDaTela.map((campo) => ({ field: campo, original: textos[campo] ?? '' })),
     ]);
   };
+  /* As candidatas da página (56). */
+  const totalDeCandidatas =
+    campoDaPagina === null ? 0 : (oferecidas?.[campoDaPagina]?.candidates ?? 0);
+  const [lista, setLista] = useState<{ key: string; itens: Candidate[] } | null>(null);
+  const passar = (delta: -1 | 1): void => {
+    if (campoDaPagina === null || textos === null) return;
+    const campo = campoDaPagina;
+    void (async () => {
+      const itens =
+        lista?.key === entity.key
+          ? lista.itens
+          : await candidatesOf(entityType, entity.key, campo, textos[campo] ?? '');
+      setLista({ key: entity.key, itens });
+      if (itens.length < 2) return;
+      const atual = itens.findIndex((c) => c.id === traducaoDaPagina?.sharedId);
+      const proxima = itens[(atual + delta + itens.length) % itens.length];
+      if (proxima !== undefined) await switchTo(entityType, entity.key, campo, proxima);
+    })();
+  };
+  const candidatas =
+    totalDeCandidatas > 1 && (traducaoDaPagina === null || traducaoDaPagina.method === 'shared')
+      ? {
+          total: totalDeCandidatas,
+          current: Math.max(
+            1,
+            (lista?.key === entity.key ? lista.itens : []).findIndex(
+              (c) => c.id === traducaoDaPagina?.sharedId,
+            ) + 1,
+          ),
+        }
+      : null;
   const traduzirTela = (forcar = false): void => {
     if (textos === null) return;
     /* Quem pediu para traduzir quer VER a tradução, seja qual for a preferência. */
@@ -353,18 +384,42 @@ export function EntityScreen({
                 : d.translate}
           </button>
         )}
+        {abaDePagina !== null && candidatas !== null && (
+          <span className={styles['candidatas']} title={d.candidatesTitle}>
+            <button
+              type="button"
+              className={styles['candidataSeta']}
+              aria-label={d.candidatePrev}
+              onClick={() => {
+                passar(-1);
+              }}
+            >
+              ‹
+            </button>
+            {d.candidates(candidatas.current, candidatas.total)}
+            <button
+              type="button"
+              className={styles['candidataSeta']}
+              aria-label={d.candidateNext}
+              onClick={() => {
+                passar(1);
+              }}
+            >
+              ›
+            </button>
+          </span>
+        )}
         {abaDePagina !== null && traducaoDaPagina?.method === 'shared' && (
           <button
             type="button"
             className={cx(styles['traduzir'], styles['editar'], 'chamfer-sm')}
-            title={d.retranslateMine}
-            aria-label={d.retranslateMine}
+            title={temChave === true ? d.retranslateTitle : strings.settings.translation.llm.noKey}
             disabled={tradutor.state.status === 'busy' || temChave !== true}
             onClick={() => {
               traduzirTela(true);
             }}
           >
-            ↻
+            {d.retranslate}
           </button>
         )}
         {abaDePagina !== null && campoDaPagina !== null && textos !== null && (

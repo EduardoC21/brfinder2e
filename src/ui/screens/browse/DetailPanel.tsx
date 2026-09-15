@@ -13,7 +13,7 @@ import {
 import type { DescriptionAlteration } from '@core/normalization/index';
 import { isRecord } from '@core/json';
 import { parseDescription, pruneForReading } from '@core/markup/index';
-import { NAME_FIELD, offeredFor } from '@core/translation/index';
+import { NAME_FIELD, offeredFor, type Candidate } from '@core/translation/index';
 import { strings } from '@i18n/index';
 import { ActionCost } from '@ui/components/ActionCost';
 import { CastCost } from '@ui/components/CastCost';
@@ -31,7 +31,7 @@ import {
   useStoredTranslations,
   useTranslate,
 } from '@ui/hooks/useTranslation';
-import { acceptOffered, useOffered } from '@ui/hooks/useCentral';
+import { acceptOffered, candidatesOf, switchTo, useOffered } from '@ui/hooks/useCentral';
 import { usePreferences } from '@ui/prefs/usePreferences';
 import { CollapseToggle } from '@ui/components/CollapseToggle';
 import { cx } from '@ui/cx';
@@ -191,6 +191,39 @@ export function DetailPanel({
     oferecidas === undefined || original === null
       ? null
       : offeredFor({ [entity.key]: oferecidas }, entity.key, 'main', original);
+  /*
+   * AS CANDIDATAS (56): o pacote diz quantas há; a lista só se busca quando a pessoa
+   * passa. `current` é a posição da que está no aparelho (pelo `sharedId`).
+   */
+  const totalDeCandidatas = oferecidas?.['main']?.candidates ?? 0;
+  const [lista, setLista] = useState<{ key: string; itens: Candidate[] } | null>(null);
+  const passar = (delta: -1 | 1): void => {
+    if (original === null) return;
+    void (async () => {
+      const itens =
+        lista?.key === entity.key
+          ? lista.itens
+          : await candidatesOf(entityType, entity.key, 'main', original);
+      setLista({ key: entity.key, itens });
+      if (itens.length < 2) return;
+      const atual = itens.findIndex((c) => c.id === traducao?.sharedId);
+      const proxima = itens[(atual + delta + itens.length) % itens.length];
+      if (proxima !== undefined) await switchTo(entityType, entity.key, 'main', proxima);
+    })();
+  };
+  const candidatas =
+    totalDeCandidatas > 1 && (traducao === null || traducao.method === 'shared')
+      ? {
+          total: totalDeCandidatas,
+          current: Math.max(
+            1,
+            (lista?.key === entity.key ? lista.itens : []).findIndex(
+              (c) => c.id === traducao?.sharedId,
+            ) + 1,
+          ),
+          onSwitch: passar,
+        }
+      : null;
   const traduzirLateral = (forcar = false): void => {
     if (original === null) return;
     /* Quem pediu para traduzir quer VER a tradução, seja qual for a preferência. */
@@ -449,6 +482,7 @@ export function DetailPanel({
                   onRetranslate: () => {
                     traduzirLateral(true);
                   },
+                  candidates: candidatas,
                   onToggle: () => {
                     setVerTraducao((estava) => !estava);
                   },
@@ -644,6 +678,12 @@ interface TranslationActions {
   readonly onUseShared: () => void;
   /** Sobrescrever a compartilhada pela minha (55). */
   readonly onRetranslate: () => void;
+  /** As candidatas (56): quantas há, qual está no aparelho, e passar para outra. */
+  readonly candidates: {
+    readonly total: number;
+    readonly current: number;
+    readonly onSwitch: (delta: -1 | 1) => void;
+  } | null;
 }
 
 function Actions({
@@ -744,17 +784,45 @@ function Actions({
         </button>
       )}
 
-      {/* TRADUZIR A MINHA (55): a compartilhada não é protegida como a manual. */}
+      {/* AS CANDIDATAS (56): "‹ 2/3 ›" só quando há mais de uma; passar grava e move o voto. */}
+      {translation?.candidates !== null && translation?.candidates !== undefined && (
+        <span className={styles['candidatas']} title={t.candidatesTitle}>
+          <button
+            type="button"
+            className={styles['candidataSeta']}
+            aria-label={t.candidatePrev}
+            onClick={() => {
+              translation.candidates?.onSwitch(-1);
+            }}
+          >
+            ‹
+          </button>
+          {t.candidates(translation.candidates.current, translation.candidates.total)}
+          <button
+            type="button"
+            className={styles['candidataSeta']}
+            aria-label={t.candidateNext}
+            onClick={() => {
+              translation.candidates?.onSwitch(1);
+            }}
+          >
+            ›
+          </button>
+        </span>
+      )}
+
+      {/* TRADUZIR ↻ (56, pelo autor): a compartilhada não é protegida como a manual. */}
       {translation?.method === 'shared' && (
         <button
           type="button"
-          className={cx(styles['icon'], 'chamfer-sm')}
-          aria-label={t.retranslateMine}
-          title={t.retranslateMine}
+          className={cx(styles['action'], 'chamfer-sm')}
+          title={
+            translation.canTranslate ? t.retranslateTitle : strings.settings.translation.llm.noKey
+          }
           disabled={translation.busy !== null || !translation.canTranslate}
           onClick={translation.onRetranslate}
         >
-          ↻
+          {t.retranslate}
         </button>
       )}
 

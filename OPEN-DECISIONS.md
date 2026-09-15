@@ -447,6 +447,15 @@ Depois: as Fichas, com um código de mesa. Não: contas, preferências, telemetr
 **Licença:** conteúdo derivado da Paizo sob a Community Use Policy, como a comunidade
 sempre distribuiu; o app baixa, nunca embute.
 
-**Construção:** (a) Etapa 54 — o worker, o banco e o contrato; (b) o cliente: Usar,
-Traduzir a minha, etiqueta, envio automático; (c) Aceitar todas, apelido, preferência
-automática. Depois: ver outra, denunciar, cobertura, dump público.
+**Os votos (Etapa 56, refinado com o autor):** O USO É O VOTO — não há "like" separado
+nem denúncia. A candidata que está no aparelho da pessoa é o voto dela: uma por entrada e
+campo; passar para outra ("‹ 2/3 ›", que aparece só quando há mais de uma) grava a
+escolhida e MOVE o voto; apagar a compartilhada tira o voto. A ordem é sempre pela mais
+votada, empate pela mais recente. A limpeza é automática (cron diário): candidata com
+zero votos há 90 dias, e que não é a única da entrada, some — com o tempo fica uma.
+"Traduzir ↻" refaz com a chave da pessoa no lugar da compartilhada. O "Aceitar todas"
+nunca sobrepõe o que a pessoa já tem.
+
+**Construção:** (a) Etapa 54 — o worker, o banco e o contrato; (b) Etapa 55 — o cliente:
+Usar, etiqueta, envio automático, Aceitar todas, apelido, preferência automática;
+(c) Etapa 56 — os votos, as candidatas, a limpeza. Depois: cobertura, dump público.

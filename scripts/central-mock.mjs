@@ -11,7 +11,11 @@ import { createServer } from 'node:http';
 
 const rows = [];
 let proximoId = 1;
-const usos = new Set();
+/* O uso é o voto (56): por entrada/campo/aparelho → id da candidata. */
+const votos = new Map();
+const recontar = () => {
+  for (const r of rows) r.uses = [...votos.values()].filter((v) => v === r.id).length;
+};
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
@@ -54,6 +58,19 @@ createServer(async (req, res) => {
     return json(res, 200, {
       types: Object.entries(tipos).map(([type, s]) => ({ type, entries: s.size })),
     });
+  }
+  if (recurso === 'uses' && req.method === 'POST') {
+    const corpo = await lerCorpo(req);
+    let n = 0;
+    for (const id of corpo?.ids ?? []) {
+      const r = rows.find((x) => x.id === id);
+      if (!r) continue;
+      votos.set(`${r.language}|${r.entityType}|${r.key}|${r.field}|${corpo.senderId}`, r.id);
+      n++;
+    }
+    recontar();
+    console.log('votos em lote', n);
+    return json(res, 200, { voted: n });
   }
   if (recurso !== 'translations') return json(res, 404, { error: 'não há' });
   if (req.method === 'GET' && a && b && !c) {
@@ -131,10 +148,16 @@ createServer(async (req, res) => {
     const corpo = await lerCorpo(req);
     if (!r) return json(res, 404, { error: 'não há' });
     if (req.method === 'POST' && b === 'use') {
-      usos.add(`${a}:${corpo?.senderId}`);
-      r.uses = [...usos].filter((u) => u.startsWith(`${a}:`)).length;
-      console.log('uso', a, '→', r.uses);
+      votos.set(`${r.language}|${r.entityType}|${r.key}|${r.field}|${corpo?.senderId}`, r.id);
+      recontar();
+      console.log('voto', a, '→', r.uses);
       return json(res, 200, { uses: r.uses });
+    }
+    if (req.method === 'DELETE' && b === 'use') {
+      votos.delete(`${r.language}|${r.entityType}|${r.key}|${r.field}|${corpo?.senderId}`);
+      recontar();
+      console.log('desvoto', a, '→', r.uses);
+      return json(res, 200, { ok: true });
     }
     if (req.method === 'DELETE') {
       if (r.senderId === corpo?.senderId) r.hidden = true;

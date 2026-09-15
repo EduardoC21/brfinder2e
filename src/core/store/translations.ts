@@ -29,6 +29,8 @@ export interface Translation {
   readonly at: string;
   /** `sourceHash(original)` do texto traduzido. */
   readonly sourceHash: string;
+  /** A candidata da central que esta tradução é (Etapa 56) — para mover ou tirar o voto. */
+  readonly sharedId?: number;
 }
 
 /** As traduções de uma entrada, por campo de `desc/` (`main`, `page`…). */
@@ -51,10 +53,16 @@ export function sourceHash(text: string): string {
 
 function readTranslation(value: unknown): Translation | null {
   if (!isRecord(value)) return null;
-  const { html, method, at, sourceHash: hash } = value;
+  const { html, method, at, sourceHash: hash, sharedId } = value;
   if (typeof html !== 'string' || !isTranslationMethodId(method)) return null;
   if (typeof at !== 'string' || typeof hash !== 'string') return null;
-  return { html, method, at, sourceHash: hash };
+  return {
+    html,
+    method,
+    at,
+    sourceHash: hash,
+    ...(typeof sharedId === 'number' ? { sharedId } : {}),
+  };
 }
 
 export async function readTranslations(

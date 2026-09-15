@@ -146,9 +146,44 @@ export function offeredFor(
   return candidata.sourceHash === sourceHash(original) ? candidata : null;
 }
 
-/** A tradução gravada a partir de uma candidata aceita. */
+/** A tradução gravada a partir de uma candidata aceita — leva o id, que é o voto. */
 export function acceptedTranslation(offered: Offered, at: string): Translation {
-  return { html: offered.html, method: 'shared', at, sourceHash: offered.sourceHash };
+  return {
+    html: offered.html,
+    method: 'shared',
+    at,
+    sourceHash: offered.sourceHash,
+    sharedId: offered.id,
+  };
+}
+
+/** Uma candidata de uma entrada, como a central lista (todas, por campo). */
+export interface Candidate extends Offered {
+  readonly field: string;
+}
+
+/**
+ * Todas as candidatas de UMA entrada (Etapa 56): é o "‹ 2/3 ›". Só se busca quando o
+ * pacote diz que há mais de uma; a mais votada primeiro, como a central ordena.
+ */
+export async function fetchCandidates(
+  port: CentralPort,
+  base: string,
+  language: string,
+  type: string,
+  key: string,
+): Promise<Candidate[]> {
+  const resposta = await port.getJson(
+    `${base}/v1/translations/${encodeURIComponent(language)}/${encodeURIComponent(type)}/${encodeURIComponent(key)}`,
+  );
+  const items = isRecord(resposta) && Array.isArray(resposta['items']) ? resposta['items'] : [];
+  const out: Candidate[] = [];
+  for (const item of items) {
+    const oferecida = lerOferecida(item);
+    if (oferecida === null || !isRecord(item) || typeof item['field'] !== 'string') continue;
+    out.push({ ...oferecida, field: item['field'] });
+  }
+  return out;
 }
 
 /** Os alvos das marcas do Foundry de um HTML — a trava que a central confere do lado de lá. */
@@ -194,7 +229,7 @@ export async function submitTranslation(
   });
 }
 
-/** "Usar": conta uma vez por aparelho. */
+/** "Usar": o voto do aparelho vai para esta candidata (um por entrada e campo). */
 export async function markUse(
   port: CentralPort,
   base: string,
@@ -202,6 +237,28 @@ export async function markUse(
   sender: Sender,
 ): Promise<void> {
   await port.postJson(`${base}/v1/translations/${String(id)}/use`, { senderId: sender.id });
+}
+
+/** Os votos em lote — "Aceitar todas" —, até 500 por pedido. */
+export async function markUses(
+  port: CentralPort,
+  base: string,
+  ids: readonly number[],
+  sender: Sender,
+): Promise<void> {
+  for (let i = 0; i < ids.length; i += 500) {
+    await port.postJson(`${base}/v1/uses`, { senderId: sender.id, ids: ids.slice(i, i + 500) });
+  }
+}
+
+/** Apagou a compartilhada do aparelho: o voto vai junto. */
+export async function unmarkUse(
+  port: CentralPort,
+  base: string,
+  id: number,
+  sender: Sender,
+): Promise<void> {
+  await port.delete(`${base}/v1/translations/${String(id)}/use`, { senderId: sender.id });
 }
 
 /** Um id anônimo por aparelho: 24 caracteres de `[A-Za-z0-9_-]`, gerado uma vez. */

@@ -81,6 +81,10 @@ Antes: **Etapa 20** — as tabelas das regras param de quebrar (célula compacta
 linha, `@Embed` cola a entrada apontada, e as duas vassouras em Configurações: apagar as
 entradas aposentadas e apagar a base inteira.
 
+Antes: **Etapa 56** — os votos: o uso é o voto (um por entrada e campo por aparelho,
+move ao passar de candidata, sai ao apagar), "‹ 2/3 ›" para passar, "Traduzir ↻", votos
+em lote no Aceitar todas, e a limpeza diária das candidatas sem voto.
+
 Antes: **Etapa 55** — a central de traduções, lado app: "Usar a compartilhada", a
 etiqueta, "Traduzir a minha", o envio automático ao terminar, "Aceitar todas", o modo
 "sem perguntar", o bloco nas configurações; e uma central de mentira em Node para testar.

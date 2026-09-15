@@ -11,8 +11,14 @@
  *                                                   "Aceitar todas" e a busca por fonte
  *   GET    /translations/:lang/:type/:key           todas as candidatas de uma entrada
  *   POST   /translations                            um envio (ver `parseSubmission`)
- *   POST   /translations/:id/use     {senderId}     "Usar": conta uma vez por aparelho
+ *   POST   /translations/:id/use     {senderId}     "Usar": o voto do aparelho vai para
+ *                                                   esta candidata (um por entrada/campo)
+ *   DELETE /translations/:id/use     {senderId}     tira o voto (apagou a compartilhada)
+ *   POST   /uses                     {senderId, ids} o mesmo, em lote ("Aceitar todas")
  *   DELETE /translations/:id         {senderId}     esconde o que VOCÊ mandou
+ *
+ * A LIMPEZA (cron diário, `scheduled`): candidata com zero votos há 90 dias, que não é a
+ * única da entrada, some — com o tempo fica uma, sem ninguém denunciar nada.
  *   GET    /stats/:lang                             quantas entradas por tipo
  *   GET    /gh-dl/*, /gh-api/*                      o proxy do release do Foundry (CORS),
  *                                                   o mesmo que o Vite faz em dev
@@ -180,22 +186,109 @@ async function remetenteDe(request: Request): Promise<string | null> {
   return typeof id === 'string' && /^[A-Za-z0-9_-]{8,64}$/.test(id) ? id : null;
 }
 
-async function usar(env: Env, id: number, request: Request): Promise<Response> {
-  const senderId = await remetenteDe(request);
-  if (senderId === null) return erro(400, 'remetente');
-  await env.DB.batch([
-    env.DB.prepare('INSERT OR IGNORE INTO uses (translation_id, sender_id) VALUES (?1, ?2)').bind(
-      id,
-      senderId,
-    ),
+/** Recontagem dos votos de uma candidata (e da anterior, quando o voto se moveu). */
+const RECONTAR =
+  'UPDATE translations SET uses = (SELECT COUNT(*) FROM uses WHERE translation_id = ?1) WHERE id = ?1';
+
+/** O voto do aparelho vai para a candidata `id`: a anterior da mesma entrada/campo perde. */
+async function votar(env: Env, id: number, senderId: string): Promise<number | null> {
+  const alvo = await env.DB.prepare(
+    'SELECT language, entity_type, entity_key, field FROM translations WHERE id = ?1 AND hidden = 0',
+  )
+    .bind(id)
+    .first<{ language: string; entity_type: string; entity_key: string; field: string }>();
+  if (alvo === null) return null;
+  const anterior = await env.DB.prepare(
+    'SELECT translation_id FROM uses WHERE language = ?1 AND entity_type = ?2 AND entity_key = ?3 AND field = ?4 AND sender_id = ?5',
+  )
+    .bind(alvo.language, alvo.entity_type, alvo.entity_key, alvo.field, senderId)
+    .first<{ translation_id: number }>();
+  const lote = [
     env.DB.prepare(
-      'UPDATE translations SET uses = (SELECT COUNT(*) FROM uses WHERE translation_id = ?1) WHERE id = ?1',
-    ).bind(id),
-  ]);
+      `INSERT INTO uses (language, entity_type, entity_key, field, sender_id, translation_id, at)
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
+       ON CONFLICT (language, entity_type, entity_key, field, sender_id)
+       DO UPDATE SET translation_id = excluded.translation_id, at = excluded.at`,
+    ).bind(
+      alvo.language,
+      alvo.entity_type,
+      alvo.entity_key,
+      alvo.field,
+      senderId,
+      id,
+      new Date().toISOString(),
+    ),
+    env.DB.prepare(RECONTAR).bind(id),
+  ];
+  if (anterior !== null && anterior.translation_id !== id) {
+    lote.push(env.DB.prepare(RECONTAR).bind(anterior.translation_id));
+  }
+  await env.DB.batch(lote);
   const linha = await env.DB.prepare('SELECT uses FROM translations WHERE id = ?1')
     .bind(id)
     .first<{ uses: number }>();
-  return json({ uses: linha?.uses ?? 0 });
+  return linha?.uses ?? 0;
+}
+
+async function usar(env: Env, id: number, request: Request): Promise<Response> {
+  const senderId = await remetenteDe(request);
+  if (senderId === null) return erro(400, 'remetente');
+  const uses = await votar(env, id, senderId);
+  return uses === null ? erro(404, 'não há') : json({ uses });
+}
+
+/** "Aceitar todas": os votos em lote, até 500 por pedido. */
+async function usarLote(env: Env, request: Request): Promise<Response> {
+  const corpo: unknown = await request.json().catch(() => null);
+  if (typeof corpo !== 'object' || corpo === null) return erro(400, 'corpo');
+  const { senderId, ids } = corpo as { senderId?: unknown; ids?: unknown };
+  if (typeof senderId !== 'string' || !/^[A-Za-z0-9_-]{8,64}$/.test(senderId)) {
+    return erro(400, 'remetente');
+  }
+  if (!Array.isArray(ids) || ids.length > 500) return erro(400, 'ids');
+  let n = 0;
+  for (const id of ids) {
+    if (typeof id !== 'number' || !Number.isInteger(id)) continue;
+    if ((await votar(env, id, senderId)) !== null) n += 1;
+  }
+  return json({ voted: n });
+}
+
+/** Apagou a compartilhada do aparelho: o voto vai junto. */
+async function desvotar(env: Env, id: number, request: Request): Promise<Response> {
+  const senderId = await remetenteDe(request);
+  if (senderId === null) return erro(400, 'remetente');
+  await env.DB.batch([
+    env.DB.prepare('DELETE FROM uses WHERE translation_id = ?1 AND sender_id = ?2').bind(
+      id,
+      senderId,
+    ),
+    env.DB.prepare(RECONTAR).bind(id),
+  ]);
+  return json({ ok: true });
+}
+
+/**
+ * A limpeza: zero votos há mais de `DIAS` dias e outra candidata VIVA na mesma entrada e
+ * campo. A única nunca some — melhor uma tradução sem voto que nenhuma.
+ */
+const DIAS_SEM_VOTO = 90;
+export async function prune(env: Env, agora = new Date()): Promise<number> {
+  const limite = new Date(agora.getTime() - DIAS_SEM_VOTO * 86_400_000).toISOString();
+  const r = await env.DB.prepare(
+    `UPDATE translations SET hidden = 1
+     WHERE hidden = 0 AND uses = 0 AND created_at < ?1
+       AND EXISTS (
+         SELECT 1 FROM translations o
+         WHERE o.hidden = 0 AND o.id <> translations.id
+           AND o.language = translations.language AND o.entity_type = translations.entity_type
+           AND o.entity_key = translations.entity_key AND o.field = translations.field
+           AND o.source_hash = translations.source_hash
+       )`,
+  )
+    .bind(limite)
+    .run();
+  return r.meta.changes;
 }
 
 async function esconder(env: Env, id: number, request: Request): Promise<Response> {
@@ -247,14 +340,21 @@ export default {
         if (a !== undefined && /^\d+$/.test(a)) {
           const id = Number(a);
           if (request.method === 'POST' && b === 'use') return await usar(env, id, request);
+          if (request.method === 'DELETE' && b === 'use') return await desvotar(env, id, request);
           if (request.method === 'DELETE' && b === undefined) {
             return await esconder(env, id, request);
           }
         }
       }
+      if (recurso === 'uses' && request.method === 'POST') return await usarLote(env, request);
       return erro(404, 'não há');
     } catch (causa) {
       return erro(500, causa instanceof Error ? causa.message : 'erro');
     }
+  },
+
+  /** O cron diário (`[triggers]` no wrangler.toml): a limpeza. */
+  async scheduled(_event: ScheduledEvent, env: Env): Promise<void> {
+    await prune(env);
   },
 };

@@ -25,12 +25,19 @@ CREATE INDEX IF NOT EXISTS translations_lookup
 CREATE INDEX IF NOT EXISTS translations_bundle
   ON translations (language, entity_type, hidden, created_at);
 
--- "Usar" conta uma vez por aparelho.
+-- O USO É O VOTO (Etapa 56): uma pessoa, um voto por entrada e campo — a candidata que
+-- está no aparelho dela. Passar para outra move o voto; apagar a compartilhada tira.
 CREATE TABLE IF NOT EXISTS uses (
-  translation_id INTEGER NOT NULL,
+  language TEXT NOT NULL,
+  entity_type TEXT NOT NULL,
+  entity_key TEXT NOT NULL,
+  field TEXT NOT NULL,
   sender_id TEXT NOT NULL,
-  PRIMARY KEY (translation_id, sender_id)
+  translation_id INTEGER NOT NULL,
+  at TEXT NOT NULL,
+  PRIMARY KEY (language, entity_type, entity_key, field, sender_id)
 );
+CREATE INDEX IF NOT EXISTS uses_por_traducao ON uses (translation_id);
 
 -- O limite por hora: só o hash do IP com sal, nunca o IP. Varrido a cada envio.
 CREATE TABLE IF NOT EXISTS submissions (

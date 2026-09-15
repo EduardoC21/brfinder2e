@@ -7,18 +7,23 @@ import {
   readBase,
   readDesc,
   readTranslations,
+  sourceHash,
   writeTranslation,
   type Translation,
 } from '@core/store/index';
 import {
   acceptedTranslation,
   centralBase,
+  fetchCandidates,
   markUse,
+  markUses,
   newSenderId,
   offeredFor,
   readCentral,
   refreshCentral,
   submitTranslation,
+  unmarkUse,
+  type Candidate,
   type OfferedByKey,
   type Sender,
 } from '@core/translation/index';
@@ -183,6 +188,7 @@ export async function acceptAll(): Promise<number> {
   const { base, prefs } = await config();
   if (base === '') return 0;
   let n = 0;
+  const votos: number[] = [];
   for (const tipo of TIPOS) {
     const oferecidas = await readCentral(store, prefs.language, tipo);
     const chaves = Object.keys(oferecidas);
@@ -213,12 +219,65 @@ export async function acceptAll(): Promise<number> {
           field,
           acceptedTranslation(candidata, new Date().toISOString()),
         );
+        votos.push(candidata.id);
         n += 1;
       }
     }
   }
-  if (n > 0) announceTranslations();
+  if (n > 0) {
+    announceTranslations();
+    /* Os votos vão em lote, e são cortesia: a tradução já está gravada. */
+    markUses(port, base, votos, await remetente()).catch(() => undefined);
+  }
   return n;
+}
+
+/**
+ * As candidatas de uma entrada e campo (Etapa 56), na ordem da central; e "passar para"
+ * uma delas — que é o mesmo Usar: grava como `shared` e move o voto.
+ */
+export async function candidatesOf(
+  entityType: string,
+  key: string,
+  field: string,
+  original: string,
+): Promise<Candidate[]> {
+  const { base, prefs } = await config();
+  if (base === '') return [];
+  const todas = await fetchCandidates(port, base, prefs.language, entityType, key);
+  const hash = sourceHash(original);
+  return todas.filter((c) => c.field === field && c.sourceHash === hash);
+}
+
+export async function switchTo(
+  entityType: string,
+  key: string,
+  field: string,
+  candidate: Candidate,
+): Promise<void> {
+  const { base, prefs } = await config();
+  if (base === '') return;
+  await writeTranslation(
+    store,
+    prefs.language,
+    entityType,
+    key,
+    field,
+    acceptedTranslation(candidate, new Date().toISOString()),
+  );
+  announceTranslations();
+  markUse(port, base, candidate.id, await remetente()).catch(() => undefined);
+}
+
+/** A compartilhada saiu do aparelho: o voto sai da central. Cortesia, em silêncio. */
+export async function forgetUse(sharedId: number): Promise<void> {
+  try {
+    const { base } = await config();
+    if (base === '') return;
+    await unmarkUse(port, base, sharedId, await remetente());
+  } catch {
+    // A central fora do ar não é problema de quem apagou.
+  }
 }
 
 export function useCentralVersion(): number {

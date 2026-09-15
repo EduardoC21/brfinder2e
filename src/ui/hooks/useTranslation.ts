@@ -31,7 +31,7 @@ import { KEY_PREFERENCES, readPreferences } from '@core/prefs/index';
 import { strings } from '@i18n/index';
 import { usePreferences } from '@ui/prefs/usePreferences';
 
-import { offeredNow, submitBestEffort } from './useCentral';
+import { forgetUse, offeredNow, submitBestEffort } from './useCentral';
 
 const store = createIndexedDbStore();
 
@@ -421,8 +421,11 @@ export async function deleteStoredTranslation(
   field: string,
 ): Promise<void> {
   const { translation } = readPreferences(await store.get(KEY_PREFERENCES));
+  const atual = (await readTranslations(store, translation.language, entityType))[key]?.[field];
   await deleteTranslation(store, translation.language, entityType, key, field);
   anunciar();
+  /* Era uma compartilhada: o voto vai junto (56). */
+  if (atual?.sharedId !== undefined) void forgetUse(atual.sharedId);
 }
 
 /** Há chave guardada? `null` enquanto confere. O botão Traduzir apaga sem ela (Etapa 44). */

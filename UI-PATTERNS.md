@@ -181,6 +181,12 @@ não tem fica no original, sem marca — a lista mistura "Anão" com "Aiuvarin" 
 honesto, não é erro. A lista ordena pelo nome que se vê. A busca acha pelos dois nomes seja
 qual for a escolha: quem procura não quer decidir antes como vai ler.
 
+**O uso é o voto (Etapa 56, pelo autor).** Sem "like", sem denúncia: a candidata no seu
+aparelho é o seu voto. Quando há mais de uma, um contador mono "‹ 2/3 ›" ao lado da
+etiqueta; passar grava a escolhida e move o voto — é o mesmo Usar. "Traduzir ↻" (texto,
+não ícone) refaz com a sua chave no lugar da compartilhada. Apagar a compartilhada tira o
+voto. O que ninguém usa some sozinho depois de 90 dias.
+
 **A central de traduções na tela (Etapa 55, pelo autor).** Sem tradução sua e com uma
 compartilhada que casa com o original, a barra ganha "Usar a compartilhada" em latão (é
 dado da comunidade chegando), com "enviada por <apelido>, usada por N" no `title`. A
