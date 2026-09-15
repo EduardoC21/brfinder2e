@@ -2,15 +2,17 @@ import { createElement, Fragment, useMemo, type ReactNode } from 'react';
 
 import {
   actionGlyph,
+  type DocNode,
+  embedTarget,
   parseDescription,
   pruneForReading,
-  tokenText,
-  type DocNode,
   type Token,
+  tokenText,
 } from '@core/markup/index';
 import { ActionCost } from '@ui/components/ActionCost';
 import { cx } from '@ui/cx';
 import { useDescription } from '@ui/hooks/useDescription';
+import { useStoredTranslation } from '@ui/hooks/useTranslation';
 
 import styles from './RichText.module.css';
 
@@ -49,6 +51,11 @@ export interface RichTextLinks {
    * a prosa traduzida mostra o nome traduzido do alvo (Etapa 39). Ausente, o do texto.
    */
   readonly label?: (target: string, label: string) => string;
+  /**
+   * A prosa à vista é a TRADUÇÃO (Etapa 49): a entrada colada por `@Embed` usa a tradução
+   * gravada do alvo, se houver — senão o original, e fica metade-metade até traduzir.
+   */
+  readonly translated?: boolean;
 }
 
 /** A entrada a colar: o tipo e a chave, que é o que `useDescription` precisa. */
@@ -296,11 +303,6 @@ function TokenPiece({
   }
 }
 
-/** O alvo de um `@Embed`: a primeira palavra do corpo. O resto (`inline`, `hr=false`) é modo. */
-function embedTarget(body: string): string {
-  return body.trim().split(/\s+/)[0] ?? '';
-}
-
 /**
  * A entrada COLADA por um `@Embed`.
  *
@@ -317,12 +319,23 @@ function Colada({
   readonly links?: RichTextLinks | undefined;
 }) {
   const description = useDescription(subject.type, subject.key);
+  const traducao = useStoredTranslation(subject.type, subject.key, 'main');
+  const html = links?.translated === true && traducao !== null ? traducao.html : description;
   const nodes = useMemo(
-    () => (description === null ? null : pruneForReading(parseDescription(description))),
-    [description],
+    () => (html === null ? null : pruneForReading(parseDescription(html))),
+    [html],
   );
+  /* Desce tudo menos o `embed` (um nível só); o rótulo e o modo, sim — o link de dentro conta. */
   const semEmbed = useMemo<RichTextLinks | undefined>(
-    () => (links === undefined ? undefined : { resolves: links.resolves, open: links.open }),
+    () =>
+      links === undefined
+        ? undefined
+        : {
+            resolves: links.resolves,
+            open: links.open,
+            ...(links.label === undefined ? {} : { label: links.label }),
+            ...(links.translated === undefined ? {} : { translated: links.translated }),
+          },
     [links],
   );
   if (nodes === null) return null;

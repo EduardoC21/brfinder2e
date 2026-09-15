@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 
 import {
   deleteTranslation,
+  readDesc,
   readTranslations,
   sourceHash,
   writeTranslation,
@@ -19,11 +20,13 @@ import {
   type LlmModel,
   type TranslationProvider,
 } from '@core/translation/index';
+import { embedTargets } from '@core/markup/index';
 import { readGlossary } from '@core/store/index';
 import { translatedName, translatedNameOf } from '@ui/text';
 import { createIndexedDbStore } from '@platform/store-indexeddb';
 import { createGeminiChat } from '@platform/gemini';
 import { createBrowserSecretStore, LLM_KEY_SECRET } from '@platform/secrets';
+import { isRecord } from '@core/json';
 import { KEY_PREFERENCES, readPreferences } from '@core/prefs/index';
 import { strings } from '@i18n/index';
 import { usePreferences } from '@ui/prefs/usePreferences';
@@ -200,10 +203,44 @@ export type TranslateState =
   | { readonly status: 'busy' }
   | { readonly status: 'error'; readonly message: string };
 
-/** Um campo a traduzir: o nome dele em `desc/` e o texto original. */
+/** Um campo a traduzir: o nome dele em `desc/` e o texto original (lido de `desc/` se ausente). */
 export interface TranslateField {
   readonly field: string;
-  readonly html: string;
+  readonly html?: string;
+}
+
+/** Um trabalho SUBSEQUENTE (Etapa 49): a entrada colada por `@Embed` na prosa que se traduz. */
+export interface TranslateJob {
+  readonly entityType: string;
+  readonly key: string;
+  readonly fields: readonly TranslateField[];
+}
+
+/**
+ * Os trabalhos SUBSEQUENTES de um HTML (Etapa 49, pelo autor: "se está metade de um texto
+ * e metade do outro, deveria fazer uma tradução subsequente"): cada `@Embed` que a ponte
+ * resolve vira um trabalho — o `main` do alvo, e o nome se o glossário não o tem. Os links
+ * NÃO entram: o que está atrás de um clique se traduz quando se abre.
+ */
+export function embedJobs(
+  htmls: readonly string[],
+  resolve: (
+    uuid: string,
+  ) => { readonly entityType: string; readonly key: string; readonly name: string } | null,
+): TranslateJob[] {
+  const jobs: TranslateJob[] = [];
+  for (const html of htmls) {
+    for (const alvo of embedTargets(html)) {
+      const destino = resolve(alvo);
+      if (destino === null || jobs.some((j) => j.key === destino.key)) continue;
+      jobs.push({
+        entityType: destino.entityType,
+        key: destino.key,
+        fields: [...campoDoNome(destino.entityType, destino.name), { field: 'main' }],
+      });
+    }
+  }
+  return jobs;
 }
 
 /**
@@ -226,7 +263,13 @@ export function campoDoNome(entityType: string, name: string): TranslateField[] 
  */
 export function useTranslate(): {
   readonly state: TranslateState;
-  readonly translate: (entityType: string, key: string, fields: readonly TranslateField[]) => void;
+  readonly translate: (
+    entityType: string,
+    key: string,
+    fields: readonly TranslateField[],
+    /** As coladas: traduzidas em seguida, cada uma na própria chave. */
+    extras?: readonly TranslateJob[],
+  ) => void;
 } {
   const { prefs } = usePreferences();
   const { language } = prefs.translation;
@@ -234,33 +277,51 @@ export function useTranslate(): {
   const [state, setState] = useState<TranslateState>({ status: 'idle' });
 
   const translate = useCallback(
-    (entityType: string, key: string, fields: readonly TranslateField[]): void => {
+    (
+      entityType: string,
+      key: string,
+      fields: readonly TranslateField[],
+      extras: readonly TranslateJob[] = [],
+    ): void => {
       setState({ status: 'busy' });
       (async () => {
-        const gravadas = (await readTranslations(store, language, entityType))[key] ?? {};
-        const pendentes = fields.filter(
-          ({ field, html }) => html !== '' && gravadas[field]?.sourceHash !== sourceHash(html),
-        );
-        if (pendentes.length === 0) {
-          setState({ status: 'idle' });
-          return;
-        }
         const tradutor = await provedor(language, llmModel);
         const disponivel = await tradutor.availability(language);
         if (disponivel.kind !== 'ready') {
           setState({ status: 'error', message: strings.settings.translation.llm.noKey });
           return;
         }
-        for (const { field, html } of pendentes) {
-          const traduzido = await tradutor.translate({ language, entityType, key, field, html });
-          await writeTranslation(store, language, entityType, key, field, {
-            html: traduzido,
-            method: tradutor.id,
-            at: new Date().toISOString(),
-            sourceHash: sourceHash(html),
+        for (const job of [{ entityType, key, fields }, ...extras]) {
+          const gravadas = (await readTranslations(store, language, job.entityType))[job.key] ?? {};
+          /* O texto que não veio (as coladas) é lido de `desc/`; o `name` sempre vem. */
+          const descricao = job.fields.some((f) => f.html === undefined)
+            ? await readDesc(store, job.entityType)
+            : null;
+          const entrada = descricao?.[job.key];
+          const textos = job.fields.map(({ field, html }) => {
+            const lido = isRecord(entrada) ? entrada[field] : undefined;
+            return { field, html: html ?? (typeof lido === 'string' ? lido : '') };
           });
-          /* Anuncia campo a campo: a tela mostra o que já chegou enquanto o resto traduz. */
-          anunciar();
+          const pendentes = textos.filter(
+            ({ field, html }) => html !== '' && gravadas[field]?.sourceHash !== sourceHash(html),
+          );
+          for (const { field, html } of pendentes) {
+            const traduzido = await tradutor.translate({
+              language,
+              entityType: job.entityType,
+              key: job.key,
+              field,
+              html,
+            });
+            await writeTranslation(store, language, job.entityType, job.key, field, {
+              html: traduzido,
+              method: tradutor.id,
+              at: new Date().toISOString(),
+              sourceHash: sourceHash(html),
+            });
+            /* Anuncia campo a campo: a tela mostra o que já chegou enquanto o resto traduz. */
+            anunciar();
+          }
         }
         setState({ status: 'idle' });
       })().catch((erro: unknown) => {

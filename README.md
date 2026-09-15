@@ -81,6 +81,10 @@ Antes: **Etapa 20** — as tabelas das regras param de quebrar (célula compacta
 linha, `@Embed` cola a entrada apontada, e as duas vassouras em Configurações: apagar as
 entradas aposentadas e apagar a base inteira.
 
+Antes: **Etapa 49** — as entradas coladas (`@Embed`) entram no escopo do Traduzir da
+página, como traduções subsequentes gravadas na própria chave; com a tradução à vista, a
+colada mostra a tradução do alvo. Os links ficam para quando se abre.
+
 Antes: **Etapa 48** — o Gemini funcionando com a chave do autor: a lista de modelos vem da
 API (só os de texto, "Flash Latest" como padrão), sem `thinkingConfig`; com a tradução à
 vista, o título mostra o nome traduzido; e o aviso "Tradução: forma" saiu.

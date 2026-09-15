@@ -26,6 +26,7 @@ import { useTraitLabel } from '@ui/glossary/useTraitLabel';
 import { useDescription, useDescriptionFields } from '@ui/hooks/useDescription';
 import {
   campoDoNome,
+  embedJobs,
   useHasLlmKey,
   useStoredTranslations,
   useTranslate,
@@ -184,6 +185,16 @@ export function DetailPanel({
   /* O editor de tradução (Etapa 43), do `main`: abre por cima de tudo, num portal. */
   const [editando, setEditando] = useState(false);
   const mostrando = translationShowing ?? verTraducao;
+  const resolverColada = (uuid: string) => {
+    const alvo = reference?.resolve(uuid);
+    return alvo === undefined || alvo === null
+      ? null
+      : {
+          entityType: alvo.entityType,
+          key: alvo.entity.key,
+          name: fieldValue(alvo.entity, 'name'),
+        };
+  };
   const mostrandoTraducao = traducao !== null && mostrando;
   /*
    * O TÍTULO com a tradução à vista mostra o nome traduzido (Etapa 48, pelo autor: "o
@@ -283,6 +294,7 @@ export function DetailPanel({
             const alvo = reference.resolve(target);
             return alvo === null ? null : { type: alvo.entityType, key: alvo.entity.key };
           },
+          translated: mostrando,
           /* Na prosa traduzida, o link mostra o nome traduzido do alvo (Etapa 39). */
           label: (target, label) => {
             if (!mostrando) return label;
@@ -388,11 +400,17 @@ export function DetailPanel({
                     /* Quem pediu para traduzir quer VER a tradução, seja qual for a preferência. */
                     setVerTraducao(true);
                     /* O escopo da lateral: a descrição e as tabelas que ela mostra. */
-                    tradutor.translate(entityType, entity.key, [
-                      ...campoDoNome(entityType, fieldValue(entity, 'name')),
-                      { field: 'main', html: original },
-                      ...camposDeTabela.map((field) => ({ field, html: tabelas?.[field] ?? '' })),
-                    ]);
+                    tradutor.translate(
+                      entityType,
+                      entity.key,
+                      [
+                        ...campoDoNome(entityType, fieldValue(entity, 'name')),
+                        { field: 'main', html: original },
+                        ...camposDeTabela.map((field) => ({ field, html: tabelas?.[field] ?? '' })),
+                      ],
+                      /* As coladas (@Embed) da descrição: traduzidas em seguida (49). */
+                      embedJobs([original], resolverColada),
+                    );
                   },
                   onToggle: () => {
                     setVerTraducao((estava) => !estava);

@@ -25,6 +25,7 @@ import { useDescriptionFields } from '@ui/hooks/useDescription';
 import type { LoadedSource } from '@ui/hooks/useAllBases';
 import {
   campoDoNome,
+  embedJobs,
   useHasLlmKey,
   useStoredTranslations,
   useTranslate,
@@ -208,12 +209,31 @@ export function EntityScreen({
     if (textos === null) return;
     /* Quem pediu para traduzir quer VER a tradução, seja qual for a preferência. */
     setVerTraducao(true);
-    tradutor.translate(entityType, entity.key, [
-      ...campoDoNome(entityType, fieldValue(entity, 'name')),
-      ...camposDaTela
-        .filter((campo) => campo !== abaDePagina?.fallback || campo === campoDaPagina)
-        .map((campo) => ({ field: campo, html: textos[campo] ?? '' })),
-    ]);
+    const campos = camposDaTela.filter(
+      (campo) => campo !== abaDePagina?.fallback || campo === campoDaPagina,
+    );
+    tradutor.translate(
+      entityType,
+      entity.key,
+      [
+        ...campoDoNome(entityType, fieldValue(entity, 'name')),
+        ...campos.map((campo) => ({ field: campo, html: textos[campo] ?? '' })),
+      ],
+      /* As coladas (@Embed) da página e do apêndice: traduzidas em seguida (49). */
+      embedJobs(
+        campos.map((campo) => textos[campo] ?? ''),
+        (uuid) => {
+          const alvo = reference.resolve(uuid);
+          return alvo === null
+            ? null
+            : {
+                entityType: alvo.entityType,
+                key: alvo.entity.key,
+                name: fieldValue(alvo.entity, 'name'),
+              };
+        },
+      ),
+    );
   };
 
   return (
@@ -453,6 +473,7 @@ function PageTab({
       const alvo = reference.resolve(target);
       return alvo === null ? null : { type: alvo.entityType, key: alvo.entity.key };
     },
+    translated: translation !== null,
     /* Na prosa traduzida, o link mostra o nome traduzido do alvo (Etapa 39). */
     label: (target, label) => {
       if (translation === null) return label;

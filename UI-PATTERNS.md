@@ -181,6 +181,14 @@ não tem fica no original, sem marca — a lista mistura "Anão" com "Aiuvarin" 
 honesto, não é erro. A lista ordena pelo nome que se vê. A busca acha pelos dois nomes seja
 qual for a escolha: quem procura não quer decidir antes como vai ler.
 
+**O escopo inclui o que está colado, não o que está atrás de um clique (Etapa 49, pelo
+autor).** Uma entrada colada por `@Embed` é corpo da página — a pessoa lê ali —, então o
+Traduzir da página dispara em seguida a tradução das coladas, cada uma gravada na própria
+chave: abrir o flutuante depois já vem traduzido, e vice-versa. Com a tradução à vista, a
+colada mostra a tradução gravada do alvo (se houver). Os links ficam como estão: abre,
+traduz, e daí em diante o rótulo já sai traduzido. Traduzir também o que está atrás dos
+links gastaria cota com o que talvez ninguém leia.
+
 **Com a tradução à vista, o nome também (Etapa 48, pelo autor: "o nome faz parte de tudo").**
 O título da lateral, do flutuante e da tela completa mostra o nome traduzido — do
 glossário ou gravado — sempre que a tradução está à vista, seja qual for a preferência de

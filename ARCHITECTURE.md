@@ -1088,6 +1088,13 @@ gravada o mesmo botão alterna "Ver original" / "Ver tradução", nascendo na pr
 cada entrada; acima do texto, "Tradução: modelo local", e "o original mudou desde a
 tradução" quando a impressão digital não bate mais.
 
+**As coladas entram no escopo (Etapa 49).** `embedTargets` (`core/markup/embeds.ts`) lista
+os alvos dos `@Embed` de um HTML; `embedJobs` os resolve pela ponte e monta um trabalho por
+alvo (`main`, e o nome se o glossário não o tem); `useTranslate().translate` recebe esses
+trabalhos como `extras` e os traduz em seguida, lendo o texto de `desc/` — um pedido por
+campo, na cota da pessoa. `RichTextLinks.translated` desce à colada (`Colada`), que lê a
+tradução gravada do alvo em vez do original.
+
 **O nome faz parte da entidade traduzida (Etapa 45, pelo autor: "se eu traduzir o
 Necromancer, a lista tem de mostrar Necromante").** O nome é o campo `name` da tradução
 gravada, texto puro, com prompt próprio no provedor (nomenclatura oficial quando existe;
