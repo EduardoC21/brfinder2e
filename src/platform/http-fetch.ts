@@ -85,12 +85,21 @@ export function createFetchHttp(options: FetchHttpOptions = {}): HttpPort {
 }
 
 /**
- * Reescrita para o navegador em desenvolvimento.
- *
- * Troca os dois domínios do GitHub pelos caminhos que o proxy do Vite atende
- * (ver `server.proxy` no vite.config.ts). Fora do navegador não faz falta: em Node e no
- * Tauri o pedido sai direto, sem CORS no caminho.
+ * A reescrita do download pelo PROXY (Etapa 57): o GitHub não manda CORS, então dentro do
+ * navegador o zip e a API passam por alguém. Em dev, o proxy do Vite (`/gh-dl`, `/gh-api`
+ * no vite.config.ts). No site e no executável, a CENTRAL de traduções — o worker atende
+ * os mesmos caminhos, com a mesma forma. Quem sabe se há central é a tela, que põe a base
+ * aqui (`setProxyBase`) a partir das preferências; sem base, fica o caminho relativo, que
+ * só o Vite atende.
  */
+let proxyBase = '';
+
+export function setProxyBase(base: string): void {
+  proxyBase = base.trim().replace(/\/+$/, '');
+}
+
 export function viteProxyRewrite(url: string): string {
-  return url.replace('https://api.github.com', '/gh-api').replace('https://github.com', '/gh-dl');
+  return url
+    .replace('https://api.github.com', `${proxyBase}/gh-api`)
+    .replace('https://github.com', `${proxyBase}/gh-dl`);
 }

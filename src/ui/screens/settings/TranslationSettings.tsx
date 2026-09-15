@@ -7,6 +7,7 @@ import { cx } from '@ui/cx';
 import { useCommunityPack } from '@ui/hooks/useCommunityPack';
 import { useCentralActions } from '@ui/hooks/useCentral';
 import { useLlmKey } from '@ui/hooks/useTranslation';
+import { defaultCentralUrl } from '@platform/env';
 import { usePreferences } from '@ui/prefs/usePreferences';
 
 import styles from './SettingsPanel.module.css';
@@ -130,7 +131,7 @@ function Central({
   const [estado, setEstado] = useState<
     { status: 'idle' } | { status: 'busy'; texto: string } | { status: 'done'; texto: string }
   >({ status: 'idle' });
-  const ligada = central.url.trim() !== '';
+  const ligada = central.url.trim() !== '' || defaultCentralUrl() !== '';
   const rodar = (texto: string, acao: () => Promise<number>, pronto: (n: number) => string) => {
     setEstado({ status: 'busy', texto });
     acao()
@@ -151,7 +152,7 @@ function Central({
         <input
           type="url"
           className={cx(styles['seletor'], styles['llmChave'], 'chamfer-sm')}
-          placeholder={t.central.urlPlaceholder}
+          placeholder={defaultCentralUrl() === '' ? t.central.urlPlaceholder : defaultCentralUrl()}
           value={central.url}
           onChange={(event) => {
             onChange({ url: event.target.value });

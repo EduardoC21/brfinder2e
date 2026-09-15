@@ -5,6 +5,13 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   plugins: [react()],
 
+  /*
+   * O caminho-base do site (Etapa 57): no GitHub Pages o app vive em
+   * `https://<conta>.github.io/brfinder2e/`, e os arquivos precisam saber disso. A Action
+   * passa `BASE_PATH=/brfinder2e/`; em dev e no Tauri fica `/`.
+   */
+  base: process.env['BASE_PATH'] ?? '/',
+
   resolve: {
     // Lê os "paths" do tsconfig.app.json. Assim os apelidos (@core/...) existem
     // em UM lugar só, e valem no editor, no build e nos testes ao mesmo tempo.

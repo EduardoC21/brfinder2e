@@ -1192,6 +1192,24 @@ user}) → texto`): o core não sabe de HTTP nem de Gemini. O glossário entra d
   guardada" é tudo o que se mostra de volta), Esquecer, e Testar — traduz uma frase de
   verdade pelo provedor e mostra o resultado ou o erro.
 
+### A V1 como site (Etapa 57)
+
+O site é o mesmo app: `.github/workflows/pages.yml` constrói com `BASE_PATH` (o Pages
+serve em `/brfinder2e/`) e `VITE_CENTRAL_URL` (variável do repositório, lida só em
+`platform/env.ts` — o core não sabe que o Vite existe). Com a URL embutida, o app nasce
+ligado à central sem ninguém colar nada, e o DOWNLOAD do release passa por ela: o
+navegador não consegue baixar o zip do GitHub direto (sem CORS), e o worker atende
+`/gh-dl` e `/gh-api` com a mesma forma do proxy do Vite — `setProxyBase` em
+`platform/http-fetch.ts`, posta pela tela a partir das preferências. Sem central e fora do
+dev, a sincronização não tem por onde passar: é a única dependência do site.
+
+**O que persiste, e onde.** No site, tudo o que o app grava — a base sincronizada, as
+traduções, as preferências, a chave — fica no IndexedDB/localStorage do navegador, no PC
+da pessoa (por perfil de navegador; "limpar dados do site" apaga). Não é uma pasta que se
+vê no Explorador. A camada de armazenamento é uma porta (`StorePort`), então um
+adaptador de PASTA (o Tauri com arquivos, ou a File System Access API no Chrome/Edge) entra
+sem mexer no resto — é a decisão pendente para fichas, criaturas e escudo do mestre.
+
 ### A central de traduções (Etapa 54)
 
 O primeiro servidor do projeto, e é minúsculo: `server/` é um worker na Cloudflare com um

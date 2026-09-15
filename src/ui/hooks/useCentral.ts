@@ -28,6 +28,7 @@ import {
   type Sender,
 } from '@core/translation/index';
 import { createCentralFetch } from '@platform/central-fetch';
+import { defaultCentralUrl } from '@platform/env';
 import { createBrowserSecretStore } from '@platform/secrets';
 import { createIndexedDbStore } from '@platform/store-indexeddb';
 import { usePreferences } from '@ui/prefs/usePreferences';
@@ -80,9 +81,15 @@ async function remetente(): Promise<Sender> {
   return { id, name: nome === '' ? null : nome };
 }
 
+/** A URL efetiva da central: a das preferências, senão a que o build embutiu (57). */
+export function effectiveCentralUrl(prefUrl: string): string {
+  const escolhida = centralBase(prefUrl);
+  return escolhida === '' ? defaultCentralUrl() : escolhida;
+}
+
 async function config(): Promise<{ base: string; prefs: Preferences['translation'] }> {
   const { translation } = readPreferences(await store.get(KEY_PREFERENCES));
-  return { base: centralBase(translation.central.url), prefs: translation };
+  return { base: effectiveCentralUrl(translation.central.url), prefs: translation };
 }
 
 const TIPOS: readonly string[] = SOURCES.flatMap((s) =>
@@ -288,7 +295,7 @@ export function useCentralVersion(): number {
 export function useOffered(entityType: string, key: string): OfferedByKey[string] | undefined {
   const { prefs } = usePreferences();
   const language = prefs.translation.language;
-  const ligada = centralBase(prefs.translation.central.url) !== '';
+  const ligada = effectiveCentralUrl(prefs.translation.central.url) !== '';
   const version = useCentralVersion();
   const [estado, setEstado] = useState<{
     token: string;

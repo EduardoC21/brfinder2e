@@ -56,7 +56,9 @@ import {
 } from '@ui/hooks/useTraitGlossary';
 import { useCommunityPackVersion } from '@ui/hooks/useCommunityPack';
 import { TraitGlossaryContext } from '@ui/glossary/TraitGlossaryContext';
+import { effectiveCentralUrl } from '@ui/hooks/useCentral';
 import { useStoredNames } from '@ui/hooks/useTranslation';
+import { setProxyBase } from '@platform/http-fetch';
 import { usePreferences } from '@ui/prefs/usePreferences';
 
 import { DetailPane } from './DetailPane';
@@ -204,6 +206,8 @@ export function BrowseScreen({ baseVersion }: BrowseScreenProps) {
    * memorizada ficar com o texto do outro modo.
    */
   setTermMode(prefs.translation.display);
+  /* O download do release passa pela central, quando há uma (57). */
+  setProxyBase(effectiveCentralUrl(prefs.translation.central.url));
   const versaoDoPacote = useCommunityPackVersion();
   const traduzido = useTranslatedTraitGlossary(prefs.translation.language, versaoDoPacote);
   /*

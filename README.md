@@ -81,6 +81,11 @@ Antes: **Etapa 20** — as tabelas das regras param de quebrar (célula compacta
 linha, `@Embed` cola a entrada apontada, e as duas vassouras em Configurações: apagar as
 entradas aposentadas e apagar a base inteira.
 
+Antes: **Etapa 57** — a V1 como site: a Action de Pages (`pages.yml`) constrói com
+`BASE_PATH=/brfinder2e/` e `VITE_CENTRAL_URL` (variável do repositório), o app nasce
+ligado à central, e o download do release passa pelo proxy dela (`setProxyBase`) —
+conferido o build servido sob `/brfinder2e/`.
+
 Antes: **Etapa 56** — os votos: o uso é o voto (um por entrada e campo por aparelho,
 move ao passar de candidata, sai ao apagar), "‹ 2/3 ›" para passar, "Traduzir ↻", votos
 em lote no Aceitar todas, e a limpeza diária das candidatas sem voto.

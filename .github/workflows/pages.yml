@@ -1,0 +1,52 @@
+name: Site (GitHub Pages)
+
+# A V1 como SITE (Etapa 57): o mesmo app, sem instalar nada. O que persiste — base,
+# traduções, preferências — fica no armazenamento do navegador de cada pessoa
+# (IndexedDB), no PC dela; o site só serve os arquivos.
+#
+# Antes de ligar: Settings › Pages › Source = "GitHub Actions"; e a variável de
+# repositório CENTRAL_URL com a URL do worker (Settings › Secrets and variables ›
+# Actions › Variables), para o app já nascer ligado à central e baixar o zip por ela.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Build
+        env:
+          BASE_PATH: /${{ github.event.repository.name }}/
+          VITE_CENTRAL_URL: ${{ vars.CENTRAL_URL }}
+        run: npm run build
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
