@@ -2,6 +2,7 @@ import { createElement, Fragment, useMemo, type ReactNode } from 'react';
 
 import {
   actionGlyph,
+  actTarget,
   type DocNode,
   embedTarget,
   parseDescription,
@@ -262,12 +263,40 @@ function TokenPiece({
         </span>
       );
 
-    case 'roll':
+    /*
+     * `[[/act slug]]` — 1.170 na base — aponta uma AÇÃO pelo slug (Etapa 52, pelo autor:
+     * "estamos faltando com links"). Resolve pela ponte como `act:<slug>` e vira o mesmo
+     * botão do `@UUID`; o rótulo é o nome da ação (traduzido quando a prosa à vista é a
+     * tradução), não o slug capitalizado. Os outros comandos (`/r`, `/gmr`) seguem texto.
+     */
+    case 'roll': {
+      const alvo = token.command === 'act' ? actTarget(token.body) : null;
+      if (alvo !== null && links?.resolves(alvo) === true) {
+        return (
+          <button
+            type="button"
+            className={cx(styles['xref'], styles['uuid'], styles['clicavel'])}
+            title={token.raw}
+            onClick={(event) => {
+              links.open(alvo, event.ctrlKey || event.metaKey);
+            }}
+            onAuxClick={(event) => {
+              if (event.button === 1) {
+                event.preventDefault();
+                links.open(alvo, true);
+              }
+            }}
+          >
+            {links.label?.(alvo, text) ?? text}
+          </button>
+        );
+      }
       return (
         <span className={cx(styles['xref'], styles['roll'])} title={token.raw}>
           {text}
         </span>
       );
+    }
 
     /*
      * `@Embed[<uuid> inline]` cola a descrição de OUTRA entrada aqui. É como as páginas de

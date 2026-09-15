@@ -476,11 +476,15 @@ function PageTab({
     translated: translation !== null,
     /* Na prosa traduzida, o link mostra o nome traduzido do alvo (Etapa 39). */
     label: (target, label) => {
-      if (translation === null) return label;
       const alvo = reference.resolve(target);
-      return alvo === null
-        ? label
-        : translatedLabel(alvo.entityType, fieldValue(alvo.entity, 'name'), label);
+      if (alvo === null) return label;
+      const nome = fieldValue(alvo.entity, 'name');
+      /* O `[[/act]]` não tem rótulo próprio: é o nome da ação, como a preferência manda. */
+      if (target.startsWith('act:'))
+        return translation !== null
+          ? (translatedName(alvo.entityType, nome) ?? displayName(alvo.entityType, nome))
+          : displayName(alvo.entityType, nome);
+      return translation !== null ? translatedLabel(alvo.entityType, nome, label) : label;
     },
   };
 

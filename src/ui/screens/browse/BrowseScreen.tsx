@@ -284,6 +284,8 @@ export function BrowseScreen({ baseVersion }: BrowseScreenProps) {
    * acontecer: o teste de contrato prende as 50 da tabela de perícias.
    */
   const resolver = (uuid: string): PopoutSubject | null => {
+    /* `act:<slug>` é o `[[/act]]` da prosa (Etapa 52): resolve pelo slug, na fonte de ações. */
+    if (uuid.startsWith('act:')) return resolverSlug('action', uuid.slice('act:'.length));
     const alvo = indiceGlobal.byUuid.get(uuid);
     if (alvo === undefined) return null;
     return {

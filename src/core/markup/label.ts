@@ -120,10 +120,20 @@ export function templateLabel(body: string): string {
  *           um rótulo para a janela de dados do Foundry, não parte da frase. Sai fora.
  *           Vem com e sem espaço antes (`1d4+1#Lost Omens`), então o corte é no `#`.
  */
+/** O slug de um `[[/act …]]`: o corpo sem o `dc=`/`|` que às vezes vem colado. */
+export function actSlug(body: string): string {
+  return (body.split(/\s*(?:dc=|\|)/)[0] ?? body).trim();
+}
+
+/**
+ * O ALVO de um `[[/act]]` no vocabulário da ponte (Etapa 52): `act:<slug>`. A ponte resolve
+ * pelo slug na fonte de ações — é o que faz "Make an Impression" e "Request" virarem link.
+ */
+export function actTarget(body: string): string {
+  return `act:${actSlug(body)}`;
+}
+
 export function rollLabel(command: string, body: string): string {
-  if (command === 'act') {
-    const slug = body.split(/\s*(?:dc=|\|)/)[0] ?? body;
-    return titulo(slug.trim());
-  }
+  if (command === 'act') return titulo(actSlug(body));
   return (body.split('#')[0] ?? body).trim();
 }

@@ -81,6 +81,9 @@ Antes: **Etapa 20** — as tabelas das regras param de quebrar (célula compacta
 linha, `@Embed` cola a entrada apontada, e as duas vassouras em Configurações: apagar as
 entradas aposentadas e apagar a base inteira.
 
+Antes: **Etapa 52** — o `[[/act slug]]` da prosa vira link (1.170 na base): resolvido pelo
+slug na fonte de ações, com o nome da ação como rótulo.
+
 Antes: **Etapa 51** — os filtros em português (a promessa da 28): a tabela de termos do
 pacote alimenta os traços sem descrição, os domínios e a fonte divina; de 402 valores em
 inglês no modo Traduzido para 21 sem termo.

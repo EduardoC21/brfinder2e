@@ -181,6 +181,13 @@ não tem fica no original, sem marca — a lista mistura "Anão" com "Aiuvarin" 
 honesto, não é erro. A lista ordena pelo nome que se vê. A busca acha pelos dois nomes seja
 qual for a escolha: quem procura não quer decidir antes como vai ler.
 
+**O `[[/act]]` é link (Etapa 52, pelo autor: "estamos faltando com links").** A marca de
+"rolar a ação" do Foundry aponta uma ação pelo slug, não pelo UUID — 1.170 na base — e a
+máscara a desenhava em mono, sem clique. Agora resolve pelo slug na fonte de ações e vira
+o mesmo botão em latão do `@UUID`; o rótulo é o NOME da ação (como a preferência manda, e
+traduzido quando a prosa à vista é a tradução), não o slug capitalizado. `/r`, `/gmr`,
+`/br` (rolagens de dado) seguem texto.
+
 **A tradução chega de uma vez (Etapa 50, pelo autor: "a tela fica piscando ao longo da
 tradução").** Enquanto o escopo traduz, a tela fica no que estava e o botão conta —
 "Traduzindo… 3/8"; o texto troca de uma vez, no fim. Duas causas do piscar, as duas
