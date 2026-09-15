@@ -181,6 +181,12 @@ não tem fica no original, sem marca — a lista mistura "Anão" com "Aiuvarin" 
 honesto, não é erro. A lista ordena pelo nome que se vê. A busca acha pelos dois nomes seja
 qual for a escolha: quem procura não quer decidir antes como vai ler.
 
+**Prosa original, citação original (Etapa 53, pelo autor).** O que decide o rótulo de um
+link é ter tradução À VISTA — gravada e mostrada —, nunca a preferência sozinha: com a
+preferência em "Traduzido" mas sem tradução gravada, o texto é o original e os links
+também ("Bony Barrage", não "Bombardeio Ósseo"). Vale para o `@UUID` e para o `[[/act]]`.
+Ao traduzir, o link vem junto com o que já se tem.
+
 **O `[[/act]]` é link (Etapa 52, pelo autor: "estamos faltando com links").** A marca de
 "rolar a ação" do Foundry aponta uma ação pelo slug, não pelo UUID — 1.170 na base — e a
 máscara a desenhava em mono, sem clique. Agora resolve pelo slug na fonte de ações e vira

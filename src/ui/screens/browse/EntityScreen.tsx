@@ -479,11 +479,9 @@ function PageTab({
       const alvo = reference.resolve(target);
       if (alvo === null) return label;
       const nome = fieldValue(alvo.entity, 'name');
-      /* O `[[/act]]` não tem rótulo próprio: é o nome da ação, como a preferência manda. */
+      /* O `[[/act]]` não tem rótulo próprio: é o nome da ação — original na prosa original. */
       if (target.startsWith('act:'))
-        return translation !== null
-          ? (translatedName(alvo.entityType, nome) ?? displayName(alvo.entityType, nome))
-          : displayName(alvo.entityType, nome);
+        return translation !== null ? (translatedName(alvo.entityType, nome) ?? nome) : nome;
       return translation !== null ? translatedLabel(alvo.entityType, nome, label) : label;
     },
   };
