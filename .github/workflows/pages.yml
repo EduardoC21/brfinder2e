@@ -4,9 +4,9 @@ name: Site (GitHub Pages)
 # traduções, preferências — fica no armazenamento do navegador de cada pessoa
 # (IndexedDB), no PC dela; o site só serve os arquivos.
 #
-# Antes de ligar: Settings › Pages › Source = "GitHub Actions"; e a variável de
-# repositório CENTRAL_URL com a URL do worker (Settings › Secrets and variables ›
-# Actions › Variables), para o app já nascer ligado à central e baixar o zip por ela.
+# Antes de ligar: Settings › Pages › Source = "GitHub Actions". A URL da central de
+# produção está fixa em `src/platform/env.ts`; a variável de repositório CENTRAL_URL
+# (Settings › Secrets and variables › Actions › Variables) só a sobrescreve — um fork.
 
 on:
   push:

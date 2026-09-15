@@ -16,8 +16,9 @@ Pages); tudo o que o app grava fica no armazenamento do navegador de cada pessoa
 as fichas, criaturas e o escudo do mestre entrarem, o app passa a executável com uma pasta
 local, e a central continua só para as traduções.
 
-Para soltar a V1 (do autor): subir a central (`server/README.md`), ligar o Pages no
-repositório (Settings › Pages › GitHub Actions) e criar a variável `CENTRAL_URL`.
+Para soltar a V1 (do autor): subir a central (`server/README.md`) e ligar o Pages no
+repositório (Settings › Pages › GitHub Actions). A URL da central de produção está fixa
+em `src/platform/env.ts`; a variável `CENTRAL_URL` só a sobrescreve (um fork).
 
 Próxima, depois da V1: a amostra em larga escala pelo Gemini com os jogadores; cobertura
 por tipo e o dump público da central; e as tabelas da lateral no editor. O PR ao pf2e com
