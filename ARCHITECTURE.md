@@ -1230,7 +1230,7 @@ que acontece em cada momento: o pacote de cada tipo baixa na sincronização e n
 `shared` onde a pessoa não tem nada e conta o uso; "Aceitar todas" faz o mesmo para tudo,
 conferindo a impressão contra `desc/` e `base/` (o cache não é confiado às cegas); com
 "aceitar sem perguntar", o Traduzir procura na central antes do Gemini. A forma `shared`
-não é protegida: "Traduzir a minha" força a refazer (`force`). A URL, o apelido e as duas
+não é protegida: "↻ Traduzir" força a refazer (`force`). A URL, o apelido e as duas
 escolhas moram nas preferências; o id do aparelho, nos segredos. Sem URL, nada acontece.
 `scripts/central-mock.mjs` é a central de mentira em Node, com o mesmo contrato, para
 testar o cliente sem subir nada.

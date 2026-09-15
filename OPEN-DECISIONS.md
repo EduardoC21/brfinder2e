@@ -410,6 +410,12 @@ para quem quiser pagar por ele.
 local sai do padrão, mas fica disponível. O app pode viver como site; o executável, se
 voltar, ganha o cofre do sistema para a chave pelo mesmo contrato de `secrets.ts`.
 
+**Decidido (Etapa 58, pelo autor):** a V1 é SÓ no navegador — consulta e tradução, com o
+que se grava no armazenamento do navegador de cada pessoa. Quando entrarem as fichas, as
+criaturas e o escudo do mestre, o navegador é desligado e o app passa a executável com
+uma pasta local: é a garantia de persistência que esses dados pedem. A central fica para o
+mínimo — as traduções.
+
 ## 16. A central de traduções: compartilhar o que a máquina traduziu `decidido`
 
 Pedido do autor (Etapa 53 → 54): "se cada um fizer sua tradução local, todo mundo uma hora
@@ -424,13 +430,13 @@ app não tinha servidor nenhum; este é o primeiro, e é minúsculo. Sem login.
 
 - **O que sobe:** só tradução de máquina, sozinha, ao terminar. A manual não sobe por
   padrão (opção "enviar também as minhas correções", desligada).
-- **Aceitar:** individualmente ("Compartilhada disponível — Usar · Traduzir a minha") e
+- **Aceitar:** individualmente ("Compartilhada disponível — Usar · ↻ Traduzir") e
   todas de uma vez (Configurações: "N disponíveis — Aceitar todas", grava só onde a pessoa
   não tem nada). E uma preferência "aceitar sem perguntar", desligada por padrão, que faz
   o Traduzir procurar na central antes do Gemini.
 - **Identificar:** a aceita fica com a forma `shared`, com uma etiqueta de uma palavra
   ("compartilhada") ao lado do botão; no editor, "enviada por <apelido>".
-- **Sobrescrever:** `shared` não é protegida como a manual — "Traduzir a minha" sobrescreve.
+- **Sobrescrever:** `shared` não é protegida como a manual — "↻ Traduzir" sobrescreve.
 - **Mais de uma pessoa, mesma entrada:** todas as candidatas válidas ficam, por remetente;
   oferece-se a de mais "Usar", empate pela mais recente; "ver outra" depois. Mesma versão =
   mesma impressão digital do original; versão diferente não é oferecida.

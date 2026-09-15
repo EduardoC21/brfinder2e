@@ -57,7 +57,11 @@ function erro(status: number, why: string): Response {
 /** Só o que a fonte é: o release do sistema pf2e no GitHub. Nada mais passa pelo proxy. */
 const PROXY: Record<string, { readonly base: string; readonly allow: RegExp }> = {
   'gh-dl': { base: 'https://github.com', allow: /^\/foundryvtt\/pf2e\/releases\/download\// },
-  'gh-api': { base: 'https://api.github.com', allow: /^\/repos\/foundryvtt\/pf2e\/releases/ },
+  /* A API: os releases do sistema E os do glossário da comunidade (varredura da 58). */
+  'gh-api': {
+    base: 'https://api.github.com',
+    allow: /^\/repos\/(?:foundryvtt\/pf2e|mclemente\/fvtt-ptbr-pf2e-translation)\/releases/,
+  },
 };
 
 async function proxy(prefixo: string, resto: string, request: Request): Promise<Response> {

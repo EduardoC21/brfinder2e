@@ -9,8 +9,12 @@ import { cx } from '@ui/cx';
 
 import styles from './TopBar.module.css';
 
-/** As abas do mockup. `sheets` só existe a partir da fase da ficha. */
+/**
+ * As abas do mockup. `sheets` só existe a partir da fase da ficha — e a V1 é só consulta
+ * (varredura da Etapa 58, pelo autor): a aba fica fora da tela até haver o que abrir.
+ */
 type Tab = 'lookup' | 'sheets';
+const ABAS: readonly Tab[] = ['lookup'];
 
 export function TopBar({ sync }: { readonly sync: UseSync }) {
   const [tab, setTab] = useState<Tab>('lookup');
@@ -41,7 +45,7 @@ export function TopBar({ sync }: { readonly sync: UseSync }) {
       </div>
 
       <nav className={cx(styles['tabs'], 'chamfer-md')} aria-label={strings.app.name}>
-        {(['lookup', 'sheets'] as const).map((value) => (
+        {ABAS.map((value) => (
           <button
             key={value}
             type="button"

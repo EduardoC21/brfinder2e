@@ -1,85 +1,29 @@
 # brfinder2e
 
-Forja de fichas de **Pathfinder 2e (Remaster)**. Aplicativo desktop, offline, sem backend,
-sem login. A primeira entrega é o **aplicativo de consulta**: sincroniza a base do sistema
-`pf2e` do Foundry (~17.200 entradas) e deixa pesquisar e ler talentos, magias, itens,
-ações, condições, ancestrias, antecedentes e classes.
+Consulta de **Pathfinder 2e (Remaster)** em português, sem login e sem backend de
+conteúdo: o app sincroniza a base do sistema `pf2e` do Foundry (17.801 entradas) direto do
+GitHub deles, guarda no navegador da pessoa, e traduz sob demanda com a chave dela do
+Gemini — com o glossário da comunidade brasileira no prompt e as marcas do Foundry
+blindadas. As traduções de máquina se juntam numa **central** minúscula (um worker na
+Cloudflare) para ninguém traduzir a mesma coisa duas vezes.
 
 Não é um VTT: sem rolagem, combate, iniciativa, tokens, mapas ou bestiário.
 
 ## Estado
 
-**Etapa 10 concluída** — a receita de `spell` e a tela de magias.
+**V1 — a consulta, como site.** Decidido na Etapa 58: a V1 vive só no navegador (GitHub
+Pages); tudo o que o app grava fica no armazenamento do navegador de cada pessoa. Quando
+as fichas, criaturas e o escudo do mestre entrarem, o app passa a executável com uma pasta
+local, e a central continua só para as traduções.
 
-Antes: **Etapa 8** — a tela de consulta e detalhe. Lista em grade única com nome, nível,
-raridade e traços colados ao nome; quantos traços cabem é aritmética sobre uma largura
-medida uma vez, e o que não cabe vira `+N`. Filtros derivados do dado, com E/OU por tópico;
-colunas escolhidas e reordenadas pela pessoa; laterais recolhíveis; painel flutuante; e o
-chanfro do sistema feito com `corner-shape: bevel` nativo.
+Para soltar a V1 (do autor): subir a central (`server/README.md`), ligar o Pages no
+repositório (Settings › Pages › GitHub Actions) e criar a variável `CENTRAL_URL`.
 
-Antes: **Etapa 7** — analisador das dez sintaxes de marcação, com o invariante de ida e
-volta valendo em 100% da base (2,87 milhões de strings, zero quebras).
-Antes: **Etapa 6** — receita de `action`: 766 normalizadas de dois packs, 0 falhas,
-relatório limpo, com o setor vindo da pasta do compêndio (Class 196, Adventure 192,
-Archetype 140, Skill 54, Basic 30…).
-Antes: **Etapa 5** — tela de consulta: trilho de fontes, busca com MiniSearch, filtros
-derivados do dado e navegação por teclado.
-Antes: **Etapa 4** — sistema de design do mockup fixado nos tokens, fontes embarcadas,
-casca com barra de topo, e a sincronização pelo botão da engrenagem: baixa, normaliza,
-**grava em IndexedDB** e mostra o que entrou, o que mudou e o que sumiu. A base sobrevive
-ao recarregar a janela. E `source/` (Etapa 1), motor de receita (Etapa 2) e a receita de
-`condition` (Etapa 3).
+Próxima, depois da V1: a amostra em larga escala pelo Gemini com os jogadores; cobertura
+por tipo e o dump público da central; e as tabelas da lateral no editor. O PR ao pf2e com
+a seção 3 do INCONSISTENCIAS se faz em outro chat, com o repositório deles.
 
-Antes: **Etapa 9** — receita de `feat` e a tela de talentos: 6.284 normalizados de um pack
-entre os sete que o tipo mistura, lista com nível, ordenação pelo cabeçalho, largura de
-coluna pela cerca de Tukey, e a lista desenhando só o que aparece (42.905 nós no DOM
-viraram 416).
-
-Antes: **Etapa 10** — receita de `spell` e a tela de magias: 1.994 normalizadas, o custo de
-conjurar decodificado dos 27 formatos da fonte, filtros de faixa numérica para alcance e
-área, e a defesa montada de quatro campos (a CA de 82 magias existe só no traço `attack`).
-
-Antes: **Etapa 11** — a busca global: Ctrl+Q abre uma paleta que atravessa as quatro
-fontes (9.087 entradas), com filtro por fonte, busca opcional dentro da descrição e
-abertura em painel flutuante.
-
-Antes: **Etapa 12** — receita de `equipment`: 5.869 itens de NOVE tipos do Foundry numa
-receita só, com preço em cobre, volume na escala do jogo e os números de arma, armadura e
-escudo.
-
-Antes: **Etapa 13** — receita e tela de `skill`: as 17 perícias, que não são documento no
-Foundry — saem de uma tabela dentro de um jornal. Primeira fonte que APONTA para outra: as
-ações de cada perícia abrem a entrada que já existe em Ações.
-
-Antes: **Etapa 14** — receita e tela de `background`: os 520 antecedentes, a fonte mais
-textual do projeto (descrição de 370 a 4.860 caracteres, mediana 666). Segunda ponte entre
-fontes: o talento concedido abre a entrada que já existe em Talentos.
-
-Antes: **Etapas 16 e 17** — `familiar` (111 habilidades, a receita mais barata), e as
-duas fontes que o trilho não previa: `deity` (480 divindades, panteões, pactos e
-filosofias) e `domain` (61 páginas de jornal). Segunda forma de ponte, por slug: os
-domínios, a perícia e a arma de uma divindade abrem a entrada correspondente.
-
-Antes: **Etapa 19** — `rule`: as 64 páginas da tela do mestre e do Remaster Changes, com a
-seção do livro como Tipo. Os índices viram sumário clicável — a referência relativa
-`@UUID[.página]`, que só jornal usa, é reescrita na forma canônica.
-
-Antes: **Etapa 22** — `ancestry`, a primeira das três fontes grandes: 50 do pack com a
-mecânica em campos (PV, tamanho, deslocamento, aumentos, falha, visão, idiomas) e a
-página do jornal `Ancestries` colada por `fromJournal`, a segunda tabela de consulta do
-motor. A lista e o painel lateral mostram o básico; a página fica guardada para a tela
-completa.
-
-Antes: **Etapa 21** — o Tipo do familiar, derivado: o livro separa habilidade de familiar
-e de mestre e o pack não; contra o AoN, nome a nome, os 111 viram 65 de familiar, 16 do
-patrono da bruxa, 14 de mestre (a única lista nossa), 10 de familiar específico, 6
-elementais. Familiares específicos (37 no AoN) e companheiros (97) não existem no zip —
-OPEN-DECISIONS #13.
-
-Antes: **Etapa 20** — as tabelas das regras param de quebrar (célula compacta medida em
-40 caracteres, `pf2-icon`, `sup`, `colspan`, `float:right`), o link na prosa perde a
-linha, `@Embed` cola a entrada apontada, e as duas vassouras em Configurações: apagar as
-entradas aposentadas e apagar a base inteira.
+### Histórico das etapas
 
 Antes: **Etapa 57** — a V1 como site: a Action de Pages (`pages.yml`) constrói com
 `BASE_PATH=/brfinder2e/` e `VITE_CENTRAL_URL` (variável do repositório), o app nasce
@@ -91,7 +35,7 @@ move ao passar de candidata, sai ao apagar), "‹ 2/3 ›" para passar, "Traduzi
 em lote no Aceitar todas, e a limpeza diária das candidatas sem voto.
 
 Antes: **Etapa 55** — a central de traduções, lado app: "Usar a compartilhada", a
-etiqueta, "Traduzir a minha", o envio automático ao terminar, "Aceitar todas", o modo
+etiqueta, "↻ Traduzir", o envio automático ao terminar, "Aceitar todas", o modo
 "sem perguntar", o bloco nas configurações; e uma central de mentira em Node para testar.
 
 Antes: **Etapa 54** — a central de traduções, lado servidor: um worker na Cloudflare com
@@ -263,11 +207,6 @@ Antes: **Etapa 23** — `heritage` (311 próprias, fonte fora do trilho) e as 17
 como Tipo da ancestralidade; as abas de lista da tela completa, com o filtro travado —
 Dwarf: Heranças 9, Talentos 48; Nephilim: Talentos 88.
 
-Próxima: o teste de verdade do Gemini com uma chave, e a amostra pelo modelo; depois,
-tradução em lote de uma fonte (com a cota do nível gratuito em mente). O modelo de linguagem (BYOK, 2 ou 3 ferramentas) vem depois — é
-aprimoramento, não o caminho principal. O PR
-ao pf2e com a seção 3 do INCONSISTENCIAS se faz em outro chat, com o repositório deles.
-
 Antes: **Etapa 22e** — a descrição no contexto: o Change Shape aberto pelo Anadi tem o
 texto do Anadi (o `ItemAlteration` de descrição do Foundry, 91 estáticas no zip), com
 "Ver a original". Serve a qualquer fonte que conceda algo.
@@ -291,7 +230,7 @@ e não um substituto.
 ## Requisitos
 
 - Node.js **>= 20.19** (testado em 20.19.5)
-- Rust: **ainda não**. Só faz falta na Etapa 15 (empacotamento). Ver `src-tauri/README.md`.
+- Rust: **ainda não** — a V1 é site. Só faz falta no executável (fichas). Ver `src-tauri/README.md`.
 
 ## Comandos
 
@@ -322,8 +261,9 @@ Detalhe e justificativa em `ARCHITECTURE.md`, seção 2.
 ## Licença e conteúdo
 
 Código do sistema `pf2e` sob Apache 2.0; conteúdo de jogo sob ORC/OGL e acordo Paizo–Foundry.
-**Nada de conteúdo da Paizo é embarcado no instalador nem redistribuído.** O usuário baixa a
-base na primeira execução; o cache de tradução fica local, por usuário.
+**Nada de conteúdo da Paizo é embarcado no site nem redistribuído pelo app.** A pessoa baixa
+a base na primeira execução; as traduções ficam no navegador dela, e as de máquina vão para
+a central da comunidade sob a Community Use Policy (ver `server/README.md`).
 
 ## Documentos
 

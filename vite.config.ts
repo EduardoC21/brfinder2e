@@ -10,7 +10,7 @@ export default defineConfig({
    * `https://<conta>.github.io/brfinder2e/`, e os arquivos precisam saber disso. A Action
    * passa `BASE_PATH=/brfinder2e/`; em dev e no Tauri fica `/`.
    */
-  base: process.env['BASE_PATH'] ?? '/',
+  base: process.env.BASE_PATH ?? '/',
 
   resolve: {
     // Lê os "paths" do tsconfig.app.json. Assim os apelidos (@core/...) existem

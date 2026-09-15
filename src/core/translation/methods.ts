@@ -12,7 +12,7 @@
  *            `platform/secrets.ts`, nunca em `prefs/`. O glossário entra no prompt e na
  *            blindagem. Precisa de internet; o Gemini tem nível gratuito.
  *   shared   a tradução de máquina de OUTRA pessoa, aceita da central (Etapa 55). Não é
- *            protegida como a manual: "Traduzir a minha" a sobrescreve.
+ *            protegida como a manual: "↻ Traduzir" a sobrescreve.
  *
  * O que já foi forma e deixou de ser: o PACOTE DA COMUNIDADE (Etapa 31) é glossário e
  * nomes — alimenta a blindagem, o prompt e a tela — e não traduz prosa: virou

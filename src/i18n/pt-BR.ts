@@ -9,6 +9,13 @@
  */
 export const ptBR = {
   app: {
+    /** A rede de proteção (58): o que aparece se a tela quebrar. */
+    crash: {
+      title: 'Alguma coisa quebrou nesta tela.',
+      description:
+        'A base e as suas traduções continuam guardadas. Recarregue; se voltar a acontecer, mande a mensagem abaixo para quem cuida do app.',
+      reload: 'Recarregar',
+    },
     name: 'Forja',
     shortName: 'BR',
     tagline: 'Forja de fichas de Pathfinder 2e (Remaster)',

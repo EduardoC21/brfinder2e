@@ -284,7 +284,7 @@ export function useTranslate(): {
     fields: readonly TranslateField[],
     /** As coladas: traduzidas em seguida, cada uma na própria chave. */
     extras?: readonly TranslateJob[],
-    /** Refaz mesmo o que já está gravado do mesmo original — "Traduzir a minha" (55). */
+    /** Refaz mesmo o que já está gravado do mesmo original — "↻ Traduzir" (55). */
     force?: boolean,
   ) => void;
 } {
