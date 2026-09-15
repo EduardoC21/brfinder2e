@@ -11,4 +11,4 @@ crons = ["17 4 * * *"]
 binding = "DB"
 database_name = "brfinder2e"
 # Preencha com o id que `npx wrangler d1 create brfinder2e` imprimir.
-database_id = "SUBSTITUA-PELO-ID"
+database_id = "66064abb-5eb2-4748-a5e8-b34673f29e69"
