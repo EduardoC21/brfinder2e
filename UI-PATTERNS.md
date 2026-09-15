@@ -181,6 +181,13 @@ não tem fica no original, sem marca — a lista mistura "Anão" com "Aiuvarin" 
 honesto, não é erro. A lista ordena pelo nome que se vê. A busca acha pelos dois nomes seja
 qual for a escolha: quem procura não quer decidir antes como vai ler.
 
+**A tradução chega de uma vez (Etapa 50, pelo autor: "a tela fica piscando ao longo da
+tradução").** Enquanto o escopo traduz, a tela fica no que estava e o botão conta —
+"Traduzindo… 3/8"; o texto troca de uma vez, no fim. Duas causas do piscar, as duas
+corrigidas: cada campo anunciava e as telas reliam (agora anuncia uma vez, ao terminar —
+ou no erro, para o que já gravou), e a releitura devolvia vazio por um instante (agora
+segura o que já tinha enquanto relê a mesma entrada).
+
 **O escopo inclui o que está colado, não o que está atrás de um clique (Etapa 49, pelo
 autor).** Uma entrada colada por `@Embed` é corpo da página — a pessoa lê ali —, então o
 Traduzir da página dispara em seguida a tradução das coladas, cada uma gravada na própria

@@ -81,6 +81,9 @@ Antes: **Etapa 20** — as tabelas das regras param de quebrar (célula compacta
 linha, `@Embed` cola a entrada apontada, e as duas vassouras em Configurações: apagar as
 entradas aposentadas e apagar a base inteira.
 
+Antes: **Etapa 50** — a tradução chega de uma vez: sem piscar, o botão conta o progresso
+("Traduzindo… 3/8") e o texto troca no fim.
+
 Antes: **Etapa 49** — as entradas coladas (`@Embed`) entram no escopo do Traduzir da
 página, como traduções subsequentes gravadas na própria chave; com a tradução à vista, a
 colada mostra a tradução do alvo. Os links ficam para quando se abre.

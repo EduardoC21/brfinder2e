@@ -308,7 +308,7 @@ export function EntityScreen({
             }
           >
             {tradutor.state.status === 'busy'
-              ? d.translating
+              ? d.translatingProgress(tradutor.state.done, tradutor.state.total)
               : traducaoDaPagina !== null
                 ? mostrando
                   ? d.toggleOriginal

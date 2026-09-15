@@ -587,7 +587,8 @@ export const ptBR = {
       nothingSelected: 'Escolha uma entrada da lista para ver os detalhes.',
       restore: 'Restaurar',
       translate: 'Traduzir',
-      translating: 'Traduzindo…',
+      translatingProgress: (feitos: number, total: number) =>
+        total === 0 ? 'Traduzindo…' : `Traduzindo… ${String(feitos)}/${String(total)}`,
       retranslate: 'Traduzir de novo, sem usar o cache',
       editTranslation: 'Editar a tradução',
       toggleOriginal: 'Ver original',

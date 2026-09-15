@@ -70,27 +70,34 @@ export function useStoredTranslations(
   const { prefs } = usePreferences();
   const language = prefs.translation.language;
   const version = useTranslationsVersion();
-  const token = `${language}/${entityType}/${key}#${String(version)}`;
+  const entrada = `${language}/${entityType}/${key}`;
+  const token = `${entrada}#${String(version)}`;
   const [loaded, setLoaded] = useState<{
+    entrada: string;
     token: string;
     translations: Readonly<Record<string, Translation>>;
-  }>({ token: '', translations: NENHUMA });
+  }>({ entrada: '', token: '', translations: NENHUMA });
 
   useEffect(() => {
     let alive = true;
     readTranslations(store, language, entityType)
       .then((todas) => {
-        if (alive) setLoaded({ token, translations: todas[key] ?? NENHUMA });
+        if (alive) setLoaded({ entrada, token, translations: todas[key] ?? NENHUMA });
       })
       .catch(() => {
-        if (alive) setLoaded({ token, translations: NENHUMA });
+        if (alive) setLoaded({ entrada, token, translations: NENHUMA });
       });
     return () => {
       alive = false;
     };
-  }, [language, entityType, key, token]);
+  }, [language, entityType, key, entrada, token]);
 
-  return loaded.token === token ? loaded.translations : NENHUMA;
+  /*
+   * Enquanto RELÊ a mesma entrada (a versão subiu), devolve o que já tinha: era isto que
+   * piscava — vazio por um instante, original na tela, tradução de volta (Etapa 50). Só
+   * entrada OUTRA começa vazia.
+   */
+  return loaded.entrada === entrada ? loaded.translations : NENHUMA;
 }
 
 /**
@@ -200,7 +207,8 @@ async function provedor(language: string, llmModel: string): Promise<Translation
 
 export type TranslateState =
   | { readonly status: 'idle' }
-  | { readonly status: 'busy' }
+  /** `done` de `total` campos já traduzidos — o botão mostra "Traduzindo… 3/8". */
+  | { readonly status: 'busy'; readonly done: number; readonly total: number }
   | { readonly status: 'error'; readonly message: string };
 
 /** Um campo a traduzir: o nome dele em `desc/` e o texto original (lido de `desc/` se ausente). */
@@ -283,7 +291,13 @@ export function useTranslate(): {
       fields: readonly TranslateField[],
       extras: readonly TranslateJob[] = [],
     ): void => {
-      setState({ status: 'busy' });
+      setState({ status: 'busy', done: 0, total: 0 });
+      /*
+       * ANUNCIA UMA VEZ, no fim (Etapa 50, pelo autor: "a tela fica piscando ao longo da
+       * tradução"): o texto troca de uma vez quando o escopo inteiro terminou; no meio, o
+       * botão mostra o progresso. Se der erro no meio, anuncia o que já gravou.
+       */
+      let gravou = false;
       (async () => {
         const tradutor = await provedor(language, llmModel);
         const disponivel = await tradutor.availability(language);
@@ -291,6 +305,7 @@ export function useTranslate(): {
           setState({ status: 'error', message: strings.settings.translation.llm.noKey });
           return;
         }
+        const trabalhos: { job: TranslateJob; pendentes: { field: string; html: string }[] }[] = [];
         for (const job of [{ entityType, key, fields }, ...extras]) {
           const gravadas = (await readTranslations(store, language, job.entityType))[job.key] ?? {};
           /* O texto que não veio (as coladas) é lido de `desc/`; o `name` sempre vem. */
@@ -305,6 +320,12 @@ export function useTranslate(): {
           const pendentes = textos.filter(
             ({ field, html }) => html !== '' && gravadas[field]?.sourceHash !== sourceHash(html),
           );
+          trabalhos.push({ job, pendentes });
+        }
+        const total = trabalhos.reduce((n, t) => n + t.pendentes.length, 0);
+        let done = 0;
+        setState({ status: 'busy', done, total });
+        for (const { job, pendentes } of trabalhos) {
           for (const { field, html } of pendentes) {
             const traduzido = await tradutor.translate({
               language,
@@ -319,12 +340,15 @@ export function useTranslate(): {
               at: new Date().toISOString(),
               sourceHash: sourceHash(html),
             });
-            /* Anuncia campo a campo: a tela mostra o que já chegou enquanto o resto traduz. */
-            anunciar();
+            gravou = true;
+            done += 1;
+            setState({ status: 'busy', done, total });
           }
         }
+        if (gravou) anunciar();
         setState({ status: 'idle' });
       })().catch((erro: unknown) => {
+        if (gravou) anunciar();
         setState({ status: 'error', message: erro instanceof Error ? erro.message : String(erro) });
       });
     },

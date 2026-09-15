@@ -392,7 +392,10 @@ export function DetailPanel({
               : {
                   has: traducao !== null,
                   showing: mostrandoTraducao,
-                  busy: tradutor.state.status === 'busy',
+                  busy:
+                    tradutor.state.status === 'busy'
+                      ? { done: tradutor.state.done, total: tradutor.state.total }
+                      : null,
                   canTranslate: temChave === true,
                   error: tradutor.state.status === 'error' ? tradutor.state.message : null,
                   onTranslate: () => {
@@ -591,7 +594,8 @@ export function DetailPanel({
 interface TranslationActions {
   readonly has: boolean;
   readonly showing: boolean;
-  readonly busy: boolean;
+  /** O progresso enquanto traduz, ou nulo. */
+  readonly busy: { readonly done: number; readonly total: number } | null;
   readonly error: string | null;
   readonly onTranslate: () => void;
   /** Há como traduzir (chave guardada)? Sem, o botão fica apagado — a edição continua. */
@@ -662,7 +666,7 @@ function Actions({
         <button
           type="button"
           className={cx(styles['action'], 'chamfer-sm')}
-          disabled={translation.busy || (!translation.has && !translation.canTranslate)}
+          disabled={translation.busy !== null || (!translation.has && !translation.canTranslate)}
           title={
             translation.error ??
             (!translation.has && !translation.canTranslate
@@ -671,8 +675,8 @@ function Actions({
           }
           onClick={translation.has ? translation.onToggle : translation.onTranslate}
         >
-          {translation.busy
-            ? t.translating
+          {translation.busy !== null
+            ? t.translatingProgress(translation.busy.done, translation.busy.total)
             : translation.has
               ? translation.showing
                 ? t.toggleOriginal
