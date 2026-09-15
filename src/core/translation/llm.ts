@@ -31,6 +31,12 @@ export interface TranslationGlossary {
   readonly nameOf?: (label: string) => string | null;
 }
 
+/** Um modelo que a chave enxerga: o id que a API aceita, e o nome para a tela. */
+export interface LlmModel {
+  readonly id: string;
+  readonly label: string;
+}
+
 /** Uma conversa de uma volta com o modelo: instrução, pedido, resposta em texto. */
 export interface LlmChat {
   complete(request: {
@@ -38,6 +44,8 @@ export interface LlmChat {
     readonly system: string;
     readonly user: string;
   }): Promise<string>;
+  /** Os modelos que a chave enxerga, do mais indicado ao menos. Ver `pickDefaultModel`. */
+  models(): Promise<readonly LlmModel[]>;
 }
 
 /** O que o provedor precisa saber na hora: o modelo escolhido e se há chave. */
@@ -46,12 +54,23 @@ export interface LlmConfig {
   readonly hasKey: boolean;
 }
 
-/** Os modelos oferecidos. Os dois têm nível gratuito no Google AI Studio (14/09/2026). */
-export const LLM_MODELS: readonly { readonly id: string; readonly label: string }[] = [
-  { id: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash' },
-  { id: 'gemini-2.5-flash-lite', label: 'Gemini 2.5 Flash-Lite' },
-];
+/**
+ * O modelo de PARTIDA, antes de a lista chegar. Medido em 14/09/2026 com a chave do
+ * autor: "gemini-2.5-flash-lite" já dava 404 — nome de modelo muda todo ano, e por isso a
+ * lista de verdade vem da API (`LlmChat.models`), não daqui.
+ */
 export const DEFAULT_LLM_MODEL = 'gemini-2.5-flash';
+
+/**
+ * Qual modelo escolher quando o guardado não está na lista: um "flash" (rápido e com
+ * nível gratuito) sem "lite", senão qualquer "flash", senão o primeiro. `null` sem lista.
+ */
+export function pickDefaultModel(models: readonly LlmModel[], stored: string): string | null {
+  if (models.some((m) => m.id === stored)) return stored;
+  const flash = models.filter((m) => /flash/i.test(m.id));
+  const cheio = flash.find((m) => !/lite/i.test(m.id));
+  return (cheio ?? flash[0] ?? models[0])?.id ?? null;
+}
 
 const INSTRUCAO = `Você traduz texto de regras do Pathfinder 2e (Remaster) do inglês para o português do Brasil, no tom do livro traduzido: direto, em segunda pessoa ("você"), sem floreio.
 

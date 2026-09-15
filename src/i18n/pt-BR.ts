@@ -817,6 +817,7 @@ export const ptBR = {
         description:
           'O Gemini traduz a prosa com o glossário no contexto, usando uma chave sua. Precisa de internet. O que você corrigir à mão nunca é sobrescrito.',
         model: 'Modelo',
+        modelsLoading: 'buscando os modelos que a sua chave enxerga…',
         key: 'Chave de API',
         keyPlaceholder: 'Cole a chave do Google AI Studio',
         keyHint:

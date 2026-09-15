@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
-import { LLM_MODELS, TRANSLATION_LANGUAGES } from '@core/translation/index';
+import { pickDefaultModel, TRANSLATION_LANGUAGES } from '@core/translation/index';
 import { withTranslation } from '@core/prefs/index';
 import { strings } from '@i18n/index';
 import { cx } from '@ui/cx';
@@ -171,6 +171,16 @@ function Llm({
   readonly chave: ReturnType<typeof useLlmKey>;
 }) {
   const [digitada, setDigitada] = useState('');
+  /*
+   * A lista de modelos vem da API (Etapa 47): nome de modelo muda todo ano, e o guardado
+   * pode ter deixado de existir — aí troca-se pelo indicado, sem perguntar.
+   */
+  const { models } = chave;
+  useEffect(() => {
+    if (models.length === 0) return;
+    const indicado = pickDefaultModel(models, model);
+    if (indicado !== null && indicado !== model) onModel(indicado);
+  }, [models, model, onModel]);
   const [teste, setTeste] = useState<
     { status: 'idle' } | { status: 'busy' } | { status: 'done'; texto: string }
   >({ status: 'idle' });
@@ -183,16 +193,20 @@ function Llm({
         <select
           className={cx(styles['seletor'], 'chamfer-sm')}
           value={model}
+          disabled={models.length === 0}
           onChange={(event) => {
             onModel(event.target.value);
           }}
         >
-          {LLM_MODELS.map((m) => (
+          {(models.length === 0 ? [{ id: model, label: model }] : models).map((m) => (
             <option key={m.id} value={m.id}>
               {m.label}
             </option>
           ))}
         </select>
+        {chave.hasKey === true && models.length === 0 && (
+          <span className={styles['formaEstado']}>{t.llm.modelsLoading}</span>
+        )}
       </label>
       <label className={styles['llmLinha']}>
         <span className={styles['llmRotulo']}>{t.llm.key}</span>

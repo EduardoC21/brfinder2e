@@ -16,6 +16,7 @@ import {
   readCommunityDictionary,
   readCommunityNames,
   readCommunityTerms,
+  type LlmModel,
   type TranslationProvider,
 } from '@core/translation/index';
 import { readGlossary } from '@core/store/index';
@@ -335,6 +336,8 @@ export function useHasLlmKey(): boolean | null {
  */
 export function useLlmKey(): {
   readonly hasKey: boolean | null;
+  /** Os modelos que a chave enxerga; vazio sem chave ou enquanto carrega. */
+  readonly models: readonly LlmModel[];
   readonly save: (key: string) => Promise<void>;
   readonly forget: () => Promise<void>;
   readonly test: () => Promise<{ ok: true; text: string } | { ok: false; why: string }>;
@@ -343,6 +346,27 @@ export function useLlmKey(): {
   const { language } = prefs.translation;
   const llmModel = prefs.translation.llm.model;
   const hasKey = useHasLlmKey();
+  /* A lista vem com a chave; sem chave, a lista é vazia — e não há estado a zerar. */
+  const [carregados, setCarregados] = useState<{ hasKey: boolean; models: readonly LlmModel[] }>({
+    hasKey: false,
+    models: [],
+  });
+  useEffect(() => {
+    if (hasKey !== true) return;
+    let alive = true;
+    gemini
+      .models()
+      .then((lista) => {
+        if (alive) setCarregados({ hasKey: true, models: lista });
+      })
+      .catch(() => {
+        if (alive) setCarregados({ hasKey: true, models: [] });
+      });
+    return () => {
+      alive = false;
+    };
+  }, [hasKey]);
+  const models = hasKey === true && carregados.hasKey ? carregados.models : [];
 
   const save = useCallback(async (key: string) => {
     await segredos.set(LLM_KEY_SECRET, key.trim());
@@ -368,5 +392,5 @@ export function useLlmKey(): {
     }
   }, [language, llmModel]);
 
-  return { hasKey, save, forget, test };
+  return { hasKey, models, save, forget, test };
 }

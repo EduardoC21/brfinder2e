@@ -13,7 +13,7 @@
  * ele custaria tempo e cota. Temperatura baixa: tradução pede fidelidade, não variedade.
  */
 
-import type { LlmChat } from '@core/translation/index';
+import type { LlmChat, LlmModel } from '@core/translation/index';
 
 const BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 
@@ -40,8 +40,45 @@ function explicar(status: number, corpo: unknown): string {
   return `erro ${String(status)}${mensagem === '' ? '' : `: ${mensagem.slice(0, 120)}`}`;
 }
 
+/**
+ * `GET /v1beta/models`: os modelos que a chave enxerga e que geram conteúdo. Só os
+ * "gemini" (a lista traz embedding, imagem, áudio…), os mais novos primeiro pelo nome —
+ * a API não diz qual é o atual; o número na frente diz.
+ */
+async function listarModelos(key: string): Promise<readonly LlmModel[]> {
+  const response = await fetch(`${BASE}?pageSize=200`, { headers: { 'x-goog-api-key': key } });
+  const corpo: unknown = await response.json().catch(() => null);
+  if (!response.ok) throw new GeminiError(response.status, explicar(response.status, corpo));
+  const lista =
+    typeof corpo === 'object' && corpo !== null ? (corpo as { models?: unknown }).models : null;
+  if (!Array.isArray(lista)) return [];
+  const modelos: LlmModel[] = [];
+  for (const item of lista) {
+    if (typeof item !== 'object' || item === null) continue;
+    const { name, displayName, supportedGenerationMethods } = item as {
+      name?: unknown;
+      displayName?: unknown;
+      supportedGenerationMethods?: unknown;
+    };
+    if (typeof name !== 'string' || !name.startsWith('models/gemini')) continue;
+    if (
+      !Array.isArray(supportedGenerationMethods) ||
+      !supportedGenerationMethods.includes('generateContent')
+    )
+      continue;
+    const id = name.slice('models/'.length);
+    modelos.push({ id, label: typeof displayName === 'string' ? displayName : id });
+  }
+  return modelos.sort((a, b) => b.id.localeCompare(a.id, 'en', { numeric: true }));
+}
+
 export function createGeminiChat(getKey: () => Promise<string | null>): LlmChat {
   return {
+    async models() {
+      const key = await getKey();
+      if (key === null || key === '') return [];
+      return listarModelos(key);
+    },
     async complete({ model, system, user }) {
       const key = await getKey();
       if (key === null || key === '') throw new GeminiError(null, 'sem chave');
