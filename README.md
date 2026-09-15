@@ -81,6 +81,10 @@ Antes: **Etapa 20** — as tabelas das regras param de quebrar (célula compacta
 linha, `@Embed` cola a entrada apontada, e as duas vassouras em Configurações: apagar as
 entradas aposentadas e apagar a base inteira.
 
+Antes: **Etapa 55** — a central de traduções, lado app: "Usar a compartilhada", a
+etiqueta, "Traduzir a minha", o envio automático ao terminar, "Aceitar todas", o modo
+"sem perguntar", o bloco nas configurações; e uma central de mentira em Node para testar.
+
 Antes: **Etapa 54** — a central de traduções, lado servidor: um worker na Cloudflare com
 um banco D1 (`server/`), o contrato (`/v1/translations`, `/use`, `/stats`, o proxy do
 release), a trava das marcas do lado de lá, o limite por hora sem guardar IP, e o passo a

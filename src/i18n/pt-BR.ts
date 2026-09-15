@@ -596,6 +596,12 @@ export const ptBR = {
         total === 0 ? 'Traduzindo…' : `Traduzindo… ${String(feitos)}/${String(total)}`,
       retranslate: 'Traduzir de novo, sem usar o cache',
       editTranslation: 'Editar a tradução',
+      /** A central (Etapa 55): a compartilhada oferecida, e a etiqueta da forma. */
+      useShared: 'Usar a compartilhada',
+      useSharedTitle: (quem: string | null, usos: number) =>
+        `Tradução compartilhada${quem === null ? '' : ` enviada por ${quem}`}, usada por ${String(usos)} ${usos === 1 ? 'pessoa' : 'pessoas'}. Grava no seu aparelho sem gastar a sua cota.`,
+      retranslateMine: 'Traduzir a minha (sobrescreve a compartilhada)',
+      tag: { shared: 'compartilhada', manual: 'manual' } as Record<string, string>,
       toggleOriginal: 'Ver original',
       toggleTranslated: 'Ver tradução',
       /** O único aviso acima da tradução (Etapa 34; o "Tradução: forma" saiu na 48). */
@@ -799,6 +805,7 @@ export const ptBR = {
       methods: {
         manual: { name: 'Manual' },
         llm: { name: 'Gemini' },
+        shared: { name: 'Compartilhada' },
         community: { name: 'Pacote da comunidade' },
         local: { name: 'Modelo local (antigo)' },
       } as Record<string, { name: string }>,
@@ -836,6 +843,29 @@ export const ptBR = {
         hasKey: 'Chave guardada.',
         testOk: (texto: string) => `Funciona: "${texto}"`,
         testFail: (porque: string) => `Não funcionou: ${porque}`,
+      },
+      /** A central de traduções (Etapa 55). */
+      central: {
+        title: 'Traduções compartilhadas',
+        description:
+          'Uma central onde as traduções de máquina de todo mundo se juntam: o que uma pessoa traduziu, as outras podem usar sem gastar cota. A sua tradução de máquina sobe sozinha ao terminar; a manual, só se você ligar. Nada de chave, nada de conta.',
+        url: 'Endereço da central',
+        urlPlaceholder: 'https://…workers.dev (vazio = sem central)',
+        nickname: 'Apelido',
+        nicknamePlaceholder: 'como você aparece para os outros (opcional)',
+        autoAccept:
+          'Usar as compartilhadas sem perguntar (o Traduzir procura na central antes do Gemini)',
+        sendManual: 'Enviar também as minhas correções manuais',
+        refresh: 'Atualizar',
+        refreshing: 'Atualizando…',
+        refreshed: (n: number) => `${String(n)} traduções oferecidas pela central.`,
+        acceptAll: 'Aceitar todas',
+        accepting: 'Aceitando…',
+        accepted: (n: number) =>
+          n === 0
+            ? 'Nada novo para aceitar: você já tem tudo o que a central oferece.'
+            : `${String(n)} traduções aceitas.`,
+        failed: (porque: string) => `A central não respondeu: ${porque}`,
       },
       storage:
         'As traduções ficam gravadas por língua, fora da base: sobrevivem à sincronização e não são apagadas com ela.',

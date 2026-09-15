@@ -429,3 +429,23 @@
 .contextoLink:hover {
   color: var(--color-data-strong);
 }
+
+/* A etiqueta da forma (55): mono, apagada, uma palavra — "compartilhada", "manual". */
+.etiqueta {
+  align-self: center;
+  font: 400 var(--text-xs) / 1 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+/* "Usar a compartilhada" em latão: é dado da comunidade chegando, não um estado. */
+.usar {
+  border-color: var(--color-data);
+  color: var(--color-data);
+}
+
+.usar:hover:not(:disabled) {
+  background: var(--color-data);
+  color: var(--color-bg);
+}

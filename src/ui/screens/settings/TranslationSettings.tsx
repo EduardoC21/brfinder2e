@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 
 import { pickDefaultModel, TRANSLATION_LANGUAGES } from '@core/translation/index';
-import { withTranslation } from '@core/prefs/index';
+import { withTranslation, type Preferences } from '@core/prefs/index';
 import { strings } from '@i18n/index';
 import { cx } from '@ui/cx';
 import { useCommunityPack } from '@ui/hooks/useCommunityPack';
+import { useCentralActions } from '@ui/hooks/useCentral';
 import { useLlmKey } from '@ui/hooks/useTranslation';
 import { usePreferences } from '@ui/prefs/usePreferences';
 
@@ -96,7 +97,124 @@ export function TranslationSettings() {
         />
         <p className={styles['hint']}>{t.storage}</p>
       </section>
+
+      <section className={styles['section']}>
+        <h3 className={styles['sectionTitle']}>{t.central.title}</h3>
+        <p className={styles['hint']}>{t.central.description}</p>
+        <Central
+          central={prefs.translation.central}
+          onChange={(patch) => {
+            update((atual) =>
+              withTranslation(atual, { central: { ...atual.translation.central, ...patch } }),
+            );
+          }}
+        />
+      </section>
     </>
+  );
+}
+
+/**
+ * O bloco da central (Etapa 55): o endereço (vazio = desligada), o apelido, as duas
+ * escolhas, e os dois botões — Atualizar (baixa o que a central oferece) e Aceitar todas
+ * (grava onde a pessoa não tem nada). O resultado de cada um fica numa linha embaixo.
+ */
+function Central({
+  central,
+  onChange,
+}: {
+  readonly central: Preferences['translation']['central'];
+  readonly onChange: (patch: Partial<Preferences['translation']['central']>) => void;
+}) {
+  const acoes = useCentralActions();
+  const [estado, setEstado] = useState<
+    { status: 'idle' } | { status: 'busy'; texto: string } | { status: 'done'; texto: string }
+  >({ status: 'idle' });
+  const ligada = central.url.trim() !== '';
+  const rodar = (texto: string, acao: () => Promise<number>, pronto: (n: number) => string) => {
+    setEstado({ status: 'busy', texto });
+    acao()
+      .then((n) => {
+        setEstado({ status: 'done', texto: pronto(n) });
+      })
+      .catch((erro: unknown) => {
+        setEstado({
+          status: 'done',
+          texto: t.central.failed(erro instanceof Error ? erro.message : String(erro)),
+        });
+      });
+  };
+  return (
+    <div className={styles['llm']}>
+      <label className={styles['llmLinha']}>
+        <span className={styles['llmRotulo']}>{t.central.url}</span>
+        <input
+          type="url"
+          className={cx(styles['seletor'], styles['llmChave'], 'chamfer-sm')}
+          placeholder={t.central.urlPlaceholder}
+          value={central.url}
+          onChange={(event) => {
+            onChange({ url: event.target.value });
+          }}
+        />
+      </label>
+      <label className={styles['llmLinha']}>
+        <span className={styles['llmRotulo']}>{t.central.nickname}</span>
+        <input
+          type="text"
+          className={cx(styles['seletor'], styles['llmChave'], 'chamfer-sm')}
+          placeholder={t.central.nicknamePlaceholder}
+          value={central.nickname}
+          maxLength={40}
+          onChange={(event) => {
+            onChange({ nickname: event.target.value });
+          }}
+        />
+      </label>
+      <label className={styles['formaLiga']}>
+        <input
+          type="checkbox"
+          checked={central.autoAccept}
+          onChange={(event) => {
+            onChange({ autoAccept: event.target.checked });
+          }}
+        />
+        {t.central.autoAccept}
+      </label>
+      <label className={styles['formaLiga']}>
+        <input
+          type="checkbox"
+          checked={central.sendManual}
+          onChange={(event) => {
+            onChange({ sendManual: event.target.checked });
+          }}
+        />
+        {t.central.sendManual}
+      </label>
+      <div className={styles['llmLinha']}>
+        <button
+          type="button"
+          className={cx(styles['secondary'], styles['formaBotao'], 'chamfer-sm')}
+          disabled={!ligada || estado.status === 'busy'}
+          onClick={() => {
+            rodar(t.central.refreshing, acoes.refresh, t.central.refreshed);
+          }}
+        >
+          {t.central.refresh}
+        </button>
+        <button
+          type="button"
+          className={cx(styles['secondary'], styles['formaBotao'], 'chamfer-sm')}
+          disabled={!ligada || estado.status === 'busy'}
+          onClick={() => {
+            rodar(t.central.accepting, acoes.acceptAll, t.central.accepted);
+          }}
+        >
+          {t.central.acceptAll}
+        </button>
+      </div>
+      {estado.status !== 'idle' && <p className={styles['llmResultado']}>{estado.texto}</p>}
+    </div>
   );
 }
 

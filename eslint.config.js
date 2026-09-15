@@ -7,7 +7,8 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 export default defineConfig([
-  globalIgnores(['dist', 'coverage', 'node_modules', 'src-tauri']),
+  // `central-mock.mjs` é Node puro sem tsconfig: fora do lint tipado.
+  globalIgnores(['dist', 'coverage', 'node_modules', 'src-tauri', 'scripts/central-mock.mjs']),
 
   js.configs.recommended,
 

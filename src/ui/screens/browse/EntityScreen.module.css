@@ -179,3 +179,28 @@
   margin-left: 0;
   padding: 0 var(--space-2);
 }
+
+/* A etiqueta da forma (55) e o "Usar a compartilhada", como na lateral. */
+.etiqueta {
+  margin-left: auto;
+  align-self: center;
+  font: 400 var(--text-xs) / 1 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.etiqueta + .traduzir,
+.usar + .traduzir {
+  margin-left: 0;
+}
+
+.usar {
+  border-color: var(--color-data);
+  color: var(--color-data);
+}
+
+.usar:hover:not(:disabled) {
+  background: var(--color-data);
+  color: var(--color-bg);
+}

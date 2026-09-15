@@ -13,7 +13,7 @@ import {
   type SideSpec,
 } from '@core/browse/index';
 import { parseDescription, pruneForReading } from '@core/markup/index';
-import { NAME_FIELD } from '@core/translation/index';
+import { NAME_FIELD, offeredFor } from '@core/translation/index';
 import { strings } from '@i18n/index';
 import { CollapseToggle } from '@ui/components/CollapseToggle';
 import { ScrollRail } from '@ui/components/ScrollRail';
@@ -30,6 +30,7 @@ import {
   useStoredTranslations,
   useTranslate,
 } from '@ui/hooks/useTranslation';
+import { acceptOffered, useOffered } from '@ui/hooks/useCentral';
 import { usePreferences } from '@ui/prefs/usePreferences';
 
 import { DetailPane } from './DetailPane';
@@ -205,7 +206,26 @@ export function EntityScreen({
       : mostrando
         ? (gravadas[campo]?.html ?? textos[campo] ?? null)
         : (textos[campo] ?? null);
-  const traduzirTela = (): void => {
+  /* A central (55): o que ela oferece para a página desta entrada. */
+  const oferecidas = useOffered(entityType, entity.key);
+  const compartilhada =
+    oferecidas === undefined || campoDaPagina === null || textos === null
+      ? null
+      : offeredFor(
+          { [entity.key]: oferecidas },
+          entity.key,
+          campoDaPagina,
+          textos[campoDaPagina] ?? '',
+        );
+  const usarCompartilhada = (): void => {
+    if (textos === null) return;
+    setVerTraducao(true);
+    void acceptOffered(entityType, entity.key, [
+      { field: NAME_FIELD, original: fieldValue(entity, 'name') },
+      ...camposDaTela.map((campo) => ({ field: campo, original: textos[campo] ?? '' })),
+    ]);
+  };
+  const traduzirTela = (forcar = false): void => {
     if (textos === null) return;
     /* Quem pediu para traduzir quer VER a tradução, seja qual for a preferência. */
     setVerTraducao(true);
@@ -233,6 +253,7 @@ export function EntityScreen({
               };
         },
       ),
+      forcar,
     );
   };
 
@@ -283,6 +304,20 @@ export function EntityScreen({
             ))}
           </nav>
         </ScrollRail>
+        {abaDePagina !== null && traducaoDaPagina !== null && (
+          <span className={styles['etiqueta']}>{d.tag[traducaoDaPagina.method] ?? ''}</span>
+        )}
+        {abaDePagina !== null && traducaoDaPagina === null && compartilhada !== null && (
+          <button
+            type="button"
+            className={cx(styles['traduzir'], styles['usar'], 'chamfer-sm')}
+            disabled={tradutor.state.status === 'busy'}
+            title={d.useSharedTitle(compartilhada.senderName, compartilhada.uses)}
+            onClick={usarCompartilhada}
+          >
+            {d.useShared}
+          </button>
+        )}
         {abaDePagina !== null && (
           <button
             type="button"
@@ -304,7 +339,9 @@ export function EntityScreen({
                 ? () => {
                     setVerTraducao((estava) => !estava);
                   }
-                : traduzirTela
+                : () => {
+                    traduzirTela();
+                  }
             }
           >
             {tradutor.state.status === 'busy'
@@ -314,6 +351,20 @@ export function EntityScreen({
                   ? d.toggleOriginal
                   : d.toggleTranslated
                 : d.translate}
+          </button>
+        )}
+        {abaDePagina !== null && traducaoDaPagina?.method === 'shared' && (
+          <button
+            type="button"
+            className={cx(styles['traduzir'], styles['editar'], 'chamfer-sm')}
+            title={d.retranslateMine}
+            aria-label={d.retranslateMine}
+            disabled={tradutor.state.status === 'busy' || temChave !== true}
+            onClick={() => {
+              traduzirTela(true);
+            }}
+          >
+            ↻
           </button>
         )}
         {abaDePagina !== null && campoDaPagina !== null && textos !== null && (

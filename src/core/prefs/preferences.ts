@@ -101,6 +101,17 @@ export interface TranslationPreferences {
   readonly language: string;
   /** O modelo de linguagem escolhido (Etapa 41). A chave NÃO mora aqui. */
   readonly llm: { readonly model: string };
+  /**
+   * A CENTRAL de traduções (Etapa 55): a URL (vazia = sem central), o apelido que vai
+   * junto com o que a pessoa envia, aceitar as compartilhadas sem perguntar, e enviar
+   * também as correções manuais. A chave da API NÃO mora aqui; o id do aparelho também não.
+   */
+  readonly central: {
+    readonly url: string;
+    readonly nickname: string;
+    readonly autoAccept: boolean;
+    readonly sendManual: boolean;
+  };
 }
 
 export interface Preferences {
@@ -130,6 +141,7 @@ export const DEFAULT_PREFERENCES: Preferences = {
     names: 'original',
     language: 'pt-BR',
     llm: { model: DEFAULT_LLM_MODEL },
+    central: { url: '', nickname: '', autoAccept: false, sendManual: false },
   },
 };
 
@@ -219,7 +231,18 @@ export function readPreferences(stored: unknown): Preferences {
             ? translation['llm']['model']
             : DEFAULT_LLM_MODEL,
       },
+      central: lerCentral(translation['central']),
     },
+  };
+}
+
+function lerCentral(value: unknown): Preferences['translation']['central'] {
+  const c = isRecord(value) ? value : {};
+  return {
+    url: typeof c['url'] === 'string' ? c['url'] : '',
+    nickname: typeof c['nickname'] === 'string' ? c['nickname'] : '',
+    autoAccept: c['autoAccept'] === true,
+    sendManual: c['sendManual'] === true,
   };
 }
 

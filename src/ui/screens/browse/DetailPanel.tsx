@@ -13,7 +13,7 @@ import {
 import type { DescriptionAlteration } from '@core/normalization/index';
 import { isRecord } from '@core/json';
 import { parseDescription, pruneForReading } from '@core/markup/index';
-import { NAME_FIELD } from '@core/translation/index';
+import { NAME_FIELD, offeredFor } from '@core/translation/index';
 import { strings } from '@i18n/index';
 import { ActionCost } from '@ui/components/ActionCost';
 import { CastCost } from '@ui/components/CastCost';
@@ -31,6 +31,7 @@ import {
   useStoredTranslations,
   useTranslate,
 } from '@ui/hooks/useTranslation';
+import { acceptOffered, useOffered } from '@ui/hooks/useCentral';
 import { usePreferences } from '@ui/prefs/usePreferences';
 import { CollapseToggle } from '@ui/components/CollapseToggle';
 import { cx } from '@ui/cx';
@@ -184,6 +185,30 @@ export function DetailPanel({
   }
   /* O editor de tradução (Etapa 43), do `main`: abre por cima de tudo, num portal. */
   const [editando, setEditando] = useState(false);
+  /* O que a central oferece para o `main` desta entrada, se casa com o original (55). */
+  const oferecidas = useOffered(entityType, entity.key);
+  const compartilhada =
+    oferecidas === undefined || original === null
+      ? null
+      : offeredFor({ [entity.key]: oferecidas }, entity.key, 'main', original);
+  const traduzirLateral = (forcar = false): void => {
+    if (original === null) return;
+    /* Quem pediu para traduzir quer VER a tradução, seja qual for a preferência. */
+    setVerTraducao(true);
+    /* O escopo da lateral: a descrição e as tabelas que ela mostra. */
+    tradutor.translate(
+      entityType,
+      entity.key,
+      [
+        ...campoDoNome(entityType, fieldValue(entity, 'name')),
+        { field: 'main', html: original },
+        ...camposDeTabela.map((field) => ({ field, html: tabelas?.[field] ?? '' })),
+      ],
+      /* As coladas (@Embed) da descrição: traduzidas em seguida (49). */
+      embedJobs([original], resolverColada),
+      forcar,
+    );
+  };
   const mostrando = translationShowing ?? verTraducao;
   const resolverColada = (uuid: string) => {
     const alvo = reference?.resolve(uuid);
@@ -402,21 +427,27 @@ export function DetailPanel({
                   canTranslate: temChave === true,
                   error: tradutor.state.status === 'error' ? tradutor.state.message : null,
                   onTranslate: () => {
+                    traduzirLateral();
+                  },
+                  method: traducao?.method ?? null,
+                  offered:
+                    traducao === null && compartilhada !== null
+                      ? { by: compartilhada.senderName, uses: compartilhada.uses }
+                      : null,
+                  onUseShared: () => {
                     if (original === null) return;
-                    /* Quem pediu para traduzir quer VER a tradução, seja qual for a preferência. */
                     setVerTraducao(true);
-                    /* O escopo da lateral: a descrição e as tabelas que ela mostra. */
-                    tradutor.translate(
-                      entityType,
-                      entity.key,
-                      [
-                        ...campoDoNome(entityType, fieldValue(entity, 'name')),
-                        { field: 'main', html: original },
-                        ...camposDeTabela.map((field) => ({ field, html: tabelas?.[field] ?? '' })),
-                      ],
-                      /* As coladas (@Embed) da descrição: traduzidas em seguida (49). */
-                      embedJobs([original], resolverColada),
-                    );
+                    void acceptOffered(entityType, entity.key, [
+                      { field: NAME_FIELD, original: fieldValue(entity, 'name') },
+                      { field: 'main', original },
+                      ...camposDeTabela.map((field) => ({
+                        field,
+                        original: tabelas?.[field] ?? '',
+                      })),
+                    ]);
+                  },
+                  onRetranslate: () => {
+                    traduzirLateral(true);
                   },
                   onToggle: () => {
                     setVerTraducao((estava) => !estava);
@@ -606,6 +637,13 @@ interface TranslationActions {
   readonly onToggle: () => void;
   /** Abre o editor da tradução (Etapa 43). */
   readonly onEdit: () => void;
+  /** A forma da tradução gravada, para a etiqueta (55): `shared`, `manual`… ou nula. */
+  readonly method: string | null;
+  /** A central oferece uma (55): quem mandou e quantos usam; e o que "Usar" faz. */
+  readonly offered: { readonly by: string | null; readonly uses: number } | null;
+  readonly onUseShared: () => void;
+  /** Sobrescrever a compartilhada pela minha (55). */
+  readonly onRetranslate: () => void;
 }
 
 function Actions({
@@ -665,6 +703,24 @@ function Actions({
         fazer. Sem tradução gravada, traduz; com ela, alterna. Enquanto traduz, diz que
         está traduzindo; se falhou, o erro vai para o `title` e o botão volta a oferecer.
       */}
+      {/* A ETIQUETA da forma (55): uma palavra, mono, só para o que não é o normal. */}
+      {translation !== undefined && translation.has && translation.method !== null && (
+        <span className={styles['etiqueta']}>{t.tag[translation.method] ?? ''}</span>
+      )}
+
+      {/* USAR A COMPARTILHADA (55): sem tradução própria e com uma oferecida que casa. */}
+      {translation !== undefined && !translation.has && translation.offered !== null && (
+        <button
+          type="button"
+          className={cx(styles['action'], styles['usar'], 'chamfer-sm')}
+          disabled={translation.busy !== null}
+          title={t.useSharedTitle(translation.offered.by, translation.offered.uses)}
+          onClick={translation.onUseShared}
+        >
+          {t.useShared}
+        </button>
+      )}
+
       {translation !== undefined && (
         <button
           type="button"
@@ -685,6 +741,20 @@ function Actions({
                 ? t.toggleOriginal
                 : t.toggleTranslated
               : t.translate}
+        </button>
+      )}
+
+      {/* TRADUZIR A MINHA (55): a compartilhada não é protegida como a manual. */}
+      {translation?.method === 'shared' && (
+        <button
+          type="button"
+          className={cx(styles['icon'], 'chamfer-sm')}
+          aria-label={t.retranslateMine}
+          title={t.retranslateMine}
+          disabled={translation.busy !== null || !translation.canTranslate}
+          onClick={translation.onRetranslate}
+        >
+          ↻
         </button>
       )}
 

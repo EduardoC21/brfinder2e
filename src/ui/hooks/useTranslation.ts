@@ -31,6 +31,8 @@ import { KEY_PREFERENCES, readPreferences } from '@core/prefs/index';
 import { strings } from '@i18n/index';
 import { usePreferences } from '@ui/prefs/usePreferences';
 
+import { offeredNow, submitBestEffort } from './useCentral';
+
 const store = createIndexedDbStore();
 
 /*
@@ -50,6 +52,11 @@ const anunciar = (): void => {
   versao += 1;
   for (const ouvinte of ouvintes) ouvinte();
 };
+
+/** Para quem grava fora deste módulo (a central): as telas releem. */
+export function announceTranslations(): void {
+  anunciar();
+}
 
 export function useTranslationsVersion(): number {
   return useSyncExternalStore(subscribe, () => versao);
@@ -277,11 +284,14 @@ export function useTranslate(): {
     fields: readonly TranslateField[],
     /** As coladas: traduzidas em seguida, cada uma na própria chave. */
     extras?: readonly TranslateJob[],
+    /** Refaz mesmo o que já está gravado do mesmo original — "Traduzir a minha" (55). */
+    force?: boolean,
   ) => void;
 } {
   const { prefs } = usePreferences();
   const { language } = prefs.translation;
   const llmModel = prefs.translation.llm.model;
+  const autoAceitar = prefs.translation.central.autoAccept;
   const [state, setState] = useState<TranslateState>({ status: 'idle' });
 
   const translate = useCallback(
@@ -290,6 +300,7 @@ export function useTranslate(): {
       key: string,
       fields: readonly TranslateField[],
       extras: readonly TranslateJob[] = [],
+      force = false,
     ): void => {
       setState({ status: 'busy', done: 0, total: 0 });
       /*
@@ -317,8 +328,13 @@ export function useTranslate(): {
             const lido = isRecord(entrada) ? entrada[field] : undefined;
             return { field, html: html ?? (typeof lido === 'string' ? lido : '') };
           });
+          /* Forçado: refaz o que não é manual (a manual nunca se sobrescreve). */
           const pendentes = textos.filter(
-            ({ field, html }) => html !== '' && gravadas[field]?.sourceHash !== sourceHash(html),
+            ({ field, html }) =>
+              html !== '' &&
+              (force
+                ? gravadas[field]?.method !== 'manual'
+                : gravadas[field]?.sourceHash !== sourceHash(html)),
           );
           trabalhos.push({ job, pendentes });
         }
@@ -327,22 +343,36 @@ export function useTranslate(): {
         setState({ status: 'busy', done, total });
         for (const { job, pendentes } of trabalhos) {
           for (const { field, html } of pendentes) {
-            const traduzido = await tradutor.translate({
-              language,
-              entityType: job.entityType,
-              key: job.key,
-              field,
-              html,
-            });
-            await writeTranslation(store, language, job.entityType, job.key, field, {
-              html: traduzido,
-              method: tradutor.id,
-              at: new Date().toISOString(),
-              sourceHash: sourceHash(html),
-            });
+            /*
+             * A CENTRAL antes do modelo (Etapa 55), se a pessoa ligou "aceitar sem
+             * perguntar": uma candidata que casa com este original entra como `shared`,
+             * sem gastar um pedido.
+             */
+            const pronta = autoAceitar
+              ? await offeredNow(job.entityType, job.key, field, html)
+              : null;
+            const gravada: Translation =
+              pronta?.translation ??
+              ({
+                html: await tradutor.translate({
+                  language,
+                  entityType: job.entityType,
+                  key: job.key,
+                  field,
+                  html,
+                }),
+                method: tradutor.id,
+                at: new Date().toISOString(),
+                sourceHash: sourceHash(html),
+              } satisfies Translation);
+            await writeTranslation(store, language, job.entityType, job.key, field, gravada);
             gravou = true;
             done += 1;
             setState({ status: 'busy', done, total });
+            /* O que a máquina traduziu sobe para a central, sem esperar e sem derrubar. */
+            if (pronta === null) {
+              void submitBestEffort(job.entityType, job.key, field, html, gravada, llmModel);
+            }
           }
         }
         if (gravou) anunciar();
@@ -352,7 +382,7 @@ export function useTranslate(): {
         setState({ status: 'error', message: erro instanceof Error ? erro.message : String(erro) });
       });
     },
-    [language, llmModel],
+    [language, llmModel, autoAceitar],
   );
 
   return { state, translate };
@@ -373,13 +403,16 @@ export async function saveManualTranslation(
   original: string,
 ): Promise<void> {
   const { translation } = readPreferences(await store.get(KEY_PREFERENCES));
-  await writeTranslation(store, translation.language, entityType, key, field, {
+  const gravada: Translation = {
     html,
     method: 'manual',
     at: new Date().toISOString(),
     sourceHash: sourceHash(original),
-  });
+  };
+  await writeTranslation(store, translation.language, entityType, key, field, gravada);
   anunciar();
+  /* Sobe só se a pessoa ligou "enviar também as minhas correções" (a central confere). */
+  void submitBestEffort(entityType, key, field, original, gravada, null);
 }
 
 export async function deleteStoredTranslation(

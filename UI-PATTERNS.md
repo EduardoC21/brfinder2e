@@ -181,6 +181,15 @@ não tem fica no original, sem marca — a lista mistura "Anão" com "Aiuvarin" 
 honesto, não é erro. A lista ordena pelo nome que se vê. A busca acha pelos dois nomes seja
 qual for a escolha: quem procura não quer decidir antes como vai ler.
 
+**A central de traduções na tela (Etapa 55, pelo autor).** Sem tradução sua e com uma
+compartilhada que casa com o original, a barra ganha "Usar a compartilhada" em latão (é
+dado da comunidade chegando), com "enviada por <apelido>, usada por N" no `title`. A
+aceita fica com a etiqueta **compartilhada** (mono, uma palavra) e um ↻ "Traduzir a
+minha", que sobrescreve; a manual ganha a etiqueta **manual** e nada a sobrescreve. Nas
+configurações, o bloco "Traduções compartilhadas": endereço, apelido, "usar sem
+perguntar", "enviar também as minhas correções", Atualizar e Aceitar todas — quem chega
+aperta um botão e sai lendo em português sem gastar cota.
+
 **Prosa original, citação original (Etapa 53, pelo autor).** O que decide o rótulo de um
 link é ter tradução À VISTA — gravada e mostrada —, nunca a preferência sozinha: com a
 preferência em "Traduzido" mas sem tradução gravada, o texto é o original e os links

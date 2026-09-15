@@ -1203,7 +1203,19 @@ testada pelo vitest do projeto (projeto `server`); `server/src/index.ts` liga is
 e ao D1. O contrato está no cabeçalho dele. Sem login: id anônimo por aparelho, apelido
 opcional, limite por hora pelo hash do IP com sal. E o proxy `/gh-dl`, `/gh-api` do
 release do Foundry, com a mesma forma do proxy do Vite — é o que permite o app viver como
-site. O cliente (Usar, envio automático, Aceitar todas) é a etapa seguinte.
+site. O cliente é a Etapa 55: `core/translation/central.ts` (a porta `CentralPort`, o cache
+`trans/<língua>/central/<tipo>`, `offeredFor` pela impressão digital, `marksOf` para a
+trava, o envio e o "Usar"), `platform/central-fetch.ts`, e `ui/hooks/useCentral.ts` — o
+que acontece em cada momento: o pacote de cada tipo baixa na sincronização e no
+"Atualizar"; ao terminar uma tradução, cada campo de máquina sobe em `submitBestEffort`
+(falha em silêncio: a central fora do ar não atrapalha quem traduz); "Usar" grava como
+`shared` onde a pessoa não tem nada e conta o uso; "Aceitar todas" faz o mesmo para tudo,
+conferindo a impressão contra `desc/` e `base/` (o cache não é confiado às cegas); com
+"aceitar sem perguntar", o Traduzir procura na central antes do Gemini. A forma `shared`
+não é protegida: "Traduzir a minha" força a refazer (`force`). A URL, o apelido e as duas
+escolhas moram nas preferências; o id do aparelho, nos segredos. Sem URL, nada acontece.
+`scripts/central-mock.mjs` é a central de mentira em Node, com o mesmo contrato, para
+testar o cliente sem subir nada.
 
 ### Onde a tradução mora: a quinta camada
 

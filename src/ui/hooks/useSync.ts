@@ -37,6 +37,7 @@ import {
 import { createFetchHttp, viteProxyRewrite } from '@platform/http-fetch';
 import { createIndexedDbStore } from '@platform/store-indexeddb';
 import { KEY_PREFERENCES, readPreferences } from '@core/prefs/index';
+import { refreshAllCentral } from '@ui/hooks/useCentral';
 import { downloadCommunityPack } from '@ui/hooks/useCommunityPack';
 
 /** Uma linha do relatório: o que entrou, o que mudou, e o que está aposentado. */
@@ -341,6 +342,12 @@ export function useSync(): UseSync {
           await downloadCommunityPack(translation.language);
         } catch {
           // Sem rede para o GitHub do glossário, ou repositório fora do ar: fica para depois.
+        }
+        /* E o cache da central (Etapa 55), se houver uma: também sem derrubar nada. */
+        try {
+          await refreshAllCentral();
+        } catch {
+          // A central fora do ar não é problema da sincronização.
         }
 
         const byType = new Map(persisted.types.map((entry) => [entry.type, entry]));

@@ -11,6 +11,8 @@
  *   llm      um modelo de linguagem por API — BYOK: a chave é da pessoa, guardada em
  *            `platform/secrets.ts`, nunca em `prefs/`. O glossário entra no prompt e na
  *            blindagem. Precisa de internet; o Gemini tem nível gratuito.
+ *   shared   a tradução de máquina de OUTRA pessoa, aceita da central (Etapa 55). Não é
+ *            protegida como a manual: "Traduzir a minha" a sobrescreve.
  *
  * O que já foi forma e deixou de ser: o PACOTE DA COMUNIDADE (Etapa 31) é glossário e
  * nomes — alimenta a blindagem, o prompt e a tela — e não traduz prosa: virou
@@ -23,9 +25,10 @@
  * refeita.
  */
 
-export type TranslationMethodId = 'manual' | 'llm' | 'community' | 'local';
+export type TranslationMethodId = 'manual' | 'llm' | 'shared' | 'community' | 'local';
 
-const IDS: ReadonlySet<string> = new Set(['manual', 'llm', 'community', 'local']);
+/** `shared` (Etapa 55): a tradução ACEITA da central — de máquina, feita por outra pessoa. */
+const IDS: ReadonlySet<string> = new Set(['manual', 'llm', 'shared', 'community', 'local']);
 
 /** As línguas que o app sabe pedir. Só pt-BR tem caminho hoje; as outras entram pelo mesmo contrato. */
 export const TRANSLATION_LANGUAGES: readonly string[] = ['pt-BR'];
