@@ -59,17 +59,19 @@ export interface LlmConfig {
  * autor: "gemini-2.5-flash-lite" já dava 404 — nome de modelo muda todo ano, e por isso a
  * lista de verdade vem da API (`LlmChat.models`), não daqui.
  */
-export const DEFAULT_LLM_MODEL = 'gemini-2.5-flash';
+export const DEFAULT_LLM_MODEL = 'gemini-flash-latest';
 
 /**
- * Qual modelo escolher quando o guardado não está na lista: um "flash" (rápido e com
- * nível gratuito) sem "lite", senão qualquer "flash", senão o primeiro. `null` sem lista.
+ * Qual modelo escolher quando o guardado não está na lista: o apelido `gemini-flash-latest`
+ * (o Google o mantém apontando para o Flash atual), senão um "flash" sem "lite" (rápido e
+ * com nível gratuito), senão qualquer flash, senão o primeiro. `null` sem lista.
  */
 export function pickDefaultModel(models: readonly LlmModel[], stored: string): string | null {
   if (models.some((m) => m.id === stored)) return stored;
-  const flash = models.filter((m) => /flash/i.test(m.id));
+  const latest = models.find((m) => m.id === 'gemini-flash-latest');
+  const flash = models.filter((m) => /flash/i.test(m.id) && !/latest/i.test(m.id));
   const cheio = flash.find((m) => !/lite/i.test(m.id));
-  return (cheio ?? flash[0] ?? models[0])?.id ?? null;
+  return (latest ?? cheio ?? flash[0] ?? models[0])?.id ?? null;
 }
 
 const INSTRUCAO = `Você traduz texto de regras do Pathfinder 2e (Remaster) do inglês para o português do Brasil, no tom do livro traduzido: direto, em segunda pessoa ("você"), sem floreio.

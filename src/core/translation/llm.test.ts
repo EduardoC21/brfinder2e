@@ -65,6 +65,9 @@ describe('pickDefaultModel', () => {
   it('mantém o guardado se existe; senão um flash sem lite; senão o primeiro', () => {
     expect(pickDefaultModel(lista, 'gemini-3.1-pro')).toBe('gemini-3.1-pro');
     expect(pickDefaultModel(lista, 'gemini-2.5-flash')).toBe('gemini-3.1-flash');
+    expect(
+      pickDefaultModel([...lista, { id: 'gemini-flash-latest', label: 'Latest' }], 'nada'),
+    ).toBe('gemini-flash-latest');
     expect(pickDefaultModel([{ id: 'gemini-x', label: 'x' }], 'nada')).toBe('gemini-x');
     expect(pickDefaultModel([], 'nada')).toBeNull();
   });

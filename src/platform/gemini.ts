@@ -9,8 +9,9 @@
  * deles, que avisa que a chave fica visível para quem tem o app: é o esperado no BYOK, a
  * chave é de quem usa).
  *
- * `thinkingBudget: 0` desliga o raciocínio do 2.5 Flash: tradução não precisa dele, e
- * ele custaria tempo e cota. Temperatura baixa: tradução pede fidelidade, não variedade.
+ * Temperatura baixa: tradução pede fidelidade, não variedade. Nada mais na configuração
+ * de geração — cada parâmetro a mais é um 400 num modelo novo (medido com
+ * `thinkingConfig` nos 3.x).
  */
 
 import type { LlmChat, LlmModel } from '@core/translation/index';
@@ -41,10 +42,14 @@ function explicar(status: number, corpo: unknown): string {
 }
 
 /**
- * `GET /v1beta/models`: os modelos que a chave enxerga e que geram conteúdo. Só os
- * "gemini" (a lista traz embedding, imagem, áudio…), os mais novos primeiro pelo nome —
- * a API não diz qual é o atual; o número na frente diz.
+ * `GET /v1beta/models`: os modelos que a chave enxerga e que geram conteúdo. A lista crua
+ * traz de tudo — Robotics, Transcribe, TTS, Omni, imagem, Preview, "custom tools" — e só
+ * os Flash/Pro de TEXTO servem para traduzir (medido com a chave do autor, 14/09/2026:
+ * 20 itens, 8 úteis). Os apelidos "latest" (`gemini-flash-latest`) vêm primeiro: o Google
+ * os mantém apontando para o atual, e é o que evita nome gravado envelhecer.
  */
+const MODELO_DE_TEXTO = /^gemini-(?:\d+(?:\.\d+)?-)?(?:flash|pro)(?:-lite)?(?:-latest)?$/;
+
 async function listarModelos(key: string): Promise<readonly LlmModel[]> {
   const response = await fetch(`${BASE}?pageSize=200`, { headers: { 'x-goog-api-key': key } });
   const corpo: unknown = await response.json().catch(() => null);
@@ -67,9 +72,13 @@ async function listarModelos(key: string): Promise<readonly LlmModel[]> {
     )
       continue;
     const id = name.slice('models/'.length);
+    if (!MODELO_DE_TEXTO.test(id)) continue;
     modelos.push({ id, label: typeof displayName === 'string' ? displayName : id });
   }
-  return modelos.sort((a, b) => b.id.localeCompare(a.id, 'en', { numeric: true }));
+  const latest = (m: LlmModel): number => (m.id.includes('latest') ? 0 : 1);
+  return modelos.sort(
+    (a, b) => latest(a) - latest(b) || b.id.localeCompare(a.id, 'en', { numeric: true }),
+  );
 }
 
 export function createGeminiChat(getKey: () => Promise<string | null>): LlmChat {
@@ -90,7 +99,8 @@ export function createGeminiChat(getKey: () => Promise<string | null>): LlmChat 
           body: JSON.stringify({
             system_instruction: { parts: [{ text: system }] },
             contents: [{ role: 'user', parts: [{ text: user }] }],
-            generationConfig: { temperature: 0.2, thinkingConfig: { thinkingBudget: 0 } },
+            /* Só a temperatura: `thinkingConfig` dava 400 nos modelos 3.x (medido 14/09/2026). */
+            generationConfig: { temperature: 0.2 },
           }),
         });
       } catch (cause) {
