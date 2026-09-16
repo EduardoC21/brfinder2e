@@ -62,12 +62,22 @@ describe('pickDefaultModel', () => {
     { id: 'gemini-3.1-flash-lite', label: 'Lite' },
     { id: 'gemini-3.1-flash', label: 'Flash' },
   ];
-  it('mantém o guardado se existe; senão um flash sem lite; senão o primeiro', () => {
+  it('mantém o guardado se existe; senão lite-latest, latest, um flash-lite; senão o primeiro', () => {
     expect(pickDefaultModel(lista, 'gemini-3.1-pro')).toBe('gemini-3.1-pro');
-    expect(pickDefaultModel(lista, 'gemini-2.5-flash')).toBe('gemini-3.1-flash');
+    expect(pickDefaultModel(lista, 'gemini-2.5-flash')).toBe('gemini-3.1-flash-lite');
     expect(
       pickDefaultModel([...lista, { id: 'gemini-flash-latest', label: 'Latest' }], 'nada'),
     ).toBe('gemini-flash-latest');
+    expect(
+      pickDefaultModel(
+        [
+          ...lista,
+          { id: 'gemini-flash-latest', label: 'Latest' },
+          { id: 'gemini-flash-lite-latest', label: 'Lite latest' },
+        ],
+        'nada',
+      ),
+    ).toBe('gemini-flash-lite-latest');
     expect(pickDefaultModel([{ id: 'gemini-x', label: 'x' }], 'nada')).toBe('gemini-x');
     expect(pickDefaultModel([], 'nada')).toBeNull();
   });

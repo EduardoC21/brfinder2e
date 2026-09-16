@@ -57,21 +57,24 @@ export interface LlmConfig {
 /**
  * O modelo de PARTIDA, antes de a lista chegar. Medido em 14/09/2026 com a chave do
  * autor: "gemini-2.5-flash-lite" já dava 404 — nome de modelo muda todo ano, e por isso a
- * lista de verdade vem da API (`LlmChat.models`), não daqui.
+ * lista de verdade vem da API (`LlmChat.models`), não daqui. O apelido `-lite-latest` é
+ * o que o autor mediu funcionando com os jogadores na V1 (15/09/2026): entra na frente.
  */
-export const DEFAULT_LLM_MODEL = 'gemini-flash-latest';
+export const DEFAULT_LLM_MODEL = 'gemini-flash-lite-latest';
 
 /**
- * Qual modelo escolher quando o guardado não está na lista: o apelido `gemini-flash-latest`
- * (o Google o mantém apontando para o Flash atual), senão um "flash" sem "lite" (rápido e
- * com nível gratuito), senão qualquer flash, senão o primeiro. `null` sem lista.
+ * Qual modelo escolher quando o guardado não está na lista: o apelido
+ * `gemini-flash-lite-latest` (o Google o mantém apontando para o Flash-Lite atual — o
+ * mais barato na cota gratuita, e o medido na V1), senão `gemini-flash-latest`, senão um
+ * "flash-lite" nomeado, senão qualquer flash, senão o primeiro. `null` sem lista.
  */
 export function pickDefaultModel(models: readonly LlmModel[], stored: string): string | null {
   if (models.some((m) => m.id === stored)) return stored;
+  const liteLatest = models.find((m) => m.id === 'gemini-flash-lite-latest');
   const latest = models.find((m) => m.id === 'gemini-flash-latest');
   const flash = models.filter((m) => /flash/i.test(m.id) && !/latest/i.test(m.id));
-  const cheio = flash.find((m) => !/lite/i.test(m.id));
-  return (latest ?? cheio ?? flash[0] ?? models[0])?.id ?? null;
+  const lite = flash.find((m) => /lite/i.test(m.id));
+  return (liteLatest ?? latest ?? lite ?? flash[0] ?? models[0])?.id ?? null;
 }
 
 const INSTRUCAO = `Você traduz texto de regras do Pathfinder 2e (Remaster) do inglês para o português do Brasil, no tom do livro traduzido: direto, em segunda pessoa ("você"), sem floreio.

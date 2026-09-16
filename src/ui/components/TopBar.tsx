@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 
 import { strings } from '@i18n/index';
+import { HelpPanel } from '@ui/components/HelpPanel';
 import { IconButton } from '@ui/components/IconButton';
 import type { UseSync } from '@ui/hooks/useSync';
 import { SettingsPanel } from '@ui/screens/settings/SettingsPanel';
@@ -20,6 +21,12 @@ export function TopBar({ sync }: { readonly sync: UseSync }) {
   const [tab, setTab] = useState<Tab>('lookup');
   const [settingsOpen, setSettingsOpen] = useState(false);
   const gear = useRef<HTMLButtonElement>(null);
+  /* A ajuda (59): o "?" antes da engrenagem; abrir um fecha o outro — é o mesmo lugar. */
+  const [helpOpen, setHelpOpen] = useState(false);
+  const help = useRef<HTMLButtonElement>(null);
+  const closeHelp = useCallback(() => {
+    setHelpOpen(false);
+  }, []);
 
   const closeSettings = useCallback(() => {
     setSettingsOpen(false);
@@ -69,15 +76,32 @@ export function TopBar({ sync }: { readonly sync: UseSync }) {
         </span>
 
         <IconButton
+          ref={help}
+          label={strings.help.open}
+          expanded={helpOpen}
+          onClick={() => {
+            setSettingsOpen(false);
+            setHelpOpen((open) => !open);
+          }}
+        >
+          <span className={styles['helpMark']} aria-hidden="true">
+            ?
+          </span>
+        </IconButton>
+
+        <IconButton
           ref={gear}
           label={strings.settings.open}
           expanded={settingsOpen}
           onClick={() => {
+            setHelpOpen(false);
             setSettingsOpen((open) => !open);
           }}
         >
           <GearIcon />
         </IconButton>
+
+        {helpOpen && <HelpPanel anchor={help} onClose={closeHelp} />}
 
         {settingsOpen && (
           <SettingsPanel

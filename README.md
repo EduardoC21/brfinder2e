@@ -26,6 +26,12 @@ a seção 3 do INCONSISTENCIAS se faz em outro chat, com o repositório deles.
 
 ### Histórico das etapas
 
+Antes: **Etapa 59** — a ajuda dentro do app: o "?" ao lado da engrenagem abre um painel
+ancorado (`HelpPanel`) com o que se mandaria no grupo — sincronizar, consultar (lateral
+e tela completa ⛶), traduzir (chave, modelo, glossário), a central (apelido, endereço
+vazio), bugs e o AoN, só PC. O modelo padrão passa a `gemini-flash-lite-latest` (o que o
+autor mediu funcionando na V1), e o campo da central ganha a dica "vazio = a do projeto".
+
 Antes: **Etapa 57** — a V1 como site: a Action de Pages (`pages.yml`) constrói com
 `BASE_PATH=/brfinder2e/` e `VITE_CENTRAL_URL` (variável do repositório), o app nasce
 ligado à central, e o download do release passa pelo proxy dela (`setProxyBase`) —

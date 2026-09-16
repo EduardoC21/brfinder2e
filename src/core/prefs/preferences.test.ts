@@ -46,7 +46,7 @@ describe('readPreferences', () => {
       display: 'original',
       names: 'original',
       language: 'pt-BR',
-      llm: { model: 'gemini-flash-latest' },
+      llm: { model: 'gemini-flash-lite-latest' },
       central: { url: '', nickname: '', autoAccept: false, sendManual: false },
     });
     expect(lido.layout).toEqual({

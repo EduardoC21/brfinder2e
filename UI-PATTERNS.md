@@ -938,6 +938,21 @@ sincronizar — a versão da base, para a tela, é `syncedAt` + `revision`.
 
 ---
 
+## 6j-2. A ajuda é um painel, não uma página
+
+**Decidido (Etapa 59, pelo autor: "desde que discreta"):** um "?" ao lado da engrenagem,
+com o mesmo botão de ícone e o mesmo painel ancorado (`useDismissable`: Esc ou clique
+fora). Abrir um fecha o outro — ocupam o mesmo canto. Não é um setor das configurações:
+ajuda não é preferência, e quem procura ajuda não abre uma engrenagem. Não é uma rota nem
+um banner: a V1 é uma tela só, e um aviso permanente grita para quem já leu.
+
+O texto vive no i18n como DADOS — seções de título e parágrafos — e o componente só
+desenha. É o mesmo texto que se manda no grupo dos jogadores, guardado onde eles vão
+procurar quando esquecerem. Prosa em `text-sm`, um tamanho acima do `hint` das
+configurações: é para ler, não para rodapé.
+
+---
+
 ## 6k. A tela completa da entrada
 
 **Decidido (Etapa 22b), pelo autor:** as três fontes grandes — ancestralidade, classe,

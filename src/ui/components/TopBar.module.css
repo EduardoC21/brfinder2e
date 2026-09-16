@@ -85,3 +85,8 @@
 .stale {
   color: var(--color-state);
 }
+
+/* O "?" da ajuda (59): um glifo de texto no mesmo botão de ícone da engrenagem. */
+.helpMark {
+  font: 600 var(--text-md) / 1 var(--font-display);
+}

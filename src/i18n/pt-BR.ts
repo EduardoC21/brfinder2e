@@ -24,6 +24,59 @@ export const ptBR = {
     lookup: 'Consulta',
     sheets: 'Fichas',
   },
+  /**
+   * A AJUDA (Etapa 59, pelo autor): o painel do "?" ao lado da engrenagem. Texto como
+   * dados — seções de título e parágrafos — para o componente só desenhar. É o que se
+   * mandaria no grupo dos jogadores, guardado onde eles vão procurar.
+   */
+  help: {
+    open: 'Ajuda',
+    title: 'Como usar',
+    sections: [
+      {
+        title: 'O que é',
+        body: [
+          'Consulta das regras de Pathfinder 2e (Remaster): ancestralidades, classes, talentos, magias, itens, condições e regras. Sem login e sem instalar nada.',
+          'Tudo o que você baixa e traduz fica guardado no seu navegador — use sempre o mesmo navegador, no mesmo aparelho. Por enquanto só há versão para PC.',
+        ],
+      },
+      {
+        title: 'Primeira vez: sincronizar',
+        body: [
+          'Engrenagem › Sincronização › Sincronizar. Leva uns 40 segundos: baixa a base oficial do sistema pf2e do Foundry (17 mil entradas) e prepara tudo. Só uma vez; quando sair versão nova, é o mesmo botão.',
+          'Junto com a base vem o glossário da comunidade, que o tradutor usa para os termos do jogo. Confira em Tradução › Glossário da comunidade; se disser "ainda não baixado", clique Atualizar.',
+        ],
+      },
+      {
+        title: 'Consultar',
+        body: [
+          'Navegue pelas categorias da esquerda ou use a busca — ela encontra pelo nome em inglês e em português. Um link dentro de um texto abre a entrada ligada. Os filtros acham por nível, tradição, traço e afins.',
+          'Clicar numa entrada abre a lateral. Ancestralidades e classes têm mais que isso: o botão ⛶ no alto da lateral abre a tela completa, com as abas de heranças, talentos, progressão e o texto do livro.',
+        ],
+      },
+      {
+        title: 'Traduzir',
+        body: [
+          'A tradução é sob demanda, com uma chave gratuita do Google Gemini que é sua: crie em aistudio.google.com/apikey (conta Google, sem cartão). Depois, engrenagem › Tradução › Tradutor › cole a chave › Guardar › Testar.',
+          'No campo Modelo, dê preferência ao "Gemini Flash-Lite Latest": é o que está funcionando bem na cota gratuita. Em qualquer entrada, clique Traduzir; em alguns segundos o texto aparece em português, com os termos do glossário.',
+          'Em Tradução você escolhe se vê o original ou o traduzido por padrão, e se os nomes das entradas aparecem traduzidos. Achou algo estranho? O lápis ✎ corrige na mão, e a sua correção nunca é sobrescrita.',
+        ],
+      },
+      {
+        title: 'Tradução coletiva',
+        body: [
+          'Toda tradução que alguém faz sobe sozinha para uma central compartilhada. Ao abrir algo que outra pessoa já traduziu, aparece "Usar a compartilhada" — sem gastar a sua cota. Em Tradução › Traduções compartilhadas › Aceitar todas você puxa tudo o que já existe de uma vez.',
+          'Nessa seção, coloque um Apelido (é como você aparece para os outros) e deixe o Endereço da central vazio: vazio é a central do projeto.',
+        ],
+      },
+      {
+        title: 'Bugs e erros de dados',
+        body: [
+          'A base vem do Foundry e não é perfeita: às vezes um dado, um link ou um texto não bate com o Archives of Nethys. Qualquer bug, ou discordância com o AoN, mande para quem cuida do app (print + nome da entrada) — entra nas próximas atualizações. O site atualiza sozinho; é só recarregar.',
+        ],
+      },
+    ] as readonly { readonly title: string; readonly body: readonly string[] }[],
+  },
   base: {
     empty: 'base ausente',
     /** `entries` e `version` entram por interpolação em quem monta a linha. */
@@ -865,6 +918,8 @@ export const ptBR = {
           'Uma central onde as traduções de máquina de todo mundo se juntam: o que uma pessoa traduziu, as outras podem usar sem gastar cota. A sua tradução de máquina sobe sozinha ao terminar; a manual, só se você ligar. Nada de chave, nada de conta.',
         url: 'Endereço da central',
         urlPlaceholder: 'https://…workers.dev (vazio = sem central)',
+        /** Quando o build traz a central do projeto (59): vazio é ela. */
+        urlDefaultHint: 'Vazio usa a central do projeto. Preencha só para apontar para outra.',
         nickname: 'Apelido',
         nicknamePlaceholder: 'como você aparece para os outros (opcional)',
         autoAccept:

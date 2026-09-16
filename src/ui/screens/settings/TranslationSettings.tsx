@@ -159,6 +159,9 @@ function Central({
           }}
         />
       </label>
+      {defaultCentralUrl() !== '' && (
+        <p className={styles['formaEstado']}>{t.central.urlDefaultHint}</p>
+      )}
       <label className={styles['llmLinha']}>
         <span className={styles['llmRotulo']}>{t.central.nickname}</span>
         <input
