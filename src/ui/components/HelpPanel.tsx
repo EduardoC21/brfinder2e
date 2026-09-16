@@ -8,6 +8,9 @@ import styles from './HelpPanel.module.css';
 
 const t = strings.help;
 
+/** Um parágrafo que é só uma URL: vira link, em linha própria, para ser achado de longe. */
+const SO_URL = /^https?:\/\/\S+$/;
+
 /**
  * A ajuda (Etapa 59, pelo autor): o painel do "?" ao lado da engrenagem, com o mesmo
  * comportamento do de configurações — ancorado no botão, some com Esc ou clique fora.
@@ -34,11 +37,24 @@ export function HelpPanel({
       {t.sections.map((section) => (
         <section key={section.title} className={styles['section']}>
           <h3 className={styles['sectionTitle']}>{section.title}</h3>
-          {section.body.map((paragraph) => (
-            <p key={paragraph} className={styles['text']}>
-              {paragraph}
-            </p>
-          ))}
+          {section.body.map((paragraph) =>
+            SO_URL.test(paragraph) ? (
+              <p key={paragraph} className={styles['text']}>
+                <a
+                  className={styles['link']}
+                  href={paragraph}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {paragraph}
+                </a>
+              </p>
+            ) : (
+              <p key={paragraph} className={styles['text']}>
+                {paragraph}
+              </p>
+            ),
+          )}
         </section>
       ))}
     </div>

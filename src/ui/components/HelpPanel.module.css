@@ -42,3 +42,14 @@
 .text + .text {
   margin-top: var(--space-2);
 }
+
+/* A URL em linha própria: mono e latão — é identificador, e o que se copia. */
+.link {
+  font: 400 var(--text-sm) / 1.55 var(--font-mono);
+  color: var(--color-data);
+  overflow-wrap: anywhere;
+}
+
+.link:hover {
+  text-decoration: underline;
+}

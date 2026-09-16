@@ -27,7 +27,8 @@ export const ptBR = {
   /**
    * A AJUDA (Etapa 59, pelo autor): o painel do "?" ao lado da engrenagem. Texto como
    * dados — seções de título e parágrafos — para o componente só desenhar. É o que se
-   * mandaria no grupo dos jogadores, guardado onde eles vão procurar.
+   * mandaria no grupo dos jogadores, guardado onde eles vão procurar. Um parágrafo que é
+   * SÓ uma URL vira link em linha própria (o componente reconhece pela forma).
    */
   help: {
     open: 'Ajuda',
@@ -37,6 +38,7 @@ export const ptBR = {
         title: 'O que é',
         body: [
           'Consulta das regras de Pathfinder 2e (Remaster): ancestralidades, classes, talentos, magias, itens, condições e regras. Sem login e sem instalar nada.',
+          'https://eduardoc21.github.io/brfinder2e/',
           'Tudo o que você baixa e traduz fica guardado no seu navegador — use sempre o mesmo navegador, no mesmo aparelho. Por enquanto só há versão para PC.',
         ],
       },
@@ -50,14 +52,16 @@ export const ptBR = {
       {
         title: 'Consultar',
         body: [
-          'Navegue pelas categorias da esquerda ou use a busca — ela encontra pelo nome em inglês e em português. Um link dentro de um texto abre a entrada ligada. Os filtros acham por nível, tradição, traço e afins.',
-          'Clicar numa entrada abre a lateral. Ancestralidades e classes têm mais que isso: o botão ⛶ no alto da lateral abre a tela completa, com as abas de heranças, talentos, progressão e o texto do livro.',
+          'Navegue pelas categorias da esquerda ou use a busca — ela encontra pelo nome em inglês e em português. Ctrl+Q abre a busca global, em todas as categorias de uma vez. Um link dentro de um texto abre a entrada ligada. Os filtros acham por nível, tradição, traço e afins.',
+          'Clicar numa entrada abre a lateral. Ancestralidades, arquétipos e classes têm mais que isso: o botão ⛶ no alto da lateral abre a tela completa, com as abas de heranças, talentos, progressão e o texto do livro.',
         ],
       },
       {
         title: 'Traduzir',
         body: [
-          'A tradução é sob demanda, com uma chave gratuita do Google Gemini que é sua: crie em aistudio.google.com/apikey (conta Google, sem cartão). Depois, engrenagem › Tradução › Tradutor › cole a chave › Guardar › Testar.',
+          'A tradução é sob demanda, com uma chave gratuita do Google Gemini que é sua (conta Google, sem cartão). Crie a chave em:',
+          'https://aistudio.google.com/apikey',
+          'Depois, engrenagem › Tradução › Tradutor › cole a chave › Guardar › Testar.',
           'No campo Modelo, dê preferência ao "Gemini Flash-Lite Latest": é o que está funcionando bem na cota gratuita. Em qualquer entrada, clique Traduzir; em alguns segundos o texto aparece em português, com os termos do glossário.',
           'Em Tradução você escolhe se vê o original ou o traduzido por padrão, e se os nomes das entradas aparecem traduzidos. Achou algo estranho? O lápis ✎ corrige na mão, e a sua correção nunca é sobrescrita.',
         ],
